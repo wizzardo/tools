@@ -4,7 +4,6 @@
  */
 package org.bordl.utils.math;
 
-import java.awt.Point;
 import java.util.LinkedList;
 
 /**
