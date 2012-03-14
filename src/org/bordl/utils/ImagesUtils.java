@@ -104,21 +104,9 @@ public class ImagesUtils {
         g.fillPolygon(xPoints, yPoints, 4);
     }
 
-    public static void resize(BufferedImage im, double scale, String file, float quality) throws IOException {
-        saveJPG(resize(im, scale), file, quality);
-    }
-
-    public static void resizeToWidth(BufferedImage im, int width, String file, float quality) throws IOException {
-        double sacle = (width * 1.0) / im.getWidth();
-        resize(im, sacle, file, quality);
-    }
-
-    public static void resizeToWidth(File in, int width, String file, float quality) throws IOException {
-        resizeToWidth(ImageIO.read(in), width, file, quality);
-    }
-
-    public static void resize(File in, double scale, String fileOut, float quality) throws IOException {
-        resize(ImageIO.read(in), scale, fileOut, quality);
+    public static BufferedImage resizeToWidth(BufferedImage im, int width) throws IOException {
+        double scale = (width * 1.0) / im.getWidth();
+        return resize(im, scale);
     }
 
     public static BufferedImage resize(BufferedImage im, double scale) {

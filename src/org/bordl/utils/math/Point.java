@@ -25,4 +25,9 @@ public class Point {
         }
         return super.equals(obj);
     }
+
+    @Override
+    public String toString() {
+        return x + ";" + y;
+    }
 }
