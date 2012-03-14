@@ -48,10 +48,6 @@ public class Line {
         return getX(y);
     }
 
-    public static double getLength(Point p1, Point p2) {
-        return Math.sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
-    }
-
     public Point getPoint(double x, double distance) {
         double newX;
         if (distance > 0) {
@@ -77,6 +73,38 @@ public class Line {
     @Override
     public String toString() {
         return a + " * X + " + b;
+    }
+
+    public static double getLength(Point p1, Point p2) {
+        return Math.sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
+    }
+
+    public static double getLength(double x1, double y1, double x2, double y2) {
+        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    }
+
+    public static double getLength(float x1, float y1, float x2, float y2) {
+        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    }
+
+    public static double getLength(int x1, int y1, int x2, int y2) {
+        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    }
+
+    public static boolean isBigger(Point p1, Point p2, double distance) {
+        return (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y) > distance * distance;
+    }
+
+    public static boolean isBigger(double x1, double y1, double x2, double y2, double distance) {
+        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) > distance * distance;
+    }
+
+    public static boolean isBigger(float x1, float y1, float x2, float y2, float distance) {
+        return ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) > distance * distance;
+    }
+
+    public static boolean isBigger(int x1, int y1, int x2, int y2, int distance) {
+        return ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) > distance * distance;
     }
 
     public static Line approximate(Point[] data) {
@@ -120,4 +148,70 @@ public class Line {
 //        System.out.println(l.getY(2));
 //        System.out.println(l);
 //    }
+
+    public static class F {
+
+        private float a, b;
+
+        public F(float a, float b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        public F(float x1, float y1, float x2, float y2) {
+            if (y1 == y2) {
+                a = 0;
+            } else {
+                a = (y2 - y1) / (x2 - x1);
+            }
+            b = y1 - a * x1;
+        }
+
+        public F(Point.F p1, Point.F p2) {
+            this(p1.x, p1.y, p2.x, p2.y);
+        }
+
+        public float getY(float x) {
+            return a * x + b;
+        }
+
+        public float y(float x) {
+            return getY(x);
+        }
+
+        public float getX(float y) {
+            return (y - b) / a;
+        }
+
+        public float x(float y) {
+            return getX(y);
+        }
+
+        public Point.F getPoint(float x, float distance) {
+            float newX;
+            if (distance > 0) {
+                newX = (float) (x + Math.sqrt(distance * distance / (1 + a * a)));
+            } else {
+                newX = (float) (x - Math.sqrt(distance * distance / (1 + a * a)));
+            }
+            return new Point.F(newX, getY(newX));
+        }
+
+        public Point.F getPoint(Point.F p, float distance) {
+            if (a == Float.NEGATIVE_INFINITY || a == Float.POSITIVE_INFINITY) {
+                return new Point.F(p.x, p.y + distance);
+            } else {
+                return getPoint(p.x, distance);
+            }
+        }
+
+        public F getNormal(float x) {
+            return new F(-1 / a, getY(x) + x * 1 / a);
+        }
+
+        @Override
+        public String toString() {
+            return a + " * X + " + b;
+        }
+    }
 }

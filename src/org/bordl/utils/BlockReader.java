@@ -7,6 +7,7 @@ package org.bordl.utils;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class BlockReader {
 
-    private InputStream in;
+    private PushbackInputStream in;
     private byte[] buffer, dynamicBuffer;
     private boolean close = false;
     private byte[] separator;
@@ -30,7 +31,7 @@ public class BlockReader {
 
     public BlockReader(InputStream in, byte[] separator) {
         this.separator = Arrays.copyOf(separator, separator.length);
-        this.in = in;
+        this.in = new PushbackInputStream(in, 1);
         buffer = new byte[separator.length];
         bm = new BoyerMoore(separator);
     }
@@ -192,8 +193,8 @@ public class BlockReader {
     public boolean ready() throws IOException {
         if (!close) {
             long wait = 0;
-            int available = 0;
-            while ((available = in.available()) == 0 && wait < 5000) {
+            int r;
+            while ((r = in.read()) == -1 && wait < 5000) {
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException ex) {
@@ -201,7 +202,8 @@ public class BlockReader {
                 }
                 wait++;
             }
-            return in.available() > 0;
+            in.unread(r);
+            return true;
         } else {
             return false;
         }

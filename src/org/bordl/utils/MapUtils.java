@@ -73,6 +73,22 @@ public class MapUtils {
         return null;
     }
 
+    public static Float getFloat(Map map, String key) {
+        if (map.containsKey(key)) {
+            Object ob = map.get(key);
+            if (ob instanceof Float) {
+                return (Float) ob;
+            }
+            if (ob instanceof String) {
+                try {
+                    return Float.parseFloat(ob.toString());
+                } catch (NumberFormatException ex) {
+                }
+            }
+        }
+        return null;
+    }
+
     public static String getString(Map map, String key) {
         if (map.containsKey(key)) {
             return map.get(key).toString();
@@ -98,6 +114,14 @@ public class MapUtils {
 
     public static double getDouble(Map map, String key, double def) {
         Double l = getDouble(map, key);
+        if (l != null) {
+            return l;
+        }
+        return def;
+    }
+
+    public static float getFloat(Map map, String key, float def) {
+        Float l = getFloat(map, key);
         if (l != null) {
             return l;
         }
