@@ -21,7 +21,7 @@ public class Line {
         if (y1 == y2) {
             a = 0;
         } else {
-            a = (x2 - x1) / (y2 - y1);
+            a = (y2 - y1) / (x2 - x1);
         }
         b = y1 - a * x1;
     }
@@ -46,23 +46,46 @@ public class Line {
         return getX(y);
     }
 
-    public double getLength(Point p1, Point p2) {
+    public static double getLength(Point p1, Point p2) {
         return Math.sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
     }
 
     public Point getPoint(double x, double distance) {
         double newX;
         if (distance > 0) {
-            newX = Math.sqrt(distance * distance / (1 + a * a)) + x;
+            newX = x + Math.sqrt(distance * distance / (1 + a * a));
         } else {
-            newX = Math.sqrt(distance * distance / (1 + a * a)) - x;
+            newX = x - Math.sqrt(distance * distance / (1 + a * a));
         }
         return new Point(newX, getY(newX));
     }
 
-    public static void main(String[] args) {
-        Line l = new Line(0, 0, 1, 2);
-        System.out.println(l.getY(4));
-        System.out.println(l.getPoint(2, -2.23607));
+    public Point getPoint(Point p, double distance) {
+        if (a == Double.NEGATIVE_INFINITY || a == Double.POSITIVE_INFINITY) {
+            return new Point(p.x, p.y + distance);
+        } else {
+            return getPoint(p.x, distance);
+        }
     }
+
+    public Line getNormal(double x) {
+        return new Line(-1 / a, getY(x) + x * 1 / a);
+    }
+
+    @Override
+    public String toString() {
+        return a + " * X + " + b;
+    }
+//    public static void main(String[] args) {
+//        Line l = new Line(-2, -1, 2, 1);
+//        System.out.println(l);
+//        System.out.println(l.getLength(new Point(0, 0), new Point(2, 1)));
+//        System.out.println(l.getY(4));
+//        System.out.println(l.getPoint(0, -l.getLength(new Point(0, 0), new Point(2, 1))));
+//        System.out.println(l.getPoint(0, l.getLength(new Point(0, 0), new Point(2, 1))));
+//        System.out.println(l);
+//        System.out.println(l.getNormal(2));
+//        System.out.println(l.getNormal(2).getPoint(2, 4.472135954999579));
+//        System.out.println(l.getNormal(2).getPoint(2, -4.472135954999579));
+//    }
 }

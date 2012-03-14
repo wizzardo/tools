@@ -2,7 +2,7 @@ package org.bordl.utils.math;
 
 import java.util.LinkedList;
 
-class Bezier {
+public class Bezier {
 
     private LinkedList<Point> points;
 
