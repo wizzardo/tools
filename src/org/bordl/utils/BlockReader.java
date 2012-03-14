@@ -7,6 +7,7 @@ package org.bordl.utils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import org.bordl.utils.security.MD5;
 
 /**
  *
@@ -22,11 +23,14 @@ public class BlockReader {
     private int findedIndex = -1;
     private int offset = 0;
     private int r, endimg, buffered;
+    private BoyerMoore bm;
+    private long blockLength = 0;
 
     public BlockReader(InputStream in, byte[] separator) {
         this.separator = Arrays.copyOf(separator, separator.length);
         this.in = in;
         buffer = new byte[separator.length];
+        bm = new BoyerMoore(separator);
     }
 
     public boolean hashNext() throws IOException {
@@ -35,6 +39,7 @@ public class BlockReader {
 
     public void next() {
         wait = false;
+        blockLength = 0;
     }
 
     public int read(byte[] b) throws IOException {
@@ -75,7 +80,8 @@ public class BlockReader {
             }
         }
         if (r != -1) {
-            findedIndex = endOfBlock(b, 0, r);
+            findedIndex = bm.search(b, 0, r);
+//            findedIndex = endOfBlock(b, 0, r);
             if (findedIndex != -1) {
                 wait = true;
                 int length = r - findedIndex - separator.length;
@@ -83,19 +89,26 @@ public class BlockReader {
                     dynamicBuffer = new byte[length];
                     System.arraycopy(b, findedIndex + separator.length, dynamicBuffer, 0, dynamicBuffer.length);
                 }
+                blockLength += findedIndex;
                 return findedIndex;
             } else {
-                endimg = isEnding(b, separator);
+                endimg = isEnding(b, r, separator);
                 if (endimg != -1) {
-                    buffered = b.length - endimg;
+                    buffered = r - endimg;
                     System.arraycopy(b, endimg, buffer, 0, buffered);
+                    blockLength += endimg;
                     return endimg;
                 } else {
+                    blockLength += r;
                     return r;
                 }
             }
         }
         return -1;
+    }
+
+    public long getBlockLength() {
+        return blockLength;
     }
 
 //    public String readLine(String encoding) throws IOException {
@@ -123,18 +136,18 @@ public class BlockReader {
         in = null;
     }
 
-    public static int isEnding(byte[] b, byte[] endsWith) {
-        int i = b.length - endsWith.length;
+    public static int isEnding(byte[] b, int length, byte[] endsWith) {
+        int i = length - endsWith.length;
         if (i < 0) {
             i = 0;
         }
         outer:
-        for (; i < b.length; i++) {
+        for (; i < length; i++) {
             int j = 0;
-            while (j < endsWith.length && j + i < b.length && b[i + j] == endsWith[j]) {
+            while (j < endsWith.length && j + i < length && b[i + j] == endsWith[j]) {
                 j++;
             }
-            if (j + i == b.length) {
+            if (j + i == length) {
                 return i;
             }
         }

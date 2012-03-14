@@ -10,12 +10,37 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Moxa
  */
 public class MD5 {
+
+    private MessageDigest md5;
+
+    public MD5() {
+        try {
+            md5 = MessageDigest.getInstance("md5");
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(MD5.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void update(byte[] b, int offset, int length) {
+        md5.update(b, 0, length);
+    }
+
+    public void reset() {
+        md5.reset();
+    }
+
+    @Override
+    public String toString() {
+        return md5BytesToString(md5.digest());
+    }
 
     /** 
     @return MD5 hash as string from given bytes

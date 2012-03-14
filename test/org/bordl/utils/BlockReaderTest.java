@@ -7,8 +7,10 @@ package org.bordl.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bordl.utils.security.MD5;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -99,9 +101,51 @@ public class BlockReaderTest {
 
     @Test
     public void testEnding() {
-        assertEquals(5, BlockReader.isEnding("123;456".getBytes(), "56".getBytes()));
-        assertEquals(6, BlockReader.isEnding("123;456".getBytes(), "6".getBytes()));
-        assertEquals(0, BlockReader.isEnding("123;456".getBytes(), "123;456".getBytes()));
-        assertEquals(-1, BlockReader.isEnding("123;456".getBytes(), ";".getBytes()));
+        assertEquals(5, BlockReader.isEnding("123;456".getBytes(), 7, "56".getBytes()));
+        assertEquals(6, BlockReader.isEnding("123;456".getBytes(), 7, "6".getBytes()));
+        assertEquals(0, BlockReader.isEnding("123;456".getBytes(), 7, "123;456".getBytes()));
+        assertEquals(-1, BlockReader.isEnding("123;456".getBytes(), 7, ";".getBytes()));
+    }
+
+    @Test
+    public void test3() throws IOException {
+        byte[] separator = "!!!separator!!!".getBytes();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] data1 = new byte[10240], data2 = new byte[10240], data3 = new byte[10240];
+        Random random = new Random();
+        random.nextBytes(data1);
+        random.nextBytes(data2);
+        random.nextBytes(data3);
+
+        out.write(data1);
+        out.write(separator);
+        out.write(data2);
+        out.write(separator);
+        out.write(data3);
+
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        BlockReader bl = new BlockReader(in, separator);
+
+        MD5 md5 = new MD5();
+        String[] hashes = new String[3];
+        hashes[0] = MD5.getMD5AsString(data1);
+        hashes[1] = MD5.getMD5AsString(data2);
+        hashes[2] = MD5.getMD5AsString(data3);
+
+        md5.update(data1, 0, data1.length);
+        assertEquals(hashes[0], md5.toString());
+
+        int n = 0;
+        while (bl.hashNext()) {
+            md5.reset();
+            bl.next();
+            int r = 0;
+            byte[] b = new byte[102400];
+            while ((r = bl.read(b)) != -1) {
+                md5.update(b, 0, r);
+            }
+            assertEquals(hashes[n], md5.toString());
+            n++;
+        }
     }
 }
