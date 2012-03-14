@@ -18,6 +18,12 @@ public class MapUtils {
             if (ob instanceof Long) {
                 return (Long) ob;
             }
+            if (ob instanceof String) {
+                try {
+                    return Long.parseLong(ob.toString());
+                } catch (NumberFormatException ex) {
+                }
+            }
         }
         return null;
     }
@@ -27,6 +33,12 @@ public class MapUtils {
             Object ob = map.get(key);
             if (ob instanceof Integer) {
                 return (Integer) ob;
+            }
+            if (ob instanceof String) {
+                try {
+                    return Integer.parseInt(ob.toString());
+                } catch (NumberFormatException ex) {
+                }
             }
         }
         return null;
@@ -38,6 +50,12 @@ public class MapUtils {
             if (ob instanceof Double) {
                 return (Double) ob;
             }
+            if (ob instanceof String) {
+                try {
+                    return Double.parseDouble(ob.toString());
+                } catch (NumberFormatException ex) {
+                }
+            }
         }
         return null;
     }
@@ -47,6 +65,9 @@ public class MapUtils {
             Object ob = map.get(key);
             if (ob instanceof Boolean) {
                 return (Boolean) ob;
+            }
+            if (ob instanceof String) {
+                return Boolean.parseBoolean(ob.toString());
             }
         }
         return null;

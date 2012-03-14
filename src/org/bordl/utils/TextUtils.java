@@ -7,7 +7,7 @@ package org.bordl.utils;
 public class TextUtils {
 
     public static boolean isBlank(String s) {
-        return s == null ? true : s.isEmpty();
+        return s == null ? true : s.length() == 0;
     }
 
     public static int getInt(String s) {

@@ -4,10 +4,12 @@
  */
 package org.bordl.utils;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import org.bordl.utils.security.MD5;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -76,7 +78,11 @@ public class BlockReader {
                 }
                 buffered = 0;
             } else {
-                r = in.read(b);
+                if (ready()) {
+                    r = in.read(b);
+                } else {
+                    r = -1;
+                }
             }
         }
         if (r != -1) {
@@ -185,6 +191,16 @@ public class BlockReader {
 //    }
     public boolean ready() throws IOException {
         if (!close) {
+            long wait = 0;
+            int available = 0;
+            while ((available = in.available()) == 0 && wait < 5000) {
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(BlockReader.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                wait++;
+            }
             return in.available() > 0;
         } else {
             return false;
