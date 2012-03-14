@@ -4,6 +4,8 @@
  */
 package org.bordl.utils.math;
 
+import java.util.Arrays;
+
 /**
  *
  * @author Moxa
@@ -76,16 +78,46 @@ public class Line {
     public String toString() {
         return a + " * X + " + b;
     }
+
+    public static Line approximate(Point[] data) {
+        return approximate(data, 0, data.length);
+    }
+
+    public static Line approximate(Point[] data, int offset, int length) {
+        double sx = 0;
+        double sy = 0;
+        double sxx = 0;
+        double sxy = 0;
+        int n = length;
+        for (int i = offset; i < offset + length && i < data.length; i++) {
+            sx += data[i].x;
+            sy += data[i].y;
+            sxx += data[i].x * data[i].x;
+            sxy += data[i].x * data[i].y;
+        }
+        double d = (n * sxx - sx * sx);
+        if (d == 0) {
+            throw new IllegalArgumentException("The equation can't be solved, check the data: " + Arrays.toString(data));
+        }
+        double a = (n * sxy - sx * sy) / d;
+        double b = (sy * sxx - sxy * sx) / d;
+        return new Line(a, b);
+    }
 //    public static void main(String[] args) {
-//        Line l = new Line(-2, -1, 2, 1);
+////        Line l = new Line(-2, -1, 2, 1);
+////        System.out.println(l);
+////        System.out.println(l.getLength(new Point(0, 0), new Point(2, 1)));
+////        System.out.println(l.getY(4));
+////        System.out.println(l.getPoint(0, -l.getLength(new Point(0, 0), new Point(2, 1))));
+////        System.out.println(l.getPoint(0, l.getLength(new Point(0, 0), new Point(2, 1))));
+////        System.out.println(l);
+////        System.out.println(l.getNormal(2));
+////        System.out.println(l.getNormal(2).getPoint(2, 4.472135954999579));
+////        System.out.println(l.getNormal(2).getPoint(2, -4.472135954999579));
+//        Line l = approximate(new Point[]{new Point(0, 1), new Point(1, 0), new Point(2, 1)});
+//        System.out.println(l.getY(0));
+//        System.out.println(l.getY(1));
+//        System.out.println(l.getY(2));
 //        System.out.println(l);
-//        System.out.println(l.getLength(new Point(0, 0), new Point(2, 1)));
-//        System.out.println(l.getY(4));
-//        System.out.println(l.getPoint(0, -l.getLength(new Point(0, 0), new Point(2, 1))));
-//        System.out.println(l.getPoint(0, l.getLength(new Point(0, 0), new Point(2, 1))));
-//        System.out.println(l);
-//        System.out.println(l.getNormal(2));
-//        System.out.println(l.getNormal(2).getPoint(2, 4.472135954999579));
-//        System.out.println(l.getNormal(2).getPoint(2, -4.472135954999579));
 //    }
 }
