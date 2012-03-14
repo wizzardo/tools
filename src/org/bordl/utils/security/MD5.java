@@ -17,6 +17,9 @@ import java.util.Arrays;
  */
 public class MD5 {
 
+    /** 
+    @return MD5 hash as string from given bytes
+     */
     public static String getMD5AsString(byte[] b) {
         try {
             MessageDigest md5 = MessageDigest.getInstance("md5");
@@ -27,10 +30,16 @@ public class MD5 {
         return "";
     }
 
+    /** 
+    @return MD5 hash as string from given string
+     */
     public static String getMD5AsString(String s) {
         return getMD5AsString(s.getBytes());
     }
 
+    /** 
+    @return MD5 hash from given bytes
+     */
     public static byte[] getMD5(byte[] b) {
         try {
             MessageDigest md5 = MessageDigest.getInstance("md5");
@@ -41,6 +50,9 @@ public class MD5 {
         return null;
     }
 
+    /** 
+    @return MD5 hash as string from given stream
+     */
     public static String getMD5AsString(InputStream in) throws IOException {
         try {
             MessageDigest md5 = MessageDigest.getInstance("md5");
@@ -55,6 +67,9 @@ public class MD5 {
         return "";
     }
 
+    /** 
+    @return string representation of MD5 hash 
+     */
     public static String md5BytesToString(byte[] b) {
         String str = new BigInteger(1, b).toString(16);
         while (str.length() < 32) {
@@ -63,6 +78,9 @@ public class MD5 {
         return str;
     }
 
+    /** 
+    @return MD5 hash as bytes from given bytes
+     */
     public static byte[] getMD5(InputStream in) throws IOException {
         try {
             MessageDigest md5 = MessageDigest.getInstance("md5");
@@ -77,11 +95,17 @@ public class MD5 {
         return null;
     }
 
-    public static boolean check(String value, String md5) {
-        return getMD5AsString(value.getBytes()).equalsIgnoreCase(md5);
+    /** 
+    get MD5 from given string and check for equals it with md5String
+     */
+    public static boolean check(String value, String md5String) {
+        return getMD5AsString(value.getBytes()).equalsIgnoreCase(md5String);
     }
 
-    public static boolean check(byte[] b, byte[] md5) {
-        return Arrays.equals(getMD5(b), md5);
+    /** 
+    get MD5 from given bytes and check for equals it with md5Bytes
+     */
+    public static boolean check(byte[] b, byte[] md5Bytes) {
+        return Arrays.equals(getMD5(b), md5Bytes);
     }
 }
