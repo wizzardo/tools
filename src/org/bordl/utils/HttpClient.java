@@ -57,8 +57,16 @@ public class HttpClient {
         return sb.toString();
     }
 
+    public HttpURLConnection createConnection(String url) throws IOException {
+        return createConnection(url, null, null, "GET", null);
+    }
+
     public HttpURLConnection createConnection(String url, String cookie) throws IOException {
         return createConnection(url, cookie, null, "GET", null);
+    }
+
+    public HttpURLConnection createConnection(String url, HashMap<String, Object> params) throws IOException {
+        return createConnection(url, null, params, "GET", null);
     }
 
     public HttpURLConnection createConnection(String url, String cookie, HashMap<String, Object> params) throws IOException {
