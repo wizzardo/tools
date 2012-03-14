@@ -4,27 +4,25 @@ package org.bordl.utils;
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.Proxy;
-import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.bordl.utils.security.MD5;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -32,17 +30,28 @@ import org.bordl.utils.security.MD5;
  */
 public class HttpClient {
 
-    private String lastURL;
+    private static String createPostParameters(Map<String, String> params) {
+        return createPostParameters(params, null);
+    }
 
-    private String createPostParameters(HashMap<String, Object> params) {
+    private static String createPostParameters(Map<String, String> params, String urlEncoding) {
         if (params == null || params.isEmpty()) {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        Iterator<Map.Entry<String, Object>> iter = params.entrySet().iterator();
+        Iterator<Map.Entry<String, String>> iter = params.entrySet().iterator();
         while (iter.hasNext()) {
-            Map.Entry<String, Object> entry = iter.next();
-            sb.append(entry.getKey()).append("=").append(entry.getValue());
+            Map.Entry<String, String> entry = iter.next();
+            sb.append(entry.getKey()).append("=");
+            if (urlEncoding != null) {
+                try {
+                    sb.append(URLEncoder.encode(entry.getValue(), urlEncoding));
+                } catch (UnsupportedEncodingException ex) {
+                    Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                sb.append(entry.getValue());
+            }
             if (iter.hasNext()) {
                 sb.append("&");
             }
@@ -50,18 +59,18 @@ public class HttpClient {
         return sb.toString();
     }
 
-    private String createURL(String url, HashMap<String, Object> params) throws UnsupportedEncodingException {
+    private static String createURL(String url, Map<String, String> params) throws UnsupportedEncodingException {
         if (params == null || params.isEmpty()) {
             return url;
         }
         StringBuilder sb = new StringBuilder(url);
-        Iterator<Map.Entry<String, Object>> iter = params.entrySet().iterator();
+        Iterator<Map.Entry<String, String>> iter = params.entrySet().iterator();
         if (iter.hasNext()) {
             sb.append("?");
         }
         while (iter.hasNext()) {
-            Map.Entry<String, Object> entry = iter.next();
-            sb.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue().toString(), "utf-8"));
+            Map.Entry<String, String> entry = iter.next();
+            sb.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), "utf-8"));
             if (iter.hasNext()) {
                 sb.append("&");
             }
@@ -69,123 +78,294 @@ public class HttpClient {
         return sb.toString();
     }
 
-    public HttpURLConnection createConnection(String url) throws IOException {
-        return createConnection(url, null, null, "GET", null);
-    }
-
-    public HttpURLConnection createConnection(String url, String cookie) throws IOException {
-        return createConnection(url, cookie, null, "GET", null);
-    }
-
-    public HttpURLConnection createConnection(String url, HashMap<String, Object> params) throws IOException {
-        return createConnection(url, null, params, "GET", null);
-    }
-
-    public HttpURLConnection createConnection(String url, String cookie, HashMap<String, Object> params) throws IOException {
-        return createConnection(url, cookie, params, "GET", null);
-    }
-
-    public HttpURLConnection createConnection(String url, String cookie, HashMap<String, Object> params, String method) throws IOException {
-        return createConnection(url, cookie, params, method, null);
-    }
-
-    public HttpURLConnection createConnection(String url, String cookie, HashMap<String, Object> params, String method, String referer) throws IOException {
-        if (method.equalsIgnoreCase("GET")) {
-            url = createURL(url, params);
+    public static String getContentAsString(HttpURLConnection conn, String charset) {
+        try {
+            InputStream in = conn.getInputStream();
+            int r;
+            byte[] b = new byte[10240];
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            while ((r = in.read(b)) != -1) {
+                out.write(b, 0, r);
+            }
+            return out.toString(charset);
+        } catch (IOException e) {
+            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, e);
         }
-        URL u = new URL(url);
-        HttpURLConnection c = (HttpURLConnection) u.openConnection();
-
-        if (lastURL != null) {
-            c.setRequestProperty("Referer", lastURL);
-        }
-        if (referer != null) {
-            c.setRequestProperty("Referer", referer);
-        }
-        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.187 Safari/535.1");
-        c.setRequestProperty("Cookie", cookie);
-        c.setRequestMethod(method);
-        if (method.equalsIgnoreCase("POST")) {
-            c.setDoOutput(true);
-            c.addRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            String data = createPostParameters(params);
-            c.addRequestProperty("Content-Length", data.length() + "");
-            OutputStreamWriter out = new OutputStreamWriter(c.getOutputStream());
-            out.write(data);
-            out.flush();
-            out.close();
-        }
-        lastURL = url;
-        return c;
-    }
-
-    public static InputStream doPostMultiPartRequest(String url, HashMap<String, String> params, HashMap<String, File> files) {
-
         return null;
     }
 
-    private static int getLength(HashMap<String, String> params, HashMap<String, File> files) {
-        int l = 0;
-        l += "------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".length() * (params.size() + files.size() + 1) + 2;
-        for (Entry<String, String> en : params.entrySet()) {
-            l += "Content-Disposition: form-data; name=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + en.getValue().getBytes().length;
-        }
-        for (Entry<String, File> en : files.entrySet()) {
-            l += "Content-Type: image/png\r\n".length();
-            l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + en.getValue().getName().getBytes().length + en.getValue().length();
-        }
-        return l;
+    public static Connection connect(String url) {
+        return new Connection(url);
     }
 
-    public static void main(String[] args) throws Exception {
-        URL u = new URL("http://moxa.no-ip.biz/post/");
-        System.out.println("length: " + getLength(new HashMap<String, String>() {
+    public static enum ConnectionMethod {
 
-            {
-                put("textfield", "dsfgsdf");
-            }
-        }, new HashMap<String, File>() {
+        GET("GET"), POST("POST");
+        private String method;
 
-            {
-                put("filefield", new File("C:\\favicon.png"));
-            }
-        }));
-        HttpURLConnection hc = (HttpURLConnection) u.openConnection();
-//        HttpURLConnection hc = (HttpURLConnection) u.openConnection(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost",8080)));
-        File f = new File("C:\\favicon.png");
-        System.out.println(MD5.getMD5AsString(new FileInputStream(f)));
-        hc.setDoOutput(true);
-        hc.setRequestMethod("POST");
-        hc.setRequestProperty("Connection", "Keep-Alive");
-        hc.setRequestProperty("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryZzaC4MkAfrAMfJCJ");
-        hc.setRequestProperty("Content-Length", f.length() * 2 + "");
-        hc.setChunkedStreamingMode(10240);
-        hc.connect();
-        OutputStream out = hc.getOutputStream();
-        out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
-        out.write(("Content-Disposition: form-data; name=\"" + "textfield" + "\"" + "\r\n\r\n").getBytes());
-        out.write(("testtestetst" + "\r\n").getBytes());
-
-        out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
-        String fieldName = "file";
-        out.write(("Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + f.getName() + "\"\r\n").getBytes());
-        out.write("Content-Type: application/octet-stream\r\n".getBytes());
-        out.write("\r\n".getBytes());
-        FileInputStream in = new FileInputStream(f);
-        int r = 0;
-        byte[] b = new byte[10240];
-
-        while ((r = in.read(b)) != -1) {
-            out.write(b, 0, r);
-            out.flush();
+        private ConnectionMethod(String method) {
+            this.method = method;
         }
-        out.write("\r\n".getBytes());
-        out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ--".getBytes());
-        out.flush();
-        out.close();
-        BufferedReader br = new BufferedReader(new InputStreamReader(hc.getInputStream()));
-        while (br.ready()) {
-            System.out.println(br.readLine());
+
+        @Override
+        public String toString() {
+            return method;
         }
     }
+
+    public static class Connection {
+
+        private int maxRetryCount = 0;
+        private long pauseBetweenRetries = 0;
+        private ConnectionMethod method = ConnectionMethod.GET;
+        private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
+        private HashMap<String, String> headers = new HashMap<String, String>();
+        private HashMap<String, byte[]> dataArrays = new HashMap<String, byte[]>();
+        private String url;
+        private String json;
+        private boolean multipart = false;
+        private String charsetForEncoding;
+
+        public Connection(String url) {
+            this.url = url;
+            headers.put("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.187 Safari/535.1");
+//            headers.put("Accept-Charset", "windows-1251,utf-8;q=0.7,*;q=0.3");
+        }
+
+        public Connection setMaxRetryCount(int n) {
+            maxRetryCount = n;
+            return this;
+        }
+
+        public Connection maxRetryCount(int n) {
+            maxRetryCount = n;
+            return this;
+        }
+
+        public Connection setPauseBetweenRetries(long pause) {
+            pauseBetweenRetries = pause;
+            return this;
+        }
+
+        public Connection pauseBetweenRetries(long pause) {
+            pauseBetweenRetries = pause;
+            return this;
+        }
+
+        public Connection setMethod(ConnectionMethod method) {
+            this.method = method;
+            return this;
+        }
+
+        public Connection method(ConnectionMethod method) {
+            this.method = method;
+            return this;
+        }
+
+        public Connection setCookie(String cookie) {
+            headers.put("Cookie", cookie);
+            return this;
+        }
+
+        public Connection cookie(String cookie) {
+            headers.put("Cookie", cookie);
+            return this;
+        }
+
+        public Connection setReferer(String referer) {
+            headers.put("Referer", referer);
+            return this;
+        }
+
+        public Connection referer(String referer) {
+            headers.put("Referer", referer);
+            return this;
+        }
+
+        public Connection setJson(String json) {
+            this.json = json;
+            return this;
+        }
+
+        public Connection json(String json) {
+            this.json = json;
+            return this;
+        }
+
+        public Connection addParameter(String key, String value) {
+            params.put(key, value);
+            return this;
+        }
+
+        public Connection setUrlEncoding(String charset) {
+            charsetForEncoding = charset;
+            return this;
+        }
+
+        public Connection addFile(String key, File value) {
+            return addFile(key, value.getAbsolutePath());
+        }
+
+        public Connection addFile(String key, String path) {
+            multipart = true;
+            method = ConnectionMethod.POST;
+            params.put(key, "file://" + path);
+            return this;
+        }
+
+        public Connection addByteArray(String key, byte[] array, String name) {
+            multipart = true;
+            method = ConnectionMethod.POST;
+            params.put(key, "array://" + name);
+            dataArrays.put(key, array);
+            return this;
+        }
+
+        public Connection data(String key, String value) {
+            params.put(key, value);
+            return this;
+        }
+
+        public Connection setHeader(String key, String value) {
+            headers.put(key, value);
+            return this;
+        }
+
+        public Connection header(String key, String value) {
+            headers.put(key, value);
+            return this;
+        }
+
+        public HttpURLConnection connect() throws IOException {
+            return connect(0);
+        }
+
+        public String getAsString() throws IOException {
+            return getContentAsString(connect(), "utf-8");
+        }
+
+        public String getAsString(String charset) throws IOException {
+            return getContentAsString(connect(), charset);
+        }
+
+        public HttpURLConnection get() throws IOException {
+            setMethod(ConnectionMethod.GET);
+            return connect(0);
+        }
+
+        public HttpURLConnection post() throws IOException {
+            setMethod(ConnectionMethod.POST);
+            return connect(0);
+        }
+
+        private HttpURLConnection connect(int retryNumber) throws IOException {
+            try {
+                if (method.equals(ConnectionMethod.GET)) {
+                    url = createURL(url, params);
+                }
+                URL u = new URL(url);
+                HttpURLConnection c = (HttpURLConnection) u.openConnection();
+
+                c.setRequestMethod(method.toString());
+                for (Map.Entry<String, String> header : headers.entrySet()) {
+                    c.setRequestProperty(header.getKey(), header.getValue());
+                }
+                if (method.equals(ConnectionMethod.POST)) {
+                    c.setDoOutput(true);
+                    if (!multipart) {
+                        String data;
+                        if (json != null) {
+                            c.addRequestProperty("Content-Type", "application/json; charset=utf-8");
+                            data = json;
+                        } else {
+                            c.addRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                            data = createPostParameters(params, charsetForEncoding);
+                        }
+                        c.addRequestProperty("Content-Length", String.valueOf(data.length()));
+                        OutputStreamWriter out = new OutputStreamWriter(c.getOutputStream());
+                        out.write(data);
+                        out.flush();
+                        out.close();
+                    } else {
+                        c.setRequestProperty("Connection", "Keep-Alive");
+                        c.setRequestProperty("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryZzaC4MkAfrAMfJCJ");
+                        c.setRequestProperty("Content-Length", String.valueOf(getLength()));
+                        c.setChunkedStreamingMode(10240);
+                        OutputStream out = c.getOutputStream();
+                        for (Map.Entry<String, String> param : params.entrySet()) {
+                            out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
+                            if (param.getValue().startsWith("file://")) {
+                                File f = new File(param.getValue().substring(7));
+                                out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + f.getName() + "\"\r\n").getBytes());
+                                out.write("Content-Type: application/octet-stream\r\n".getBytes());
+                                out.write("\r\n".getBytes());
+                                FileInputStream in = new FileInputStream(f);
+                                int r = 0;
+                                byte[] b = new byte[10240];
+                                while ((r = in.read(b)) != -1) {
+                                    out.write(b, 0, r);
+                                    out.flush();
+                                }
+                                in.close();
+                            } else if (param.getValue().startsWith("array://")) {
+                                out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + param.getValue().substring(8) + "\"\r\n").getBytes());
+                                out.write("Content-Type: application/octet-stream\r\n".getBytes());
+                                out.write("\r\n".getBytes());
+                                out.write(dataArrays.get(param.getKey()));
+                            } else {
+                                out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"" + "\r\n\r\n").getBytes());
+                                out.write((param.getValue()).getBytes());
+                            }
+                            out.write("\r\n".getBytes());
+                        }
+                        out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ--".getBytes());
+                        out.flush();
+                        out.close();
+                    }
+                }
+                return c;
+            } catch (SocketTimeoutException e) {
+                Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, e);
+                if (retryNumber < maxRetryCount) {
+                    try {
+                        Thread.sleep(pauseBetweenRetries);
+                    } catch (InterruptedException ex1) {
+                        Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex1);
+                    }
+                    return connect(++retryNumber);
+                }
+            }
+            throw new SocketTimeoutException();
+        }
+
+        private int getLength() {
+            int l = 0;
+            l += "------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".length() * (params.size() + 1) + 2;
+            for (Entry<String, String> en : params.entrySet()) {
+                if (en.getValue().startsWith("file://") || en.getValue().startsWith("array://")) {
+                    l += "Content-Type: application/octet-stream\r\n".length();
+                    if (en.getValue().startsWith("file://")) {
+                        l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + new File(en.getValue().substring(7)).getName().getBytes().length + en.getValue().length();
+                    } else {
+                        l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + dataArrays.get(en.getKey()).length + en.getValue().length();
+                    }
+                } else {
+                    l += "Content-Disposition: form-data; name=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + en.getValue().getBytes().length;
+                }
+            }
+            System.out.println(l);
+            return l;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String url() {
+            return url;
+        }
+    }
+//    public static void main(String[] args) throws IOException {
+//        System.out.println(connect("http://moxa.no-ip.biz/post/").addParameter("textfield", "testtestetst").addFile("filefield", "C:\\favicon.png").getAsString());
+//    }
 }
