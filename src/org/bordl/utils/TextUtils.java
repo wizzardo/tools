@@ -1,7 +1,10 @@
 package org.bordl.utils;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -25,9 +28,9 @@ public class TextUtils {
         try {
             return Float.parseFloat(s);
         } catch (NumberFormatException ex) {
-            System.out.println("error parsing int: \"" + s + "\"");
-            for (char c : s.toCharArray()) {
-                System.out.println(c + "  " + (int) c);
+            try {
+                return Float.parseFloat(s.replace(',', '.'));
+            } catch (NumberFormatException e) {
             }
         }
         return def;
@@ -36,7 +39,10 @@ public class TextUtils {
     public static List<String> asListAndTrim(String[] arr) {
         ArrayList<String> l = new ArrayList<String>(arr.length);
         for (String s : arr) {
-            l.add(s.trim());
+            s = s.trim();
+            if (s.length() > 0) {
+                l.add(s);
+            }
         }
         return l;
     }
@@ -74,7 +80,7 @@ public class TextUtils {
             return Double.parseDouble(s);
         } catch (NumberFormatException ex) {
             try {
-                return Double.parseDouble(s.replace(",", "."));
+                return Double.parseDouble(s.replace(',', '.'));
             } catch (NumberFormatException e) {
             }
         }
@@ -83,5 +89,26 @@ public class TextUtils {
 
     public static String removeAllNbsp(String s) {
         return s.replaceAll("\u00A0", "");
+    }
+
+    public static List<String> findAll(String s, Pattern p) {
+        LinkedList<String> l = new LinkedList<String>();
+        Matcher m = p.matcher(s);
+        while (m.find()) {
+            l.add(m.group());
+        }
+        return l;
+    }
+
+    public static String find(String s, Pattern p) {
+        Matcher m = p.matcher(s);
+        while (m.find()) {
+            return m.group();
+        }
+        return null;
+    }
+
+    public static String removeAllButNumber(String s) {
+        return s.replaceAll("[^\\.\\d]+", "");
     }
 }
