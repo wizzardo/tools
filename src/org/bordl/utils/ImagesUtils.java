@@ -6,6 +6,8 @@ package org.bordl.utils;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -100,5 +102,30 @@ public class ImagesUtils {
         yPoints[3] = y2 + dy;
 
         g.fillPolygon(xPoints, yPoints, 4);
+    }
+
+    public static void resize(BufferedImage im, double scale, String file, float quality) throws IOException {
+        saveJPG(resize(im, scale), file, quality);
+    }
+
+    public static void resizeToWidth(BufferedImage im, int width, String file, float quality) throws IOException {
+        double sacle = (width * 1.0) / im.getWidth();
+        resize(im, sacle, file, quality);
+    }
+
+    public static void resizeToWidth(File in, int width, String file, float quality) throws IOException {
+        resizeToWidth(ImageIO.read(in), width, file, quality);
+    }
+
+    public static void resize(File in, double scale, String fileOut, float quality) throws IOException {
+        resize(ImageIO.read(in), scale, fileOut, quality);
+    }
+
+    public static BufferedImage resize(BufferedImage im, double scale) {
+        BufferedImage img = new BufferedImage((int) (im.getWidth() * scale), (int) (im.getHeight() * scale), BufferedImage.TYPE_INT_RGB);
+        Image imgg = im.getScaledInstance(img.getWidth(), img.getHeight(), Image.SCALE_SMOOTH);
+        Graphics2D gr = (Graphics2D) img.getGraphics();
+        gr.drawImage(imgg, 0, 0, null);
+        return img;
     }
 }
