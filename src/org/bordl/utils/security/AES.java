@@ -4,6 +4,8 @@
  */
 package org.bordl.utils.security;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -139,6 +141,20 @@ public class AES {
         dcipher = Cipher.getInstance("AES/CFB8/NoPadding");
         ecipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
         dcipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
+    }
+
+    public byte[] decrypt(byte[] b) {
+        ByteArrayInputStream in = new ByteArrayInputStream(b);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(b.length);
+        decrypt(in, out);
+        return out.toByteArray();
+    }
+
+    public byte[] encrypt(byte[] b) {
+        ByteArrayInputStream in = new ByteArrayInputStream(b);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(b.length);
+        encrypt(in, out);
+        return out.toByteArray();
     }
 
     public void decrypt(InputStream in, OutputStream out) {
