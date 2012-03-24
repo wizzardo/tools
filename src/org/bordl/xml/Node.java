@@ -113,7 +113,7 @@ public class Node {
         Node find = null;
         if (!innerNodes.isEmpty()) {
             for (Node n : innerNodes) {
-                if (n.getName().equals(name)) {
+                if (name.equals(n.getName())) {
                     find = n;
                     break;
                 }
@@ -215,7 +215,7 @@ public class Node {
                     lastInnerTextStart = innerTagEnd;
                     String innerText = s.substring(innerTagEnd, temp).trim();
                     if (innerText.length() > 0) {
-                        innerNodes.add(new TextNode(innerText));
+                        innerNodes.add(new TextNode(fromXMLEscapedString(innerText)));
                     }
                 }
                 temp++;
@@ -227,7 +227,7 @@ public class Node {
                         if (innerStart != lastInnerTextStart) {
                             String innerText = s.substring(innerStart, innerTagStart).trim();
                             if (innerText.length() > 0) {
-                                innerNodes.add(new TextNode(innerText));
+                                innerNodes.add(new TextNode(fromXMLEscapedString(innerText)));
                             }
                         }
                         addChild(new Node(s.substring(innerTagStart, innerTagEnd), ignoreCase));
@@ -251,7 +251,10 @@ public class Node {
                 }
             }
             if (innerNodes.isEmpty()) {
-                innerNodes.add(new TextNode(fromXMLEscapedString(s.substring(tagEnds, temp - 1).trim())));
+                String innerText = s.substring(tagEnds, temp - 1).trim();
+                if (innerText.length() > 0) {
+                    innerNodes.add(new TextNode(fromXMLEscapedString(innerText)));
+                }
             }
             tagEnds = s.indexOf(">", temp);
             if (!s.substring(temp + 1, tagEnds).equals(name)) {
@@ -298,7 +301,10 @@ public class Node {
             }
             s.append("</");
             s.append(name);
-            s.append(">\n");
+            s.append(">");
+            if (level > 0) {
+                s.append("\n");
+            }
         }
         return s.toString();
     }

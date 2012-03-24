@@ -302,9 +302,12 @@ public class HttpClient {
                                 FileInputStream in = new FileInputStream(f);
                                 int r = 0;
                                 byte[] b = new byte[10240];
+                                long rr=0;
                                 while ((r = in.read(b)) != -1) {
                                     out.write(b, 0, r);
                                     out.flush();
+                                    rr+=r;
+                                    System.out.println(100f*rr/f.length());
                                 }
                                 in.close();
                             } else if (param.getValue().startsWith("array://")) {
