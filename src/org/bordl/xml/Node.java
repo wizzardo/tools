@@ -1,21 +1,11 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bordl.xml;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -25,31 +15,59 @@ public class Node {
 
     private HashMap<String, String> attributes;
     private boolean ignoreCase;
-    private String name, text;
-    private LinkedList<Node> innerNodes = new LinkedList<Node>();
+    private String name;
+    private LinkedList<Node> innerNodes;
     private Node parent;
+
+    public static class TextNode extends Node {
+
+        private String text;
+
+        public TextNode(String text) {
+            this.text = text;
+        }
+
+        @Override
+        public String toString(int level) {
+            StringBuilder s = new StringBuilder();
+            for (int i = 0; i < level; i++) {
+                s.append("\t");
+            }
+            s.append(toXMLEscapedString(text)).append("\n");
+            return s.toString();
+        }
+
+        @Override
+        public String getText() {
+            return text;
+        }
+    }
+
+    private Node() {
+    }
 
     public Node(String name) {
         this.name = name;
+        innerNodes = new LinkedList<Node>();
         attributes = new HashMap<String, String>();
     }
 
     public Node(String name, String text) {
         this(name);
-        this.text = text;
+        innerNodes.add(new TextNode(text));
     }
 
-    public Node(String s, boolean ignoreCase) throws XmlParseException {
+    public Node(String xml, boolean ignoreCase) throws XmlParseException {
         this.ignoreCase = ignoreCase;
         int start = 0;
         boolean data = false;
-        while (!data && (start = s.indexOf("<", start)) >= 0) {
+        while (!data && (start = xml.indexOf("<", start)) >= 0) {
             start++;
-            if (s.charAt(start) != '?') {
+            if (xml.charAt(start) != '?') {
                 data = true;
             }
         }
-        parse(s.substring(start - 1));
+        parse(xml.substring(start - 1));
     }
 
     public HashMap<String, String> getAttributes() {
@@ -73,6 +91,9 @@ public class Node {
     }
 
     public void addChild(Node child) {
+        if (innerNodes == null) {
+            return;
+        }
         innerNodes.add(child);
         child.setParent(this);
     }
@@ -86,6 +107,9 @@ public class Node {
     }
 
     public Node findChildWithNameEquals(String name, boolean recursive) {
+        if (innerNodes == null) {
+            return null;
+        }
         Node find = null;
         if (!innerNodes.isEmpty()) {
             for (Node n : innerNodes) {
@@ -109,6 +133,9 @@ public class Node {
 
     public LinkedList<Node> findChildsWithNameEquals(String name, boolean recursive) {
         LinkedList<Node> found = new LinkedList<Node>();
+        if (innerNodes == null) {
+            return found;
+        }
         if (!innerNodes.isEmpty()) {
             for (Node n : innerNodes) {
                 if (n.getName().equals(name)) {
@@ -137,6 +164,9 @@ public class Node {
     }
 
     public Set<String> getAttributeNames() {
+        if (innerNodes == null) {
+            return null;
+        }
         return attributes.keySet();
     }
 
@@ -145,6 +175,9 @@ public class Node {
     }
 
     public void setAttribute(String key, String value) {
+        if (innerNodes == null) {
+            return;
+        }
         attributes.put(key, value);
     }
 
@@ -153,6 +186,9 @@ public class Node {
     }
 
     public boolean containsAttribute(String key) {
+        if (innerNodes == null) {
+            return false;
+        }
         return attributes.containsKey(key);
     }
 
@@ -165,19 +201,35 @@ public class Node {
         } else {
             setName(s.substring(1, k2));
         }
+        innerNodes = new LinkedList<Node>();
         int tagEnds = s.indexOf(">") + 1, temp;
         String tag = s.substring(s.indexOf("<"), tagEnds);
         attributes = parseAttributes(tag, ignoreCase);
         int level = 1;
         temp = tagEnds;
+        int lastInnerTextStart = -1;
         if (s.charAt(tagEnds - 2) != '/') {
-            int innerTagStart = 0, innerTagEnd;
+            int innerTagStart = 0, innerTagEnd = -1;
             while (level > 0 && (temp = s.indexOf("<", temp)) > 0) {
+                if (innerTagEnd != -1 && level == 1) {
+                    lastInnerTextStart = innerTagEnd;
+                    String innerText = s.substring(innerTagEnd, temp).trim();
+                    if (innerText.length() > 0) {
+                        innerNodes.add(new TextNode(innerText));
+                    }
+                }
                 temp++;
                 if (s.charAt(temp) == '/') {//close tag
                     level--;
                     if (level == 1) {
+                        int innerStart = Math.max(tagEnds, innerTagEnd);
                         innerTagEnd = s.indexOf(">", temp) + 1;
+                        if (innerStart != lastInnerTextStart) {
+                            String innerText = s.substring(innerStart, innerTagStart).trim();
+                            if (innerText.length() > 0) {
+                                innerNodes.add(new TextNode(innerText));
+                            }
+                        }
                         addChild(new Node(s.substring(innerTagStart, innerTagEnd), ignoreCase));
                     }
                 } else {// new Node start
@@ -199,7 +251,7 @@ public class Node {
                 }
             }
             if (innerNodes.isEmpty()) {
-                text = fromXMLEscapedString(s.substring(tagEnds, temp - 1).trim());
+                innerNodes.add(new TextNode(fromXMLEscapedString(s.substring(tagEnds, temp - 1).trim())));
             }
             tagEnds = s.indexOf(">", temp);
             if (!s.substring(temp + 1, tagEnds).equals(name)) {
@@ -220,7 +272,7 @@ public class Node {
         return "<?xml version=\"1.0\" encoding=\"" + charset + "\"?>\n" + toString();
     }
 
-    private String toString(int level) {
+    protected String toString(int level) {
         StringBuilder s = new StringBuilder();
         for (int i = 0; i < level; i++) {
             s.append("\t");
@@ -234,20 +286,15 @@ public class Node {
             s.append(toXMLEscapedString(attributes.get(attribute)));
             s.append("\"");
         }
-        if (innerNodes.isEmpty() && text == null) {
+        if (innerNodes.isEmpty()) {
             s.append("/>\n");
         } else {
-            if (text == null) {
-                s.append(">\n");
-                for (Node inner : innerNodes) {
-                    s.append(inner.toString(level + 1));
-                }
-                for (int i = 0; i < level; i++) {
-                    s.append("\t");
-                }
-            } else {
-                s.append(">");
-                s.append(toXMLEscapedString(text));
+            s.append(">\n");
+            for (Node inner : innerNodes) {
+                s.append(inner.toString(level + 1));
+            }
+            for (int i = 0; i < level; i++) {
+                s.append("\t");
             }
             s.append("</");
             s.append(name);
@@ -300,10 +347,26 @@ public class Node {
     }
 
     public String getText() {
-        return text;
+        StringBuilder sb = new StringBuilder();
+        for (Node n : innerNodes) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(n.getText());
+        }
+        return sb.toString();
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public String getTextOwn() {
+        StringBuilder sb = new StringBuilder();
+        for (Node n : innerNodes) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            if (n instanceof TextNode) {
+                sb.append(n.getText());
+            }
+        }
+        return sb.toString();
     }
 }

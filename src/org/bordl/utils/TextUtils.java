@@ -102,8 +102,16 @@ public class TextUtils {
 
     public static String find(String s, Pattern p) {
         Matcher m = p.matcher(s);
-        while (m.find()) {
+        if (m.find()) {
             return m.group();
+        }
+        return null;
+    }
+
+    public static String find(String s, Pattern p, int group) {
+        Matcher m = p.matcher(s);
+        if (m.find()) {
+            return m.group(group);
         }
         return null;
     }
