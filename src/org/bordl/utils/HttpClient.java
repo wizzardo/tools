@@ -13,9 +13,12 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.net.URLStreamHandler;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -80,7 +83,15 @@ public class HttpClient {
 
     public static String getContentAsString(HttpURLConnection conn, String charset) {
         try {
-            InputStream in = conn.getInputStream();
+            return getContentAsString(conn.getInputStream(), charset);
+        } catch (IOException e) {
+            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return null;
+    }
+
+    public static String getContentAsString(InputStream in, String charset) {
+        try {
             int r;
             byte[] b = new byte[10240];
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -125,6 +136,7 @@ public class HttpClient {
         private String json;
         private boolean multipart = false;
         private String charsetForEncoding;
+        private Proxy proxy;
 
         public Connection(String url) {
             this.url = url;
@@ -134,6 +146,11 @@ public class HttpClient {
 
         public Connection setMaxRetryCount(int n) {
             maxRetryCount = n;
+            return this;
+        }
+
+        public Connection setProxy(Proxy proxy) {
+            this.proxy = proxy;
             return this;
         }
 
@@ -264,8 +281,13 @@ public class HttpClient {
                     url = createURL(url, params);
                 }
                 URL u = new URL(url);
-                HttpURLConnection c = (HttpURLConnection) u.openConnection();
-
+                HttpURLConnection c;
+                if (proxy != null) {
+                    c = (HttpURLConnection) u.openConnection(proxy);
+                } else {
+                    c = (HttpURLConnection) u.openConnection();
+                }
+                System.out.println("c.usingProxy(); " + c.usingProxy());
                 c.setRequestMethod(method.toString());
                 for (Map.Entry<String, String> header : headers.entrySet()) {
                     c.setRequestProperty(header.getKey(), header.getValue());
@@ -302,12 +324,12 @@ public class HttpClient {
                                 FileInputStream in = new FileInputStream(f);
                                 int r = 0;
                                 byte[] b = new byte[10240];
-                                long rr=0;
+//                                long rr = 0;
                                 while ((r = in.read(b)) != -1) {
                                     out.write(b, 0, r);
                                     out.flush();
-                                    rr+=r;
-                                    System.out.println(100f*rr/f.length());
+//                                    rr += r;
+//                                    System.out.println(100f * rr / f.length());
                                 }
                                 in.close();
                             } else if (param.getValue().startsWith("array://")) {

@@ -1,10 +1,5 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bordl.utils;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
@@ -88,7 +83,6 @@ public class BlockReader {
         }
         if (r != -1) {
             findedIndex = bm.search(b, 0, r);
-//            findedIndex = endOfBlock(b, 0, r);
             if (findedIndex != -1) {
                 wait = true;
                 int length = r - findedIndex - separator.length;
@@ -118,25 +112,6 @@ public class BlockReader {
         return blockLength;
     }
 
-//    public String readLine(String encoding) throws IOException {
-//        String s = null;
-//        while ((r = in.read(buffer)) != -1) {
-//            int sl = -1;
-//            if ((sl = endOfLine(buffer, r)) != -1) {
-//                s = new String(buffer, 0, sl, encoding);
-//                byte[] bb = new byte[10240];
-//                System.arraycopy(buffer, 0, bb, 0, sl);
-//                buffer = bb;
-//                r = r - sl;
-//                break;
-//            }
-//        }
-//
-//        if (s != null) {
-//            s = s.trim();
-//        }
-//        return s;
-//    }
     public void close() throws IOException {
         in.close();
         close = true;
@@ -180,27 +155,20 @@ public class BlockReader {
         return -1;
     }
 
-//    private int endOfLine(byte[] b, int length) {
-//        int i = 0;
-//        while (i < length) {
-//            if (b[i] == 13 || b[i] == 10) {
-//                return i;
-//            }
-//            i++;
-//        }
-//        return -1;
-//    }
     public boolean ready() throws IOException {
         if (!close) {
             long wait = 0;
             int r;
-            while ((r = in.read()) == -1 && wait < 5000) {
+            while ((r = in.read()) == -1 && wait < 500) {
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(BlockReader.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 wait++;
+            }
+            if (r == -1) {
+                return false;
             }
             in.unread(r);
             return true;

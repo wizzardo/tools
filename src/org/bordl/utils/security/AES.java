@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.bordl.utils.security;
 
 import java.io.ByteArrayInputStream;
@@ -48,6 +44,20 @@ public class AES {
         return null;
     }
 
+    /** 
+     * 16 chars max,  128-bit encription
+     **/
+    public static SecretKey generateKey(String key) {
+        return generateKey(key.getBytes());
+    }
+
+    public static SecretKey generateKeyAsMD5(String key) {
+        return generateKey(MD5.getMD5(key.getBytes()));
+    }
+
+    /** 
+     * 16 bytes max,  128-bit encription
+     **/
     public static SecretKey generateKey(final byte[] key) {
         return new SecretKey() {
 
@@ -118,6 +128,9 @@ public class AES {
         this(generateKey(key));
     }
 
+    /** 
+     * 16 chars max,  128-bit encription
+     **/
     public AES(String key) {
         this(generateKey(key.getBytes()));
     }
@@ -161,7 +174,7 @@ public class AES {
         try {
             CipherInputStream inc = new CipherInputStream(in, dcipher);
             int r = 0;
-            byte[] b = new byte[16];
+            byte[] b = new byte[10240];
             while ((r = inc.read(b)) != -1) {
                 out.write(b, 0, r);
                 out.flush();
@@ -176,7 +189,7 @@ public class AES {
         try {
             out = new CipherOutputStream(out, ecipher);
             int r = 0;
-            byte[] b = new byte[16];
+            byte[] b = new byte[10240];
             while ((r = in.read(b)) != -1) {
                 out.write(b, 0, r);
                 out.flush();
@@ -186,17 +199,5 @@ public class AES {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) throws FileNotFoundException {
-//        SecretKey key = generateKey();
-//        System.out.println(key.getEncoded().length);
-//        System.out.println(AES.generateKey().getEncoded());
-        AES m = new AES("testKey".getBytes());
-        m.encrypt(new FileInputStream("build.xml"), new FileOutputStream("build.xml.enc"));
-        m.decrypt(new FileInputStream("build.xml.enc"), new FileOutputStream("build_dec.xml"));
     }
 }

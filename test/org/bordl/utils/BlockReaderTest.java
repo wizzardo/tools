@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,10 +43,11 @@ public class BlockReaderTest {
             while (bl.hashNext()) {
                 n++;
                 bl.next();
+                System.out.println("next");
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 while ((r = bl.read(b)) != -1) {
                     out.write(b, 0, r);
-//                    System.out.println(new String(b, 0, r));
+                    System.out.println(new String(b, 0, r) + "\t" + Arrays.toString(b) + "\t" + r);
                 }
                 switch (n) {
                     case 1: {
@@ -267,7 +269,7 @@ public class BlockReaderTest {
                 String s = getAnswer(br2);
                 System.out.println("br2: " + s);
                 if (!("" + i).equals(s)) {
-                    System.out.println("fuckup!!!!!!!!  "+s);
+                    System.out.println("fuckup!!!!!!!!  " + s);
                     break;
                 }
             } catch (IOException ex) {
