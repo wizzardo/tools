@@ -107,6 +107,42 @@ public class BlockReaderTest {
     }
 
     @Test
+    public void test6() {
+        int n = 0;
+        try {
+            BlockReader bl = new BlockReader(new ByteArrayInputStream("test1{separator ololo}[]{separator ololo}test3".getBytes()), "{separator ololo}".getBytes());
+            byte[] b = new byte[500];
+            int r = 0;
+            while (bl.hashNext()) {
+                n++;
+                bl.next();
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                while ((r = bl.read(b)) != -1) {
+                    out.write(b, 0, r);
+//                    System.out.println(new String(b, 0, r));
+                }
+                switch (n) {
+                    case 1: {
+                        assertEquals("test1", new String(out.toByteArray()));
+                        break;
+                    }
+                    case 2: {
+                        assertEquals("[]", new String(out.toByteArray()));
+                        break;
+                    }
+                    case 3: {
+                        assertEquals("test3", new String(out.toByteArray()));
+                        break;
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(BlockReaderTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        assertEquals(3, n);
+    }
+    
+    @Test
     public void testEnding() {
         assertEquals(5, BlockReader.isEnding("123;456".getBytes(), 7, "56".getBytes()));
         assertEquals(6, BlockReader.isEnding("123;456".getBytes(), 7, "6".getBytes()));
@@ -156,7 +192,7 @@ public class BlockReaderTest {
         }
     }
 
-//    @Test
+    @Test
     public void test4() throws IOException {
 
         final byte[][] data = new byte[100][];

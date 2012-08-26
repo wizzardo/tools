@@ -17,29 +17,50 @@ import java.util.logging.Logger;
  *
  * @author Moxa
  */
-public class Cache<K, V> implements Computable<K, V> {
+public abstract class Cache<K, V> {
 
     private final ConcurrentHashMap<K, Future<V>> cache = new ConcurrentHashMap<K, Future<V>>();
     private final ConcurrentLinkedQueue<Entry<K, Long>> timings = new ConcurrentLinkedQueue<Entry<K, Long>>();
     private long lifetime;
-    private final Computable<K, V> c;
 
-    public Cache(Computable<K, V> c, long lifetime, long checkPeriod) {
+    public Cache(long lifetime, long checkPeriod) {
         this.lifetime = lifetime;
-        this.c = c;
         new CacheControl(checkPeriod).start();
     }
 
-    @Override
-    public V compute(final K key) throws InterruptedException {
+    public V get(K k) {
+        try {
+            return getFromCache(k);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Cache.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return get(k, 5);
+    }
+
+    public V get(K k, int retries) {
+        try {
+            return getFromCache(k);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Cache.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        if (retries > 0) {
+            return get(k, retries - 1);
+        } else {
+            return null;
+        }
+    }
+
+    abstract protected V compute(K k);
+
+    private V getFromCache(final K key) throws InterruptedException {
         while (true) {
             Future<V> f = cache.get(key);
             if (f == null) {
                 Callable<V> eval = new Callable<V>() {
 
                     @Override
-                    public V call() throws Exception {
-                        return c.compute(key);
+                    public V call() {
+                        return compute(key);
                     }
                 };
                 FutureTask<V> ft = new FutureTask<V>(eval);
