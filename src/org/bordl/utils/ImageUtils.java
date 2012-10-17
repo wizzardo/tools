@@ -35,7 +35,7 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
  *
  * @author Moxa
  */
-public class ImagesUtils {
+public class ImageUtils {
 
     public static BufferedImage toGrayScale2(BufferedImage source) {
         BufferedImageOp op = new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_GRAY), null);
@@ -238,7 +238,7 @@ public class ImagesUtils {
     }
 
     public static BufferedImage resize(BufferedImage im, double scale) {
-        BufferedImage img = new BufferedImage((int) (im.getWidth() * scale), (int) (im.getHeight() * scale), BufferedImage.TYPE_INT_RGB);
+        BufferedImage img = new BufferedImage((int) (im.getWidth() * scale), (int) (im.getHeight() * scale), BufferedImage.TYPE_INT_ARGB);
         Image imgg = im.getScaledInstance(img.getWidth(), img.getHeight(), Image.SCALE_SMOOTH);
         Graphics2D gr = (Graphics2D) img.getGraphics();
         gr.drawImage(imgg, 0, 0, null);
