@@ -91,6 +91,18 @@ public class HttpClient {
     }
 
     public static String getContentAsString(InputStream in, String charset) {
+        byte[] out = getContent(in);
+        if (out != null) {
+            try {
+                return new String(out, charset);
+            } catch (UnsupportedEncodingException ex) {
+                Logger.getLogger(HttpClient.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return null;
+    }
+
+    public static byte[] getContent(InputStream in) {
         try {
             int r;
             byte[] b = new byte[10240];
@@ -98,7 +110,7 @@ public class HttpClient {
             while ((r = in.read(b)) != -1) {
                 out.write(b, 0, r);
             }
-            return out.toString(charset);
+            return out.toByteArray();
         } catch (IOException e) {
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, e);
         }
@@ -259,6 +271,10 @@ public class HttpClient {
 
         public String getAsString() throws IOException {
             return getContentAsString(connect(), "utf-8");
+        }
+
+        public byte[] getAsBytes() throws IOException {
+            return getContent(connect().getInputStream());
         }
 
         public String getAsString(String charset) throws IOException {

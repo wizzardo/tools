@@ -26,9 +26,19 @@ public class BlockReader {
 
     public BlockReader(InputStream in, byte[] separator) {
         this.separator = Arrays.copyOf(separator, separator.length);
-        this.in = new PushbackInputStream(in, 1);
+        this.in = new PushbackInputStream(in, 10240);
         buffer = new byte[separator.length];
         bm = new BoyerMoore(separator);
+    }
+
+    public InputStream getInputStream() throws IOException {
+        if (!wait) {
+            throw new IllegalStateException("this method can be executed only between blocks");
+        }
+        if (dynamicBuffer != null) {
+            in.unread(dynamicBuffer, offset, dynamicBuffer.length - offset);
+        }
+        return in;
     }
 
     public boolean hashNext() throws IOException {
@@ -41,7 +51,11 @@ public class BlockReader {
     }
 
     public int read(byte[] b) throws IOException {
-        if (b.length < separator.length) {
+        return read(b, 0, b.length);
+    }
+
+    public int read(byte[] b, int off, int l) throws IOException {
+        if (l < separator.length) {
             throw new IllegalArgumentException("byte array MUST be bigger then separator");
         }
         if (wait) {
@@ -49,24 +63,24 @@ public class BlockReader {
         }
         if (dynamicBuffer != null) {
             int k = dynamicBuffer.length - offset;
-            if (k >= b.length) {
-                System.arraycopy(dynamicBuffer, offset, b, 0, b.length);
-                offset += b.length;
+            if (k >= l) {
+                System.arraycopy(dynamicBuffer, offset, b, off, l);
+                offset += l;
                 if (offset == dynamicBuffer.length) {
                     dynamicBuffer = null;
                     offset = 0;
                 }
-                r = b.length;
+                r = l;
             } else {
-                System.arraycopy(dynamicBuffer, offset, b, 0, k);
+                System.arraycopy(dynamicBuffer, offset, b, off, k);
                 dynamicBuffer = null;
                 offset = 0;
                 r = k;
             }
         } else {
             if (buffered > 0) {
-                System.arraycopy(buffer, 0, b, 0, buffered);
-                r = in.read(b, buffered, b.length - buffered);
+                System.arraycopy(buffer, 0, b, off, buffered);
+                r = in.read(b, buffered + off, l - buffered);
                 if (r != -1) {
                     r += buffered;
                 } else {
@@ -75,23 +89,23 @@ public class BlockReader {
                 buffered = 0;
             } else {
                 if (ready()) {
-                    r = in.read(b);
+                    r = in.read(b, off, l);
                 } else {
                     r = -1;
                 }
             }
         }
         if (r != -1) {
-            findedIndex = bm.search(b, 0, r);
+            findedIndex = bm.search(b, off, r);
             if (findedIndex != -1) {
                 wait = true;
-                int length = r - findedIndex - separator.length;
+                int length = r - findedIndex - separator.length + off;
                 if (length != 0) {
                     dynamicBuffer = new byte[length];
                     System.arraycopy(b, findedIndex + separator.length, dynamicBuffer, 0, dynamicBuffer.length);
                 }
                 blockLength += findedIndex;
-                return findedIndex;
+                return findedIndex - off;
             } else {
                 endimg = isEnding(b, r, separator);
                 if (endimg != -1) {

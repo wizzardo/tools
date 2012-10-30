@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.logging.Level;
@@ -31,6 +32,48 @@ import static org.junit.Assert.*;
 public class BlockReaderTest {
 
     public BlockReaderTest() {
+    }
+
+    @Test
+    public void testGetInput() {
+        BlockReader br = new BlockReader(new ByteArrayInputStream("test1\ntest2\ntest3".getBytes()), "\n".getBytes());
+        br.next();
+        byte[] b = new byte[10];
+        int r;
+        ByteArrayOutputStream data = new ByteArrayOutputStream();
+        try {
+            while ((r = br.read(b)) != -1) {
+                data.write(b, 0, r);
+            }
+            assertEquals("test1", new String(data.toByteArray()));
+            data.reset();
+            InputStream in = br.getInputStream();
+            while ((r = in.read(b)) != -1) {
+                data.write(b, 0, r);
+            }
+            assertEquals("test2\ntest3", new String(data.toByteArray()));
+        } catch (IOException ex) {
+            Logger.getLogger(BlockReaderTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Test
+    public void testAppending() {
+        BlockReader br = new BlockReader(new ByteArrayInputStream("test1\ntest2\ntest3\ntest4\ntest5\ntest6".getBytes()), "\n".getBytes());
+        byte[] b = new byte[1024];
+        int r, t = 0;
+        try {
+            while (br.hashNext()) {
+                br.next();
+                while ((r = br.read(b, t, b.length - t)) != -1) {
+                    System.out.println("readed: " + new String(b, t, r) + " \t" + r);
+                    t += r;
+                }
+            }
+            assertEquals("test1test2test3test4test5test6", new String(b, 0, t));
+        } catch (IOException ex) {
+            Logger.getLogger(BlockReaderTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Test
@@ -141,7 +184,7 @@ public class BlockReaderTest {
         }
         assertEquals(3, n);
     }
-    
+
     @Test
     public void testEnding() {
         assertEquals(5, BlockReader.isEnding("123;456".getBytes(), 7, "56".getBytes()));
@@ -210,7 +253,6 @@ public class BlockReaderTest {
         final byte[] separator = "!!!!separator!!!!".getBytes();
         final BlockReader br = new BlockReader(in, separator);
         new Thread(new Runnable() {
-
             public void run() {
                 int i = 1;
                 while (i < 100) {
@@ -277,7 +319,6 @@ public class BlockReaderTest {
         final BlockReader br2 = new BlockReader(in2, sep);
 
         new Thread(new Runnable() {
-
             @Override
             public void run() {
                 for (int i = 0; i < 10; i++) {
