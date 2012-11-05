@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public class TextUtils {
 
     public static boolean isBlank(String s) {
-        return s == null ? true : s.length() == 0;
+        return s == null || s.length() == 0;
     }
 
     public static int getInt(String s) {
@@ -101,11 +101,7 @@ public class TextUtils {
     }
 
     public static String find(String s, Pattern p) {
-        Matcher m = p.matcher(s);
-        if (m.find()) {
-            return m.group();
-        }
-        return null;
+        return find(s, p, 0);
     }
 
     public static String find(String s, Pattern p, int group) {

@@ -2,7 +2,6 @@ package org.bordl.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -67,12 +66,13 @@ public class ZipUtils {
             in.read(b);
         } catch (IOException ex) {
             Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        if (in != null) {
-            try {
-                in.close();
-            } catch (IOException ex) {
-                Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
         return b[0] == 80 && b[1] == 75;
