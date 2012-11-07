@@ -50,7 +50,12 @@ public class UserFunction {
     }
 
     public Object get(Map<String, Object> model) {
-        Map<String, Object> m = new HashMap<String, Object>();
+        Map<String, Object> m;
+        if (model != null) {
+            m = new HashMap<String, Object>(model);
+        } else {
+            m = new HashMap<String, Object>();
+        }
 //        System.out.println("get user function: "+exp);
 //        System.out.println("argsNames: " + Arrays.toString(argsNames));
 //        System.out.println("args: " + Arrays.toString(args));
@@ -63,7 +68,14 @@ public class UserFunction {
                 eh = EvalUtils.prepare(exp, m, functions);
             }
 //            System.out.println(m);
-            return eh.get(m);
+            Object r = eh.get(m);
+            if (model != null)
+                for (Map.Entry<String, Object> entry : model.entrySet()) {
+                    if (m.get(entry.getKey()) != entry.getValue()) {
+                        entry.setValue(m.get(entry.getKey()));
+                    }
+                }
+            return r;
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

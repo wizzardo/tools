@@ -15,7 +15,6 @@ class Operation {
     private ExpressionHolder rightPart;
     private Operator operator;
     private int start, end;
-    private boolean isContinue = true;
 
     public Operation(ExpressionHolder leftPart, ExpressionHolder rightPart, Operator operator) {
         this.leftPart = leftPart;
@@ -122,10 +121,6 @@ class Operation {
 
     public void start(int start) {
         this.start = start;
-    }
-
-    public boolean isContinue() {
-        return isContinue;
     }
 
     public boolean isFull() {
@@ -259,7 +254,6 @@ class Operation {
             }
             case OR2: {
                 if ((Boolean) ob1) {
-                    isContinue = false;
                     return true;
                 } else {
                     return rightPart().get(model);
@@ -275,7 +269,6 @@ class Operation {
             }
             case AND2: {
                 if (!(Boolean) ob1) {
-                    isContinue = false;
                     return false;
                 } else {
                     return rightPart().get(model);

@@ -55,12 +55,7 @@ public class EvalUtils {
         }
 
         {
-            Matcher m = logicalActions.matcher(exp);
-            if (m.find()) {
-                m.reset();
-            } else {
-                m = actions.matcher(exp);
-            }
+            Matcher m = actions.matcher(exp);
             List<String> exps = new ArrayList<String>();
             List<Operation> operations = new ArrayList<Operation>();
             int last = 0;
@@ -73,6 +68,7 @@ public class EvalUtils {
                         continue;
                     }
                 }
+//                System.out.println(m.group());
                 if (countOpenBrackets(exp, last, m.start()) == 0) {
                     exps.add(exp.substring(last, m.start()).trim());
 //                    lastExpressionHolder = new ExpressionHolder(exp.substring(last, m.start()));
@@ -117,12 +113,18 @@ public class EvalUtils {
                         }
                     }
                     if (operation.operator() == Operator.TERNARY) {
-                        n--;
-                        while (n >= 0 && operations.get(n).operator().logical) {
-                            n--;
+                        int ternaryIndex = n;
+                        operation = null;
+                        n = 0;
+                        for (int i = 0; i < ternaryIndex; i++) {
+                            if (operation == null || operations.get(i).operator().priority > operation.operator().priority) {
+                                operation = operations.get(i);
+                                n = i;
+                            }
                         }
-                        n++;
-                        operation = operations.get(n);
+                        if (operation == null) {
+                            operation = operations.get(0);
+                        }
                     }
 
                     if (operation.operator() == Operator.TERNARY) {
@@ -178,8 +180,8 @@ public class EvalUtils {
             if (m.find()) {
 //                System.out.println("find user function: "+m.group(1)+"\t from "+exp);
 //                System.out.println("available functions: "+functions);
-                thatObject=new ExpressionHolder(functions.get(m.group(1)).clone());
-                exp=exp.substring(thatObject.getUserFunction().getName().length());
+                thatObject = new ExpressionHolder(functions.get(m.group(1)).clone());
+                exp = exp.substring(thatObject.getUserFunction().getName().length());
             }
         }
 
@@ -313,7 +315,6 @@ public class EvalUtils {
     }
 
 
-    private static final Pattern actions = Pattern.compile("[\\+\\-/*\\%=\\?!:><]{1,2}");
-    private static final Pattern logicalActions = Pattern.compile("[&\\|]{1,2}");
+    private static final Pattern actions = Pattern.compile("\\+\\+|--|\\*=?|/=?|\\+=?|-=?|:|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
 
 }

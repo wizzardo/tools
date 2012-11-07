@@ -25,12 +25,13 @@ public class EvalUtilsTest {
      */
     @Test
     public void testEvaluate() throws Exception {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
         assertEquals(2, EvalUtils.evaluate("1+1", new HashMap<String, Object>()));
         assertEquals(5, EvalUtils.evaluate("1+1+3", new HashMap<String, Object>()));
         assertEquals("olo123", EvalUtils.evaluate("\"olo\"+1+(1+1)+3", new HashMap<String, Object>()));
         assertEquals("OLO123", EvalUtils.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()", new HashMap<String, Object>()));
 
-        Map<String, Object> model = new HashMap<String, Object>();
         model.put("ololo", "qwerty");
         model.put("qwe", "  ololo  ");
         model.put("length", "111");
@@ -145,6 +146,16 @@ public class EvalUtilsTest {
         assertEquals(b, EvalUtils.evaluate("i++>1||i++>1||i++>1|i++>1", model));
         assertEquals(i, model.get("i"));
 
+        model = new HashMap<String, Object>();
+        model.put("x", 0);
+        assertEquals(true, EvalUtils.evaluate("x<++x", model));
+
+        model = new HashMap<String, Object>();
+        model.put("x", 0);
+        model.put("i", 1);
+        model.put("n", 1);
+        assertEquals(true, EvalUtils.evaluate("i<n&&x++<x?false:true", model));
+        assertEquals(0, model.get("x"));
 
         model = new HashMap<String, Object>();
         model.put("i", 0);
@@ -180,7 +191,6 @@ public class EvalUtilsTest {
 
 
         System.out.println("test user functions");
-        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
         UserFunction y = new UserFunction("y", "x*2", "x");
         functions = new HashMap<String, UserFunction>();
         functions.put(y.getName(), y);
@@ -202,8 +212,16 @@ public class EvalUtilsTest {
         assertEquals(9, EvalUtils.evaluate("z(5) - z(2)", null, functions));
 
         functions = new HashMap<String, UserFunction>();
-        functions.put("y", new UserFunction("y", "2*2",null));
+        functions.put("y", new UserFunction("y", "2*2", null));
         assertEquals(4, EvalUtils.evaluate("y()", null, functions));
+
+        model = new HashMap<String, Object>();
+        model.put("x", 0);
+        model.put("g", 0);
+        functions = new HashMap<String, UserFunction>();
+        functions.put("it", new UserFunction("it", "i<end&&(g=++x)==g?it(i+1,end):g", "i", "end"));
+        assertEquals(10, EvalUtils.evaluate("it(0,10)", model, functions));
+        assertEquals(10, model.get("x"));
     }
 
     @Test
