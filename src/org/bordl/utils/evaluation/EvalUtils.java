@@ -175,7 +175,7 @@ public class EvalUtils {
         }
 
         if (thatObject == null) {
-            Pattern p = Pattern.compile("^([a-z_]+\\d*[a-zA-Z_]*)\\(.+");
+            Pattern p = Pattern.compile("^([a-z_]+\\w*)\\(.+");
             Matcher m = p.matcher(exp);
             if (m.find()) {
 //                System.out.println("find user function: "+m.group(1)+"\t from "+exp);

@@ -4,29 +4,17 @@
  */
 package org.bordl.utils;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.HashMap;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Random;
+import org.bordl.utils.security.MD5;
+import org.junit.Test;
+
+import java.io.*;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bordl.utils.security.MD5;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
- *
  * @author Moxa
  */
 public class BlockReaderTest {
@@ -63,7 +51,7 @@ public class BlockReaderTest {
         byte[] b = new byte[1024];
         int r, t = 0;
         try {
-            while (br.hashNext()) {
+            while (br.hasNext()) {
                 br.next();
                 while ((r = br.read(b, t, b.length - t)) != -1) {
                     System.out.println("readed: " + new String(b, t, r) + " \t" + r);
@@ -83,7 +71,7 @@ public class BlockReaderTest {
             BlockReader bl = new BlockReader(new ByteArrayInputStream("test1\ntest2\ntest3".getBytes()), "\n".getBytes());
             byte[] b = new byte[2];
             int r = 0;
-            while (bl.hashNext()) {
+            while (bl.hasNext()) {
                 n++;
                 bl.next();
                 System.out.println("next");
@@ -120,7 +108,7 @@ public class BlockReaderTest {
             BlockReader bl = new BlockReader(new ByteArrayInputStream("test1{sep}test2{sep}test3".getBytes()), "{sep}".getBytes());
             byte[] b = new byte[500];
             int r = 0;
-            while (bl.hashNext()) {
+            while (bl.hasNext()) {
                 n++;
                 bl.next();
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -156,7 +144,7 @@ public class BlockReaderTest {
             BlockReader bl = new BlockReader(new ByteArrayInputStream("test1{separator ololo}[]{separator ololo}test3".getBytes()), "{separator ololo}".getBytes());
             byte[] b = new byte[500];
             int r = 0;
-            while (bl.hashNext()) {
+            while (bl.hasNext()) {
                 n++;
                 bl.next();
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -222,7 +210,7 @@ public class BlockReaderTest {
         assertEquals(hashes[0], md5.toString());
 
         int n = 0;
-        while (bl.hashNext()) {
+        while (bl.hasNext()) {
             md5.reset();
             bl.next();
             int r = 0;
@@ -249,9 +237,10 @@ public class BlockReaderTest {
         final MD5 md5In = new MD5();
         final MD5 md5Out = new MD5();
         final PipedOutputStream out = new PipedOutputStream();
-        final PipedInputStream in = new PipedInputStream(out);
+        final PipedInputStream in = new PipedInputStream(out,1024*1024);
         final byte[] separator = "!!!!separator!!!!".getBytes();
         final BlockReader br = new BlockReader(in, separator);
+        long time = System.currentTimeMillis();
         new Thread(new Runnable() {
             public void run() {
                 int i = 1;
@@ -279,23 +268,29 @@ public class BlockReaderTest {
         }).start();
         int r = 0;
         byte[] b = new byte[10240];
-        int n = 0;
+        int n = 1;
         try {
             Thread.sleep(10);
         } catch (InterruptedException ex) {
             Logger.getLogger(BlockReaderTest.class.getName()).log(Level.SEVERE, null, ex);
         }
         try {
-            while (br.hashNext()) {
+            long t = 0;
+            while (br.hasNext()) {
                 br.next();
-                System.out.println("next block: " + ++n);
+//                System.out.println("next block: " + n);
                 md5In.reset();
                 while ((r = br.read(b)) != -1) {
                     md5In.update(b, 0, r);
+                    t += r;
                 }
                 hashMapIn.put(n, md5In.toString());
+                n++;
             }
-            System.out.println("end reading");
+            time = System.currentTimeMillis() - time;
+            System.out.println("end reading: " + time + "ms for " + t + " bytes");
+            System.out.println("speed: "+(t/1024f/1024f)/(time/1000f)+" MB/s");
+            assertEquals(100, n);
             LinkedList<Integer> list = new LinkedList<Integer>(hashMapOut.keySet());
             Collections.sort(list);
             for (Integer i : list) {

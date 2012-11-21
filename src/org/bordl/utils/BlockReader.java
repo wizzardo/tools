@@ -41,7 +41,7 @@ public class BlockReader {
         return in;
     }
 
-    public boolean hashNext() throws IOException {
+    public boolean hasNext() throws IOException {
         return dynamicBuffer != null || ready();
     }
 

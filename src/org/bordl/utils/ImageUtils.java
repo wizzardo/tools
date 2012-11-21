@@ -4,32 +4,20 @@
  */
 package org.bordl.utils;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
+import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ColorConvertOp;
 import java.awt.image.WritableRaster;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
+import java.io.*;
 import java.util.Iterator;
-import java.util.LinkedList;
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.FileImageOutputStream;
-import javax.imageio.stream.ImageOutputStream;
-import javax.imageio.stream.ImageOutputStreamImpl;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 
 /**
  *
@@ -238,7 +226,7 @@ public class ImageUtils {
     }
 
     public static BufferedImage resize(BufferedImage im, double scale) {
-        BufferedImage img = new BufferedImage((int) (im.getWidth() * scale), (int) (im.getHeight() * scale), BufferedImage.TYPE_INT_ARGB);
+        BufferedImage img = new BufferedImage((int) (Math.ceil((im.getWidth() * scale))), (int) (Math.ceil((im.getHeight() * scale))), BufferedImage.TYPE_INT_ARGB);
         Image imgg = im.getScaledInstance(img.getWidth(), img.getHeight(), Image.SCALE_SMOOTH);
         Graphics2D gr = (Graphics2D) img.getGraphics();
         gr.drawImage(imgg, 0, 0, null);

@@ -4,21 +4,9 @@ package org.bordl.utils;
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.Proxy;
-import java.net.SocketTimeoutException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.net.URLStreamHandler;
+
+import java.io.*;
+import java.net.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -28,7 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author Moxa
  */
 public class HttpClient {
@@ -144,6 +131,7 @@ public class HttpClient {
         private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
         private HashMap<String, String> headers = new HashMap<String, String>();
         private HashMap<String, byte[]> dataArrays = new HashMap<String, byte[]>();
+        private HashMap<String, String> dataTypes = new HashMap<String, String>();
         private String url;
         private String json;
         private boolean multipart = false;
@@ -243,10 +231,17 @@ public class HttpClient {
         }
 
         public Connection addByteArray(String key, byte[] array, String name) {
+            return addByteArray(key, array, name, null);
+        }
+
+        public Connection addByteArray(String key, byte[] array, String name, String type) {
             multipart = true;
             method = ConnectionMethod.POST;
             params.put(key, "array://" + name);
             dataArrays.put(key, array);
+            if (type != null) {
+                dataTypes.put(key, type);
+            }
             return this;
         }
 
@@ -332,10 +327,11 @@ public class HttpClient {
                         OutputStream out = c.getOutputStream();
                         for (Map.Entry<String, String> param : params.entrySet()) {
                             out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
+                            String type = dataTypes.get(param.getKey()) != null ? dataTypes.get(param.getKey()) : "application/octet-stream";
                             if (param.getValue().startsWith("file://")) {
                                 File f = new File(param.getValue().substring(7));
                                 out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + f.getName() + "\"\r\n").getBytes());
-                                out.write("Content-Type: application/octet-stream\r\n".getBytes());
+                                out.write(("Content-Type: " + type + "\r\n").getBytes());
                                 out.write("\r\n".getBytes());
                                 FileInputStream in = new FileInputStream(f);
                                 int r = 0;
@@ -350,7 +346,7 @@ public class HttpClient {
                                 in.close();
                             } else if (param.getValue().startsWith("array://")) {
                                 out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + param.getValue().substring(8) + "\"\r\n").getBytes());
-                                out.write("Content-Type: application/octet-stream\r\n".getBytes());
+                                out.write(("Content-Type: " + type + "\r\n").getBytes());
                                 out.write("\r\n".getBytes());
                                 out.write(dataArrays.get(param.getKey()));
                             } else {
@@ -384,7 +380,8 @@ public class HttpClient {
             l += "------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".length() * (params.size() + 1) + 2;
             for (Entry<String, String> en : params.entrySet()) {
                 if (en.getValue().startsWith("file://") || en.getValue().startsWith("array://")) {
-                    l += "Content-Type: application/octet-stream\r\n".length();
+                    String type = dataTypes.get(en.getKey()) != null ? dataTypes.get(en.getKey()) : "application/octet-stream";
+                    l += ("Content-Type: " + type + "\r\n").length();
                     if (en.getValue().startsWith("file://")) {
                         l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + new File(en.getValue().substring(7)).getName().getBytes().length + en.getValue().length();
                     } else {
