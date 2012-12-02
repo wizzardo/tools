@@ -11,18 +11,18 @@ import java.util.Map;
  */
 class Operation {
 
-    private ExpressionHolder leftPart;
-    private ExpressionHolder rightPart;
+    private Expression leftPart;
+    private Expression rightPart;
     private Operator operator;
     private int start, end;
 
-    public Operation(ExpressionHolder leftPart, ExpressionHolder rightPart, Operator operator) {
+    public Operation(Expression leftPart, Expression rightPart, Operator operator) {
         this.leftPart = leftPart;
         this.rightPart = rightPart;
         this.operator = operator;
     }
 
-    public Operation(ExpressionHolder leftPart, Operator operator, int start, int end) {
+    public Operation(Expression leftPart, Operator operator, int start, int end) {
         this.leftPart = leftPart;
         this.operator = operator;
         this.start = start;
@@ -43,19 +43,19 @@ class Operation {
         return "(" + leftPart + ")\t" + getOperator().text + "\t(" + rightPart + ")";
     }
 
-    public ExpressionHolder getLeftPart() {
+    public Expression getLeftPart() {
         return leftPart;
     }
 
-    public void setLeftPart(ExpressionHolder leftPart) {
+    public void setLeftPart(Expression leftPart) {
         this.leftPart = leftPart;
     }
 
-    public ExpressionHolder getRightPart() {
+    public Expression getRightPart() {
         return rightPart;
     }
 
-    public void setRightPart(ExpressionHolder rightPart) {
+    public void setRightPart(Expression rightPart) {
         this.rightPart = rightPart;
     }
 
@@ -67,19 +67,19 @@ class Operation {
         this.operator = operator;
     }
 
-    public ExpressionHolder leftPart() {
+    public Expression leftPart() {
         return leftPart;
     }
 
-    public void leftPart(ExpressionHolder leftPart) {
+    public void leftPart(Expression leftPart) {
         this.leftPart = leftPart;
     }
 
-    public ExpressionHolder rightPart() {
+    public Expression rightPart() {
         return rightPart;
     }
 
-    public void rightPart(ExpressionHolder rightPart) {
+    public void rightPart(Expression rightPart) {
         this.rightPart = rightPart;
     }
 
@@ -289,17 +289,23 @@ class Operation {
 
     private static Object plus(Object ob1, Object ob2) {
         if (ob1 instanceof Number && ob2 instanceof Number) {
-            if (ob1 instanceof Byte || ob2 instanceof Byte) {
-                return ((Number) ob1).byteValue() + ((Number) ob2).byteValue();
+            if (ob1 instanceof Double || ob2 instanceof Double) {
+                return ((Number) ob1).doubleValue() + ((Number) ob2).doubleValue();
             }
-            if (ob1 instanceof Integer || ob2 instanceof Integer) {
-                return ((Number) ob1).intValue() + ((Number) ob2).intValue();
+            if (ob1 instanceof Float || ob2 instanceof Float) {
+                return ((Number) ob1).floatValue() + ((Number) ob2).floatValue();
             }
             if (ob1 instanceof Long || ob2 instanceof Long) {
                 return ((Number) ob1).longValue() + ((Number) ob2).longValue();
             }
-            if (ob1 instanceof Float || ob2 instanceof Float) {
-                return ((Number) ob1).floatValue() + ((Number) ob2).floatValue();
+            if (ob1 instanceof Integer || ob2 instanceof Integer) {
+                return ((Number) ob1).intValue() + ((Number) ob2).intValue();
+            }
+            if (ob1 instanceof Short || ob2 instanceof Short) {
+                return ((Number) ob1).shortValue() + ((Number) ob2).shortValue();
+            }
+            if (ob1 instanceof Byte || ob2 instanceof Byte) {
+                return ((Number) ob1).byteValue() + ((Number) ob2).byteValue();
             }
             return ((Number) ob1).doubleValue() + ((Number) ob2).doubleValue();
         } else {
@@ -308,81 +314,111 @@ class Operation {
     }
 
     private static Object minus(Object ob1, Object ob2) {
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return (ob1 != null ? ((Number) ob1).byteValue() : 0) - ((Number) ob2).byteValue();
+        if (ob1 instanceof Double || ob2 instanceof Double) {
+            return (ob1 != null ? ((Number) ob1).doubleValue() : 0) - ((Number) ob2).doubleValue();
         }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return (ob1 != null ? ((Number) ob1).intValue() : 0) - ((Number) ob2).intValue();
+        if (ob1 instanceof Float || ob2 instanceof Float) {
+            return (ob1 != null ? ((Number) ob1).floatValue() : 0) - ((Number) ob2).floatValue();
         }
         if (ob1 instanceof Long || ob2 instanceof Long) {
             return (ob1 != null ? ((Number) ob1).longValue() : 0) - ((Number) ob2).longValue();
         }
-        if (ob1 instanceof Float || ob2 instanceof Float) {
-            return (ob1 != null ? ((Number) ob1).floatValue() : 0) - ((Number) ob2).floatValue();
+        if (ob1 instanceof Integer || ob2 instanceof Integer) {
+            return (ob1 != null ? ((Number) ob1).intValue() : 0) - ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return (ob1 != null ? ((Number) ob1).shortValue() : 0) - ((Number) ob2).shortValue();
+        }
+        if (ob1 instanceof Byte || ob2 instanceof Byte) {
+            return (ob1 != null ? ((Number) ob1).byteValue() : 0) - ((Number) ob2).byteValue();
         }
         return (ob1 != null ? ((Number) ob1).doubleValue() : 0) - ((Number) ob2).doubleValue();
     }
 
     private static Object gt(Object ob1, Object ob2) {
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return ((Number) ob1).byteValue() > ((Number) ob2).byteValue();
+        if (ob1 instanceof Double || ob2 instanceof Double) {
+            return ((Number) ob1).doubleValue() > ((Number) ob2).doubleValue();
         }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return ((Number) ob1).intValue() > ((Number) ob2).intValue();
+        if (ob1 instanceof Float || ob2 instanceof Float) {
+            return ((Number) ob1).floatValue() > ((Number) ob2).floatValue();
         }
         if (ob1 instanceof Long || ob2 instanceof Long) {
             return ((Number) ob1).longValue() > ((Number) ob2).longValue();
         }
-        if (ob1 instanceof Float || ob2 instanceof Float) {
-            return ((Number) ob1).floatValue() > ((Number) ob2).floatValue();
+        if (ob1 instanceof Integer || ob2 instanceof Integer) {
+            return ((Number) ob1).intValue() > ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() > ((Number) ob2).shortValue();
+        }
+        if (ob1 instanceof Byte || ob2 instanceof Byte) {
+            return ((Number) ob1).byteValue() > ((Number) ob2).byteValue();
         }
         return ((Number) ob1).doubleValue() > ((Number) ob2).doubleValue();
     }
 
     private static Object lt(Object ob1, Object ob2) {
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return ((Number) ob1).byteValue() < ((Number) ob2).byteValue();
+        if (ob1 instanceof Double || ob2 instanceof Double) {
+            return ((Number) ob1).doubleValue() < ((Number) ob2).doubleValue();
         }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return ((Number) ob1).intValue() < ((Number) ob2).intValue();
+        if (ob1 instanceof Float || ob2 instanceof Float) {
+            return ((Number) ob1).floatValue() < ((Number) ob2).floatValue();
         }
         if (ob1 instanceof Long || ob2 instanceof Long) {
             return ((Number) ob1).longValue() < ((Number) ob2).longValue();
         }
-        if (ob1 instanceof Float || ob2 instanceof Float) {
-            return ((Number) ob1).floatValue() < ((Number) ob2).floatValue();
+        if (ob1 instanceof Integer || ob2 instanceof Integer) {
+            return ((Number) ob1).intValue() < ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() < ((Number) ob2).shortValue();
+        }
+        if (ob1 instanceof Byte || ob2 instanceof Byte) {
+            return ((Number) ob1).byteValue() < ((Number) ob2).byteValue();
         }
         return ((Number) ob1).doubleValue() < ((Number) ob2).doubleValue();
     }
 
     private static Object gte(Object ob1, Object ob2) {
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return ((Number) ob1).byteValue() >= ((Number) ob2).byteValue();
+        if (ob1 instanceof Double || ob2 instanceof Double) {
+            return ((Number) ob1).doubleValue() >= ((Number) ob2).doubleValue();
         }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return ((Number) ob1).intValue() >= ((Number) ob2).intValue();
+        if (ob1 instanceof Float || ob2 instanceof Float) {
+            return ((Number) ob1).floatValue() >= ((Number) ob2).floatValue();
         }
         if (ob1 instanceof Long || ob2 instanceof Long) {
             return ((Number) ob1).longValue() >= ((Number) ob2).longValue();
         }
-        if (ob1 instanceof Float || ob2 instanceof Float) {
-            return ((Number) ob1).floatValue() >= ((Number) ob2).floatValue();
+        if (ob1 instanceof Integer || ob2 instanceof Integer) {
+            return ((Number) ob1).intValue() >= ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() >= ((Number) ob2).shortValue();
+        }
+        if (ob1 instanceof Byte || ob2 instanceof Byte) {
+            return ((Number) ob1).byteValue() >= ((Number) ob2).byteValue();
         }
         return ((Number) ob1).doubleValue() >= ((Number) ob2).doubleValue();
     }
 
     private static Object lte(Object ob1, Object ob2) {
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return ((Number) ob1).byteValue() <= ((Number) ob2).byteValue();
+        if (ob1 instanceof Double || ob2 instanceof Double) {
+            return ((Number) ob1).doubleValue() <= ((Number) ob2).doubleValue();
         }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return ((Number) ob1).intValue() <= ((Number) ob2).intValue();
+        if (ob1 instanceof Float || ob2 instanceof Float) {
+            return ((Number) ob1).floatValue() <= ((Number) ob2).floatValue();
         }
         if (ob1 instanceof Long || ob2 instanceof Long) {
             return ((Number) ob1).longValue() <= ((Number) ob2).longValue();
         }
-        if (ob1 instanceof Float || ob2 instanceof Float) {
-            return ((Number) ob1).floatValue() <= ((Number) ob2).floatValue();
+        if (ob1 instanceof Integer || ob2 instanceof Integer) {
+            return ((Number) ob1).intValue() <= ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() <= ((Number) ob2).shortValue();
+        }
+        if (ob1 instanceof Byte || ob2 instanceof Byte) {
+            return ((Number) ob1).byteValue() <= ((Number) ob2).byteValue();
         }
         return ((Number) ob1).doubleValue() <= ((Number) ob2).doubleValue();
     }
@@ -391,38 +427,50 @@ class Operation {
         if (ob1 == null || ob2 == null) {
             return ob1 == ob2;
         }
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return ((Number) ob1).byteValue() == ((Number) ob2).byteValue();
-        }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return ((Number) ob1).intValue() == ((Number) ob2).intValue();
-        }
-        if (ob1 instanceof Long || ob2 instanceof Long) {
-            return ((Number) ob1).longValue() == ((Number) ob2).longValue();
+        if (ob1 instanceof Double || ob2 instanceof Double) {
+            return ((Number) ob1).doubleValue() == ((Number) ob2).doubleValue();
         }
         if (ob1 instanceof Float || ob2 instanceof Float) {
             return ((Number) ob1).floatValue() == ((Number) ob2).floatValue();
         }
-        return ((Number) ob1).doubleValue() == ((Number) ob2).doubleValue();
+        if (ob1 instanceof Long || ob2 instanceof Long) {
+            return ((Number) ob1).longValue() == ((Number) ob2).longValue();
+        }
+        if (ob1 instanceof Integer || ob2 instanceof Integer) {
+            return ((Number) ob1).intValue() == ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() == ((Number) ob2).shortValue();
+        }
+        if (ob1 instanceof Byte || ob2 instanceof Byte) {
+            return ((Number) ob1).byteValue() == ((Number) ob2).byteValue();
+        }
+        return ob1 == ob2;
     }
 
     private static Object ne(Object ob1, Object ob2) {
         if (ob1 == null || ob2 == null) {
             return ob1 != ob2;
         }
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return ((Number) ob1).byteValue() != ((Number) ob2).byteValue();
-        }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return ((Number) ob1).intValue() != ((Number) ob2).intValue();
-        }
-        if (ob1 instanceof Long || ob2 instanceof Long) {
-            return ((Number) ob1).longValue() != ((Number) ob2).longValue();
+        if (ob1 instanceof Double || ob2 instanceof Double) {
+            return ((Number) ob1).doubleValue() != ((Number) ob2).doubleValue();
         }
         if (ob1 instanceof Float || ob2 instanceof Float) {
             return ((Number) ob1).floatValue() != ((Number) ob2).floatValue();
         }
-        return ((Number) ob1).doubleValue() != ((Number) ob2).doubleValue();
+        if (ob1 instanceof Long || ob2 instanceof Long) {
+            return ((Number) ob1).longValue() != ((Number) ob2).longValue();
+        }
+        if (ob1 instanceof Integer || ob2 instanceof Integer) {
+            return ((Number) ob1).intValue() != ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() != ((Number) ob2).shortValue();
+        }
+        if (ob1 instanceof Byte || ob2 instanceof Byte) {
+            return ((Number) ob1).byteValue() != ((Number) ob2).byteValue();
+        }
+        return ob1 != ob2;
     }
 
     private static Object multiply(Object ob1, Object ob2) {
@@ -437,6 +485,9 @@ class Operation {
         }
         if (ob1 instanceof Integer || ob2 instanceof Integer) {
             return ((Number) ob1).intValue() * ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() * ((Number) ob2).shortValue();
         }
         if (ob1 instanceof Byte || ob2 instanceof Byte) {
             return ((Number) ob1).byteValue() * ((Number) ob2).byteValue();
@@ -457,6 +508,9 @@ class Operation {
         if (ob1 instanceof Integer || ob2 instanceof Integer) {
             return ((Number) ob1).intValue() / ((Number) ob2).intValue();
         }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() / ((Number) ob2).shortValue();
+        }
         if (ob1 instanceof Byte || ob2 instanceof Byte) {
             return ((Number) ob1).byteValue() / ((Number) ob2).byteValue();
         }
@@ -464,33 +518,45 @@ class Operation {
     }
 
     private static Object increment(Object ob1) {
-        if (ob1 instanceof Byte) {
-            return ((Number) ob1).byteValue() + 1;
+        if (ob1 instanceof Double) {
+            return ((Number) ob1).doubleValue() + 1;
         }
-        if (ob1 instanceof Integer) {
-            return ((Number) ob1).intValue() + 1;
+        if (ob1 instanceof Float) {
+            return ((Number) ob1).floatValue() + 1;
         }
         if (ob1 instanceof Long) {
             return ((Number) ob1).longValue() + 1;
         }
-        if (ob1 instanceof Float) {
-            return ((Number) ob1).floatValue() + 1;
+        if (ob1 instanceof Short) {
+            return ((Number) ob1).shortValue() + 1;
+        }
+        if (ob1 instanceof Integer) {
+            return ((Number) ob1).intValue() + 1;
+        }
+        if (ob1 instanceof Byte) {
+            return ((Number) ob1).byteValue() + 1;
         }
         return ((Number) ob1).doubleValue() + 1;
     }
 
     private static Object decrement(Object ob1) {
-        if (ob1 instanceof Byte) {
-            return ((Number) ob1).byteValue() - 1;
+        if (ob1 instanceof Double) {
+            return ((Number) ob1).doubleValue() - 1;
         }
-        if (ob1 instanceof Integer) {
-            return ((Number) ob1).intValue() - 1;
+        if (ob1 instanceof Float) {
+            return ((Number) ob1).floatValue() - 1;
         }
         if (ob1 instanceof Long) {
             return ((Number) ob1).longValue() - 1;
         }
-        if (ob1 instanceof Float) {
-            return ((Number) ob1).floatValue() - 1;
+        if (ob1 instanceof Integer) {
+            return ((Number) ob1).intValue() - 1;
+        }
+        if (ob1 instanceof Short) {
+            return ((Number) ob1).shortValue() - 1;
+        }
+        if (ob1 instanceof Byte) {
+            return ((Number) ob1).byteValue() - 1;
         }
         return ((Number) ob1).doubleValue() - 1;
     }

@@ -1,20 +1,12 @@
 package org.bordl.utils.cache;
 
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author Moxa
  */
 public class Cache<K, V> {
@@ -100,6 +92,9 @@ public class Cache<K, V> {
     private V getFromCache(final K key, Computable<K, V> c) {
         Holder<V> f = cache.get(key);
         if (f == null) {
+            if (c == null) {
+                return null;
+            }
             Holder<V> ft = new Holder<V>();
             f = cache.putIfAbsent(key, ft);
             if (f == null) {
@@ -164,7 +159,7 @@ public class Cache<K, V> {
                 try {
                     Thread.sleep(checkPeriod);
                 } catch (InterruptedException ex) {
-                    Logger.getLogger(Cache1.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Cache.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 Long time = System.currentTimeMillis();
                 while ((entry = timings.peek()) != null && entry.getValue().compareTo(time) < 0) {

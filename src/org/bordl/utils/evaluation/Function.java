@@ -16,51 +16,51 @@ import java.util.Map;
  */
 class Function {
 
-    private ExpressionHolder thatObject;
+    private Expression thatObject;
     private Method method;
     private Constructor constructor;
     private Field field;
     private String methodName;
-    private ExpressionHolder[] args;
+    private Expression[] args;
     private String fieldName;
 
-    public Function(ExpressionHolder thatObject, Method method, ExpressionHolder[] args) {
+    public Function(Expression thatObject, Method method, Expression[] args) {
         this.thatObject = thatObject;
         this.method = method;
         this.args = args;
     }
 
-    public Function(ExpressionHolder thatObject, String methodName, ExpressionHolder[] args) {
+    public Function(Expression thatObject, String methodName, Expression[] args) {
         this.thatObject = thatObject;
         this.args = args;
         this.methodName = methodName;
     }
 
-    public Function(Constructor constructor, ExpressionHolder[] args) {
+    public Function(Constructor constructor, Expression[] args) {
         this.args = args;
         this.constructor = constructor;
     }
 
-    public Function(ExpressionHolder object, Method method) {
+    public Function(Expression object, Method method) {
         this.thatObject = object;
         this.method = method;
     }
 
-    public Function(ExpressionHolder thatObject, String fieldName) {
+    public Function(Expression thatObject, String fieldName) {
         this.thatObject = thatObject;
         this.fieldName = fieldName;
     }
 
-    public Function(ExpressionHolder thatObject, Field field) {
+    public Function(Expression thatObject, Field field) {
         this.thatObject = thatObject;
         this.field = field;
     }
 
     @Override
     public Function clone() {
-        ExpressionHolder[] args = null;
+        Expression[] args = null;
         if (this.args != null) {
-            args = new ExpressionHolder[this.args.length];
+            args = new Expression[this.args.length];
             for (int i = 0; i < args.length; i++) {
                 args[i] = this.args[i].clone();
             }
@@ -197,11 +197,11 @@ class Function {
         return method;
     }
 
-    public ExpressionHolder getThatObject() {
+    public Expression getThatObject() {
         return thatObject;
     }
 
-    public ExpressionHolder[] getArgs() {
+    public Expression[] getArgs() {
         return args;
     }
 

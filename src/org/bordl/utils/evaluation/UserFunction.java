@@ -9,11 +9,11 @@ import java.util.Map;
  * Date: 11/5/12
  */
 public class UserFunction {
-    private ExpressionHolder eh;
+    private Expression eh;
     private String exp;
     private String[] argsNames;
     private String name;
-    private ExpressionHolder[] args;
+    private Expression[] args;
     private Map<String, UserFunction> functions;
 
     public UserFunction(String name, String exp, String... argsNames) {
@@ -22,7 +22,7 @@ public class UserFunction {
         this.argsNames = argsNames;
     }
 
-    public UserFunction(String name, ExpressionHolder eh, String... argsNames) {
+    public UserFunction(String name, Expression eh, String... argsNames) {
         this.eh = eh;
         this.name = name;
         this.argsNames = argsNames;
@@ -41,7 +41,7 @@ public class UserFunction {
         }
     }
 
-    public void setArgs(ExpressionHolder[] args) {
+    public void setArgs(Expression[] args) {
         this.args = args;
     }
 

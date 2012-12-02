@@ -27,15 +27,23 @@ public class EvalUtilsTest {
     public void testEvaluate() throws Exception {
         Map<String, Object> model = new HashMap<String, Object>();
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
-        assertEquals(2, EvalUtils.evaluate("1+1", new HashMap<String, Object>()));
-        assertEquals(5, EvalUtils.evaluate("1+1+3", new HashMap<String, Object>()));
-        assertEquals("olo123", EvalUtils.evaluate("\"olo\"+1+(1+1)+3", new HashMap<String, Object>()));
-        assertEquals("OLO123", EvalUtils.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()", new HashMap<String, Object>()));
+
+
+        assertEquals(true, EvalUtils.evaluate("(Math.sin((3.1416/2))) > 0", new HashMap<String, Object>()));
+
+//        assertEquals(1, EvalUtils.evaluate("(1)", new HashMap<String, Object>()));
+//        assertEquals(1, EvalUtils.evaluate("((1))", new HashMap<String, Object>()));
+//        assertEquals(2, EvalUtils.evaluate("1+1", new HashMap<String, Object>()));
+//        assertEquals(2.0, EvalUtils.evaluate("1+1.0", new HashMap<String, Object>()));
+//        assertEquals(5, EvalUtils.evaluate("1+1+3", new HashMap<String, Object>()));
+//        assertEquals("olo123", EvalUtils.evaluate("\"olo\"+1+(1+1)+3", new HashMap<String, Object>()));
+//        assertEquals("OLO123", EvalUtils.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()", new HashMap<String, Object>()));
+//        assertEquals("ololo", EvalUtils.evaluate("\"olo\".concat(\"lo\")", new HashMap<String, Object>()));
 
         model.put("ololo", "qwerty");
         model.put("qwe", "  ololo  ");
-        model.put("length", "111");
-        assertEquals("QWERTYOLOLO123", EvalUtils.evaluate("ololo.concat(qwe.trim().substring(2)).concat(qwe.trim().substring(length.length()) + 123).toUpperCase()", model));
+        model.put("length111", "111");
+        assertEquals("QWERTYOLOLO123", EvalUtils.evaluate("ololo.concat(qwe.trim().substring(2)).concat(qwe.trim().substring(length111.length()) + 123).toUpperCase()", model));
 
         assertEquals(5f, EvalUtils.evaluate("10f/2", new HashMap<String, Object>()));
         assertEquals(7, EvalUtils.evaluate("1+2*3", new HashMap<String, Object>()));
@@ -157,6 +165,13 @@ public class EvalUtilsTest {
         assertEquals(true, EvalUtils.evaluate("i<n&&x++<x?false:true", model));
         assertEquals(0, model.get("x"));
 
+        assertEquals("c", EvalUtils.evaluate("false ? \"a\" : false ? \"b\" : \"c\"", model));
+        assertEquals("a", EvalUtils.evaluate("true ? \"a\" : false ? \"b\" : \"c\"", model));
+        assertEquals("b", EvalUtils.evaluate("false ? \"a\" : true ? \"b\" : \"c\"", model));
+        assertEquals("a", EvalUtils.evaluate("true ? \"a\" : true ? \"b\" : \"c\"", model));
+        assertEquals("b", EvalUtils.evaluate("true ? true ? \"b\" : \"c\" : \"a\"", model));
+        assertEquals("c", EvalUtils.evaluate("true ? false ? \"b\" : \"c\" : \"a\"", model));
+
         model = new HashMap<String, Object>();
         model.put("i", 0);
         i = 0;
@@ -222,12 +237,13 @@ public class EvalUtilsTest {
         functions.put("it", new UserFunction("it", "i<end&&(g=++x)==g?it(i+1,end):g", "i", "end"));
         assertEquals(10, EvalUtils.evaluate("it(0,10)", model, functions));
         assertEquals(10, model.get("x"));
+
     }
 
     @Test
     public void testClone() throws Exception {
         String exp = "1+\"ololo\".substring(2)";
-        ExpressionHolder eh = EvalUtils.prepare(exp, null);
+        Expression eh = EvalUtils.prepare(exp, null);
         Object ob1 = eh.get(null);
         Object ob2 = eh.get(null);
         assertTrue(ob1 == ob2);

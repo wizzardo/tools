@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 /**
  * @author Moxa
  */
-public class ExpressionHolder {
+public class Expression {
 
     protected String exp;
     protected Operation operation;
@@ -19,36 +19,36 @@ public class ExpressionHolder {
     protected UserFunction userFunction;
     protected Object result;
     protected boolean done = false;
-    protected ExpressionHolder inner;
+    protected Expression inner;
     protected boolean simple = false;
     protected Class clazz;
 
-    public ExpressionHolder(String exp) {
+    public Expression(String exp) {
         this.exp = clean(exp.trim());
     }
 
-    public ExpressionHolder(Operation operation) {
+    Expression(Operation operation) {
         this.operation = operation;
     }
 
-    public ExpressionHolder(Function function) {
+    Expression(Function function) {
         this.function = function;
     }
 
-    public ExpressionHolder(ExpressionHolder inner) {
+    Expression(Expression inner) {
         this.inner = inner;
     }
 
-    public ExpressionHolder(UserFunction userFunction) {
+    Expression(UserFunction userFunction) {
         this.userFunction = userFunction;
     }
 
-    public ExpressionHolder(Object result) {
+    public Expression(Object result) {
         this.result = result;
         done = true;
     }
 
-    public ExpressionHolder(Class clazz) {
+    Expression(Class clazz) {
         this.clazz = clazz;
         done = true;
     }
@@ -67,27 +67,27 @@ public class ExpressionHolder {
      * @return copy of this expression
      */
     @Override
-    public ExpressionHolder clone() {
+    public Expression clone() {
         if (function != null) {
-            return new ExpressionHolder(function.clone());
+            return new Expression(function.clone());
         }
         if (inner != null) {
-            return new ExpressionHolder(inner.clone());
+            return new Expression(inner.clone());
         }
         if (operation != null) {
-            return new ExpressionHolder(operation.clone());
+            return new Expression(operation.clone());
         }
         if (clazz != null) {
-            return new ExpressionHolder(clazz);
+            return new Expression(clazz);
         }
         if (userFunction != null) {
-            return new ExpressionHolder(userFunction);
+            return new Expression(userFunction);
         }
         if (exp != null) {
             if (simple) {
-                return new ExpressionHolder(result);
+                return new Expression(result);
             }
-            return new ExpressionHolder(exp);
+            return new Expression(exp);
         }
         return null;
     }
