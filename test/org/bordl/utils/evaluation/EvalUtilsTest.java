@@ -31,14 +31,14 @@ public class EvalUtilsTest {
 
         assertEquals(true, EvalUtils.evaluate("(Math.sin((3.1416/2))) > 0", new HashMap<String, Object>()));
 
-//        assertEquals(1, EvalUtils.evaluate("(1)", new HashMap<String, Object>()));
-//        assertEquals(1, EvalUtils.evaluate("((1))", new HashMap<String, Object>()));
-//        assertEquals(2, EvalUtils.evaluate("1+1", new HashMap<String, Object>()));
-//        assertEquals(2.0, EvalUtils.evaluate("1+1.0", new HashMap<String, Object>()));
-//        assertEquals(5, EvalUtils.evaluate("1+1+3", new HashMap<String, Object>()));
-//        assertEquals("olo123", EvalUtils.evaluate("\"olo\"+1+(1+1)+3", new HashMap<String, Object>()));
-//        assertEquals("OLO123", EvalUtils.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()", new HashMap<String, Object>()));
-//        assertEquals("ololo", EvalUtils.evaluate("\"olo\".concat(\"lo\")", new HashMap<String, Object>()));
+        assertEquals(1, EvalUtils.evaluate("(1)", new HashMap<String, Object>()));
+        assertEquals(1, EvalUtils.evaluate("((1))", new HashMap<String, Object>()));
+        assertEquals(2, EvalUtils.evaluate("1+1", new HashMap<String, Object>()));
+        assertEquals(2.0, EvalUtils.evaluate("1+1.0", new HashMap<String, Object>()));
+        assertEquals(5, EvalUtils.evaluate("1+1+3", new HashMap<String, Object>()));
+        assertEquals("olo123", EvalUtils.evaluate("\"olo\"+1+(1+1)+3", new HashMap<String, Object>()));
+        assertEquals("OLO123", EvalUtils.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()", new HashMap<String, Object>()));
+        assertEquals("ololo", EvalUtils.evaluate("\"olo\".concat(\"lo\")", new HashMap<String, Object>()));
 
         model.put("ololo", "qwerty");
         model.put("qwe", "  ololo  ");
