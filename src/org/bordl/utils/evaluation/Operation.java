@@ -502,6 +502,12 @@ class Operation {
         if (ob1 instanceof Float || ob2 instanceof Float) {
             return ((Number) ob1).floatValue() / ((Number) ob2).floatValue();
         }
+        if (EvalUtils.defaultEvaluatingStrategy == EvalUtils.EvaluatingStrategy.DOUBLE) {
+            return ((Number) ob1).doubleValue() / ((Number) ob2).doubleValue();
+        }
+        if (EvalUtils.defaultEvaluatingStrategy == EvalUtils.EvaluatingStrategy.FLOAT) {
+            return ((Number) ob1).floatValue() / ((Number) ob2).floatValue();
+        }
         if (ob1 instanceof Long || ob2 instanceof Long) {
             return ((Number) ob1).longValue() / ((Number) ob2).longValue();
         }

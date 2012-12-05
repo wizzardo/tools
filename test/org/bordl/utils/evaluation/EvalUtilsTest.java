@@ -29,8 +29,6 @@ public class EvalUtilsTest {
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
 
 
-        assertEquals(true, EvalUtils.evaluate("(Math.sin((3.1416/2))) > 0", new HashMap<String, Object>()));
-
         assertEquals(1, EvalUtils.evaluate("(1)", new HashMap<String, Object>()));
         assertEquals(1, EvalUtils.evaluate("((1))", new HashMap<String, Object>()));
         assertEquals(2, EvalUtils.evaluate("1+1", new HashMap<String, Object>()));
@@ -238,6 +236,11 @@ public class EvalUtilsTest {
         assertEquals(10, EvalUtils.evaluate("it(0,10)", model, functions));
         assertEquals(10, model.get("x"));
 
+        assertEquals(true, EvalUtils.evaluate("(Math.sin((3.1416/2))) > 0", new HashMap<String, Object>()));
+
+        model = new HashMap<String, Object>();
+        model.put("x", 0);
+        assertEquals(0, EvalUtils.evaluate("x = x++", model));
     }
 
     @Test

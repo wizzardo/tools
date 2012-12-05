@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
  */
 public class EvalUtils {
     static final String CONSTRUCTOR = "%constructor%";
+    static EvaluatingStrategy defaultEvaluatingStrategy;
 
     private static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
@@ -24,6 +25,14 @@ public class EvalUtils {
             }
         }
         return n;
+    }
+
+    public static enum EvaluatingStrategy {
+        DEFAULT_JAVA, FLOAT, DOUBLE
+    }
+
+    public static void setDefaultEvaluatingStrategy(EvaluatingStrategy defaultEvaluatingStrategy) {
+        EvalUtils.defaultEvaluatingStrategy = defaultEvaluatingStrategy;
     }
 
     public static Expression prepare(String exp, Map<String, Object> model) throws Exception {

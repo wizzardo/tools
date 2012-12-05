@@ -1,10 +1,6 @@
 package org.bordl.utils.security;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Arrays;
-import org.bordl.utils.Chrono;
 
 public class Base64 {
 
@@ -577,6 +573,17 @@ public class Base64 {
     // ****************************************************************************************
     // * String version
     // ****************************************************************************************
+
+    /** Encodes a raw byte array into a BASE64 <code>String</code> representation i accordance with RFC 2045.
+     * @param sArr The bytes to convert. If <code>null</code> or length 0 an empty array will be returned.
+     * No line separator will be in breach of RFC 2045 which specifies max 76 per line but will be a
+     * little faster.
+     * @return A BASE64 encoded array. Never <code>null</code>.
+     */
+    public final static String encodeToString(byte[] sArr) {
+        return encodeToString(sArr, false, false);
+    }
+
     /** Encodes a raw byte array into a BASE64 <code>String</code> representation i accordance with RFC 2045.
      * @param sArr The bytes to convert. If <code>null</code> or length 0 an empty array will be returned.
      * @param lineSep Optional "\r\n" after 76 characters, unless end of file.<br>

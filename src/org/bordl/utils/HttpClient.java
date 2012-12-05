@@ -5,6 +5,8 @@ package org.bordl.utils;
  * and open the template in the editor.
  */
 
+import org.bordl.utils.security.Base64;
+
 import java.io.*;
 import java.net.*;
 import java.util.HashMap;
@@ -77,6 +79,20 @@ public class HttpClient {
         return null;
     }
 
+    /**
+     * use UTF-8 as default charset
+     */
+    public static String getContentAsString(HttpURLConnection conn) {
+        return getContentAsString(conn, "utf-8");
+    }
+
+    /**
+     * use UTF-8 as default charset
+     */
+    public static String getContentAsString(InputStream in) {
+        return getContentAsString(in, "utf-8");
+    }
+
     public static String getContentAsString(InputStream in, String charset) {
         byte[] out = getContent(in);
         if (out != null) {
@@ -146,6 +162,11 @@ public class HttpClient {
 
         public Connection setMaxRetryCount(int n) {
             maxRetryCount = n;
+            return this;
+        }
+
+        public Connection setBasicAuthentication(String user, String password) {
+            header("Authorization", "Basic " + Base64.encodeToString((user + ":" + password).getBytes()));
             return this;
         }
 
@@ -265,7 +286,7 @@ public class HttpClient {
         }
 
         public String getAsString() throws IOException {
-            return getContentAsString(connect(), "utf-8");
+            return getContentAsString(connect());
         }
 
         public byte[] getAsBytes() throws IOException {
