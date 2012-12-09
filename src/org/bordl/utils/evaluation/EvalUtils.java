@@ -41,7 +41,7 @@ public class EvalUtils {
 
     private static Pattern brackets = Pattern.compile("[\\(\\)]");
 
-    private static String trimBrackets(String s) {
+    public static String trimBrackets(String s) {
         int db = s.indexOf("((");
         if (db != -1) {
             String t = s.substring(db + 2);

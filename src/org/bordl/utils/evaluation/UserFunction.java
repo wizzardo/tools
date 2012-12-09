@@ -1,6 +1,5 @@
 package org.bordl.utils.evaluation;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +31,8 @@ public class UserFunction {
     public UserFunction clone() {
         String[] args = null;
         if (argsNames != null) {
-            args = Arrays.copyOf(argsNames, argsNames.length);
+            args = new String[argsNames.length];
+            System.arraycopy(argsNames, 0, args, 0, args.length);
         }
         if (eh == null) {
             return new UserFunction(name, exp, args);
