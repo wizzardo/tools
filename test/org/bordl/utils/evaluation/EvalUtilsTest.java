@@ -303,6 +303,12 @@ public class EvalUtilsTest {
         assertEquals(1, EvalUtils.evaluate("l[0]", model));
         assertEquals(2, EvalUtils.evaluate("l[2]=2", model));
         assertEquals("[1, null, 2]", EvalUtils.evaluate("l", model).toString());
+
+        model = new HashMap<String, Object>();
+        assertTrue(EvalUtils.evaluate("def m = [:]", model) instanceof Map);
+        assertTrue(EvalUtils.evaluate("m.a = [:]", model) instanceof Map);
+        assertEquals(1, EvalUtils.evaluate("m.[\"a\"][\"b\"] = 1", model));
+        assertEquals(1, EvalUtils.evaluate("m.a.b = 1", model));
     }
 
     @Test

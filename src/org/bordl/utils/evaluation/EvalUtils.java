@@ -309,7 +309,11 @@ public class EvalUtils {
 //                    System.out.println("thatObject2: " + exp.substring(0, m.start()));
                     thatObject = new Expression(prepare(Expression.clean(exp.substring(last, m.start())), model, functions));
                 } else if (methodName == null && !thatObject.isUserFunction()) {
-                    methodName = exp.substring(last, m.start());
+                    if (m.group().equals(".")) { //chain of maps
+                        thatObject = new Expression(new Function(thatObject, exp.substring(last, m.start())));
+                        methodName = null;
+                    } else
+                        methodName = exp.substring(last, m.start());
 //                    System.out.println("methodName: " + methodName);
                 } else {
 //                    System.out.println("prepare args: " + exp.substring(last, m.start()));
