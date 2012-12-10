@@ -18,9 +18,9 @@ public class EvalUtils {
     private static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
         for (int i = from; i < to; i++) {
-            if (s.charAt(i) == '(') {
+            if (s.charAt(i) == '(' || s.charAt(i) == '[' || s.charAt(i) == '{') {
                 n++;
-            } else if (s.charAt(i) == ')') {
+            } else if (s.charAt(i) == ')' || s.charAt(i) == ']' || s.charAt(i) == '}') {
                 n--;
             }
         }
@@ -92,18 +92,25 @@ public class EvalUtils {
             return null;
         }
 
+        if (model == null) {
+            model = new HashMap<String, Object>();
+        }
         {
             Object obj = Expression.parse(exp);
             if (obj != null) {
                 return new Expression(exp);
             }
-            if (model != null && model.containsKey(exp)) {
+            if (model.containsKey(exp)) {
                 return new Expression(exp);
             }
-        }
-
-        if (model == null) {
-            model = new HashMap<String, Object>();
+            {
+                Pattern p = Pattern.compile("def +([a-z]+[a-zA-Z_\\d]*)$");
+                Matcher m = p.matcher(exp);
+                if (m.find()) {
+                    model.put(m.group(1), null);
+                    return new Expression(m.group(1));
+                }
+            }
         }
 
         {
@@ -208,6 +215,24 @@ public class EvalUtils {
             }
         }
 
+        {
+            if (exp.equals("[]")) {
+                return new Expression(new ArrayList());
+            }
+            if (exp.equals("[:]")) {
+                return new Expression(new LinkedHashMap());
+            }
+            if (exp.startsWith("[") && exp.endsWith("]")) {
+                ArrayList l = new ArrayList();
+                exp = exp.substring(1, exp.length() - 1);
+                List<String> arr = parseArgs(exp);
+                for (int i = 0; i < arr.size(); i++) {
+                    l.add(prepare(Expression.clean(arr.get(i)), model, functions));
+                }
+                return new Expression(l);
+            }
+        }
+
         Expression thatObject = null;
         String methodName = null;
         {
@@ -220,6 +245,15 @@ public class EvalUtils {
                     exp = exp.substring(m.end());
                     methodName = CONSTRUCTOR;
                 }
+            }
+        }
+
+        if (thatObject == null) {
+            Pattern p = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
+            Matcher m = p.matcher(exp);
+            if (m.find()) {
+                thatObject = new Expression(m.group(1));
+                exp = exp.substring(m.group(1).length());
             }
         }
 
@@ -247,21 +281,21 @@ public class EvalUtils {
         }
 
 
-        Pattern p = Pattern.compile("[\\.\\(\\)]");
+        Pattern p = Pattern.compile("[\\.\\(\\)\\[\\]]");
         Matcher m = p.matcher(exp);
         int last = 0;
         int brackets = 0;
         while (m.find()) {
 //                System.out.println("last: " + last);
-            if (m.group().equals("(")) {
+            if (m.group().equals("(") || m.group().equals("[")) {
                 brackets++;
-            } else if (m.group().equals(")")) {
+            } else if (m.group().equals(")") || m.group().equals("]")) {
                 brackets--;
             }
 //                System.out.println(brackets + ":\t" + exp.substring(last, m.start() + 1));
             if (brackets == 0 || (thatObject != null && methodName == null && brackets == 1)) {
 //                    System.out.println("brackets==0");
-                if (last == m.start()) {
+                if (last == m.start() && !m.group().equals("[")) {
                     last = m.end();
                     if (thatObject != null && methodName != null) {
                         Function function = new Function(thatObject, methodName, null);
@@ -280,23 +314,28 @@ public class EvalUtils {
                 } else {
 //                    System.out.println("prepare args: " + exp.substring(last, m.start()));
                     String argsRaw = Expression.clean(exp.substring(last, m.start()));
-                    Expression[] args = null;
-                    if (argsRaw.length() > 0) {
-                        String[] arr = parseArgs(argsRaw);
-                        args = new Expression[arr.length];
-                        for (int i = 0; i < arr.length; i++) {
-                            args[i] = prepare(Expression.clean(arr[i]), model, functions);
-                        }
-                    }
-                    if (thatObject.isUserFunction()) {
-//                        System.out.println("set args: "+Arrays.toString(args));
-                        thatObject.getUserFunction().setArgs(args);
-                        thatObject.getUserFunction().setUserFunctions(functions);
-                    } else {
-                        Function function = new Function(thatObject, methodName, args);
-//                        System.out.println("function: " + function);
-                        thatObject = new Expression(function);
+                    if (methodName != null && methodName.length() == 0 && m.group().equals("]")) {
+                        thatObject = new Expression(new Operation(thatObject, new Expression(prepare(argsRaw, model, functions)), Operator.GET));
                         methodName = null;
+                    } else {
+                        Expression[] args = null;
+                        if (argsRaw.length() > 0) {
+                            List<String> arr = parseArgs(argsRaw);
+                            args = new Expression[arr.size()];
+                            for (int i = 0; i < arr.size(); i++) {
+                                args[i] = prepare(Expression.clean(arr.get(i)), model, functions);
+                            }
+                        }
+                        if (thatObject.isUserFunction()) {
+//                        System.out.println("set args: "+Arrays.toString(args));
+                            thatObject.getUserFunction().setArgs(args);
+                            thatObject.getUserFunction().setUserFunctions(functions);
+                        } else {
+                            Function function = new Function(thatObject, methodName, args);
+//                        System.out.println("function: " + function);
+                            thatObject = new Expression(function);
+                            methodName = null;
+                        }
                     }
                 }
 //                    System.out.println("ololololo " + brackets);
@@ -347,7 +386,7 @@ public class EvalUtils {
         return null;
     }
 
-    private static String[] parseArgs(String argsRaw) {
+    private static List<String> parseArgs(String argsRaw) {
         ArrayList<String> l = new ArrayList<String>();
         Pattern p = Pattern.compile(",");
         Matcher m = p.matcher(argsRaw);
@@ -363,12 +402,13 @@ public class EvalUtils {
         } else if (last == 0 && argsRaw.length() > 0) {
             l.add(argsRaw);
         }
-        return l.toArray(new String[l.size()]);
+        return l;
     }
 
     public static Object evaluate(String exp, Map<String, Object> model) throws Exception {
 //        System.out.println("evaluate: " + exp + "\t" + model);
-        return prepare(exp, model).get(model);
+        Expression ex = prepare(exp, model);
+        return ex.get(model);
     }
 
     public static Object evaluate(String exp, Map<String, Object> model, Map<String, UserFunction> functions) throws Exception {
@@ -377,6 +417,6 @@ public class EvalUtils {
     }
 
 
-    private static final Pattern actions = Pattern.compile("\\+\\+|--|\\*=?|/=?|\\+=?|-=?|:|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
+    private static final Pattern actions = Pattern.compile("\\+\\+|--|\\*=?|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
 
 }

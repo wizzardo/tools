@@ -4,6 +4,9 @@
  */
 package org.bordl.utils.evaluation;
 
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -167,34 +170,35 @@ class Operation {
             }
             case PLUS2: {
                 //pre-increment
-                if (rightPart != null && rightPart.exp().length() > 0) {
+                if (rightPart != null) {
                     Object ob = increment(rightPart.get(model));
-                    model.put(rightPart.exp(), ob);
+                    if (!set(rightPart, ob))
+                        model.put(rightPart.exp(), ob);
                     return ob;
                 }
                 //post-increment
-                if (leftPart != null && leftPart.exp().length() > 0) {
+                if (leftPart != null) {
                     Object ob = leftPart.get(model);
-                    //System.out.println("try do post-increment");
-                    //System.out.println(leftPart);
-                    //System.out.println(leftPart.exp);
-                    //System.out.println(leftPart.operation);
-                    //System.out.println("and?");
-                    model.put(leftPart.exp(), increment(ob));
+                    Object r = increment(ob);
+                    if (!set(leftPart, r))
+                        model.put(leftPart.exp(), r);
                     return ob;
                 }
             }
             case MINUS2: {
                 //pre-decrement
-                if (rightPart != null && rightPart.exp().length() > 0) {
+                if (rightPart != null) {
                     Object ob = decrement(rightPart.get(model));
-                    model.put(rightPart.exp(), ob);
+                    if (!set(rightPart, ob))
+                        model.put(rightPart.exp(), ob);
                     return ob;
                 }
                 //post-decrement
-                if (leftPart != null && leftPart.exp().length() > 0) {
+                if (leftPart != null) {
                     Object ob = leftPart.get(model);
-                    model.put(leftPart.exp(), decrement(ob));
+                    Object r = decrement(ob);
+                    if (!set(leftPart, r))
+                        model.put(leftPart.exp(), decrement(ob));
                     return ob;
                 }
             }
@@ -230,26 +234,31 @@ class Operation {
             }
             case PLUS_EQUAL: {
                 Object r = plus(ob1, ob2);
-                model.put(leftPart.exp(), r);
+                if (!set(leftPart, r))
+                    model.put(leftPart.exp(), r);
                 return r;
             }
             case MINUS_EQUAL: {
                 Object r = minus(ob1, ob2);
-                model.put(leftPart.exp(), r);
+                if (!set(leftPart, r))
+                    model.put(leftPart.exp(), r);
                 return r;
             }
             case MULTIPLY_EQUAL: {
                 Object r = multiply(ob1, ob2);
-                model.put(leftPart.exp(), r);
+                if (!set(leftPart, r))
+                    model.put(leftPart.exp(), r);
                 return r;
             }
             case DIVIDE_EQUAL: {
                 Object r = divide(ob1, ob2);
-                model.put(leftPart.exp(), r);
+                if (!set(leftPart, r))
+                    model.put(leftPart.exp(), r);
                 return r;
             }
             case EQUAL: {
-                model.put(leftPart.exp(), ob2);
+                if (!set(leftPart, ob2))
+                    model.put(leftPart.exp(), ob2);
                 return ob2;
             }
             case OR2: {
@@ -282,9 +291,90 @@ class Operation {
                     return rightPart().get(model);
                 }
             }
+            case APPEND: {
+                return append(ob1, ob2);
+            }
+            case GET: {
+                return get(ob1, ob2);
+            }
         }
 
         throw new UnsupportedOperationException("Not yet implemented:" + this.operator);
+    }
+
+    private static Object get(Object ob1, Object ob2) {
+        if (ob1 == null) {
+            throw new NullPointerException("can not append to null");
+        }
+        if (ob1 instanceof Map) {
+            return ((Map) ob1).get(ob2);
+        }
+        if (ob1 instanceof List && ob2 instanceof Number) {
+            List l = (List) ob1;
+            int i = ((Number) ob2).intValue();
+            if (i >= l.size())
+                return null;
+            else
+                return (l).get(i);
+        }
+        if (ob1.getClass().getName().startsWith("[") && ob2 instanceof Number) {
+            return Array.get(ob1, ((Number) ob2).intValue());
+        }
+        return null;
+    }
+
+    private static Object append(Object ob1, Object ob2) {
+        if (ob1 == null) {
+            throw new NullPointerException("can not append to null");
+        }
+        if (ob1 instanceof Collection) {
+            ((Collection) ob1).add(ob2);
+            return ob1;
+        }
+        if (ob1 instanceof StringBuilder) {
+            ((StringBuilder) ob1).append(ob2);
+            return ob1;
+        }
+        return null;
+    }
+
+    private static boolean set(Expression leftPart, Object ob2) throws IllegalAccessException {
+        if (leftPart == null) {
+            throw new NullPointerException("can not append to null");
+        }
+        if (leftPart.function != null
+                && leftPart.function.getFieldName() != null
+                && leftPart.function.getThatObject().result instanceof Map) {
+            ((Map) leftPart.function.getThatObject().result).put(leftPart.function.getFieldName(), ob2);
+            return true;
+        }
+        if (leftPart.function != null
+                && leftPart.function.getField() != null) {
+            leftPart.function.getField().set(leftPart.function.getThatObject().result, ob2);
+            return true;
+        }
+        if (leftPart.operation != null
+                && leftPart.operation.operator() == Operator.GET) {
+            Object ob1 = leftPart.operation.leftPart().result;
+            if (ob1 instanceof Map) {
+                ((Map) ob1).put(leftPart.operation.rightPart().result, ob2);
+                return true;
+            }
+            if (ob1 instanceof List && leftPart.operation.rightPart().result instanceof Number) {
+                List l = (List) ob1;
+                int i = ((Number) leftPart.operation.rightPart().result).intValue();
+                while (i >= l.size()) {
+                    l.add(null);
+                }
+                l.set(i, ob2);
+                return true;
+            }
+            if (ob1.getClass().getName().startsWith("[") && leftPart.operation.rightPart().result instanceof Number) {
+                Array.set(ob1, ((Number) leftPart.operation.rightPart().result).intValue(), ob2);
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Object plus(Object ob1, Object ob2) {
@@ -309,6 +399,15 @@ class Operation {
             }
             return ((Number) ob1).doubleValue() + ((Number) ob2).doubleValue();
         } else {
+            if (ob1 instanceof Collection) {
+                if (ob2 instanceof Collection) {
+                    ((Collection) ob1).addAll((Collection) ob2);
+                    return ob1;
+                } else {
+                    ((Collection) ob1).add(ob2);
+                    return ob1;
+                }
+            }
             return String.valueOf(ob1) + String.valueOf(ob2);
         }
     }

@@ -16,6 +16,7 @@ enum Operator {
     MULTIPLY("*", Operator.Requirement.BOTH, 2, false),
     DIVIDE("/", Operator.Requirement.BOTH, 2, false),
     EQUAL("=", Operator.Requirement.BOTH, -2, false),
+    APPEND("<<", Operator.Requirement.BOTH, -2, false),
     EQUAL2("==", Operator.Requirement.BOTH, 0, true),
     AND("&", Operator.Requirement.BOTH, -1, true),
     AND2("&&", Operator.Requirement.BOTH, -1, true),
@@ -32,7 +33,8 @@ enum Operator {
     LOWER("<", Operator.Requirement.BOTH, 1, true),
     GREATE(">", Operator.Requirement.BOTH, 1, true),
     TERNARY("?", Operator.Requirement.BOTH, 4, true),
-    COLON(":", Operator.Requirement.BOTH, 4, true),;
+    COLON(":", Operator.Requirement.BOTH, 4, true),
+    GET("%get%", Operator.Requirement.BOTH, 0, false);
     private static final Map<String, Operator> operators = new HashMap<String, Operator>();
     final public String text;
     final public Operator.Requirement requirement;

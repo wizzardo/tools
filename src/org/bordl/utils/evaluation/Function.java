@@ -92,6 +92,9 @@ class Function {
             }
         }
         if (fieldName != null || field != null) {
+            if (thatObject.get(model) instanceof Map) {
+                return ((Map) thatObject.get(model)).get(fieldName);
+            }
             if (field == null) {
                 field = thatObject.getClass(model).getField(fieldName);
             }
@@ -205,8 +208,16 @@ class Function {
         return args;
     }
 
+    public String getFieldName() {
+        return fieldName;
+    }
+
     @Override
     public String toString() {
         return "function for: " + thatObject + " ." + methodName + "(" + Arrays.toString(args) + ")";
+    }
+
+    public Field getField() {
+        return field;
     }
 }

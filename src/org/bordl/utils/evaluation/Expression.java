@@ -4,6 +4,8 @@
  */
 package org.bordl.utils.evaluation;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,6 +24,7 @@ public class Expression {
     protected Expression inner;
     protected boolean simple = false;
     protected Class clazz;
+    protected Collection collection;
 
     public Expression(String exp) {
         this.exp = clean(exp.trim());
@@ -41,6 +44,10 @@ public class Expression {
 
     Expression(UserFunction userFunction) {
         this.userFunction = userFunction;
+    }
+
+    Expression(Collection collection) {
+        this.collection = collection;
     }
 
     public Expression(Object result) {
@@ -125,6 +132,13 @@ public class Expression {
                 result = inner.get(model);
             } else if (userFunction != null) {
                 result = userFunction.get(model);
+            } else if (collection != null) {
+                Collection r = collection.getClass().newInstance();
+                Iterator i = collection.iterator();
+                while (i.hasNext()) {
+                    r.add(((Expression) i.next()).get(model));
+                }
+                result = r;
             }
             done = true;
         }

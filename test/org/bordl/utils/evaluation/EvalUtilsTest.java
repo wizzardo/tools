@@ -7,6 +7,7 @@ package org.bordl.utils.evaluation;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -241,6 +242,67 @@ public class EvalUtilsTest {
         model = new HashMap<String, Object>();
         model.put("x", 0);
         assertEquals(0, EvalUtils.evaluate("x = x++", model));
+
+
+        System.out.println("test variables definition");
+        model = new HashMap<String, Object>();
+        assertEquals(1, EvalUtils.evaluate("def x = 1", model));
+        assertEquals(1, model.get("x"));
+
+
+        System.out.println("test collections");
+        model = new HashMap<String, Object>();
+        assertTrue(EvalUtils.evaluate("def x = []", model) instanceof List);
+        assertEquals("[1]", EvalUtils.evaluate("x << 1", model).toString());
+        assertEquals(1, ((List) model.get("x")).size());
+        assertEquals(1, ((List) model.get("x")).get(0));
+        assertEquals("[1, 2, 3]", EvalUtils.evaluate("x << 2 << 3", model).toString());
+        assertEquals("[1, 2, 3, 4]", EvalUtils.evaluate("x + 4", model).toString());
+        assertEquals("[1, 2, 3, 4, 5]", EvalUtils.evaluate("x += 5", model).toString());
+
+        assertEquals(1, ((List) EvalUtils.evaluate("[1,[2,3]]", null)).get(0));
+        assertEquals("[2, 3]", ((List) EvalUtils.evaluate("[1,[2,3]]", null)).get(1).toString());
+
+        model = new HashMap<String, Object>();
+        model.put("x", 1);
+        assertEquals("[1]", EvalUtils.evaluate("[x]", model).toString());
+
+        assertTrue(EvalUtils.evaluate("[:]", model) instanceof Map);
+
+        model = new HashMap<String, Object>();
+        assertTrue(EvalUtils.evaluate("def x = [:]", model) instanceof Map);
+        assertEquals("value", EvalUtils.evaluate("x.key = \"value\"", model));
+        assertEquals("value", ((Map) model.get("x")).get("key"));
+        assertEquals(1, EvalUtils.evaluate("x.key = 1", model));
+        assertEquals(1, EvalUtils.evaluate("x.key++", model));
+        assertEquals(2, ((Map) model.get("x")).get("key"));
+        assertEquals(4, EvalUtils.evaluate("x.key+=2", model));
+        assertEquals(12, EvalUtils.evaluate("x.key*=3", model));
+        assertEquals(3, EvalUtils.evaluate("x.key/=4", model));
+        assertEquals(0, EvalUtils.evaluate("x.key-=3", model));
+        assertEquals(1, EvalUtils.evaluate("++x.key", model));
+        assertEquals(0, EvalUtils.evaluate("--x.key", model));
+        assertEquals(0, EvalUtils.evaluate("x.key--", model));
+        assertEquals(-1, ((Map) model.get("x")).get("key"));
+
+
+        model = new HashMap<String, Object>();
+        assertTrue(EvalUtils.evaluate("def x = [:]", model) instanceof Map);
+        assertEquals(1, EvalUtils.evaluate("x[\"key\"] = 1", model));
+        assertEquals(1, EvalUtils.evaluate("x[\"key\"]", model));
+        assertEquals(1, ((Map) model.get("x")).get("key"));
+        assertEquals(3, EvalUtils.evaluate("x[\"key\"] +=2", model));
+
+        model = new HashMap<String, Object>();
+        model.put("arr", new String[1]);
+        assertEquals("ololo", EvalUtils.evaluate("arr[0] = \"ololo\"", model));
+
+        model = new HashMap<String, Object>();
+        assertTrue(EvalUtils.evaluate("def l = []", model) instanceof List);
+        assertEquals(1, EvalUtils.evaluate("l[0] = 1", model));
+        assertEquals(1, EvalUtils.evaluate("l[0]", model));
+        assertEquals(2, EvalUtils.evaluate("l[2]=2", model));
+        assertEquals("[1, null, 2]", EvalUtils.evaluate("l", model).toString());
     }
 
     @Test
