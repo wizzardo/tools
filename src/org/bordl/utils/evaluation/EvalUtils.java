@@ -316,6 +316,9 @@ public class EvalUtils {
                         methodName = exp.substring(last, m.start());
 //                    System.out.println("methodName: " + methodName);
                 } else {
+                    if (countOpenBrackets(exp, last, m.start()) != 0) {
+                        continue;
+                    }
 //                    System.out.println("prepare args: " + exp.substring(last, m.start()));
                     String argsRaw = Expression.clean(exp.substring(last, m.start()));
                     if (methodName != null && methodName.length() == 0 && m.group().equals("]")) {

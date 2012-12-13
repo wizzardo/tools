@@ -212,6 +212,10 @@ public class EvalUtilsTest {
 
         functions = new HashMap<String, UserFunction>();
         functions.put("y", new UserFunction("y", "x*2", "x"));
+        assertEquals(8, EvalUtils.evaluate("y(2*(10/5))", null, functions));
+
+        functions = new HashMap<String, UserFunction>();
+        functions.put("y", new UserFunction("y", "x*2", "x"));
         functions.put("z", new UserFunction("z", "y(x)+x", "x"));
         assertEquals(15, EvalUtils.evaluate("z(5)", null, functions));
 
