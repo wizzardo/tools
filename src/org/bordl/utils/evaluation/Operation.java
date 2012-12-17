@@ -4,6 +4,8 @@
  */
 package org.bordl.utils.evaluation;
 
+import org.bordl.utils.Range;
+
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.List;
@@ -297,9 +299,23 @@ class Operation {
             case GET: {
                 return get(ob1, ob2);
             }
+            case RANGE: {
+                return createRange(ob1, ob2);
+            }
         }
 
         throw new UnsupportedOperationException("Not yet implemented:" + this.operator);
+    }
+
+    private static Range createRange(Object ob1, Object ob2) {
+        if (ob1 == null || ob2 == null) {
+            throw new NullPointerException("can not append to null");
+        }
+
+        if (ob1 instanceof Integer && ob2 instanceof Integer) {
+            return new Range((Integer) ob1, (Integer) ob2);
+        }
+        return null;
     }
 
     private static Object get(Object ob1, Object ob2) {

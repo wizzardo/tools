@@ -424,6 +424,6 @@ public class EvalUtils {
     }
 
 
-    private static final Pattern actions = Pattern.compile("\\+\\+|--|\\*=?|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
+    private static final Pattern actions = Pattern.compile("\\+\\+|--|\\.\\.|\\*=?|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
 
 }

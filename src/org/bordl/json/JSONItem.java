@@ -5,7 +5,6 @@
 package org.bordl.json;
 
 /**
- *
  * @author Moxa
  */
 public class JSONItem {
@@ -26,6 +25,10 @@ public class JSONItem {
 
     public String getAsString() {
         return ob.toString();
+    }
+
+    public Object get() {
+        return ob;
     }
 
     public Long getAsLong() {
@@ -92,6 +95,23 @@ public class JSONItem {
     public JSONArray getAsJsonArray() {
         if (ob instanceof JSONArray) {
             return (JSONArray) ob;
+        }
+        return null;
+    }
+
+    public <T> T getAs(Class<T> clazz) {
+        if (String.class == clazz) {
+            return (T) getAsString();
+        } else if (Integer.class == clazz || int.class == clazz) {
+            return (T) getAsInteger();
+        } else if (Double.class == clazz || double.class == clazz) {
+            return (T) getAsDouble();
+        } else if (Long.class == clazz || long.class == clazz) {
+            return (T) getAsLong();
+        } else if (Boolean.class == clazz || boolean.class == clazz) {
+            return (T) getAsBoolean();
+        } else if (Float.class == clazz || float.class == clazz) {
+            return (T) getAsBoolean();
         }
         return null;
     }

@@ -18,6 +18,7 @@ enum Operator {
     EQUAL("=", Operator.Requirement.BOTH, -2, false),
     APPEND("<<", Operator.Requirement.BOTH, -2, false),
     EQUAL2("==", Operator.Requirement.BOTH, 0, true),
+    RANGE("..", Operator.Requirement.BOTH, 0, true),
     AND("&", Operator.Requirement.BOTH, -1, true),
     AND2("&&", Operator.Requirement.BOTH, -1, true),
     OR("|", Operator.Requirement.BOTH, -1, true),
