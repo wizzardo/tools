@@ -313,6 +313,10 @@ public class EvalUtilsTest {
         assertTrue(EvalUtils.evaluate("m.a = [:]", model) instanceof Map);
         assertEquals(1, EvalUtils.evaluate("m.[\"a\"][\"b\"] = 1", model));
         assertEquals(1, EvalUtils.evaluate("m.a.b = 1", model));
+
+
+        assertEquals(5, EvalUtils.evaluate("(0..5).size()", null));
+        assertEquals(5, EvalUtils.evaluate("(1+2-3 .. 5).size()", null));
     }
 
     @Test

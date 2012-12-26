@@ -1,378 +1,450 @@
 package org.bordl.xml;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Set;
+/**
+ * @author: moxa
+ * Date: 12/24/12
+ */
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- *
- * @author moxa
+ * @author: moxa
+ * Date: 12/23/12
  */
 public class Node {
 
-    private HashMap<String, String> attributes;
-    private boolean ignoreCase;
-    private String name;
-    private LinkedList<Node> innerNodes;
-    private Node parent;
+    protected Map<String, String> attributes;
+    protected List<Node> children;
+    protected String name;
+    protected Node parent;
+
+    public void attribute(String attributeName, String value) {
+        if (attributes == null)
+            attributes = new LinkedHashMap<String, String>();
+        attributes.put(attributeName, value);
+    }
+
+    public void attr(String attributeName, String value) {
+        if (attributes == null)
+            attributes = new LinkedHashMap<String, String>();
+        attributes.put(attributeName, value);
+    }
+
+    public String attribute(String attributeName) {
+        if (attributes == null)
+            return null;
+        return attributes.get(attributeName);
+    }
+
+    public String attr(String attributeName) {
+        if (attributes == null)
+            return null;
+        return attributes.get(attributeName);
+    }
+
+    public void add(Node node) {
+        if (children == null)
+            children = new ArrayList<Node>();
+        children.add(node);
+        node.parent = this;
+    }
+
+    public Node parent() {
+        return parent;
+    }
+
+    public String toString() {
+        return "node " + name + " attributes: " + attributes + " children: " + children;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public void name(String name) {
+        this.name = name;
+    }
+
+    public Node get(String path) {
+        if (children == null || path == null)
+            return null;
+        int l = path.indexOf('/');
+        if (l == -1) {
+            l = path.indexOf("[");
+            XPathExpression exp = null;
+            if (l != -1) {
+                exp = new XPathExpression(path.substring(l, path.length()));
+                path = path.substring(0, l);
+            }
+            for (Node node : children) {
+                if (node.name != null && node.name.equals(path) && (exp == null || exp.check(node)))
+                    return node;
+            }
+        } else {
+            String tag = path.substring(0, l);
+            path = path.substring(l + 1);
+            for (Node node : children) {
+                if (node.name != null && node.name.equals(tag)) {
+                    Node r = node.get(path);
+                    if (r != null)
+                        return r;
+                }
+            }
+        }
+        return null;
+    }
+
+    public List<Node> getAll(String path) {
+        List<Node> list = new ArrayList<Node>();
+        if (children == null || path == null)
+            return list;
+        int l = path.indexOf('/');
+        if (l == -1) {
+            l = path.indexOf("[");
+            XPathExpression exp = null;
+            if (l != -1) {
+                exp = new XPathExpression(path.substring(l, path.length()));
+                path = path.substring(0, l);
+            }
+            for (Node node : children) {
+                if (node.name != null && node.name.equals(path) && (exp == null || exp.check(node)))
+                    list.add(node);
+            }
+        } else {
+            String tag = path.substring(0, l);
+            path = path.substring(l + 1);
+            for (Node node : children) {
+                if (node.name != null && node.name.equals(tag)) {
+                    List<Node> r = node.getAll(path);
+                    if (r != null)
+                        list.addAll(r);
+                }
+            }
+        }
+        return list;
+    }
+
+    public Node find(String path) {
+        if (children == null || path == null)
+            return null;
+        for (Node node : children) {
+            if (node.name != null && node.name.equals(path))
+                return node;
+            Node r = node.find(path);
+            if (r != null)
+                return r;
+        }
+        return null;
+    }
+
+    public List<Node> findAll(String path) {
+        List<Node> list = new ArrayList<Node>();
+        if (children == null || path == null)
+            return list;
+        for (Node node : children) {
+            if (node.name != null && node.name.equals(path))
+                list.add(node);
+            List<Node> r = node.findAll(path);
+            list.addAll(r);
+        }
+        return list;
+    }
+
+    public String text() {
+        return text(true);
+    }
+
+    public String textOwn() {
+        return text(false);
+    }
+
+    protected String text(boolean recursive) {
+        if (children == null || children.isEmpty()) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Node node : children) {
+            if (sb.length() > 0)
+                sb.append(' ');
+            String inner;
+            if (recursive)
+                inner = node.text(recursive);
+            else
+                inner = node.ownText();
+            if (inner != null)
+                sb.append(inner);
+        }
+        return sb.toString();
+    }
+
+    protected String ownText() {
+        return null;
+    }
+
+    private static class XPathExpression {
+        private String command, result;
+        private static Pattern pattern = Pattern.compile("\\[([^\\[\\]]+)\\]");
+        private XPathExpression next;
+
+        private XPathExpression(String command, String result) {
+            this.command = command;
+            this.result = result;
+        }
+
+        public XPathExpression(String s) {
+            Matcher m = pattern.matcher(s);
+            while (m.find()) {
+                String[] arr = m.group(1).split("=", 2);
+                String command = arr[0].trim();
+                String result = arr[1].trim();
+                if ((result.startsWith("\"") && result.endsWith("\"")) || (result.startsWith("'") && result.endsWith("'"))) {
+                    result = result.substring(1, result.length() - 1);
+                }
+                if (this.command == null) {
+                    this.command = command;
+                    this.result = result;
+                }
+                if (next == null) {
+                    next = new XPathExpression(command, result);
+                } else {
+                    XPathExpression next = this.next;
+                    while (next.next != null) {
+                        next = next.next;
+                    }
+                    next.next = new XPathExpression(command, result);
+                }
+            }
+        }
+
+        public boolean check(Node n) {
+            boolean b = false;
+            if (command.equals("text()")) {
+                b = result.equals(n.text());
+            } else if (command.startsWith("@")) {
+                b = result.equals(n.attr(command.substring(1)));
+            }
+            return b && (next == null || next.check(n));
+        }
+    }
 
     public static class TextNode extends Node {
-
-        private String text;
+        protected String text;
 
         public TextNode(String text) {
             this.text = text;
         }
 
-        @Override
-        public String toString(int level) {
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < level; i++) {
-                s.append("\t");
-            }
-            s.append(toXMLEscapedString(text)).append("\n");
-            return s.toString();
+        public String toString() {
+            return "textNode: " + text;
         }
 
-        @Override
-        public String getText() {
+        protected String text(boolean recursive) {
+            return text;
+        }
+
+        protected String ownText() {
             return text;
         }
     }
 
-    private Node() {
-    }
+    public static class CommentNode extends TextNode {
 
-    public Node(String name) {
-        this.name = name;
-        innerNodes = new LinkedList<Node>();
-        attributes = new HashMap<String, String>();
-    }
-
-    public Node(String name, String text) {
-        this(name);
-        innerNodes.add(new TextNode(text));
-    }
-
-    public Node(String xml, boolean ignoreCase) throws XmlParseException {
-        this.ignoreCase = ignoreCase;
-        int start = 0;
-        boolean data = false;
-        while (!data && (start = xml.indexOf("<", start)) >= 0) {
-            start++;
-            if (xml.charAt(start) != '?') {
-                data = true;
-            }
+        public CommentNode(String text) {
+            super(text);
         }
-        parse(xml.substring(start - 1));
-    }
 
-    public HashMap<String, String> getAttributes() {
-        return attributes;
-    }
-
-    public void setParent(Node parent) {
-        this.parent = parent;
-    }
-
-    public Node getParent() {
-        return parent;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public LinkedList<Node> getInnerNodes() {
-        return innerNodes;
-    }
-
-    public void addChild(Node child) {
-        if (innerNodes == null) {
-            return;
+        public String toString() {
+            return "commentNode: " + text;
         }
-        innerNodes.add(child);
-        child.setParent(this);
-    }
 
-    public Node removeLastChild() {
-        return innerNodes.pollLast();
-    }
-
-    public Node removeFirstChild() {
-        return innerNodes.pollFirst();
-    }
-
-    public Node findChildWithNameEquals(String name, boolean recursive) {
-        if (innerNodes == null) {
-            return null;
+        protected String text(boolean recursive) {
+            return "<!-- " + text + " -->";
         }
-        Node find = null;
-        if (!innerNodes.isEmpty()) {
-            for (Node n : innerNodes) {
-                if (name.equals(n.getName())) {
-                    find = n;
-                    break;
-                }
-            }
+
+        protected String ownText() {
+            return "<!-- " + text + " -->";
         }
-        if (recursive && find == null) {
-            for (Node n : innerNodes) {
-                Node temp = n.findChildWithNameEquals(name, recursive);
-                if (temp != null) {
-                    find = temp;
-                    break;
-                }
-            }
-        }
-        return find;
     }
 
-    public LinkedList<Node> findChildsWithNameEquals(String name, boolean recursive) {
-        LinkedList<Node> found = new LinkedList<Node>();
-        if (innerNodes == null) {
-            return found;
-        }
-        if (!innerNodes.isEmpty()) {
-            for (Node n : innerNodes) {
-                if (n.getName().equals(name)) {
-                    found.add(n);
-                }
-            }
-        }
-        if (recursive) {
-            for (Node n : innerNodes) {
-                found.addAll(n.findChildsWithNameEquals(name, recursive));
-            }
-        }
-        return found;
-    }
-
-    public Node getNodeWithXPath(String path) {
-        Node find = null;
-        String[] names = path.split("/");
-        if (names.length >= 2 && names[1].equals(name)) {
-            find = this;
-            for (int i = 2; i < names.length && find != null; i++) {
-                find = find.findChildWithNameEquals(names[i], false);
-            }
-        }
-        return find;
-    }
-
-    public Set<String> getAttributeNames() {
-        if (innerNodes == null) {
-            return null;
-        }
-        return attributes.keySet();
-    }
-
-    public boolean isIgnoreCase() {
-        return ignoreCase;
-    }
-
-    public void setAttribute(String key, String value) {
-        if (innerNodes == null) {
-            return;
-        }
-        attributes.put(key, value);
-    }
-
-    public int getInnerNodesCount() {
-        return innerNodes.size();
-    }
-
-    public boolean containsAttribute(String key) {
-        if (innerNodes == null) {
-            return false;
-        }
-        return attributes.containsKey(key);
-    }
-
-    private void parse(String s) throws XmlParseException {
-        int k1 = s.indexOf(">"), k2 = s.indexOf("/"), k3 = s.indexOf(" ");
-        if (k3 > 0 && k3 < k1) {
-            setName(s.substring(1, k3));
-        } else if (k1 < k2) {
-            setName(s.substring(1, k1));
+    public static Node parse(String s) {
+        // check first char
+        s = s.trim();
+        Node xml = new Node();
+        if (s.startsWith("<?xml ")) {
+            parse(s.toCharArray(), s.indexOf("?>") + 2, xml);
         } else {
-            setName(s.substring(1, k2));
+            parse(s.toCharArray(), 0, xml);
         }
-        innerNodes = new LinkedList<Node>();
-        int tagEnds = s.indexOf(">") + 1, temp;
-        String tag = s.substring(s.indexOf("<"), tagEnds);
-        attributes = parseAttributes(tag, ignoreCase);
-        int level = 1;
-        temp = tagEnds;
-        int lastInnerTextStart = -1;
-        if (s.charAt(tagEnds - 2) != '/') {
-            int innerTagStart = 0, innerTagEnd = -1;
-            while (level > 0 && (temp = s.indexOf("<", temp)) > 0) {
-                if (innerTagEnd != -1 && level == 1) {
-                    lastInnerTextStart = innerTagEnd;
-                    String innerText = s.substring(innerTagEnd, temp).trim();
-                    if (innerText.length() > 0) {
-                        innerNodes.add(new TextNode(fromXMLEscapedString(innerText)));
+        return xml;
+    }
+
+    public static Node parse(File f) throws IOException {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        FileInputStream in = new FileInputStream(f);
+        int r;
+        byte[] b = new byte[10240];
+        while ((r = in.read(b)) != -1) {
+            bout.write(b, 0, r);
+        }
+        return parse(new String(bout.toByteArray()));
+    }
+
+    private static int parse(char[] s, int from, Node xml) {
+        int i = from;
+        StringBuilder sb = new StringBuilder();
+        boolean inString = false;
+        boolean name = false;
+        boolean end = false;
+        boolean attribute = false;
+        String attributeName = null;
+        boolean checkClose = false;
+        boolean comment = false;
+        boolean inTag = false;
+        outer:
+        while (i < s.length) {
+            switch (s[i]) {
+                case '"': {
+                    if (comment) {
+                        sb.append(s[i]);
+                        break;
                     }
+                    inString = sb.toString().trim().length() == 0;
+                    if (!inString) {
+                        xml.attribute(attributeName.trim(), sb.toString());
+                        sb.setLength(0);
+                        attribute = false;
+                    }
+                    break;
                 }
-                temp++;
-                if (s.charAt(temp) == '/') {//close tag
-                    level--;
-                    if (level == 1) {
-                        int innerStart = Math.max(tagEnds, innerTagEnd);
-                        innerTagEnd = s.indexOf(">", temp) + 1;
-                        if (innerStart != lastInnerTextStart) {
-                            String innerText = s.substring(innerStart, innerTagStart).trim();
-                            if (innerText.length() > 0) {
-                                innerNodes.add(new TextNode(fromXMLEscapedString(innerText)));
-                            }
-                        }
-                        addChild(new Node(s.substring(innerTagStart, innerTagEnd), ignoreCase));
+                case '<': {
+                    if (comment) {
+                        sb.append(s[i]);
+                        break;
                     }
-                } else {// new Node start
-                    level++;
-                    if (level > 1) {
-                        int tt = temp - 1;
-                        int t = s.indexOf(">", tt) - 1;
-                        if (s.charAt(t) == '/') {// tag without inner data
-                            level--;
-                            if (level == 1) {
-                                addChild(new Node(s.substring(tt, t + 2), ignoreCase));
-                            }
+                    if (sb.length() > 0) {
+                        xml.add(new TextNode(sb.toString()));
+                        sb.setLength(0);
+                    }
+                    if (xml.name() != null)
+                        checkClose = true;
+                    name = true;
+                    inTag = true;
+                    break;
+                }
+                case ' ': {
+                    if (comment) {
+                        sb.append(s[i]);
+                        break;
+                    }
+                    if (name) {
+                        name = false;
+                        if (!end) {
+                            xml.name(sb.toString());
+                            sb.setLength(0);
+                            attribute = true;
+                        }
+                    } else if (attribute) {
+                        attributeName = sb.toString();
+                        sb.setLength(0);
+                        attribute = false;
+                    }
+                    if (!inString && inTag) {
+                        attribute = true;
+                    } else if (sb.length() != 0) {
+                        sb.append(' ');
+                    }
+                    break;
+                }
+                case '=': {
+                    if (comment) {
+                        sb.append(s[i]);
+                        break;
+                    }
+                    if (attribute) {
+                        attributeName = sb.toString();
+                        sb.setLength(0);
+                        attribute = false;
+                    } else if (inString) {
+                        sb.append('=');
+                    }
+                    break;
+                }
+                case '>': {
+                    attribute = false;
+                    if (comment) {
+                        if (sb.charAt(sb.length() - 1) == '-' && sb.charAt(sb.length() - 2) == '-') {
+                            xml.add(new CommentNode(sb.substring(2, sb.length() - 2).trim()));
+                            sb.setLength(0);
+                            comment = false;
                         } else {
-                            if (level == 2) {
-                                innerTagStart = tt;
-                            }
+                            sb.append('>');
+                        }
+                        break;
+                    }
+                    inTag = false;
+                    if (name) {
+                        name = false;
+                        if (!end) {
+                            xml.name(sb.toString());
+                            sb.setLength(0);
+                        } else {
+                            if (xml.name() == null) {
+                                xml.name(sb.toString());
+                                sb.setLength(0);
+                            } else if (!sb.toString().equals(xml.name()))
+                                throw new IllegalStateException("illegal close tag: " + sb.toString() + ". close tag must be: " + xml.name());
                         }
                     }
+                    if (end) {
+                        i++;
+                        break outer;
+                    }
+                    break;
+                }
+                case '/': {
+                    if (comment) {
+                        sb.append(s[i]);
+                        break;
+                    }
+                    if (inString) {
+                        sb.append('/');
+                        break;
+                    }
+                    end = true;
+                    checkClose = false;
+                    break;
+                }
+                case '\n': {
+                    if (sb.length() != 0) {
+                        sb.append('\n');
+                    }
+                    break;
+                }
+                default: {
+                    if (checkClose && !end) {
+                        if (s[i] == '!') {
+                            comment = true;
+                            inTag = false;
+                        } else {
+                            Node child = new Node();
+                            i = parse(s, i - 2, child);
+                            xml.add(child);
+                        }
+                        checkClose = false;
+                        name = false;
+                    } else
+                        sb.append(s[i]);
+                    break;
                 }
             }
-            if (innerNodes.isEmpty()) {
-                String innerText = s.substring(tagEnds, temp - 1).trim();
-                if (innerText.length() > 0) {
-                    innerNodes.add(new TextNode(fromXMLEscapedString(innerText)));
-                }
-            }
-            tagEnds = s.indexOf(">", temp);
-            if (!s.substring(temp + 1, tagEnds).equals(name)) {
-                System.out.println((s.substring(temp + 1, tagEnds)) + " != " + name);
-                throw new XmlParseException("wrong close tag");
-            }
+            i++;
         }
-    }
-
-    public void serialize(OutputStream out, String charset) throws UnsupportedEncodingException, IOException {
-        String header = "<?xml version=\"1.0\" encoding=\"" + charset + "\"?>\n";
-        out.write(header.getBytes(charset));
-        out.write(toString().getBytes(charset));
-        out.close();
-    }
-
-    public String serialize(String charset) {
-        return "<?xml version=\"1.0\" encoding=\"" + charset + "\"?>\n" + toString();
-    }
-
-    protected String toString(int level) {
-        StringBuilder s = new StringBuilder();
-        for (int i = 0; i < level; i++) {
-            s.append("\t");
-        }
-        s.append("<");
-        s.append(name);
-        for (String attribute : attributes.keySet()) {
-            s.append(" ");
-            s.append(attribute);
-            s.append("=\"");
-            s.append(toXMLEscapedString(attributes.get(attribute)));
-            s.append("\"");
-        }
-        if (innerNodes.isEmpty()) {
-            s.append("/>\n");
-        } else {
-            s.append(">\n");
-            for (Node inner : innerNodes) {
-                s.append(inner.toString(level + 1));
-            }
-            for (int i = 0; i < level; i++) {
-                s.append("\t");
-            }
-            s.append("</");
-            s.append(name);
-            s.append(">");
-            if (level > 0) {
-                s.append("\n");
-            }
-        }
-        return s.toString();
-    }
-
-    @Override
-    public String toString() {
-        return toString(0);
-    }
-
-    public String getAttribute(String key) {
-        if (ignoreCase) {
-            return attributes.get(key.toLowerCase());
-        } else {
-            return attributes.get(key);
-        }
-    }
-
-    private HashMap<String, String> parseAttributes(String node, boolean ignoreCase) {
-        HashMap<String, String> atts = new HashMap<String, String>();
-        if (node.contains(" ")) {
-            String temp = node.substring(node.indexOf(" ") + 1);
-            String[] keys = temp.split("=[ ]*\"[^\"]*\"");
-            String[] values = temp.split("[ ]*[\\w]*[ ]*=\"");
-            for (int i = 0; i < keys.length - 1; i++) {
-                values[i + 1] = values[i + 1].substring(0, values[i + 1].lastIndexOf("\""));
-                if (ignoreCase) {
-                    atts.put(keys[i].trim().toLowerCase(), fromXMLEscapedString(values[i + 1]));
-                } else {
-                    atts.put(keys[i].trim(), fromXMLEscapedString(values[i + 1]));
-                }
-            }
-        }
-        return atts;
-    }
-
-    public static String fromXMLEscapedString(String s) {
-        return s.replaceAll("&quot;", "\"").replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&apos;", "'");
-    }
-
-    public static String toXMLEscapedString(String s) {
-        return s.replaceAll("\"", "&quot;").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("'", "&apos;");
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getText() {
-        StringBuilder sb = new StringBuilder();
-        for (Node n : innerNodes) {
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
-            sb.append(n.getText());
-        }
-        return sb.toString();
-    }
-
-    public String getTextOwn() {
-        StringBuilder sb = new StringBuilder();
-        for (Node n : innerNodes) {
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
-            if (n instanceof TextNode) {
-                sb.append(n.getText());
-            }
-        }
-        return sb.toString();
+        return i;
     }
 }
