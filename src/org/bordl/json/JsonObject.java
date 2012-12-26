@@ -1,6 +1,7 @@
 package org.bordl.json;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author: moxa
@@ -152,5 +153,23 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                     }
             }
         }//for
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        toString(sb);
+        return sb.toString();
+    }
+
+    public void toString(StringBuilder sb) {
+        sb.append('{');
+        boolean comma = false;
+        for (Map.Entry<String, JsonItem> entry : entrySet()) {
+            if (comma)
+                sb.append(',');
+            comma = true;
+            sb.append(entry.getKey()).append(':').append(entry.getValue().toJson());
+        }
+        sb.append('}');
     }
 }

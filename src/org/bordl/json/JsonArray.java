@@ -61,4 +61,26 @@ public class JsonArray extends ArrayList<JsonItem> {
         return i;
     }
 
+    public void put(Object ob) {
+        add(new JsonItem(ob));
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        toString(sb);
+        return sb.toString();
+    }
+
+    public String toString(StringBuilder sb) {
+        sb.append('[');
+        boolean comma = false;
+        for (JsonItem item : this) {
+            if (comma)
+                sb.append(',');
+            comma = true;
+            item.toJson(sb);
+        }
+        sb.append(']');
+        return sb.toString();
+    }
 }

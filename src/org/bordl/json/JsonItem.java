@@ -117,4 +117,29 @@ public class JsonItem {
     public String toString() {
         return String.valueOf(ob);
     }
+
+    public String toJson() {
+        if (ob instanceof JsonObject) {
+            return ob.toString();
+        }
+        if (ob instanceof JsonArray) {
+            return ob.toString();
+        }
+        if (ob.getClass() == String.class) {
+            return "\"" + JsonObject.escape(ob.toString()) + "\"";
+        }
+        return String.valueOf(ob);
+    }
+
+
+    public void toJson(StringBuilder sb) {
+        if (ob instanceof JsonObject) {
+            ((JsonObject) ob).toString(sb);
+        } else if (ob instanceof JsonArray) {
+            ((JsonArray) ob).toString(sb);
+        } else if (ob.getClass() == String.class) {
+            sb.append('"').append(JsonObject.escape(ob.toString())).append('"');
+        } else
+            sb.append(String.valueOf(ob));
+    }
 }
