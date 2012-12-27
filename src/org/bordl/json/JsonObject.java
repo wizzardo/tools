@@ -172,4 +172,73 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         }
         sb.append('}');
     }
+
+    public static String unescape(String s) {
+        return s.replace("\\/", "/");
+    }
+
+    public String getAsString(String key) {
+        return getAsString(key, null);
+    }
+
+    public String getAsString(String key, String def) {
+        JsonItem item = get(key);
+        return item == null ? def : item.asString();
+    }
+
+    public Long getAsLong(String key) {
+        return getAsLong(key, null);
+    }
+
+    public Long getAsLong(String key, Long def) {
+        JsonItem item = get(key);
+        return item == null ? def : item.asLong(def);
+    }
+
+    public Integer getAsInteger(String key) {
+        return getAsInteger(key, null);
+    }
+
+    public Integer getAsInteger(String key, Integer def) {
+        JsonItem item = get(key);
+        return item == null ? def : item.asInteger(def);
+    }
+
+    public Double getAsDouble(String key) {
+        return getAsDouble(key, null);
+    }
+
+    public Double getAsDouble(String key, Double def) {
+        JsonItem item = get(key);
+        return item == null ? def : item.asDouble(def);
+    }
+
+    public Float getAsFloat(String key) {
+        return getAsFloat(key, null);
+    }
+
+    public Float getAsFloat(String key, Float def) {
+        JsonItem item = get(key);
+        return item == null ? def : item.asFloat(def);
+    }
+
+    public Boolean getAsBoolean(String key) {
+        return getAsBoolean(key, null);
+    }
+
+    public Boolean getAsBoolean(String key, Boolean def) {
+        JsonItem item = get(key);
+        return item == null ? def : item.asBoolean(def);
+    }
+
+
+    public JsonObject getAsJsonObject(String key) {
+        JsonItem item = get(key);
+        return item == null ? null : item.asJsonObject();
+    }
+
+    public JsonArray getAsJsonArray(String key) {
+        JsonItem item = get(key);
+        return item == null ? null : item.asJsonArray();
+    }
 }

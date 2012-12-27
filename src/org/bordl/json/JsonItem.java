@@ -8,11 +8,14 @@ public class JsonItem {
     private Object ob;
 
     public JsonItem(Object ob) {
-        this.ob = ob;
+        if (ob.getClass() == String.class) {
+            this.ob=JsonObject.unescape(String.valueOf(ob));
+        } else
+            this.ob = ob;
     }
 
     public String asString() {
-        return ob.toString();
+        return String.valueOf(ob);
     }
 
     public Object get() {
@@ -20,6 +23,10 @@ public class JsonItem {
     }
 
     public Long asLong() {
+        return asLong(null);
+    }
+
+    public Long asLong(Long def) {
         if (ob instanceof Long) {
             return (Long) ob;
         }
@@ -29,10 +36,14 @@ public class JsonItem {
             return l;
         } catch (NumberFormatException ex) {
         }
-        return null;
+        return def;
     }
 
     public Integer asInteger() {
+        return asInteger(null);
+    }
+
+    public Integer asInteger(Integer def) {
         if (ob instanceof Integer) {
             return (Integer) ob;
         }
@@ -42,10 +53,14 @@ public class JsonItem {
             return i;
         } catch (NumberFormatException ex) {
         }
-        return null;
+        return def;
     }
 
     public Double asDouble() {
+        return asDouble(null);
+    }
+
+    public Double asDouble(Double def) {
         if (ob instanceof Double) {
             return (Double) ob;
         }
@@ -55,10 +70,14 @@ public class JsonItem {
             return d;
         } catch (NumberFormatException ex) {
         }
-        return null;
+        return def;
     }
 
     public Float asFloat() {
+        return asFloat(null);
+    }
+
+    public Float asFloat(Float def) {
         if (ob instanceof Float) {
             return (Float) ob;
         }
@@ -68,10 +87,14 @@ public class JsonItem {
             return f;
         } catch (NumberFormatException ex) {
         }
-        return null;
+        return def;
     }
 
     public Boolean asBoolean() {
+        return asBoolean(null);
+    }
+
+    public Boolean asBoolean(Boolean def) {
         if (ob instanceof Boolean) {
             return (Boolean) ob;
         }
@@ -80,7 +103,7 @@ public class JsonItem {
             ob = b;
             return b;
         }
-        return null;
+        return def;
     }
 
     public JsonObject asJsonObject() {
