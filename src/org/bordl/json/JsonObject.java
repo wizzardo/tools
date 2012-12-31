@@ -35,9 +35,14 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         StringBuilder sb = new StringBuilder();
         String key = null, value;
         boolean inString = false;
-        while (i < s.length && s[i] != '}') {
+        outer:
+        while (i < s.length) {
             switch (s[i]) {
                 case ':': {
+                    if (inString) {
+                        sb.append(':');
+                        break;
+                    }
                     key = sb.toString().trim();
                     if (key.charAt(0) == '"' && key.charAt(sb.length() - 1) == '"') {
                         key = key.substring(1, key.length() - 1);
@@ -75,12 +80,27 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                     break;
                 }
                 case '{': {
+                    if (inString) {
+                        sb.append('{');
+                        break;
+                    }
                     JsonObject obj = new JsonObject();
                     i = JsonObject.parse(s, i, obj);
                     json.put(key, new JsonItem(obj));
                     break;
                 }
+                case '}': {
+                    if (inString) {
+                        sb.append('}');
+                        break;
+                    }
+                    break outer;
+                }
                 case '[': {
+                    if (inString) {
+                        sb.append('[');
+                        break;
+                    }
                     JsonArray obj = new JsonArray();
                     i = JsonArray.parse(s, i, obj);
                     json.put(key, new JsonItem(obj));
@@ -174,7 +194,41 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     public static String unescape(String s) {
-        return s.replace("\\/", "/");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (i > 0 && s.charAt(i - 1) == '\\') {
+                switch (ch) {
+                    case '"':
+                        sb.setCharAt(sb.length() - 1, '"');
+                        break;
+                    case '\\':
+                        sb.setCharAt(sb.length() - 1, '\\');
+                        break;
+                    case 'b':
+                        sb.setCharAt(sb.length() - 1, '\b');
+                        break;
+                    case 'f':
+                        sb.setCharAt(sb.length() - 1, '\f');
+                        break;
+                    case 'n':
+                        sb.setCharAt(sb.length() - 1, '\n');
+                        break;
+                    case 'r':
+                        sb.setCharAt(sb.length() - 1, '\r');
+                        break;
+                    case 't':
+                        sb.setCharAt(sb.length() - 1, '\t');
+                        break;
+                    case '/':
+                        sb.setCharAt(sb.length() - 1, '/');
+                        break;
+                }
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
     }
 
     public String getAsString(String key) {

@@ -29,7 +29,6 @@ public class EvalUtilsTest {
         Map<String, Object> model = new HashMap<String, Object>();
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
 
-
         assertEquals(1, EvalUtils.evaluate("(1)", new HashMap<String, Object>()));
         assertEquals(1, EvalUtils.evaluate("((1))", new HashMap<String, Object>()));
         assertEquals(2, EvalUtils.evaluate("1+1", new HashMap<String, Object>()));
@@ -317,6 +316,26 @@ public class EvalUtilsTest {
 
         assertEquals(5, EvalUtils.evaluate("(0..5).size()", null));
         assertEquals(5, EvalUtils.evaluate("(1+2-3 .. 5).size()", null));
+
+        model = new HashMap<String, Object>();
+        EvalUtils.evaluate("def x=0..10", model);
+
+        assertEquals(5, EvalUtils.evaluate("x.get(5)", model));
+        boolean exception = false;
+        try {
+            EvalUtils.evaluate("x.put(5)", model);
+        } catch (NoSuchMethodException e) {
+            exception = true;
+        }
+        assertTrue(exception);
+
+        exception = false;
+        try {
+            EvalUtils.evaluate("x.b", model);
+        } catch (NoSuchFieldException e) {
+            exception = true;
+        }
+        assertTrue(exception);
     }
 
     @Test

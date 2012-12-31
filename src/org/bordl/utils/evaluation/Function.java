@@ -109,9 +109,10 @@ class Function {
         } else if (method == null) {
             method = findMethod(thatObject.getClass(model), methodName, arr);
         }
-//        if (method == null) {
+        if (method == null) {
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
-//        }
+            throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + thatObject.getClass(model) + " with args: " + Arrays.toString(arr));
+        }
         return method.invoke(thatObject.get(model), arr);
     }
 

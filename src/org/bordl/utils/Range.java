@@ -2,12 +2,14 @@ package org.bordl.utils;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author: moxa
  * Date: 12/17/12
  */
-public class Range implements Iterable<Integer>, Collection<Integer> {
+public class Range implements Iterable<Integer>, List<Integer> {
     private int from, to;
 
     /**
@@ -115,6 +117,11 @@ public class Range implements Iterable<Integer>, Collection<Integer> {
     }
 
     @Override
+    public boolean addAll(int index, Collection<? extends Integer> c) {
+        return false;
+    }
+
+    @Override
     public boolean removeAll(Collection<?> c) {
         return false;
     }
@@ -126,6 +133,56 @@ public class Range implements Iterable<Integer>, Collection<Integer> {
 
     @Override
     public void clear() {
+    }
+
+    @Override
+    public Integer get(int index) {
+        return from + index;
+    }
+
+    @Override
+    public Integer set(int index, Integer element) {
+        return null;
+    }
+
+    @Override
+    public void add(int index, Integer element) {
+    }
+
+    @Override
+    public Integer remove(int index) {
+        return null;
+    }
+
+    @Override
+    public int indexOf(Object o) {
+        if (o.getClass() == Integer.class) {
+            int i = (Integer) o;
+            if (i >= from && i < to) {
+                return i - from;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public int lastIndexOf(Object o) {
+        return indexOf(o);
+    }
+
+    @Override
+    public ListIterator<Integer> listIterator() {
+        return null;
+    }
+
+    @Override
+    public ListIterator<Integer> listIterator(int index) {
+        return null;
+    }
+
+    @Override
+    public List<Integer> subList(int fromIndex, int toIndex) {
+        return new Range(from + fromIndex, fromIndex + toIndex);
     }
 
     public String toString() {

@@ -12,9 +12,20 @@ public class JsonArray extends ArrayList<JsonItem> {
         int i = from + 1;
         StringBuilder sb = new StringBuilder();
         String value;
-        while (i < s.length && s[i] != ']') {
+        boolean inString = false;
+        outer:
+        while (i < s.length) {
             switch (s[i]) {
+                case '"': {
+                    inString = (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\\') || sb.toString().trim().length() == 0;
+                    sb.append('"');
+                    break;
+                }
                 case ',': {
+                    if (inString) {
+                        sb.append(',');
+                        break;
+                    }
                     if (sb.length() == 0) {
                         break;
                     }
@@ -35,10 +46,31 @@ public class JsonArray extends ArrayList<JsonItem> {
                     break;
                 }
                 case '{': {
+                    if (inString) {
+                        sb.append('{');
+                        break;
+                    }
                     JsonObject obj = new JsonObject();
                     i = JsonObject.parse(s, i, obj);
                     json.add(new JsonItem(obj));
                     break;
+                }
+                case '[': {
+                    if (inString) {
+                        sb.append('[');
+                        break;
+                    }
+                    JsonArray obj = new JsonArray();
+                    i = JsonArray.parse(s, i, obj);
+                    json.add(new JsonItem(obj));
+                    break;
+                }
+                case ']': {
+                    if (inString) {
+                        sb.append(']');
+                        break;
+                    }
+                    break outer;
                 }
                 default: {
                     sb.append(s[i]);

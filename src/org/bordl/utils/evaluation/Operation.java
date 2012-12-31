@@ -311,9 +311,8 @@ class Operation {
         if (ob1 == null || ob2 == null) {
             throw new NullPointerException("can not append to null");
         }
-
-        if (ob1 instanceof Integer && ob2 instanceof Integer) {
-            return new Range((Integer) ob1, (Integer) ob2);
+        if (ob1 instanceof Number && ob2 instanceof Number) {
+            return new Range(((Number) ob1).intValue(), ((Number) ob2).intValue());
         }
         return null;
     }
