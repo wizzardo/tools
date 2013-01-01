@@ -321,6 +321,9 @@ public class EvalUtils {
                     }
 //                    System.out.println("prepare args: " + exp.substring(last, m.start()));
                     String argsRaw = Expression.clean(exp.substring(last, m.start()));
+                    if (m.group().equals(".") && argsRaw.matches("\\d+")) {
+                        continue;
+                    }
                     if (methodName != null && methodName.length() == 0 && m.group().equals("]")) {
                         thatObject = new Expression(new Operation(thatObject, new Expression(prepare(argsRaw, model, functions)), Operator.GET));
                         methodName = null;
