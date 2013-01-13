@@ -5,11 +5,11 @@ package org.bordl.xml;
  * Date: 12/24/12
  */
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,6 +23,27 @@ public class Node {
     protected List<Node> children;
     protected String name;
     protected Node parent;
+
+    private static final Set<String> selfClosedTags = new HashSet<String>();
+
+    static {
+        selfClosedTags.add("area");
+        selfClosedTags.add("base");
+        selfClosedTags.add("br");
+        selfClosedTags.add("col");
+        selfClosedTags.add("command");
+        selfClosedTags.add("embed");
+        selfClosedTags.add("hr");
+        selfClosedTags.add("img");
+        selfClosedTags.add("input");
+        selfClosedTags.add("keygen");
+        selfClosedTags.add("link");
+        selfClosedTags.add("meta");
+        selfClosedTags.add("param");
+        selfClosedTags.add("source");
+        selfClosedTags.add("track");
+        selfClosedTags.add("wbr");
+    }
 
     public void attribute(String attributeName, String value) {
         if (attributes == null)
@@ -46,6 +67,50 @@ public class Node {
         if (attributes == null)
             return null;
         return attributes.get(attributeName);
+    }
+
+    public Set<String> attributesNames() {
+        return attributes.keySet();
+    }
+
+    public Map<String, String> attributes() {
+        if (attributes == null) {
+            attributes = new LinkedHashMap<String, String>();
+        }
+        return attributes;
+    }
+
+    public List<Node> children() {
+        if (children == null) {
+            children = new ArrayList<Node>();
+        }
+        return children;
+    }
+
+    public boolean isEmpty() {
+        return children == null || children.isEmpty();
+    }
+
+    public int level() {
+        int l = 0;
+        Node p = this;
+        while ((p = p.parent) != null) {
+            l++;
+        }
+        return l;
+    }
+
+    public String offset() {
+        return offset("    ");
+    }
+
+    public String offset(String step) {
+        StringBuilder sb = new StringBuilder();
+        int level = level();
+        for (int i = 0; i < level; i++) {
+            sb.append(step);
+        }
+        return sb.toString();
     }
 
     public void add(Node node) {
@@ -273,18 +338,26 @@ public class Node {
     }
 
     public static Node parse(String s) {
+        return parse(s, false);
+    }
+
+    public static Node parse(String s, boolean html) {
         // check first char
         s = s.trim();
         Node xml = new Node();
         if (s.startsWith("<?xml ")) {
-            parse(s.toCharArray(), s.indexOf("?>") + 2, xml);
+            parse(s.toCharArray(), s.indexOf("?>") + 2, xml, html);
         } else {
-            parse(s.toCharArray(), 0, xml);
+            parse(s.toCharArray(), 0, xml, html);
         }
         return xml;
     }
 
     public static Node parse(File f) throws IOException {
+        return parse(f, false);
+    }
+
+    public static Node parse(File f, boolean html) throws IOException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         FileInputStream in = new FileInputStream(f);
         int r;
@@ -292,10 +365,10 @@ public class Node {
         while ((r = in.read(b)) != -1) {
             bout.write(b, 0, r);
         }
-        return parse(new String(bout.toByteArray()));
+        return parse(new String(bout.toByteArray()), html);
     }
 
-    private static int parse(char[] s, int from, Node xml) {
+    private static int parse(char[] s, int from, Node xml, boolean html) {
         int i = from;
         StringBuilder sb = new StringBuilder();
         boolean inString = false;
@@ -393,6 +466,9 @@ public class Node {
                         if (!end) {
                             xml.name(sb.toString());
                             sb.setLength(0);
+                            if (html && selfClosedTags.contains(xml.name().toLowerCase())) {
+                                break outer;
+                            }
                         } else {
                             if (xml.name() == null) {
                                 xml.name(sb.toString());
@@ -402,7 +478,6 @@ public class Node {
                         }
                     }
                     if (end) {
-                        i++;
                         break outer;
                     }
                     break;
@@ -433,7 +508,7 @@ public class Node {
                             inTag = false;
                         } else {
                             Node child = new Node();
-                            i = parse(s, i - 2, child);
+                            i = parse(s, i - 2, child, html);
                             xml.add(child);
                         }
                         checkClose = false;

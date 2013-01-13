@@ -77,6 +77,39 @@ public class EvalUtils {
         return s;
     }
 
+    private static boolean isMap(String s) {
+        if (!s.startsWith("[") || !s.endsWith("]")) {
+            return false;
+        }
+        boolean quotesSingle = false;
+        boolean quotesDouble = false;
+        for (int i = 1; i < s.length(); i++) {
+            switch (s.charAt(i)) {
+                case '\'':
+                    if (!quotesDouble)
+                        quotesSingle = !quotesSingle;
+                    break;
+                case '"':
+                    if (!quotesSingle)
+                        quotesDouble = !quotesDouble;
+                    break;
+                case ':':
+                    if (!quotesSingle && !quotesDouble) {
+                        return true;
+                    }
+                    break;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isList(String s) {
+        if (!s.startsWith("[") || !s.endsWith("]")) {
+            return false;
+        }
+        return true;
+    }
+
     public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions) throws Exception {
 //        System.out.println("try to prepare: " + exp);
         if (exp == null) {
@@ -222,7 +255,14 @@ public class EvalUtils {
             if (exp.equals("[:]")) {
                 return new Expression(new LinkedHashMap());
             }
-            if (exp.startsWith("[") && exp.endsWith("]")) {
+            if (isMap(exp)) {
+                Map<String, Expression> map = new LinkedHashMap<String, Expression>();
+                for (Map.Entry<String, String> entry : parseMap(exp).entrySet()) {
+                    map.put(entry.getKey(), prepare(Expression.clean(entry.getValue()), model, functions));
+                }
+                return new Expression(map);
+            }
+            if (isList(exp)) {
                 ArrayList l = new ArrayList();
                 exp = exp.substring(1, exp.length() - 1);
                 List<String> arr = parseArgs(exp);
@@ -307,7 +347,10 @@ public class EvalUtils {
                 if (thatObject == null) {
 //                    System.out.println("thatObject: " + exp.substring(last, m.start()));
 //                    System.out.println("thatObject2: " + exp.substring(0, m.start()));
-                    thatObject = new Expression(prepare(Expression.clean(exp.substring(last, m.start())), model, functions));
+                    if (last == 1 && m.group().endsWith("]")) // init map
+                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last - 1, m.end())), model, functions));
+                    else                                      // index or ordinary brackets
+                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last, m.start())), model, functions));
                 } else if (methodName == null && !thatObject.isUserFunction()) {
                     if (m.group().equals(".")) { //chain of maps
                         thatObject = new Expression(new Function(thatObject, exp.substring(last, m.start())));
@@ -413,6 +456,98 @@ public class EvalUtils {
             l.add(argsRaw);
         }
         return l;
+    }
+
+    private static Map<String, String> parseMap(String s) {
+        Map<String, String> m = new LinkedHashMap<String, String>();
+        s = s.substring(1, s.length() - 1);
+        boolean quotesSingle = false;
+        boolean quotesDouble = false;
+        StringBuilder sb = new StringBuilder();
+        String key = null;
+        boolean escape = false;
+        int brackets = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            switch (ch) {
+                case '\'':
+                    sb.append(ch);
+                    if (!quotesDouble && !escape)
+                        quotesSingle = !quotesSingle;
+                    escape = false;
+                    break;
+                case '"':
+                    sb.append(ch);
+                    if (!quotesSingle && !escape)
+                        quotesDouble = !quotesDouble;
+                    escape = false;
+                    break;
+                case '(':
+                    if (!quotesSingle && !quotesDouble) {
+                        brackets++;
+                    }
+                    sb.append(ch);
+                    break;
+                case '[':
+                    if (!quotesSingle && !quotesDouble) {
+                        brackets++;
+                    }
+                    sb.append(ch);
+                    break;
+                case ')':
+                    if (!quotesSingle && !quotesDouble) {
+                        brackets--;
+                    }
+                    sb.append(ch);
+                    break;
+                case ']':
+                    if (!quotesSingle && !quotesDouble) {
+                        brackets--;
+                    }
+                    sb.append(ch);
+                    break;
+                case ':':
+                    if (brackets > 0) {
+                        sb.append(ch);
+                        break;
+                    }
+                    if (!quotesSingle && !quotesDouble) {
+                        key = sb.toString().trim();
+                        sb.setLength(0);
+                    } else {
+                        sb.append(ch);
+                    }
+                    break;
+                case ',':
+                    if (brackets > 0) {
+                        sb.append(ch);
+                        break;
+                    }
+                    if (!quotesSingle && !quotesDouble) {
+                        String value = sb.toString().trim();
+                        m.put(key, value);
+                        key = null;
+                        sb.setLength(0);
+                    } else {
+                        sb.append(ch);
+                    }
+                    break;
+                case '\\':
+                    escape = !escape;
+                    if (!escape) {
+                        sb.append(ch);
+                    }
+                    break;
+                default:
+                    sb.append(ch);
+                    break;
+            }
+        }
+        if (sb.length() > 0) {
+            String value = sb.toString().trim();
+            m.put(key, value);
+        }
+        return m;
     }
 
     public static Object evaluate(String exp, Map<String, Object> model) throws Exception {

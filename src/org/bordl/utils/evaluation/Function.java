@@ -91,29 +91,44 @@ class Function {
                 arr[i] = args[i].get(model);
             }
         }
+        Object instance = thatObject.get(model);
         if (fieldName != null || field != null) {
-            if (thatObject.get(model) instanceof Map) {
-                return ((Map) thatObject.get(model)).get(fieldName);
+            if (instance instanceof Map) {
+                return ((Map) instance).get(fieldName);
             }
-            if (field == null) {
-                field = thatObject.getClass(model).getField(fieldName);
-            }
-            return field.get(thatObject.get(model));
+            prepareField(instance);
+            return field.get(instance);
         }
         if (methodName.equals(EvalUtils.CONSTRUCTOR)) {
-            constructor = findConstructor(thatObject.getClass(model), arr);
+            constructor = findConstructor(getClass(instance), arr);
 //            System.out.println(constructor);
 //            System.out.println(Arrays.toString(constructor.getParameterTypes()));
 //            System.out.println(Arrays.toString(arr));
             return constructor.newInstance(arr);
         } else if (method == null) {
-            method = findMethod(thatObject.getClass(model), methodName, arr);
+            method = findMethod(getClass(instance), methodName, arr);
         }
         if (method == null) {
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
-            throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + thatObject.getClass(model) + " with args: " + Arrays.toString(arr));
+            throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + getClass(instance) + " with args: " + Arrays.toString(arr));
         }
-        return method.invoke(thatObject.get(model), arr);
+        return method.invoke(instance, arr);
+    }
+
+    public Field prepareField(Object instance) throws Exception {
+        if (field == null) {
+            field = instance.getClass().getField(fieldName);
+            fieldName = null;
+        }
+        return field;
+    }
+
+    private Class getClass(Object ob) {
+        Class clazz = ob.getClass();
+        if (clazz == Class.class) {
+            return (Class) ob;
+        }
+        return clazz;
     }
 
     private Method findMethod(Class clazz, String method, Object[] args) {

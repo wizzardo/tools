@@ -7,6 +7,7 @@ package org.bordl.utils.evaluation;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,11 +21,11 @@ public class Expression {
     protected Function function;
     protected UserFunction userFunction;
     protected Object result;
-    protected boolean done = false;
     protected Expression inner;
-    protected boolean simple = false;
+    protected boolean hardcoded = false;
     protected Class clazz;
     protected Collection collection;
+    protected Map map;
 
     public Expression(String exp) {
         this.exp = clean(exp.trim());
@@ -50,14 +51,17 @@ public class Expression {
         this.collection = collection;
     }
 
+    Expression(Map map) {
+        this.map = map;
+    }
+
     public Expression(Object result) {
         this.result = result;
-        done = true;
+        hardcoded = true;
     }
 
     Expression(Class clazz) {
         this.clazz = clazz;
-        done = true;
     }
 
     public boolean isUserFunction() {
@@ -91,7 +95,7 @@ public class Expression {
             return new Expression(userFunction);
         }
         if (exp != null) {
-            if (simple) {
+            if (hardcoded) {
                 return new Expression(result);
             }
             return new Expression(exp);
@@ -116,14 +120,19 @@ public class Expression {
     }
 
     public Object get(Map<String, Object> model) throws Exception {
-        if (!done) {
+        Object result = this.result;
+        if (result == null) {
             if (exp != null) {
                 result = parse(exp);
                 if (result != null) {
-                    simple = true;
+                    hardcoded = true;
+                    this.result = result;
                 } else if (model.containsKey(exp)) {
                     result = model.get(exp);
                 }
+            } else if (clazz != null) {
+                result = clazz;
+                hardcoded = true;
             } else if (operation != null) {
                 result = operation.evaluate(model);
             } else if (function != null) {
@@ -139,8 +148,15 @@ public class Expression {
                     r.add(((Expression) i.next()).get(model));
                 }
                 result = r;
+            } else if (map != null) {
+                Map r = map.getClass().newInstance();
+                Iterator<Map.Entry> i = ((Set<Map.Entry>) map.entrySet()).iterator();
+                while (i.hasNext()) {
+                    Map.Entry entry = i.next();
+                    r.put(String.valueOf(entry.getKey()), ((Expression) entry.getValue()).get(model));
+                }
+                result = r;
             }
-            done = true;
         }
         return result;
     }
@@ -198,14 +214,26 @@ public class Expression {
     @Override
     public String toString() {
         if (exp != null) {
-            return exp + "\tis done? " + done + (done ? "\tresult:" + result : "");
+            return exp;
         }
         if (inner != null) {
-            return inner + "\tis done? " + done + (done ? "\tresult:" + result : "");
+            return inner.toString();
         }
         if (function != null) {
-            return function + "\tis done? " + done + (done ? "\tresult:" + result : "");
+            return function.toString();
         }
-        return operation + "\tis done? " + done + (done ? "\tresult:" + result : "");
+        if (hardcoded) {
+            return result.toString();
+        }
+        if (clazz != null) {
+            return clazz.toString();
+        }
+        if (collection != null) {
+            return collection.toString();
+        }
+        if (map != null) {
+            return map.toString();
+        }
+        return operation.toString();
     }
 }

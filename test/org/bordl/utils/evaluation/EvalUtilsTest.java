@@ -6,6 +6,7 @@ package org.bordl.utils.evaluation;
 
 import org.junit.Test;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,10 @@ public class EvalUtilsTest {
     public void testEvaluate() throws Exception {
         Map<String, Object> model = new HashMap<String, Object>();
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+
+
+
+
 
         assertEquals(1, EvalUtils.evaluate("(1)", new HashMap<String, Object>()));
         assertEquals(1, EvalUtils.evaluate("((1))", new HashMap<String, Object>()));
@@ -266,6 +271,11 @@ public class EvalUtilsTest {
         assertEquals(1, ((List) EvalUtils.evaluate("[1,[2,3]]", null)).get(0));
         assertEquals("[2, 3]", ((List) EvalUtils.evaluate("[1,[2,3]]", null)).get(1).toString());
 
+        assertEquals("qwerty", ((Map) EvalUtils.evaluate("[qwe:\"qwerty\"]", null)).get("qwe").toString());
+        assertEquals("qwe\",rty", ((Map) EvalUtils.evaluate("[qwe:\"qwe\\\",rty\"]", null)).get("qwe").toString());
+        assertEquals(1, ((Map) ((Map) EvalUtils.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]]", null)).get("olo")).get("asd"));
+        assertEquals(1, EvalUtils.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]].olo.asd", null));
+
         model = new HashMap<String, Object>();
         model.put("x", 1);
         assertEquals("[1]", EvalUtils.evaluate("[x]", model).toString());
@@ -287,6 +297,14 @@ public class EvalUtilsTest {
         assertEquals(0, EvalUtils.evaluate("--x.key", model));
         assertEquals(0, EvalUtils.evaluate("x.key--", model));
         assertEquals(-1, ((Map) model.get("x")).get("key"));
+
+        model = new HashMap<String, Object>();
+        Point p=new Point(0,0);
+        model.put("p",p);
+        assertEquals(0, EvalUtils.evaluate("p.x", model));
+        assertEquals(0, EvalUtils.evaluate("p.x++", model));
+        assertEquals(2, EvalUtils.evaluate("++p.x", model));
+        assertEquals(2, p.x);
 
 
         model = new HashMap<String, Object>();
@@ -336,6 +354,7 @@ public class EvalUtilsTest {
             exception = true;
         }
         assertTrue(exception);
+
     }
 
     @Test

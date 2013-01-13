@@ -11,21 +11,21 @@ import java.util.regex.Pattern;
  */
 public class CollectionUtils {
 
-    public static <T> void each(Iterable<T> c, Closure<T> closure) {
+    public static <T> void each(Iterable<T> c, Closure<Void, T> closure) {
         for (T t : c) {
             closure.execute(t);
         }
     }
 
-    public static <T> void eachWithIndex(Iterable<T> c, ClosureWithParam<T, Integer> closure) {
+    public static <T> void eachWithIndex(Iterable<T> c, Closure2<Void, Integer, T> closure) {
         int i = 0;
         for (T t : c) {
-            closure.execute(t, i);
+            closure.execute(i, t);
             i++;
         }
     }
 
-    public static <T, R> List<R> collect(Iterable<T> c, ClosureWithResult<T, R> closure) {
+    public static <T, R> List<R> collect(Iterable<T> c, Closure<R, T> closure) {
         List<R> l = new ArrayList<R>();
         for (T t : c) {
             l.add(closure.execute(t));
@@ -42,7 +42,7 @@ public class CollectionUtils {
         return l;
     }
 
-    public static <T> List<T> grep(Iterable<T> c, ClosureWithResult<T, Boolean> closure) {
+    public static <T> List<T> grep(Iterable<T> c, Closure<Boolean, T> closure) {
         List<T> l = new ArrayList<T>();
         for (T t : c) {
             if (closure.execute(t))
@@ -87,7 +87,7 @@ public class CollectionUtils {
         return l;
     }
 
-    public static <T> List<T> findAll(Iterable<T> c, ClosureWithResult<T, Boolean> closure) {
+    public static <T> List<T> findAll(Iterable<T> c, Closure<Boolean, T> closure) {
         List<T> l = new ArrayList<T>();
         for (T t : c) {
             if (closure.execute(t))
@@ -96,7 +96,7 @@ public class CollectionUtils {
         return l;
     }
 
-    public static <T> T find(Iterable<T> c, ClosureWithResult<T, Boolean> closure) {
+    public static <T> T find(Iterable<T> c, Closure<Boolean, T> closure) {
         for (T t : c) {
             if (closure.execute(t))
                 return t;
@@ -104,7 +104,7 @@ public class CollectionUtils {
         return null;
     }
 
-    public static <T> boolean every(Iterable<T> c, ClosureWithResult<T, Boolean> closure) {
+    public static <T> boolean every(Iterable<T> c, Closure<Boolean, T> closure) {
         boolean b = true;
         for (T t : c) {
             b &= closure.execute(t);
@@ -115,7 +115,7 @@ public class CollectionUtils {
         return b;
     }
 
-    public static <T> boolean any(Iterable<T> c, ClosureWithResult<T, Boolean> closure) {
+    public static <T> boolean any(Iterable<T> c, Closure<Boolean, T> closure) {
         for (T t : c) {
             if (closure.execute(t)) {
                 return true;
@@ -135,16 +135,44 @@ public class CollectionUtils {
         return sb.toString();
     }
 
-    public static abstract class Closure<T> {
-        public abstract void execute(T it);
-    }
-
-    public static abstract class ClosureWithResult<T, R> {
+    public static abstract class Closure<R, T> {
         public abstract R execute(T it);
     }
 
-    public static abstract class ClosureWithParam<T, P> {
-        public abstract void execute(T it, P p);
+    public static abstract class Closure2<R, T1, T2> {
+        public abstract R execute(T1 it, T2 it2);
+    }
+
+    public static abstract class Closure3<R, T1, T2, T3> {
+        public abstract R execute(T1 it, T2 it2, T3 it3);
+    }
+
+    public static abstract class Closure4<R, T1, T2, T3, T4> {
+        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4);
+    }
+
+    public static abstract class Closure5<R, T1, T2, T3, T4, T5> {
+        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5);
+    }
+
+    public static abstract class Closure6<R, T1, T2, T3, T4, T5, T6> {
+        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6);
+    }
+
+    public static abstract class Closure7<R, T1, T2, T3, T4, T5, T6, T7> {
+        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7);
+    }
+
+    public static abstract class Closure8<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
+        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8);
+    }
+
+    public static abstract class Closure9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
+        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9);
+    }
+
+    public static abstract class Closure10<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> {
+        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9, T10 it10);
     }
 
 }
