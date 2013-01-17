@@ -8,88 +8,88 @@ import java.util.ArrayList;
  */
 public class JsonArray extends ArrayList<JsonItem> {
 
+    private static void parseValue(JsonArray json, char[] s, int from, int to) {
+        if (from == to) {
+            return;
+        }
+        while ((from < to) && (s[from] <= ' ')) {
+            from++;
+        }
+        while ((from < to) && (s[to - 1] <= ' ')) {
+            to--;
+        }
+        if (from == to) {
+            return;
+        }
+        String value = new String(s, from, to - from);
+
+        if (s[from] == '"' && s[to - 1] == '"') {
+            value = value.substring(1, value.length() - 1);
+            json.add(new JsonItem(value));
+        } else if (value.equals("null")) {
+            json.add(null);
+        } else if (value.equals("true")) {
+            json.add(new JsonItem(true));
+        } else if (value.equals("false")) {
+            json.add(new JsonItem(false));
+        } else {
+            json.add(new JsonItem(value));
+        }
+    }
+
     static int parse(char[] s, int from, JsonArray json) {
-        int i = from + 1;
-        StringBuilder sb = new StringBuilder();
-        String value;
+        int i = ++from;
         boolean inString = false;
         outer:
         while (i < s.length) {
             switch (s[i]) {
                 case '"': {
-                    inString = (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\\') || sb.toString().trim().length() == 0;
-                    sb.append('"');
+                    while ((from < i) && (s[from] <= ' ')) {
+                        from++;
+                    }
+                    inString = from == i || s[i - 1] == '\\';
                     break;
                 }
                 case ',': {
                     if (inString) {
-                        sb.append(',');
                         break;
                     }
-                    if (sb.length() == 0) {
-                        break;
-                    }
-                    value = sb.toString().trim();
-                    sb.setLength(0);
-                    if (value.equals("null")) {
-                        json.add(null);
-                        break;
-                    }
-                    if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
-                        json.add(new JsonItem(Boolean.valueOf(value)));
-                        break;
-                    }
-                    if (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
-                        value = value.substring(1, value.length() - 1);
-                    }
-                    json.add(new JsonItem(value));
+                    parseValue(json, s, from, i);
+                    from = i + 1;
                     break;
                 }
                 case '{': {
                     if (inString) {
-                        sb.append('{');
                         break;
                     }
                     JsonObject obj = new JsonObject();
                     i = JsonObject.parse(s, i, obj);
+                    from = i + 1;
                     json.add(new JsonItem(obj));
                     break;
                 }
                 case '[': {
                     if (inString) {
-                        sb.append('[');
                         break;
                     }
                     JsonArray obj = new JsonArray();
                     i = JsonArray.parse(s, i, obj);
+                    from = i + 1;
                     json.add(new JsonItem(obj));
                     break;
                 }
                 case ']': {
                     if (inString) {
-                        sb.append(']');
                         break;
                     }
                     break outer;
                 }
-                default: {
-                    sb.append(s[i]);
-                    break;
-                }
             }
             i++;
         }
-        if (sb.length() > 0) {
-            if (sb.charAt(0) == '"' && sb.charAt(sb.length() - 1) == '"') {
-                sb.setLength(sb.length() - 1);
-                sb.deleteCharAt(0);
-            }
-            value = sb.toString();
-            sb.setLength(0);
-            json.add(new JsonItem(value));
+        if (from != i) {
+            parseValue(json, s, from, i);
         }
-//            System.out.println(s[i]);
-//            System.out.println(new String(s).substring(0,i));
         return i;
     }
 

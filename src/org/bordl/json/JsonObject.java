@@ -1,5 +1,7 @@
 package org.bordl.json;
 
+
+import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -9,17 +11,33 @@ import java.util.Map;
  */
 public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
+    public static JsonItem parse(File file) throws IOException {
+        Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
+        char[] buffer = new char[8192];
+        StringWriter writer = new StringWriter();
+        int count;
+        while ((count = reader.read(buffer)) != -1) {
+            writer.write(buffer, 0, count);
+        }
+        reader.close();
+        return parse(writer.toString());
+    }
+
     public static JsonItem parse(String s) {
-        // check first char
         s = s.trim();
-        if (s.startsWith("{")) {
+        return parse(s.toCharArray());
+    }
+
+    public static JsonItem parse(char[] s) {
+        // check first char
+        if (s[0] == '{') {
             JsonObject json = new JsonObject();
-            parse(s.toCharArray(), 0, json);
+            parse(s, 0, json);
             return new JsonItem(json);
         }
-        if (s.startsWith("[")) {
+        if (s[0] == '[') {
             JsonArray json = new JsonArray();
-            JsonArray.parse(s.toCharArray(), 0, json);
+            JsonArray.parse(s, 0, json);
             return new JsonItem(json);
         }
         return null;
@@ -30,97 +48,115 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return this;
     }
 
+    private static String parseKey(char[] s, int from, int to) {
+        while ((from < to) && (s[from] <= ' ')) {
+            from++;
+        }
+        while ((from < to) && (s[to] <= ' ')) {
+            to--;
+        }
+        String key = new String(s, from, to - from);
+        if (key.charAt(0) == '"' && key.charAt(key.length() - 1) == '"') {
+            key = key.substring(1, key.length() - 1);
+        }
+        return key;
+    }
+
+    private static void parseValue(JsonObject json, String key, char[] s, int from, int to) {
+        if (from == to) {
+            return;
+        }
+        while ((from < to) && (s[from] <= ' ')) {
+            from++;
+        }
+        while ((from < to) && (s[to - 1] <= ' ')) {
+            to--;
+        }
+        if (from == to) {
+            return;
+        }
+
+        if (s[from] == '"' && s[to - 1] == '"') {
+            from++;
+            to--;
+            String value = new String(s, from, to - from);
+            json.put(key, new JsonItem(value));
+            return;
+        }
+        String value = new String(s, from, to - from);
+        if (value.equals("null")) {
+            json.put(key, null);
+        } else if (value.equals("true")) {
+            json.put(key, new JsonItem(true));
+        } else if (value.equals("false")) {
+            json.put(key, new JsonItem(false));
+        } else {
+            json.put(key, new JsonItem(value));
+        }
+    }
+
     static int parse(char[] s, int from, JsonObject json) {
-        int i = from + 1;
-        StringBuilder sb = new StringBuilder();
-        String key = null, value;
+        int i = ++from;
+        String key = null;
         boolean inString = false;
         outer:
         while (i < s.length) {
             switch (s[i]) {
-                case ':': {
-                    if (inString) {
-                        sb.append(':');
-                        break;
+                case '"': {
+                    while ((from < i) && (s[from] <= ' ')) {
+                        from++;
                     }
-                    key = sb.toString().trim();
-                    if (key.charAt(0) == '"' && key.charAt(sb.length() - 1) == '"') {
-                        key = key.substring(1, key.length() - 1);
-                    }
-                    sb.setLength(0);
+                    inString = from == i || s[i - 1] == '\\';
                     break;
                 }
-                case '"': {
-                    inString = (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\\') || sb.toString().trim().length() == 0;
-                    sb.append('"');
+                case ':': {
+                    if (inString) {
+                        break;
+                    }
+                    key = parseKey(s, from, i);
+                    from = i + 1;
                     break;
                 }
                 case ',': {
                     if (inString) {
-                        sb.append(',');
                         break;
                     }
-                    if (sb.length() == 0) {
-                        break;
-                    }
-                    value = sb.toString().trim();
-                    sb.setLength(0);
-                    if (value.equals("null")) {
-                        json.put(key, null);
-                        break;
-                    }
-                    if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
-                        json.put(key, new JsonItem(Boolean.valueOf(value)));
-                        break;
-                    }
-                    if (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
-                        value = value.substring(1, value.length() - 1);
-                    }
-                    json.put(key, new JsonItem(value));
+                    parseValue(json, key, s, from, i);
+                    from = i + 1;
                     break;
                 }
                 case '{': {
                     if (inString) {
-                        sb.append('{');
                         break;
                     }
                     JsonObject obj = new JsonObject();
                     i = JsonObject.parse(s, i, obj);
+                    from = i + 1;
                     json.put(key, new JsonItem(obj));
                     break;
                 }
                 case '}': {
                     if (inString) {
-                        sb.append('}');
                         break;
                     }
                     break outer;
                 }
                 case '[': {
                     if (inString) {
-                        sb.append('[');
                         break;
                     }
                     JsonArray obj = new JsonArray();
                     i = JsonArray.parse(s, i, obj);
+                    from = i + 1;
                     json.put(key, new JsonItem(obj));
-                    break;
-                }
-                default: {
-                    sb.append(s[i]);
                     break;
                 }
             }
             i++;
         }
-        if (key != null && sb.length() > 0) {
-            if (sb.charAt(0) == '"' && sb.charAt(sb.length() - 1) == '"') {
-                sb.setLength(sb.length() - 1);
-                sb.deleteCharAt(0);
-            }
-            value = sb.toString();
-            sb.setLength(0);
-            json.put(key, new JsonItem(value));
+
+        if (key != null && from != i) {
+            parseValue(json, key, s, from, i);
         }
         return i;
     }
@@ -188,7 +224,10 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
             if (comma)
                 sb.append(',');
             comma = true;
-            sb.append(entry.getKey()).append(':').append(entry.getValue().toJson());
+            if (entry.getValue() == null)
+                sb.append(entry.getKey()).append(":null");
+            else
+                sb.append(entry.getKey()).append(':').append(entry.getValue().toJson());
         }
         sb.append('}');
     }
