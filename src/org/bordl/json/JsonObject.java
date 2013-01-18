@@ -99,36 +99,33 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         int i = ++from;
         String key = null;
         boolean inString = false;
+        char ch;
         outer:
         while (i < s.length) {
-            switch (s[i]) {
+            ch = s[i];
+            if (inString) {
+                if (ch == '"' && s[i - 1] != '\\') {
+                    inString = false;
+                }
+                i++;
+                continue;
+            }
+            switch (ch) {
                 case '"': {
-                    while ((from < i) && (s[from] <= ' ')) {
-                        from++;
-                    }
-                    inString = from == i || s[i - 1] == '\\';
+                    inString=s[i - 1] != '\\';
                     break;
                 }
                 case ':': {
-                    if (inString) {
-                        break;
-                    }
                     key = parseKey(s, from, i);
                     from = i + 1;
                     break;
                 }
                 case ',': {
-                    if (inString) {
-                        break;
-                    }
                     parseValue(json, key, s, from, i);
                     from = i + 1;
                     break;
                 }
                 case '{': {
-                    if (inString) {
-                        break;
-                    }
                     JsonObject obj = new JsonObject();
                     i = JsonObject.parse(s, i, obj);
                     from = i + 1;
@@ -136,15 +133,9 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                     break;
                 }
                 case '}': {
-                    if (inString) {
-                        break;
-                    }
                     break outer;
                 }
                 case '[': {
-                    if (inString) {
-                        break;
-                    }
                     JsonArray obj = new JsonArray();
                     i = JsonArray.parse(s, i, obj);
                     from = i + 1;

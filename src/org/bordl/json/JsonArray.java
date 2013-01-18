@@ -40,28 +40,28 @@ public class JsonArray extends ArrayList<JsonItem> {
     static int parse(char[] s, int from, JsonArray json) {
         int i = ++from;
         boolean inString = false;
+        char ch;
         outer:
         while (i < s.length) {
-            switch (s[i]) {
+            ch = s[i];
+            if (inString) {
+                if (ch == '"' && s[i - 1] != '\\') {
+                    inString = false;
+                }
+                i++;
+                continue;
+            }
+            switch (ch) {
                 case '"': {
-                    while ((from < i) && (s[from] <= ' ')) {
-                        from++;
-                    }
-                    inString = from == i || s[i - 1] == '\\';
+                    inString=s[i - 1] != '\\';
                     break;
                 }
                 case ',': {
-                    if (inString) {
-                        break;
-                    }
                     parseValue(json, s, from, i);
                     from = i + 1;
                     break;
                 }
                 case '{': {
-                    if (inString) {
-                        break;
-                    }
                     JsonObject obj = new JsonObject();
                     i = JsonObject.parse(s, i, obj);
                     from = i + 1;
@@ -69,9 +69,6 @@ public class JsonArray extends ArrayList<JsonItem> {
                     break;
                 }
                 case '[': {
-                    if (inString) {
-                        break;
-                    }
                     JsonArray obj = new JsonArray();
                     i = JsonArray.parse(s, i, obj);
                     from = i + 1;
@@ -79,9 +76,6 @@ public class JsonArray extends ArrayList<JsonItem> {
                     break;
                 }
                 case ']': {
-                    if (inString) {
-                        break;
-                    }
                     break outer;
                 }
             }
