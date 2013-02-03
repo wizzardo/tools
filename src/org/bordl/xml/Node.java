@@ -508,7 +508,7 @@ public class Node {
                             inTag = false;
                         } else {
                             Node child = new Node();
-                            i = parse(s, i - 2, child, html);
+                            i = parse(s, i - 1, child, html);
                             xml.add(child);
                         }
                         checkClose = false;
