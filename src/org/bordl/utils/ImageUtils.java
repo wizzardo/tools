@@ -226,7 +226,7 @@ public class ImageUtils {
     }
 
     public static BufferedImage resize(BufferedImage im, double scale) {
-        BufferedImage img = new BufferedImage((int) (Math.ceil((im.getWidth() * scale))), (int) (Math.ceil((im.getHeight() * scale))), im.getType());
+        BufferedImage img = new BufferedImage((int) (Math.round((im.getWidth() * scale))), (int) (Math.round((im.getHeight() * scale))), im.getType());
         Image imgg = im.getScaledInstance(img.getWidth(), img.getHeight(), Image.SCALE_SMOOTH);
         Graphics2D gr = (Graphics2D) img.getGraphics();
         gr.drawImage(imgg, 0, 0, null);
