@@ -43,6 +43,14 @@ public class Node {
         selfClosedTags.add("source");
         selfClosedTags.add("track");
         selfClosedTags.add("wbr");
+        selfClosedTags.add("!doctype");
+    }
+
+    public Node(String name) {
+        this.name = name;
+    }
+
+    protected Node() {
     }
 
     public void attribute(String attributeName, String value) {
@@ -347,6 +355,15 @@ public class Node {
         Node xml = new Node();
         if (s.startsWith("<?xml ")) {
             parse(s.toCharArray(), s.indexOf("?>") + 2, xml, html);
+        } else if (html) {
+            int i = 0;
+            Node document = new Node("document");
+            while ((i = parse(s.toCharArray(), i, xml, html) + 1) < s.length()) {
+                document.add(xml);
+                xml = new Node();
+            }
+            document.add(xml);
+            return document;
         } else {
             parse(s.toCharArray(), 0, xml, html);
         }
@@ -389,7 +406,8 @@ public class Node {
                     }
                     inString = sb.toString().trim().length() == 0;
                     if (!inString) {
-                        xml.attribute(attributeName.trim(), sb.toString());
+                        xml.attribute(attributeName, sb.toString());
+                        attributeName = null;
                         sb.setLength(0);
                         attribute = false;
                     }
@@ -423,7 +441,10 @@ public class Node {
                             attribute = true;
                         }
                     } else if (attribute) {
-                        attributeName = sb.toString();
+                        attributeName = sb.toString().trim();
+                        if (attributeName.length() > 0) {
+                            xml.attribute(attributeName, null);
+                        }
                         sb.setLength(0);
                         attribute = false;
                     }
@@ -440,7 +461,7 @@ public class Node {
                         break;
                     }
                     if (attribute) {
-                        attributeName = sb.toString();
+                        attributeName = sb.toString().trim();
                         sb.setLength(0);
                         attribute = false;
                     } else if (inString) {
@@ -449,6 +470,10 @@ public class Node {
                     break;
                 }
                 case '>': {
+                    if (attribute) {
+                        attributeName = sb.toString().trim();
+                        sb.setLength(0);
+                    }
                     attribute = false;
                     if (comment) {
                         if (sb.charAt(sb.length() - 1) == '-' && sb.charAt(sb.length() - 2) == '-') {
@@ -466,9 +491,6 @@ public class Node {
                         if (!end) {
                             xml.name(sb.toString());
                             sb.setLength(0);
-                            if (html && selfClosedTags.contains(xml.name().toLowerCase())) {
-                                break outer;
-                            }
                         } else {
                             if (xml.name() == null) {
                                 xml.name(sb.toString());
@@ -478,6 +500,8 @@ public class Node {
                         }
                     }
                     if (end) {
+                        break outer;
+                    } else if (html && selfClosedTags.contains(xml.name().toLowerCase())) {
                         break outer;
                     }
                     break;
@@ -490,6 +514,11 @@ public class Node {
                     if (inString) {
                         sb.append('/');
                         break;
+                    }
+                    if (attribute) {
+                        attributeName = sb.toString().trim();
+                        sb.setLength(0);
+                        attribute = false;
                     }
                     end = true;
                     checkClose = false;
@@ -519,6 +548,9 @@ public class Node {
                 }
             }
             i++;
+        }
+        if (attributeName != null && attributeName.length() > 0) {
+            xml.attribute(attributeName, null);
         }
         return i;
     }
