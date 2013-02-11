@@ -95,6 +95,18 @@ public class Node {
         return children;
     }
 
+    public Node get(int i) {
+        return children().get(i);
+    }
+
+    public Node first() {
+        return children().get(0);
+    }
+
+    public Node last() {
+        return children().get(children.size() - 1);
+    }
+
     public boolean isEmpty() {
         return children == null || children.isEmpty();
     }
@@ -260,6 +272,16 @@ public class Node {
         return null;
     }
 
+    public boolean hasAttr(String attr) {
+        if (attributes == null)
+            return false;
+        return attributes.containsKey(attr);
+    }
+
+    public int size() {
+        return children == null ? 0 : children.size();
+    }
+
     private static class XPathExpression {
         private String command, result;
         private static Pattern pattern = Pattern.compile("\\[([^\\[\\]]+)\\]");
@@ -404,7 +426,13 @@ public class Node {
                         sb.append(s[i]);
                         break;
                     }
-                    inString = sb.toString().trim().length() == 0;
+                    boolean switchInString = (i == 0 || s[i - 1] != '\\');
+                    if (!switchInString && inString) {
+                        sb.append('"');
+                    }
+                    if (switchInString) {
+                        inString = !inString;
+                    }
                     if (!inString) {
                         xml.attribute(attributeName, sb.toString());
                         attributeName = null;
