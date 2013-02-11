@@ -20,7 +20,6 @@ import java.io.*;
 import java.util.Iterator;
 
 /**
- *
  * @author Moxa
  */
 public class ImageUtils {
@@ -117,6 +116,7 @@ public class ImageUtils {
                 y++;
             }
         }
+        x--;
         int left = x > 0 ? x - 1 : 0;
         clear = true;
         for (x = src.getWidth() - 1; x >= 0 && clear; x--) {
@@ -126,6 +126,7 @@ public class ImageUtils {
                 y++;
             }
         }
+        x++;
         int right = x < src.getWidth() ? x + 1 : src.getWidth();
         return crop(src, left, 0, right, src.getHeight());
     }
@@ -141,6 +142,7 @@ public class ImageUtils {
                 x++;
             }
         }
+        y--;
         int top = y > 0 ? y - 1 : 0;
         clear = true;
         for (y = src.getHeight() - 1; y >= 0 && clear; y--) {
@@ -150,6 +152,7 @@ public class ImageUtils {
                 x++;
             }
         }
+        y++;
         int bottom = y < src.getHeight() ? y + 1 : src.getHeight();
         return crop(src, 0, top, src.getWidth(), bottom);
     }
