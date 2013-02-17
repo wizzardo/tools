@@ -153,6 +153,7 @@ public class HttpClient {
         private boolean multipart = false;
         private String charsetForEncoding;
         private Proxy proxy;
+        private boolean redirects = true;
 
         public Connection(String url) {
             this.url = url;
@@ -240,6 +241,11 @@ public class HttpClient {
             return this;
         }
 
+        public Connection disableRedirects() {
+            redirects=false;
+            return this;
+        }
+
         public Connection addFile(String key, File value) {
             return addFile(key, value.getAbsolutePath());
         }
@@ -319,7 +325,7 @@ public class HttpClient {
                 } else {
                     c = (HttpURLConnection) u.openConnection();
                 }
-                System.out.println("c.usingProxy(); " + c.usingProxy());
+                c.setInstanceFollowRedirects(redirects);
                 c.setRequestMethod(method.toString());
                 for (Map.Entry<String, String> header : headers.entrySet()) {
                     c.setRequestProperty(header.getKey(), header.getValue());
@@ -424,7 +430,4 @@ public class HttpClient {
             return url;
         }
     }
-//    public static void main(String[] args) throws IOException {
-//        System.out.println(connect("http://moxa.no-ip.biz/post/").addParameter("textfield", "testtestetst").addFile("filefield", "C:\\favicon.png").getAsString());
-//    }
 }

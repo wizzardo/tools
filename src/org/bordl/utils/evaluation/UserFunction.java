@@ -14,6 +14,7 @@ public class UserFunction {
     private String name;
     private Expression[] args;
     private Map<String, UserFunction> functions;
+    private boolean notCreateOwnModel = false;
 
     public UserFunction(String name, String exp, String... argsNames) {
         this.exp = exp;
@@ -49,9 +50,26 @@ public class UserFunction {
         this.functions = functions;
     }
 
+    public boolean isNotCreateOwnModel() {
+        return notCreateOwnModel;
+    }
+
+    public void setNotCreateOwnModel(boolean b) {
+        notCreateOwnModel = b;
+    }
+
+    public String getArgumentName(int i) {
+        if (argsNames == null) {
+            return null;
+        }
+        return argsNames[i];
+    }
+
     public Object get(Map<String, Object> model) {
         Map<String, Object> m;
-        if (model != null) {
+        if (notCreateOwnModel) {
+            m = model;
+        } else if (model != null) {
             m = new HashMap<String, Object>(model);
         } else {
             m = new HashMap<String, Object>();
