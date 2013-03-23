@@ -12,10 +12,7 @@ import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.*;
 import java.awt.color.ColorSpace;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ColorConvertOp;
-import java.awt.image.WritableRaster;
+import java.awt.image.*;
 import java.io.*;
 import java.util.Iterator;
 
@@ -41,6 +38,10 @@ public class ImageUtils {
         saveJPG(im, new FileOutputStream(file), quality);
     }
 
+    public static void saveJPG(BufferedImage im, File file, float quality) throws IOException {
+        saveJPG(im, new FileOutputStream(file), quality);
+    }
+
     public static void saveJPG(BufferedImage im, OutputStream out, float quality) throws IOException {
         Iterator iter = ImageIO.getImageWritersByFormatName("jpeg");
         ImageWriter writer = (ImageWriter) iter.next();
@@ -57,6 +58,10 @@ public class ImageUtils {
 
     public static void savePNG(BufferedImage im, String file) throws IOException {
         ImageIO.write(im, "png", new File(file));
+    }
+
+    public static void savePNG(BufferedImage im, File file) throws IOException {
+        ImageIO.write(im, "png", file);
     }
 
     public static void savePNG(BufferedImage im, OutputStream out) throws IOException {
@@ -337,5 +342,99 @@ public class ImageUtils {
         }
         g.drawImage(src, x, y, null);
         return img;
+    }
+
+    public static BufferedImage colorToAlpha(BufferedImage im, Color c) {
+        BufferedImage img = new BufferedImage(im.getWidth(), im.getHeight(), BufferedImage.TYPE_4BYTE_ABGR);
+        int[] temp = new int[4];
+        Raster src = im.getRaster();
+        WritableRaster result = img.getRaster();
+        boolean hasAlpha = im.getColorModel().hasAlpha();
+        int r = c.getRed(), g = c.getGreen(), b = c.getBlue();
+        for (int x = 0; x < im.getWidth(); x++) {
+            for (int y = 0; y < im.getHeight(); y++) {
+                colorToAlpha(src.getPixel(x, y, temp), hasAlpha, r, g, b);
+                result.setPixel(x, y, temp);
+            }
+        }
+        return img;
+    }
+
+    private static void colorToAlpha(int[] c, boolean hasAlpha, int r1, int g1, int b1) {
+        int r, g, b, a;
+        if (hasAlpha) {
+            r = c[0];
+            g = c[1];
+            b = c[2];
+            a = c[3];
+        } else {
+            a = 255;
+            r = c[0];
+            g = c[1];
+            b = c[2];
+        }
+        float red, green, blue, alpha;
+
+        if (r1 == 0) {
+            red = r;
+        } else if (r > r1) {
+            red = (r - r1) / (255.0f - r1);
+        } else if (r < r1) {
+            red = (r1 - r) / (r1 * 1f);
+        } else {
+            red = 0.0f;
+        }
+
+        if (g1 == 0) {
+            green = g;
+        } else if (g > g1) {
+            green = (g - g1) / (255.0f - g1);
+        } else if (g < g1) {
+            green = (g1 - g) / (g1 * 1f);
+        } else {
+            green = 0.0f;
+        }
+
+        if (b1 == 0) {
+            blue = b;
+        } else if (b > b1) {
+            blue = (b - b1) / (255.0f - b1);
+        } else if (b < b1) {
+            blue = (b1 - b) / (b1 * 1f);
+        } else {
+            blue = 0.0f;
+        }
+
+        if (red > green) {
+            if (red > blue) {
+                alpha = red;
+            } else {
+                alpha = blue;
+            }
+        } else {
+            if (green > blue) {
+                alpha = green;
+            } else {
+                alpha = blue;
+            }
+        }
+
+
+        if (alpha < 0.001) {
+            c[3] = (int) (alpha * 255);
+        }
+        r = (int) ((r - r1) / alpha + r1 + 0.5f);
+        g = (int) ((g - g1) / alpha + g1 + 0.5f);
+        b = (int) ((b - b1) / alpha + b1 + 0.5f);
+        a = (int) (a * alpha + 0.5f);
+
+        c[0] = r;
+        c[1] = g;
+        c[2] = b;
+        c[3] = a;
+    }
+
+    public static String toString(Color c) {
+        return "[" + c.getAlpha() + "," + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + "]";
     }
 }
