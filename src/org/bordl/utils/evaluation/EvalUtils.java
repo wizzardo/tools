@@ -35,7 +35,11 @@ public class EvalUtils {
         EvalUtils.defaultEvaluatingStrategy = defaultEvaluatingStrategy;
     }
 
-    public static Expression prepare(String exp, Map<String, Object> model) throws Exception {
+    public static Expression prepare(String exp) {
+        return prepare(exp, null, new HashMap<String, UserFunction>());
+    }
+
+    public static Expression prepare(String exp, Map<String, Object> model) {
         return prepare(exp, model, new HashMap<String, UserFunction>());
     }
 
@@ -110,7 +114,7 @@ public class EvalUtils {
         return true;
     }
 
-    public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions) throws Exception {
+    public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions) {
 //        System.out.println("try to prepare: " + exp);
         if (exp == null) {
             return null;
@@ -129,19 +133,22 @@ public class EvalUtils {
             model = new HashMap<String, Object>();
         }
         {
+            if (exp.equals("null")) {
+                return Expression.Holder.NULL;
+            }
             Object obj = Expression.parse(exp);
             if (obj != null) {
-                return new Expression(exp);
+                return new Expression.Holder(exp);
             }
             if (model.containsKey(exp)) {
-                return new Expression(exp);
+                return new Expression.Holder(exp);
             }
             {
                 Pattern p = Pattern.compile("def +([a-z]+[a-zA-Z_\\d]*)$");
                 Matcher m = p.matcher(exp);
                 if (m.find()) {
                     model.put(m.group(1), null);
-                    return new Expression(m.group(1));
+                    return new Expression.Holder(m.group(1));
                 }
             }
         }
@@ -229,20 +236,17 @@ public class EvalUtils {
                     }
 
                     if (operation.operator() == Operator.TERNARY) {
-                        Expression holder = new Expression(operations.remove(n + 1));
-                        operation.rightPart(holder);
+                        operation.rightPart(operations.remove(n + 1));
                     }
 
                     //System.out.println("operation: " + operation);
-                    Expression holder = new Expression(operation);
                     if (n > 0) {
-                        operations.get(n - 1).rightPart(holder);
+                        operations.get(n - 1).rightPart(operation);
                     }
                     if (n < operations.size() - 1) {
-                        operations.get(n + 1).leftPart(holder);
+                        operations.get(n + 1).leftPart(operation);
                     }
-                    operations.remove(n);
-                    eh = holder;
+                    eh = operations.remove(n);
                 }
                 return eh;
             }
@@ -250,17 +254,17 @@ public class EvalUtils {
 
         {
             if (exp.equals("[]")) {
-                return new Expression(new ArrayList());
+                return new Expression.CollectionExpression(new ArrayList());
             }
             if (exp.equals("[:]")) {
-                return new Expression(new LinkedHashMap());
+                return new Expression.MapExpression(new LinkedHashMap());
             }
             if (isMap(exp)) {
                 Map<String, Expression> map = new LinkedHashMap<String, Expression>();
                 for (Map.Entry<String, String> entry : parseMap(exp).entrySet()) {
                     map.put(entry.getKey(), prepare(Expression.clean(entry.getValue()), model, functions));
                 }
-                return new Expression(map);
+                return new Expression.MapExpression(map);
             }
             if (isList(exp)) {
                 ArrayList l = new ArrayList();
@@ -269,7 +273,7 @@ public class EvalUtils {
                 for (int i = 0; i < arr.size(); i++) {
                     l.add(prepare(Expression.clean(arr.get(i)), model, functions));
                 }
-                return new Expression(l);
+                return new Expression.CollectionExpression(l);
             }
         }
 
@@ -281,7 +285,7 @@ public class EvalUtils {
             if (m.find()) {
                 Class clazz = findClass(m.group().substring(4));
                 if (clazz != null) {
-                    thatObject = new Expression(clazz);
+                    thatObject = new Expression.Holder(clazz);
                     exp = exp.substring(m.end());
                     methodName = CONSTRUCTOR;
                 }
@@ -292,7 +296,7 @@ public class EvalUtils {
             Pattern p = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
             Matcher m = p.matcher(exp);
             if (m.find()) {
-                thatObject = new Expression(m.group(1));
+                thatObject = new Expression.Holder(m.group(1));
                 exp = exp.substring(m.group(1).length());
             }
         }
@@ -303,7 +307,7 @@ public class EvalUtils {
             if (m.find()) {
                 Class clazz = findClass(m.group());
                 if (clazz != null) {
-                    thatObject = new Expression(clazz);
+                    thatObject = new Expression.Holder(clazz);
                     exp = exp.substring(m.end());
                 }
             }
@@ -315,8 +319,9 @@ public class EvalUtils {
             if (m.find()) {
 //                System.out.println("find user function: " + m.group(1) + "\t from " + exp);
 //                System.out.println("available functions: " + functions);
-                thatObject = new Expression(functions.get(m.group(1)).clone());
-                exp = exp.substring(thatObject.getUserFunction().getName().length());
+                UserFunction function = functions.get(m.group(1)).clone();
+                thatObject = function;
+                exp = exp.substring(function.getName().length());
             }
         }
 
@@ -339,7 +344,7 @@ public class EvalUtils {
                     last = m.end();
                     if (thatObject != null && methodName != null) {
                         Function function = new Function(thatObject, methodName, null);
-                        thatObject = new Expression(function);
+                        thatObject = function;
                         methodName = null;
                     }
                     continue;
@@ -347,17 +352,22 @@ public class EvalUtils {
                 if (thatObject == null) {
 //                    System.out.println("thatObject: " + exp.substring(last, m.start()));
 //                    System.out.println("thatObject2: " + exp.substring(0, m.start()));
-                    if (last == 1 && m.group().endsWith("]")) // init map
-                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last - 1, m.end())), model, functions));
-                    else                                      // index or ordinary brackets
-                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last, m.start())), model, functions));
-                } else if (methodName == null && !thatObject.isUserFunction()) {
+                    if (last == 1 && m.group().endsWith("]")) { // init map
+//                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last - 1, m.end())), model, functions));
+                        thatObject = prepare(Expression.clean(exp.substring(last - 1, m.end())), model, functions);
+                    } else {                                     // index or ordinary brackets
+//                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last, m.start())), model, functions));
+                        thatObject = prepare(Expression.clean(exp.substring(last, m.start())), model, functions);
+                    }
+                } else if (methodName == null && !(thatObject instanceof UserFunction)) {
                     if (m.group().equals(".")) { //chain of maps
-                        thatObject = new Expression(new Function(thatObject, exp.substring(last, m.start())));
+//                        thatObject = new Expression(new Function(thatObject, exp.substring(last, m.start())));
+                        thatObject = new Function(thatObject, exp.substring(last, m.start()));
                         methodName = null;
-                    } else
+                    } else {
                         methodName = exp.substring(last, m.start());
 //                    System.out.println("methodName: " + methodName);
+                    }
                 } else {
                     if (countOpenBrackets(exp, last, m.start()) != 0) {
                         continue;
@@ -368,7 +378,8 @@ public class EvalUtils {
                         continue;
                     }
                     if (methodName != null && methodName.length() == 0 && m.group().equals("]")) {
-                        thatObject = new Expression(new Operation(thatObject, new Expression(prepare(argsRaw, model, functions)), Operator.GET));
+//                        thatObject = new Expression(new Operation(thatObject, new Expression(prepare(argsRaw, model, functions)), Operator.GET));
+                        thatObject = new Operation(thatObject, prepare(argsRaw, model, functions), Operator.GET);
                         methodName = null;
                     } else {
                         Expression[] args = null;
@@ -379,14 +390,15 @@ public class EvalUtils {
                                 args[i] = prepare(Expression.clean(arr.get(i)), model, functions);
                             }
                         }
-                        if (thatObject.isUserFunction()) {
+                        if (thatObject instanceof UserFunction) {
 //                        System.out.println("set args: "+Arrays.toString(args));
-                            thatObject.getUserFunction().setArgs(args);
-                            thatObject.getUserFunction().setUserFunctions(functions);
+                            UserFunction function = (UserFunction) thatObject;
+                            function.setArgs(args);
+                            function.setUserFunctions(functions);
                         } else {
                             Function function = new Function(thatObject, methodName, args);
 //                        System.out.println("function: " + function);
-                            thatObject = new Expression(function);
+                            thatObject = function;
                             methodName = null;
                         }
                     }
@@ -400,12 +412,10 @@ public class EvalUtils {
         }
         String field = exp.substring(last).trim();
         if (field.length() > 0 && !field.equals("null") && !field.equals(")")) {
-            Function function = new Function(thatObject, field);
-            thatObject = new Expression(function);
+            thatObject = new Function(thatObject, field);
         }
         if (methodName != null) {
-            Function function = new Function(thatObject, methodName, null);
-            thatObject = new Expression(function);
+            thatObject = new Function(thatObject, methodName, null);
         }
         return thatObject;
     }
@@ -550,15 +560,25 @@ public class EvalUtils {
         return m;
     }
 
-    public static Object evaluate(String exp, Map<String, Object> model) throws Exception {
+    @SuppressWarnings("unchecked")
+    public static <T> T evaluate(String exp) {
 //        System.out.println("evaluate: " + exp + "\t" + model);
-        Expression ex = prepare(exp, model);
-        return ex.get(model);
+        Expression ex = prepare(exp, null);
+        return (T) ex.get(null);
     }
 
-    public static Object evaluate(String exp, Map<String, Object> model, Map<String, UserFunction> functions) throws Exception {
+    @SuppressWarnings("unchecked")
+    public static <T> T evaluate(String exp, Map<String, Object> model) throws Exception {
 //        System.out.println("evaluate: " + exp + "\t" + model);
-        return prepare(exp, model, functions).get(model);
+        Expression ex = prepare(exp, model);
+        return (T) ex.get(model);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T evaluate(String exp, Map<String, Object> model, Map<String, UserFunction> functions) throws Exception {
+//        System.out.println("evaluate: " + exp + "\t" + model);
+        Expression ex = prepare(exp, model, functions);
+        return (T) ex.get(model);
     }
 
 

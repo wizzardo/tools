@@ -26,12 +26,12 @@ public class EvalUtilsTest {
      * Test of evaluate method, of class EvalUtils.
      */
     @Test
-    public void testEvaluate() throws Exception {
+    public void testEvaluateLine() throws Exception {
         Map<String, Object> model = new HashMap<String, Object>();
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
 
-
-
+        model = new HashMap<String, Object>();
+        assertEquals(1, EvalUtils.evaluate("java.lang.Math.abs(-1)", null));
 
 
         assertEquals(1, EvalUtils.evaluate("(1)", new HashMap<String, Object>()));
@@ -299,8 +299,8 @@ public class EvalUtilsTest {
         assertEquals(-1, ((Map) model.get("x")).get("key"));
 
         model = new HashMap<String, Object>();
-        Point p=new Point(0,0);
-        model.put("p",p);
+        Point p = new Point(0, 0);
+        model.put("p", p);
         assertEquals(0, EvalUtils.evaluate("p.x", model));
         assertEquals(0, EvalUtils.evaluate("p.x++", model));
         assertEquals(2, EvalUtils.evaluate("++p.x", model));
@@ -342,7 +342,7 @@ public class EvalUtilsTest {
         boolean exception = false;
         try {
             EvalUtils.evaluate("x.put(5)", model);
-        } catch (NoSuchMethodException e) {
+        } catch (RuntimeException e) {
             exception = true;
         }
         assertTrue(exception);
@@ -350,7 +350,7 @@ public class EvalUtilsTest {
         exception = false;
         try {
             EvalUtils.evaluate("x.b", model);
-        } catch (NoSuchFieldException e) {
+        } catch (RuntimeException e) {
             exception = true;
         }
         assertTrue(exception);
@@ -364,9 +364,24 @@ public class EvalUtilsTest {
         Object ob1 = eh.get(null);
         Object ob2 = eh.get(null);
         assertTrue(ob1 == ob2);
-        Object ob3 = eh.clone().get(null);
+        eh = eh.clone();
+        Object ob3 = eh.get(null);
         assertTrue(ob1 != ob3);
         assertTrue(ob1.equals(ob3));
+
+    }
+
+
+    @Test
+    public void testEvaluateBlock() throws Exception {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+
+        model.clear();
+        model.put("i", 0);
+        String s = "i++;" +
+                "i*=2;";
+        assertEquals(2, EvalUtils.evaluate(s, model));
 
     }
 }

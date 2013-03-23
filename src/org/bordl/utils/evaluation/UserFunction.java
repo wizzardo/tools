@@ -7,7 +7,7 @@ import java.util.Map;
  * @author: moxa
  * Date: 11/5/12
  */
-public class UserFunction {
+public class UserFunction extends Expression {
     private Expression eh;
     private String exp;
     private String[] argsNames;
@@ -95,9 +95,8 @@ public class UserFunction {
                 }
             return r;
         } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     public String getName() {

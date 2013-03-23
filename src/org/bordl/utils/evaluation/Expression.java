@@ -14,152 +14,186 @@ import java.util.regex.Pattern;
 /**
  * @author Moxa
  */
-public class Expression {
+public abstract class Expression {
 
     protected String exp;
-    protected Operation operation;
-    protected Function function;
-    protected UserFunction userFunction;
     protected Object result;
-    protected Expression inner;
     protected boolean hardcoded = false;
-    protected Class clazz;
-    protected Collection collection;
-    protected Map map;
 
-    public Expression(String exp) {
-        this.exp = clean(exp.trim());
-    }
+    public static class Holder extends Expression {
 
-    Expression(Operation operation) {
-        this.operation = operation;
-    }
+        public static final Expression NULL = new Holder() {{
+            hardcoded = true;
+        }};
 
-    Expression(Function function) {
-        this.function = function;
-    }
+        protected Expression inner;
+        protected boolean parsed = false;
 
-    Expression(Expression inner) {
-        this.inner = inner;
-    }
-
-    Expression(UserFunction userFunction) {
-        this.userFunction = userFunction;
-    }
-
-    Expression(Collection collection) {
-        this.collection = collection;
-    }
-
-    Expression(Map map) {
-        this.map = map;
-    }
-
-    public Expression(Object result) {
-        this.result = result;
-        hardcoded = true;
-    }
-
-    Expression(Class clazz) {
-        this.clazz = clazz;
-    }
-
-    public boolean isUserFunction() {
-        return userFunction != null;
-    }
-
-    public UserFunction getUserFunction() {
-        return userFunction;
-    }
-
-    /**
-     * avoid use this before executing expression, because searching for java.lang.reflect.Method object is very slow
-     *
-     * @return copy of this expression
-     */
-    @Override
-    public Expression clone() {
-        if (function != null) {
-            return new Expression(function.clone());
+        private Holder() {
         }
-        if (inner != null) {
-            return new Expression(inner.clone());
+
+        public Holder(String exp) {
+            this.exp = exp;
         }
-        if (operation != null) {
-            return new Expression(operation.clone());
+
+        public Holder(Class clazz) {
+            hardcoded = true;
+            this.result = clazz;
         }
-        if (clazz != null) {
-            return new Expression(clazz);
+
+        public Holder(Expression inner) {
+            this.inner = inner;
         }
-        if (userFunction != null) {
-            return new Expression(userFunction);
+
+        public Holder(Object result) {
+            hardcoded = true;
+            this.result = result;
         }
-        if (exp != null) {
+
+        @Override
+        public String toString() {
             if (hardcoded) {
-                return new Expression(result);
+                return String.valueOf(result);
             }
-            return new Expression(exp);
-        }
-        return null;
-    }
-
-    public Class getClass(Map<String, Object> model) throws Exception {
-        if (clazz == null) {
-            return get(model).getClass();
-        } else {
-            return clazz;
-        }
-    }
-
-    public String getExp() {
-        return exp;
-    }
-
-    public String exp() {
-        return exp;
-    }
-
-    public Object get(Map<String, Object> model) throws Exception {
-        Object result = this.result;
-        if (result == null) {
             if (exp != null) {
-                result = parse(exp);
-                if (result != null) {
-                    hardcoded = true;
-                    this.result = result;
-                } else if (model.containsKey(exp)) {
-                    result = model.get(exp);
-                }
-            } else if (clazz != null) {
-                result = clazz;
-                hardcoded = true;
-            } else if (operation != null) {
-                result = operation.evaluate(model);
-            } else if (function != null) {
-                result = function.evaluate(model);
-            } else if (inner != null) {
-                result = inner.get(model);
-            } else if (userFunction != null) {
-                result = userFunction.get(model);
-            } else if (collection != null) {
-                Collection r = collection.getClass().newInstance();
-                Iterator i = collection.iterator();
-                while (i.hasNext()) {
-                    r.add(((Expression) i.next()).get(model));
-                }
-                result = r;
-            } else if (map != null) {
-                Map r = map.getClass().newInstance();
-                Iterator<Map.Entry> i = ((Set<Map.Entry>) map.entrySet()).iterator();
-                while (i.hasNext()) {
-                    Map.Entry entry = i.next();
-                    r.put(String.valueOf(entry.getKey()), ((Expression) entry.getValue()).get(model));
-                }
-                result = r;
+                return exp;
             }
+            if (inner != null) {
+                return inner.toString();
+            }
+            return super.toString();
         }
-        return result;
+
+        @Override
+        public Expression clone() {
+            if (inner != null) {
+                return new Holder(inner.clone());
+            }
+            if (exp != null) {
+                if (hardcoded) {
+                    return new Holder(result);
+                }
+                return new Holder(exp);
+            }
+            return null;
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+            if (hardcoded) {
+                return result;
+            }
+            Object result = this.result;
+            if (result == null)
+                if (exp != null) {
+                    if (!parsed) {
+                        result = parse(exp);
+                        parsed = true;
+                        if (result != null) {
+                            hardcoded = true;
+                            this.result = result;
+                            return result;
+                        }
+                    }
+                    if (model.containsKey(exp)) {
+                        result = model.get(exp);
+                    }
+                } else if (inner != null) {
+                    result = inner.get(model);
+                }
+            return result;
+        }
+
     }
+
+    public static class MapExpression extends Expression {
+        protected Map map;
+
+        public MapExpression(Map map) {
+            this.map = map;
+        }
+
+        @Override
+        public Expression clone() {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+//            Object result = this.result;
+//            if (result == null) {
+            Map r = null;
+            try {
+                r = map.getClass().newInstance();
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            Iterator<Map.Entry> i = ((Set<Map.Entry>) map.entrySet()).iterator();
+            while (i.hasNext()) {
+                Map.Entry entry = i.next();
+                r.put(String.valueOf(entry.getKey()), ((Expression) entry.getValue()).get(model));
+            }
+//                result = r;
+//            }
+            return r;
+        }
+
+        @Override
+        public String toString() {
+            return "new " + map.getClass();
+        }
+    }
+
+    public static class CollectionExpression extends Expression {
+        protected Collection collection;
+
+        public CollectionExpression(Collection collection) {
+            this.collection = collection;
+        }
+
+        @Override
+        public String toString() {
+            return "new " + collection.getClass();
+        }
+
+        @Override
+        public Expression clone() {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+//            Object result = this.result;
+//            if (result == null) {
+            Collection r = null;
+            try {
+                r = collection.getClass().newInstance();
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            Iterator i = collection.iterator();
+            while (i.hasNext()) {
+                r.add(((Expression) i.next()).get(model));
+            }
+//                result = r;
+//            }
+//            return result;
+            return r;
+        }
+    }
+
+
+    public String raw() {
+        return exp;
+    }
+
+    public abstract Expression clone();
+
+    public abstract Object get(Map<String, Object> model);
 
     static Object parse(String exp) {
         if (exp == null) {
@@ -213,27 +247,6 @@ public class Expression {
 
     @Override
     public String toString() {
-        if (exp != null) {
-            return exp;
-        }
-        if (inner != null) {
-            return inner.toString();
-        }
-        if (function != null) {
-            return function.toString();
-        }
-        if (hardcoded) {
-            return result.toString();
-        }
-        if (clazz != null) {
-            return clazz.toString();
-        }
-        if (collection != null) {
-            return collection.toString();
-        }
-        if (map != null) {
-            return map.toString();
-        }
-        return operation.toString();
+        return exp;
     }
 }

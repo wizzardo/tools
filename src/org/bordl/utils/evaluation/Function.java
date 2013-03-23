@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * @author Moxa
  */
-class Function {
+class Function extends Expression {
 
     private Expression thatObject;
     private Method method;
@@ -23,6 +23,7 @@ class Function {
     private String methodName;
     private Expression[] args;
     private String fieldName;
+    private boolean hardcodeChecked = false;
 
     public Function(Expression thatObject, Method method, Expression[] args) {
         this.thatObject = thatObject;
@@ -80,45 +81,68 @@ class Function {
         return new Function(thatObject.clone(), methodName, args);
     }
 
-    public Object evaluate(Map<String, Object> model) throws Exception {
-        Object[] arr = null;
+    public Object get(Map<String, Object> model) {
+        if (hardcoded) {
+            return result;
+        }
+        try {
+            Object[] arr = null;
 //        System.out.println("evaluate method: "+toString());
-        if (args != null) {
-            arr = new Object[args.length];
+            if (args != null) {
+                arr = new Object[args.length];
 //            System.out.println("try resolve args:");
-            for (int i = 0; i < arr.length; i++) {
+                for (int i = 0; i < arr.length; i++) {
 //                System.out.println(i+"\t"+args[i]);
-                arr[i] = args[i].get(model);
+                    arr[i] = args[i].get(model);
+                }
             }
-        }
-        Object instance = thatObject.get(model);
-        if (fieldName != null || field != null) {
-            if (instance instanceof Map) {
-                return ((Map) instance).get(fieldName);
+            Object instance = thatObject.get(model);
+            if (fieldName != null || field != null) {
+                if (instance instanceof Map) {
+                    return ((Map) instance).get(fieldName);
+                }
+                prepareField(instance);
+                return field.get(instance);
             }
-            prepareField(instance);
-            return field.get(instance);
-        }
-        if (methodName.equals(EvalUtils.CONSTRUCTOR)) {
-            constructor = findConstructor(getClass(instance), arr);
+            if (EvalUtils.CONSTRUCTOR.equals(methodName)) {
+                constructor = findConstructor(getClass(instance), arr);
 //            System.out.println(constructor);
 //            System.out.println(Arrays.toString(constructor.getParameterTypes()));
 //            System.out.println(Arrays.toString(arr));
-            return constructor.newInstance(arr);
-        } else if (method == null) {
-            method = findMethod(getClass(instance), methodName, arr);
-        }
-        if (method == null) {
+                return constructor.newInstance(arr);
+            } else if (method == null) {
+                method = findMethod(getClass(instance), methodName, arr);
+            }
+            if (method == null) {
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
-            throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + getClass(instance) + " with args: " + Arrays.toString(arr));
+                throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + getClass(instance) + " with args: " + Arrays.toString(arr));
+            }
+            Object result = method.invoke(instance, arr);
+            if (!hardcodeChecked && (hardcoded = thatObject.hardcoded)) {
+                hardcodeChecked = true;
+                if (args != null)
+                    for (Expression arg : args) {
+                        hardcoded = arg.hardcoded;
+                        if (!hardcoded)
+                            break;
+                    }
+            }
+            if (hardcoded)
+                this.result = result;
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return method.invoke(instance, arr);
     }
 
-    public Field prepareField(Object instance) throws Exception {
+    public Field prepareField(Object instance) {
         if (field == null) {
-            field = instance.getClass().getField(fieldName);
-            fieldName = null;
+            try {
+                field = instance.getClass().getField(fieldName);
+                fieldName = null;
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
         }
         return field;
     }
@@ -230,7 +254,7 @@ class Function {
 
     @Override
     public String toString() {
-        return "function for: " + thatObject + " ." + methodName + "(" + Arrays.toString(args) + ")";
+        return "function for: " + thatObject + " ." + (method == null ? methodName : method.getName()) + "(" + Arrays.toString(args) + ")";
     }
 
     public Field getField() {

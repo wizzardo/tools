@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * @author Moxa
  */
-class Operation {
+class Operation extends Expression {
 
     private Expression leftPart;
     private Expression rightPart;
@@ -37,11 +37,7 @@ class Operation {
 
     @Override
     public Operation clone() {
-        if (rightPart == null) {
-            return new Operation(leftPart.clone(), null, operator);
-        } else {
-            return new Operation(leftPart.clone(), rightPart.clone(), operator);
-        }
+        return new Operation(leftPart == null ? null : leftPart.clone(), rightPart == null ? null : rightPart.clone(), operator);
     }
 
     @Override
@@ -143,7 +139,9 @@ class Operation {
         return false;
     }
 
-    public Object evaluate(Map<String, Object> model) throws Exception {
+    public Object get(Map<String, Object> model) {
+        if (hardcoded)
+            return result;
         //System.out.println("execute: " + this);
         Object ob1 = null;
         Object ob2 = null;
@@ -172,20 +170,25 @@ class Operation {
                 ) {
             ob2 = rightPart.get(model);
         }
+        Object result = null;
         //System.out.println(model);
         //System.out.println(ob1 + "\t" + operator + "\t" + ob2);
         switch (operator) {
             case PLUS: {
-                return plus(ob1, ob2);
+                result = plus(ob1, ob2);
+                break;
             }
             case MINUS: {
-                return minus(ob1, ob2);
+                result = minus(ob1, ob2);
+                break;
             }
             case MULTIPLY: {
-                return multiply(ob1, ob2);
+                result = multiply(ob1, ob2);
+                break;
             }
             case DIVIDE: {
-                return divide(ob1, ob2);
+                result = divide(ob1, ob2);
+                break;
             }
             case PLUS_EQUAL:
             case MINUS_EQUAL:
@@ -194,80 +197,100 @@ class Operation {
             case EQUAL:
             case PLUS2:
             case MINUS2: {
-                return set(leftPart, rightPart, model, operator);
+                result = set(leftPart, rightPart, model, operator);
+                break;
             }
             case NOT: {
-                return !(Boolean) ob2;
+                result = !(Boolean) ob2;
+                break;
             }
             case GREATE: {
-                return gt(ob1, ob2);
+                result = gt(ob1, ob2);
+                break;
             }
             case LOWER: {
-                return lt(ob1, ob2);
+                result = lt(ob1, ob2);
+                break;
             }
             case GREATE_EQUAL: {
-                return gte(ob1, ob2);
+                result = gte(ob1, ob2);
+                break;
             }
             case LOWER_EQUAL: {
-                return lte(ob1, ob2);
+                result = lte(ob1, ob2);
+                break;
             }
             case EQUAL2: {
-                return e(ob1, ob2);
+                result = e(ob1, ob2);
+                break;
             }
             case NOT_EQUAL: {
-                return ne(ob1, ob2);
+                result = ne(ob1, ob2);
+                break;
             }
             case TERNARY: {
                 //System.out.println("left: " + leftPart);
                 //System.out.println("right: " + rightPart);
                 if ((Boolean) ob1) {
-                    return rightPart.operation.leftPart.get(model);
+                    result = ((Operation) rightPart).leftPart.get(model);
                 } else {
-                    return rightPart.operation.rightPart.get(model);
+                    result = ((Operation) rightPart).rightPart.get(model);
                 }
+                break;
             }
             case OR2: {
                 if ((Boolean) ob1) {
-                    return true;
+                    result = true;
                 } else {
-                    return rightPart().get(model);
+                    result = rightPart().get(model);
                 }
+                break;
             }
             case OR: {
                 if ((Boolean) ob1) {
 //                    rightPart().get(model); already done
-                    return true;
+                    result = true;
                 } else {
-                    return ob2;
+                    result = ob2;
                 }
+                break;
             }
             case AND2: {
                 if (!(Boolean) ob1) {
-                    return false;
+                    result = false;
                 } else {
-                    return rightPart().get(model);
+                    result = rightPart().get(model);
                 }
+                break;
             }
             case AND: {
                 if (!(Boolean) ob1) {
 //                    rightPart().get(model); already done
-                    return false;
+                    result = false;
                 } else {
-                    return ob2;
+                    result = ob2;
                 }
+                break;
             }
             case APPEND: {
-                return append(ob1, ob2);
+                result = append(ob1, ob2);
+                break;
             }
             case GET: {
-                return get(ob1, ob2);
+                result = get(ob1, ob2);
+                break;
             }
             case RANGE: {
-                return createRange(ob1, ob2);
+                result = createRange(ob1, ob2);
+                break;
             }
+            default:
+                throw new UnsupportedOperationException("Not yet implemented:" + this.operator);
         }
-
-        throw new UnsupportedOperationException("Not yet implemented:" + this.operator);
+        hardcoded = (leftPart == null || leftPart.hardcoded) && (rightPart == null || rightPart.hardcoded);
+        if (hardcoded)
+            this.result = result;
+        return result;
     }
 
     private static Range createRange(Object ob1, Object ob2) {
@@ -316,11 +339,11 @@ class Operation {
         return null;
     }
 
-    private static Object set(Expression leftPart, Expression rightPart, Map<String, Object> model) throws Exception {
+    private static Object set(Expression leftPart, Expression rightPart, Map<String, Object> model) {
         return set(leftPart, rightPart, model, null);
     }
 
-    private static Object set(Expression leftPart, Expression rightPart, Map<String, Object> model, Operator operator) throws Exception {
+    private static Object set(Expression leftPart, Expression rightPart, Map<String, Object> model, Operator operator) {
         //left part not yet executed
         Object ob1 = null;
         Object ob2 = null;
@@ -328,48 +351,60 @@ class Operation {
             if (rightPart != null) {
                 ob2 = rightPart.get(model);
             }
-            if (leftPart.function != null) {
-                ob1 = leftPart.function.getThatObject().get(model);
-            }
-            if (leftPart.function != null
-                    && leftPart.function.getFieldName() != null
-                    && ob1 instanceof Map) {
 
+            Function function = null;
+            if (leftPart instanceof Function)
+                function = (Function) leftPart;
+
+            if (function != null) {
+                ob1 = function.getThatObject().get(model);
+            }
+            if (function != null && function.getFieldName() != null && ob1 instanceof Map) {
                 if (operator != null) {
-                    String key = leftPart.function.getFieldName();
+                    String key = function.getFieldName();
                     Map m = (Map) ob1;
                     return mapSetAndReturn(key, m, m.get(key), ob2, operator);
                 }
 
-                ((Map) ob1).put(leftPart.function.getFieldName(), ob2);
+                ((Map) ob1).put(function.getFieldName(), ob2);
                 return ob2;
             }
-            if (leftPart.function != null
-                    && leftPart.function.prepareField(ob1) != null) {
-
+            if (function != null && function.prepareField(ob1) != null) {
                 if (operator != null) {
-                    Field key = leftPart.function.getField();
-                    return fieldSetAndReturn(ob1, key, key.get(ob1), ob2, operator);
+                    Field key = function.getField();
+                    try {
+                        return fieldSetAndReturn(ob1, key, key.get(ob1), ob2, operator);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
 
-                leftPart.function.getField().set(ob1, ob2);
+                try {
+                    function.getField().set(ob1, ob2);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
                 return ob2;
             }
-            if (leftPart.operation != null
-                    && leftPart.operation.operator() == Operator.GET) {
-                ob1 = leftPart.operation.leftPart().get(model);
-                if (ob1 instanceof Map) {
 
+            Operation operation = null;
+            if (leftPart instanceof Operation)
+                operation = (Operation) leftPart;
+
+            if (operation != null
+                    && operation.operator() == Operator.GET) {
+                ob1 = operation.leftPart().get(model);
+                if (ob1 instanceof Map) {
                     if (operator != null) {
-                        Object key = leftPart.operation.rightPart().get(model);
+                        Object key = operation.rightPart().get(model);
                         Map m = (Map) ob1;
                         return mapSetAndReturn(key, m, m.get(key), ob2, operator);
                     }
 
-                    ((Map) ob1).put(leftPart.operation.rightPart().get(model), ob2);
+                    ((Map) ob1).put(operation.rightPart().get(model), ob2);
                     return ob2;
                 }
-                int index = ((Number) leftPart.operation.rightPart().get(model)).intValue();
+                int index = ((Number) operation.rightPart().get(model)).intValue();
                 if (ob1 instanceof List) {
                     List l = (List) ob1;
                     while (index >= l.size()) {
@@ -384,25 +419,35 @@ class Operation {
                 }
             }
         }
+
         if (operator != null) {
-            if (rightPart != null && rightPart.function != null) {
-                Object thatObject = rightPart.function.getThatObject().get(model);
-                if (rightPart.function.getFieldName() != null && thatObject instanceof Map) {
-                    String key = rightPart.function.getFieldName();
+
+            Function function = null;
+            if (rightPart != null && rightPart instanceof Function)
+                function = (Function) rightPart;
+
+            if (function != null) {
+                Object thatObject = function.getThatObject().get(model);
+                if (function.getFieldName() != null && thatObject instanceof Map) {
+                    String key = function.getFieldName();
                     Map m = (Map) thatObject;
                     return mapSetAndReturn(key, m, ob1, m.get(key), operator);
                 }
 
-                if (rightPart.function.prepareField(thatObject) != null) {
-                    Field key = rightPart.function.getField();
-                    return fieldSetAndReturn(thatObject, key, null, key.get(thatObject), operator);
+                if (function.prepareField(thatObject) != null) {
+                    Field key = function.getField();
+                    try {
+                        return fieldSetAndReturn(thatObject, key, null, key.get(thatObject), operator);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             } else if (leftPart != null) {
                 ob1 = leftPart.get(model);
             } else if (rightPart != null) {
                 ob2 = rightPart.get(model);
             }
-            return mapSetAndReturn(leftPart != null ? leftPart.exp() : rightPart.exp(), model, ob1, ob2, operator);
+            return mapSetAndReturn(leftPart != null ? leftPart.raw() : rightPart.raw(), model, ob1, ob2, operator);
         }
         return null;
     }
@@ -410,31 +455,31 @@ class Operation {
     private static Object mapSetAndReturn(Object key, Map model, Object left, Object right, Operator operator) {
         switch (operator) {
             case PLUS2: {
-                //pre-increment
-                if (right != null) {
-                    Object ob = increment(right);
-                    model.put(key, ob);
-                    return ob;
-                }
                 //post-increment
                 if (left != null) {
                     Object r = increment(left);
                     model.put(key, r);
                     return left;
                 }
-            }
-            case MINUS2: {
-                //pre-decrement
+                //pre-increment
                 if (right != null) {
-                    Object ob = decrement(right);
+                    Object ob = increment(right);
                     model.put(key, ob);
                     return ob;
                 }
+            }
+            case MINUS2: {
                 //post-decrement
                 if (left != null) {
                     Object r = decrement(left);
                     model.put(key, r);
                     return left;
+                }
+                //pre-decrement
+                if (right != null) {
+                    Object ob = decrement(right);
+                    model.put(key, ob);
+                    return ob;
                 }
             }
             case PLUS_EQUAL: {
