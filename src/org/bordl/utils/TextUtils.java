@@ -7,7 +7,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author Moxa
  */
 public class TextUtils {
@@ -30,7 +29,7 @@ public class TextUtils {
         } catch (NumberFormatException ex) {
             try {
                 return Float.parseFloat(s.replace(',', '.'));
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignore) {
             }
         }
         return def;
@@ -50,11 +49,7 @@ public class TextUtils {
     public static int getInt(String s, int def) {
         try {
             return Integer.parseInt(s);
-        } catch (NumberFormatException ex) {
-            System.out.println("error parsing int: \"" + s + "\"");
-            for (char c : s.toCharArray()) {
-                System.out.println(c + "  " + (int) c);
-            }
+        } catch (NumberFormatException ignore) {
         }
         return def;
     }
@@ -62,11 +57,7 @@ public class TextUtils {
     public static long getLong(String s, long def) {
         try {
             return Long.parseLong(s);
-        } catch (NumberFormatException ex) {
-            System.out.println("error parsing long: \"" + s + "\"");
-            for (char c : s.toCharArray()) {
-                System.out.println(c + "  " + (int) c);
-            }
+        } catch (NumberFormatException ignore) {
         }
         return def;
     }
@@ -81,7 +72,7 @@ public class TextUtils {
         } catch (NumberFormatException ex) {
             try {
                 return Double.parseDouble(s.replace(',', '.'));
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignore) {
             }
         }
         return def;

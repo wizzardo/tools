@@ -4,6 +4,8 @@
  */
 package org.bordl.utils.evaluation;
 
+import org.bordl.utils.WrappedException;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -126,9 +128,9 @@ public abstract class Expression {
             try {
                 r = map.getClass().newInstance();
             } catch (InstantiationException e) {
-                throw new RuntimeException(e);
+                throw new WrappedException(e);
             } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
+                throw new WrappedException(e);
             }
             Iterator<Map.Entry> i = ((Set<Map.Entry>) map.entrySet()).iterator();
             while (i.hasNext()) {
@@ -171,9 +173,9 @@ public abstract class Expression {
             try {
                 r = collection.getClass().newInstance();
             } catch (InstantiationException e) {
-                throw new RuntimeException(e);
+                throw new WrappedException(e);
             } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
+                throw new WrappedException(e);
             }
             Iterator i = collection.iterator();
             while (i.hasNext()) {

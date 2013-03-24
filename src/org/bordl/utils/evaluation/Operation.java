@@ -5,6 +5,7 @@
 package org.bordl.utils.evaluation;
 
 import org.bordl.utils.Range;
+import org.bordl.utils.WrappedException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -375,14 +376,14 @@ class Operation extends Expression {
                     try {
                         return fieldSetAndReturn(ob1, key, key.get(ob1), ob2, operator);
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
+                        throw new WrappedException(e);
                     }
                 }
 
                 try {
                     function.getField().set(ob1, ob2);
                 } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
+                    throw new WrappedException(e);
                 }
                 return ob2;
             }
@@ -439,7 +440,7 @@ class Operation extends Expression {
                     try {
                         return fieldSetAndReturn(thatObject, key, null, key.get(thatObject), operator);
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
+                        throw new WrappedException(e);
                     }
                 }
             } else if (leftPart != null) {

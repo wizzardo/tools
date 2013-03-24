@@ -26,7 +26,7 @@ public class BlockReader {
 
     public BlockReader(InputStream in, byte[] separator) {
         this.separator = Arrays.copyOf(separator, separator.length);
-        this.in = new PushbackInputStream(in, 10240);
+        this.in = new PushbackInputStream(in, 1024*50);
         buffer = new byte[separator.length];
         bm = new BoyerMoore(separator);
     }

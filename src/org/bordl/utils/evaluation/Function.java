@@ -4,6 +4,8 @@
  */
 package org.bordl.utils.evaluation;
 
+import org.bordl.utils.WrappedException;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -131,7 +133,7 @@ class Function extends Expression {
                 this.result = result;
             return result;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new WrappedException(e);
         }
     }
 
@@ -141,7 +143,7 @@ class Function extends Expression {
                 field = instance.getClass().getField(fieldName);
                 fieldName = null;
             } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
+                throw new WrappedException(e);
             }
         }
         return field;

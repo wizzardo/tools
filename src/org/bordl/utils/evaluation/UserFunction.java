@@ -1,5 +1,7 @@
 package org.bordl.utils.evaluation;
 
+import org.bordl.utils.WrappedException;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -95,7 +97,7 @@ public class UserFunction extends Expression {
                 }
             return r;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new WrappedException(e);
         }
     }
 

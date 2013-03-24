@@ -1,13 +1,8 @@
 package org.bordl.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -34,25 +29,23 @@ public class ZipUtils {
                         out.write(b, 0, r);
                     }
                 } catch (IOException ex) {
-                    Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+                    throw new WrappedException(ex);
                 } finally {
                     if (out != null) {
                         try {
                             out.close();
-                        } catch (IOException ex) {
-                            Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (IOException ignore) {
                         }
                     }
                 }
             }
         } catch (IOException ex) {
-            Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } finally {
             if (zip != null) {
                 try {
                     zip.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ignore) {
                 }
             }
         }
@@ -60,19 +53,22 @@ public class ZipUtils {
 
     public static boolean isZip(File f) {
         FileInputStream in = null;
-        byte[] b = new byte[2];
+
         try {
             in = new FileInputStream(f);
+        } catch (FileNotFoundException e) {
+            throw new WrappedException(e);
+        }
+
+        byte[] b = new byte[2];
+        try {
             in.read(b);
         } catch (IOException ex) {
-            Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
-                }
+            try {
+                in.close();
+            } catch (IOException ignore) {
             }
         }
         return b[0] == 80 && b[1] == 75;
@@ -92,19 +88,21 @@ public class ZipUtils {
             zipping(zipout, files, startDir);
             zipout.close();
         } catch (IOException ex) {
-            Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } finally {
             if (zipout != null) {
                 try {
                     zipout.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ignore) {
                 }
             }
         }
     }
 
     public static List<File> getFiles(List<File> files, File f) {
+        if (f == null)
+            return files;
+
         if (!f.isDirectory()) {
             files.add(f);
         } else {
@@ -131,13 +129,12 @@ public class ZipUtils {
                     zipout.write(b, 0, r);
                 }
             } catch (IOException ex) {
-                Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+                throw new WrappedException(ex);
             } finally {
                 if (in != null) {
                     try {
                         in.close();
-                    } catch (IOException ex) {
-                        Logger.getLogger(ZipUtils.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ignore) {
                     }
                 }
             }

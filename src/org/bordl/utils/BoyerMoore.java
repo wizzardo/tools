@@ -34,8 +34,8 @@ public class BoyerMoore {
      * fashion, to appropriate negative byte values, if necessary.
      * This method is provided as a convenience for searching for patterns
      * within 8 bit byte strings composed of character data.
-     * 
-     * @param pattern	The pattern create this object for.
+     *
+     * @param pattern The pattern create this object for.
      */
     public BoyerMoore(String pattern) {
         genPatternFromCharArray(pattern.toCharArray());
@@ -46,8 +46,8 @@ public class BoyerMoore {
     /**
      * Creates a precomputed Boyer-Moore byte string search object
      * from the given pattern.
-     * 
-     * @param pattern	Binary pattern to search for.
+     *
+     * @param pattern Binary pattern to search for.
      */
     public BoyerMoore(byte[] pattern) {
         genPatternFromByteArray(pattern, 0, pattern.length);
@@ -58,10 +58,10 @@ public class BoyerMoore {
     /**
      * Creates a precomputed Boyer-Moore byte string search object
      * from a portion of the given pattern array.
-     * 
-     * @param pattern	Byte array containing a pattern to search for.
-     * @param offset	Offset to beginning of search pattern.
-     * @param length	Length of the search pattern.
+     *
+     * @param pattern Byte array containing a pattern to search for.
+     * @param offset  Offset to beginning of search pattern.
+     * @param length  Length of the search pattern.
      */
     public BoyerMoore(byte[] pattern, int offset, int length) {
         genPatternFromByteArray(pattern, offset, length);
@@ -71,10 +71,10 @@ public class BoyerMoore {
 
     /**
      * Compares two integers and returns the lesser value.
-     * 
-     * @param i1	First integer to compare.
-     * @param i2	Second integer to compare.
-     * @return		The lesser of <code>i1</code> or <code>i2</code>.
+     *
+     * @param i1 First integer to compare.
+     * @param i2 Second integer to compare.
+     * @return The lesser of <code>i1</code> or <code>i2</code>.
      */
     private static final int min(int i1, int i2) {
         return (i1 < i2) ? i1 : i2;
@@ -82,10 +82,10 @@ public class BoyerMoore {
 
     /**
      * Compares two integers and returns the greater value.
-     * 
-     * @param i1	First integer to compare.
-     * @param i2	Second integer to compare.
-     * @return		The greater of <code>i1</code> or <code>i2</code>.
+     *
+     * @param i1 First integer to compare.
+     * @param i2 Second integer to compare.
+     * @return The greater of <code>i1</code> or <code>i2</code>.
      */
     private static final int max(int i1, int i2) {
         return (i1 > i2) ? i1 : i2;
@@ -94,12 +94,12 @@ public class BoyerMoore {
     /**
      * Generates the pattern byte string <code>P</code> from a portion
      * of another byte string.
-     * 
-     * @param bytes	The byte string from which to extract the pattern.
-     * @param off	The array index within <code>bytes</code> from
-     * 			which to extract the pattern.
-     * @param length	The number of characters to extract from
-     * 			<code>bytes</code> into the pattern.
+     *
+     * @param bytes  The byte string from which to extract the pattern.
+     * @param off    The array index within <code>bytes</code> from
+     *               which to extract the pattern.
+     * @param length The number of characters to extract from
+     *               <code>bytes</code> into the pattern.
      */
     private final void genPatternFromByteArray(byte[] bytes, int off, int length) {
         int i, j;
@@ -118,9 +118,9 @@ public class BoyerMoore {
      * converted into signed byte values.  Characters between 128 and 255
      * are converted to their signed negative counterpart in
      * twos-complement fashion by subtracting 256.
-     * 
-     * @param chars	Unsigned unicode character array to turn into
-     * 			a signed byte array.
+     *
+     * @param chars Unsigned unicode character array to turn into
+     *              a signed byte array.
      */
     private final void genPatternFromCharArray(char[] chars) {
         m = chars.length;
@@ -188,8 +188,8 @@ public class BoyerMoore {
 
     /**
      * Returns the length of the pattern for this searcher.
-     * 
-     * @return			The search pattern length.
+     *
+     * @return The search pattern length.
      */
     public int getPatternLength() {
         return (m);
@@ -199,12 +199,12 @@ public class BoyerMoore {
      * Search for the previously pre-compiled pattern string in an
      * array of bytes.  This method uses the Boyer-Moore pattern
      * search algorithm.
-     * 
-     * @param byteString	Array of bytes in which to search
-     * 				for the pattern.
-     * @return			The array index where the pattern
-     * 				begins in the string, or <code>-1</code>
-     * 				if the pattern was not found.
+     *
+     * @param byteString Array of bytes in which to search
+     *                   for the pattern.
+     * @return The array index where the pattern
+     * begins in the string, or <code>-1</code>
+     * if the pattern was not found.
      */
     public int search(byte[] byteString) {
         return (search(byteString, 0, byteString.length));
@@ -214,28 +214,29 @@ public class BoyerMoore {
      * Search for the previously pre-compiled pattern string in an
      * array of bytes.  This method uses the Boyer-Moore pattern
      * search algorithm.
-     * 
-     * @param byteString	Array of bytes in which to search
-     * 				for the pattern.
-     * @param offset		The the index in <code>byteString</code>
-     * 				where the search is to begin.
-     * @param length		The number of bytes to search in
-     * 				<code>byteString</code>.
-     * @return			The array index where the pattern
-     * 				begins in the string, or <code>-1</code>
-     * 				if the pattern was not found.
+     *
+     * @param byteString Array of bytes in which to search
+     *                   for the pattern.
+     * @param offset     The the index in <code>byteString</code>
+     *                   where the search is to begin.
+     * @param length     The number of bytes to search in
+     *                   <code>byteString</code>.
+     * @return The array index where the pattern
+     * begins in the string, or <code>-1</code>
+     * if the pattern was not found.
      */
     public int search(byte[] byteString, int offset, int length) {
         int j, k, len;
         j = m + offset;
         k = m;
+        byte b;
         len = min(byteString.length, offset + length);
         while ((j <= len) && (k > 0)) {
-            if ((byteString[j - 1]) == P[k]) {
+            if ((b = byteString[j - 1]) == P[k]) {
                 j = j - 1;
                 k = k - 1;
             } else {
-                j = j + max(charJump[byteString[j - 1] + 128], matchJump[k]);
+                j = j + max(charJump[b + 128], matchJump[k]);
                 k = m;
             }
         }
