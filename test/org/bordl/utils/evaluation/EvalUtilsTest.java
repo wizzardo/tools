@@ -30,6 +30,7 @@ public class EvalUtilsTest {
         Map<String, Object> model = new HashMap<String, Object>();
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
 
+
         model = new HashMap<String, Object>();
         assertEquals(1, EvalUtils.evaluate("java.lang.Math.abs(-1)", null));
 
@@ -199,6 +200,7 @@ public class EvalUtilsTest {
         assertEquals(1, EvalUtils.evaluate("Math.abs(-1)", null));
         assertEquals(2, EvalUtils.evaluate("Math.abs(-1)+Math.abs(-1)", null));
         assertEquals(2d, EvalUtils.evaluate("Math.sqrt(2+2)", null));
+        assertEquals(4d, EvalUtils.evaluate("Math.pow(2,(2*2)/(2))", null));
 
         System.out.println("test constructors");
         assertEquals("ololo", EvalUtils.evaluate("new String(\"ololo\")", null));

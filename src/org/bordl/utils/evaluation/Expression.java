@@ -236,17 +236,6 @@ public abstract class Expression {
     private static final Pattern number = Pattern.compile("(\\d+\\.?\\d*)([dflb]?)");
     private static final Pattern bool = Pattern.compile("true|false", Pattern.CASE_INSENSITIVE);
 
-    static String clean(String s) {
-        if (s != null && s.length() > 0 && s.charAt(0) == '(' && (s.charAt(s.length() - 1) == ')' || (s.charAt(s.length() - 2) == ')' && s.charAt(s.length() - 1) == '.'))) {
-            if (s.charAt(s.length() - 1) == '.') {
-                return s.substring(1, s.length() - 2).trim();
-            } else {
-                return s.substring(1, s.length() - 1).trim();
-            }
-        }
-        return s != null ? s.trim() : null;
-    }
-
     @Override
     public String toString() {
         return exp;

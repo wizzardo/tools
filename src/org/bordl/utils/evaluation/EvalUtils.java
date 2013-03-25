@@ -180,7 +180,7 @@ public class EvalUtils {
                 if (countOpenBrackets(exp, last, m.start()) == 0) {
                     exps.add(exp.substring(last, m.start()).trim());
 //                    lastExpressionHolder = new ExpressionHolder(exp.substring(last, m.start()));
-                    lastExpressionHolder = prepare(Expression.clean(exp.substring(last, m.start())), model, functions);
+                    lastExpressionHolder = prepare(exp.substring(last, m.start()), model, functions);
                     if (operation != null) {
                         //complete last operation
                         operation.end(m.start());
@@ -193,7 +193,7 @@ public class EvalUtils {
                     last = m.end();
                     if (ternary) {
 //                        lastExpressionHolder = new ExpressionHolder(exp.substring(last, exp.length()));
-                        lastExpressionHolder = prepare(Expression.clean(exp.substring(last, exp.length())), model, functions);
+                        lastExpressionHolder = prepare(exp.substring(last, exp.length()), model, functions);
                         operation.rightPart(lastExpressionHolder);
                         break;
                     }
@@ -207,7 +207,7 @@ public class EvalUtils {
                     exps.add(exp.substring(last).trim());
                     operation.end(exp.length());
 //                    operation.rightPart(new ExpressionHolder(exp.substring(last)));
-                    operation.rightPart(prepare(Expression.clean(exp.substring(last)), model, functions));
+                    operation.rightPart(prepare(exp.substring(last), model, functions));
                 }
 
                 Expression eh = null;
@@ -262,7 +262,7 @@ public class EvalUtils {
             if (isMap(exp)) {
                 Map<String, Expression> map = new LinkedHashMap<String, Expression>();
                 for (Map.Entry<String, String> entry : parseMap(exp).entrySet()) {
-                    map.put(entry.getKey(), prepare(Expression.clean(entry.getValue()), model, functions));
+                    map.put(entry.getKey(), prepare(entry.getValue(), model, functions));
                 }
                 return new Expression.MapExpression(map);
             }
@@ -271,7 +271,7 @@ public class EvalUtils {
                 exp = exp.substring(1, exp.length() - 1);
                 List<String> arr = parseArgs(exp);
                 for (int i = 0; i < arr.size(); i++) {
-                    l.add(prepare(Expression.clean(arr.get(i)), model, functions));
+                    l.add(prepare(arr.get(i), model, functions));
                 }
                 return new Expression.CollectionExpression(l);
             }
@@ -354,10 +354,10 @@ public class EvalUtils {
 //                    System.out.println("thatObject2: " + exp.substring(0, m.start()));
                     if (last == 1 && m.group().endsWith("]")) { // init map
 //                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last - 1, m.end())), model, functions));
-                        thatObject = prepare(Expression.clean(exp.substring(last - 1, m.end())), model, functions);
+                        thatObject = prepare(exp.substring(last - 1, m.end()), model, functions);
                     } else {                                     // index or ordinary brackets
 //                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last, m.start())), model, functions));
-                        thatObject = prepare(Expression.clean(exp.substring(last, m.start())), model, functions);
+                        thatObject = prepare(exp.substring(last, m.start()), model, functions);
                     }
                 } else if (methodName == null && !(thatObject instanceof UserFunction)) {
                     if (m.group().equals(".")) { //chain of maps
@@ -373,7 +373,7 @@ public class EvalUtils {
                         continue;
                     }
 //                    System.out.println("prepare args: " + exp.substring(last, m.start()));
-                    String argsRaw = Expression.clean(exp.substring(last, m.start()));
+                    String argsRaw = exp.substring(last, m.start());
                     if (m.group().equals(".") && argsRaw.matches("\\d+")) {
                         continue;
                     }
@@ -387,7 +387,7 @@ public class EvalUtils {
                             List<String> arr = parseArgs(argsRaw);
                             args = new Expression[arr.size()];
                             for (int i = 0; i < arr.size(); i++) {
-                                args[i] = prepare(Expression.clean(arr.get(i)), model, functions);
+                                args[i] = prepare(arr.get(i), model, functions);
                             }
                         }
                         if (thatObject instanceof UserFunction) {
