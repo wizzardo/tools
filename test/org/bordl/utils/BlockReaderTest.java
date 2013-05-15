@@ -267,7 +267,7 @@ public class BlockReaderTest {
             }
         }).start();
         int r = 0;
-        byte[] b = new byte[10240];
+        byte[] b = new byte[1024*50];
         int n = 1;
         try {
             Thread.sleep(10);

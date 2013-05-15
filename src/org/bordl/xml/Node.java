@@ -381,9 +381,13 @@ public class Node {
             int i = 0;
             Node document = new Node("document");
             while ((i = parse(s.toCharArray(), i, xml, html) + 1) < s.length()) {
+                if (xml.name == null && xml.children.size() == 1)
+                    xml = xml.children.get(0);
                 document.add(xml);
                 xml = new Node();
             }
+            if (xml.name == null && xml.children.size() == 1)
+                xml = xml.children.get(0);
             document.add(xml);
             return document;
         } else {
@@ -579,6 +583,11 @@ public class Node {
         }
         if (attributeName != null && attributeName.length() > 0) {
             xml.attribute(attributeName, null);
+        }
+        String t;
+        if (sb.length() > 0 && !(t = sb.toString()).equals(xml.name)) {
+            xml.add(new TextNode(t));
+            sb.setLength(0);
         }
         return i;
     }

@@ -1,7 +1,7 @@
 package org.bordl.utils.xml;
 
-import junit.framework.Assert;
 import org.bordl.xml.Node;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -14,6 +14,9 @@ public class NodeTest {
     public void parse() {
         String s;
         Node xml;
+
+        s = "I say: '${hello}'";
+        Assert.assertEquals("I say: '${hello}'", Node.parse(s,true).textOwn());
 
         s = "<xml><xml>";
         Assert.assertEquals("xml", Node.parse(s).name());
