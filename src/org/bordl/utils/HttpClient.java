@@ -6,13 +6,11 @@ package org.bordl.utils;
  */
 
 import org.bordl.utils.security.Base64;
+import org.bordl.utils.security.MD5;
 
 import java.io.*;
 import java.net.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -350,7 +348,7 @@ public class HttpClient {
                         c.setRequestProperty("Connection", "Keep-Alive");
                         c.setRequestProperty("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryZzaC4MkAfrAMfJCJ");
                         c.setRequestProperty("Content-Length", String.valueOf(getLength()));
-                        c.setChunkedStreamingMode(10240);
+//                        c.setChunkedStreamingMode(10240);
                         OutputStream out = c.getOutputStream();
                         for (Map.Entry<String, String> param : params.entrySet()) {
                             out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
@@ -429,5 +427,20 @@ public class HttpClient {
         public String url() {
             return url;
         }
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        byte[] bytes = new byte[1024 * 100];
+        Random r = new Random();
+        r.nextBytes(bytes);
+
+        String md5 = MD5.getMD5AsString(bytes);
+
+        HttpClient.connect("http://localhost:8080/upload")
+                .method(HttpClient.ConnectionMethod.POST)
+                .addParameter("textField", "ololo")
+                .addByteArray("file", bytes, "test_data.bin")
+                .getAsString();
     }
 }

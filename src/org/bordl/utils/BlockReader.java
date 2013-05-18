@@ -8,7 +8,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author Moxa
  */
 public class BlockReader {
@@ -23,12 +22,19 @@ public class BlockReader {
     private int r, endimg, buffered;
     private BoyerMoore bm;
     private long blockLength = 0;
+    private long limit = 0;
+    private long totalRead = 0;
 
     public BlockReader(InputStream in, byte[] separator) {
         this.separator = Arrays.copyOf(separator, separator.length);
-        this.in = new PushbackInputStream(in, 1024*50);
+        this.in = new PushbackInputStream(in, 1024 * 50);
         buffer = new byte[separator.length];
         bm = new BoyerMoore(separator);
+    }
+
+    public BlockReader(InputStream in, byte[] separator, long limit) {
+        this(in, separator);
+        this.limit = limit;
     }
 
     public InputStream getInputStream() throws IOException {
@@ -42,6 +48,9 @@ public class BlockReader {
     }
 
     public boolean hasNext() throws IOException {
+        if (dynamicBuffer == null && limit > 0 && totalRead >= limit) {
+            return false;
+        }
         return dynamicBuffer != null || ready();
     }
 
@@ -55,6 +64,9 @@ public class BlockReader {
     }
 
     public int read(byte[] b, int off, int l) throws IOException {
+        if (dynamicBuffer == null && limit > 0 && totalRead >= limit) {
+            return -1;
+        }
         if (l < separator.length) {
             throw new IllegalArgumentException("byte array MUST be bigger then separator");
         }
@@ -83,6 +95,7 @@ public class BlockReader {
                 r = in.read(b, buffered + off, l - buffered);
                 if (r != -1) {
                     r += buffered;
+                    totalRead += r;
                 } else {
                     r = buffered;
                 }
@@ -90,6 +103,7 @@ public class BlockReader {
             } else {
                 if (ready()) {
                     r = in.read(b, off, l);
+                    totalRead += r;
                 } else {
                     r = -1;
                 }
@@ -170,7 +184,7 @@ public class BlockReader {
     }
 
     public boolean ready() throws IOException {
-        if (!close) {
+        if (!close && (dynamicBuffer == null && limit > 0 && totalRead < limit)) {
             long wait = 0;
             int r;
             while ((r = in.read()) == -1 && wait < 500) {
