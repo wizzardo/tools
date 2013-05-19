@@ -543,7 +543,7 @@ public class Node {
                         sb.append(s[i]);
                         break;
                     }
-                    if (inString) {
+                    if (inString || !inTag) {
                         sb.append('/');
                         break;
                     }
