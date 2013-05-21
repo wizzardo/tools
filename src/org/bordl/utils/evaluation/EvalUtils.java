@@ -27,6 +27,22 @@ public class EvalUtils {
         return n;
     }
 
+    private static boolean inString(String s, int from, int to) {
+        boolean inString = false;
+        char quote = 0;
+        for (int i = from; i < to; i++) {
+            if (!inString) {
+                if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i > 1 && s.charAt(i - 1) != '\\'))) {
+                    quote = s.charAt(i);
+                    inString = true;
+                }
+            } else if ((s.charAt(i) == quote) && i > 1 && s.charAt(i - 1) != '\\') {
+                inString = false;
+            }
+        }
+        return inString;
+    }
+
     public static enum EvaluatingStrategy {
         DEFAULT_JAVA, FLOAT, DOUBLE
     }
@@ -177,7 +193,7 @@ public class EvalUtils {
                     }
                 }
 //                System.out.println(m.group());
-                if (countOpenBrackets(exp, last, m.start()) == 0) {
+                if (countOpenBrackets(exp, last, m.start()) == 0 && !inString(exp, last, m.start())) {
                     exps.add(exp.substring(last, m.start()).trim());
 //                    lastExpressionHolder = new ExpressionHolder(exp.substring(last, m.start()));
                     lastExpressionHolder = prepare(exp.substring(last, m.start()), model, functions);
@@ -412,6 +428,9 @@ public class EvalUtils {
         }
         String field = exp.substring(last).trim();
         if (field.length() > 0 && !field.equals("null") && !field.equals(")")) {
+//            if (thatObject == null)
+//                thatObject = new Expression.Holder(field);
+//            else
             thatObject = new Function(thatObject, field);
         }
         if (methodName != null) {

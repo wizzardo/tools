@@ -31,9 +31,7 @@ public class EvalUtilsTest {
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
 
 
-        model = new HashMap<String, Object>();
         assertEquals(1, EvalUtils.evaluate("java.lang.Math.abs(-1)", null));
-
 
         assertEquals(1, EvalUtils.evaluate("(1)", new HashMap<String, Object>()));
         assertEquals(1, EvalUtils.evaluate("((1))", new HashMap<String, Object>()));
@@ -41,6 +39,7 @@ public class EvalUtilsTest {
         assertEquals(2.0, EvalUtils.evaluate("1+1.0", new HashMap<String, Object>()));
         assertEquals(5, EvalUtils.evaluate("1+1+3", new HashMap<String, Object>()));
         assertEquals("olo123", EvalUtils.evaluate("\"olo\"+1+(1+1)+3", new HashMap<String, Object>()));
+        assertEquals("olo123", EvalUtils.evaluate("'olo'+1+(1+1)+3", new HashMap<String, Object>()));
         assertEquals("OLO123", EvalUtils.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()", new HashMap<String, Object>()));
         assertEquals("ololo", EvalUtils.evaluate("\"olo\".concat(\"lo\")", new HashMap<String, Object>()));
 
@@ -356,6 +355,13 @@ public class EvalUtilsTest {
             exception = true;
         }
         assertTrue(exception);
+
+        model.clear();
+        model.put("it", 1);
+        model.put("pageNumber", 0);
+        assertEquals("", EvalUtils.evaluate(" it == pageNumber ? 'style=\"font-size: 20px;\"' : ''", model));
+        model.put("it", 0);
+        assertEquals("style=\"font-size: 20px;\"", EvalUtils.evaluate(" it == pageNumber ? 'style=\"font-size: 20px;\"' : ''", model));
 
     }
 

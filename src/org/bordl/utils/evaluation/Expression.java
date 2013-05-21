@@ -203,7 +203,7 @@ public abstract class Expression {
         }
         Matcher m = string.matcher(exp);
         if (m.matches()) {
-            return m.group(1);
+            return m.group(1) == null ? m.group(2).replace("\\'", "'") : m.group(1).replace("\\\"", "\"");
         }
         m = number.matcher(exp);
         if (m.matches()) {
@@ -232,7 +232,7 @@ public abstract class Expression {
         return null;
     }
 
-    private static final Pattern string = Pattern.compile("\"(.*)\"");
+    private static final Pattern string = Pattern.compile("\"(.*)\"|\'(.*)\'");
     private static final Pattern number = Pattern.compile("(\\d+\\.?\\d*)([dflb]?)");
     private static final Pattern bool = Pattern.compile("true|false", Pattern.CASE_INSENSITIVE);
 

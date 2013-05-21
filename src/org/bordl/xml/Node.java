@@ -372,15 +372,19 @@ public class Node {
     }
 
     public static Node parse(String s, boolean html) {
+        return parse(s, html, false);
+    }
+
+    public static Node parse(String s, boolean html, boolean gsp) {
         // check first char
         s = s.trim();
         Node xml = new Node();
         if (s.startsWith("<?xml ")) {
-            parse(s.toCharArray(), s.indexOf("?>") + 2, xml, html);
+            parse(s.toCharArray(), s.indexOf("?>") + 2, xml, html, gsp);
         } else if (html) {
             int i = 0;
             Node document = new Node("document");
-            while ((i = parse(s.toCharArray(), i, xml, html) + 1) < s.length()) {
+            while ((i = parse(s.toCharArray(), i, xml, html, gsp) + 1) < s.length()) {
                 if (xml.name == null && xml.children.size() == 1)
                     xml = xml.children.get(0);
                 document.add(xml);
@@ -391,7 +395,7 @@ public class Node {
             document.add(xml);
             return document;
         } else {
-            parse(s.toCharArray(), 0, xml, html);
+            parse(s.toCharArray(), 0, xml, html, gsp);
         }
         return xml;
     }
@@ -401,6 +405,10 @@ public class Node {
     }
 
     public static Node parse(File f, boolean html) throws IOException {
+        return parse(f, html, false);
+    }
+
+    public static Node parse(File f, boolean html, boolean gsp) throws IOException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         FileInputStream in = new FileInputStream(f);
         int r;
@@ -408,10 +416,10 @@ public class Node {
         while ((r = in.read(b)) != -1) {
             bout.write(b, 0, r);
         }
-        return parse(new String(bout.toByteArray()), html);
+        return parse(new String(bout.toByteArray()), html, gsp);
     }
 
-    private static int parse(char[] s, int from, Node xml, boolean html) {
+    private static int parse(char[] s, int from, Node xml, boolean html, boolean gsp) {
         int i = from;
         StringBuilder sb = new StringBuilder();
         boolean inString = false;
@@ -422,11 +430,48 @@ public class Node {
         boolean checkClose = false;
         boolean comment = false;
         boolean inTag = false;
+        boolean inGroovy = false;
+        char quote = 0, ch;
         outer:
         while (i < s.length) {
+            ch = s[i];
+            if (gsp && inGroovy) {
+                switch (ch) {
+                    case '}': {
+                        sb.append('}');
+                        if (!inString) {
+                            inGroovy = false;
+                            xml.attribute(sb.toString(), null);
+                        }
+                        break;
+                    }
+                    case '\"':
+                    case '\'': {
+                        if (inString) {
+                            if (quote == ch && s[i - i] != '\\')
+                                inString = false;
+                        } else {
+                            quote = ch;
+                            inString = true;
+                        }
+                        sb.append(ch);
+                        break;
+                    }
+                    default:
+                        sb.append(s[i]);
+                }
+                i++;
+                continue;
+            }
+            if (checkClose && html && s[i] != '/' && xml.name.equals("script")) {
+                sb.append('<').append(s[i]);
+                i++;
+                checkClose = false;
+                continue;
+            }
             switch (s[i]) {
                 case '"': {
-                    if (comment) {
+                    if (comment || !inTag) {
                         sb.append(s[i]);
                         break;
                     }
@@ -450,7 +495,7 @@ public class Node {
                         sb.append(s[i]);
                         break;
                     }
-                    if (sb.length() > 0) {
+                    if (sb.length() > 0 && !(html && xml.name.equals("script"))) {
                         xml.add(new TextNode(sb.toString()));
                         sb.setLength(0);
                     }
@@ -488,7 +533,7 @@ public class Node {
                     break;
                 }
                 case '=': {
-                    if (comment) {
+                    if (comment || !inTag) {
                         sb.append(s[i]);
                         break;
                     }
@@ -502,6 +547,14 @@ public class Node {
                     break;
                 }
                 case '>': {
+//                    if ("script".equals(xml.name)) {
+//                        System.out.println();
+//                    }
+                    if (html && (inString || ("script".equals(xml.name) && !sb.toString().equals(xml.name)))) {
+                        sb.append('>');
+                        break;
+                    }
+
                     if (attribute) {
                         attributeName = sb.toString().trim();
                         sb.setLength(0);
@@ -531,6 +584,9 @@ public class Node {
                                 throw new IllegalStateException("illegal close tag: " + sb.toString() + ". close tag must be: " + xml.name());
                         }
                     }
+//                    if (!end && xml.name == null) {
+//                        System.out.println();
+//                    }
                     if (end) {
                         break outer;
                     } else if (html && selfClosedTags.contains(xml.name().toLowerCase())) {
@@ -543,7 +599,7 @@ public class Node {
                         sb.append(s[i]);
                         break;
                     }
-                    if (inString || !inTag) {
+                    if (!checkClose && (inString || !inTag)) {
                         sb.append('/');
                         break;
                     }
@@ -551,6 +607,10 @@ public class Node {
                         attributeName = sb.toString().trim();
                         sb.setLength(0);
                         attribute = false;
+                    }
+                    if (checkClose && sb.length() > 0) {
+                        xml.add(new TextNode(sb.toString()));
+                        sb.setLength(0);
                     }
                     end = true;
                     checkClose = false;
@@ -562,6 +622,13 @@ public class Node {
                     }
                     break;
                 }
+                case '{': {
+                    if (!inString && inTag && i > 0 && s[i - 1] == '$') {
+                        inGroovy = true;
+                    }
+                    sb.append('{');
+                    break;
+                }
                 default: {
                     if (checkClose && !end) {
                         if (s[i] == '!') {
@@ -569,7 +636,7 @@ public class Node {
                             inTag = false;
                         } else {
                             Node child = new Node();
-                            i = parse(s, i - 1, child, html);
+                            i = parse(s, i - 1, child, html, gsp);
                             xml.add(child);
                         }
                         checkClose = false;
