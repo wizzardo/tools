@@ -136,8 +136,9 @@ public class MapUtils {
     }
 
     public static String getString(Map map, String key, String def) {
-        if (map.containsKey(key)) {
-            return map.get(key).toString();
+        String s = getString(map, key);
+        if (s != null) {
+            return s;
         }
         return def;
     }
