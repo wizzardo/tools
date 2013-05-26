@@ -4,11 +4,14 @@
  */
 package org.bordl.utils;
 
+import org.bordl.utils.io.BlockReader;
+import org.bordl.utils.io.ProgressListener;
 import org.bordl.utils.security.MD5;
 import org.junit.Test;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -225,11 +228,11 @@ public class BlockReaderTest {
 
     @Test
     public void test4() throws IOException {
-
+        final int partLength = 1024;
         final byte[][] data = new byte[100][];
         final Random random = new Random();
         for (int i = 0; i < data.length; i++) {
-            data[i] = new byte[1024];
+            data[i] = new byte[partLength];
             random.nextBytes(data[i]);
         }
         final HashMap<Integer, String> hashMapIn = new HashMap<Integer, String>();
@@ -237,24 +240,37 @@ public class BlockReaderTest {
         final MD5 md5In = new MD5();
         final MD5 md5Out = new MD5();
         final PipedOutputStream out = new PipedOutputStream();
-        final PipedInputStream in = new PipedInputStream(out,1024*1024);
+        final PipedInputStream in = new PipedInputStream(out, 1024 * 1024);
         final byte[] separator = "!!!!separator!!!!".getBytes();
-        final BlockReader br = new BlockReader(in, separator);
         long time = System.currentTimeMillis();
+        final int k = 100;
+        final int parts = 10240;
+
+        ProgressListener pl = new ProgressListener() {
+            @Override
+            protected void onProgressChanged(int progress) {
+                System.out.println(progress);
+            }
+        };
+        int length = (separator.length + partLength * parts) * (k - 1);
+        final AtomicLong writed = new AtomicLong();
+        final BlockReader br = new BlockReader(in, separator, length, pl);
         new Thread(new Runnable() {
             public void run() {
                 int i = 1;
-                while (i < 100) {
+                while (i < k) {
                     try {
-                        for (int j = 0; j < 1024 * 10; j++) {
+                        for (int j = 0; j < parts; j++) {
                             int n = random.nextInt(data.length);
                             out.write(data[n]);
+                            writed.addAndGet(data[n].length);
                             md5Out.update(data[n], 0, data[n].length);
                         }
                         hashMapOut.put(i, md5Out.toString());
                         i++;
                         md5Out.reset();
                         out.write(separator);
+                        writed.addAndGet(separator.length);
                     } catch (IOException ex) {
                         Logger.getLogger(BlockReaderTest.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -267,7 +283,7 @@ public class BlockReaderTest {
             }
         }).start();
         int r = 0;
-        byte[] b = new byte[1024*50];
+        byte[] b = new byte[1024 * 50];
         int n = 1;
         try {
             Thread.sleep(10);
@@ -289,7 +305,7 @@ public class BlockReaderTest {
             }
             time = System.currentTimeMillis() - time;
             System.out.println("end reading: " + time + "ms for " + t + " bytes");
-            System.out.println("speed: "+(t/1024f/1024f)/(time/1000f)+" MB/s");
+            System.out.println("speed: " + (t / 1024f / 1024f) / (time / 1000f) + " MB/s");
             assertEquals(100, n);
             LinkedList<Integer> list = new LinkedList<Integer>(hashMapOut.keySet());
             Collections.sort(list);

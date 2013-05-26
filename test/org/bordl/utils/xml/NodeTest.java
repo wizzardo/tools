@@ -4,6 +4,9 @@ import org.bordl.xml.Node;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+
 /**
  * @author: moxa
  * Date: 2/11/13
@@ -16,7 +19,7 @@ public class NodeTest {
         Node xml;
 
         s = "I say: '${hello}'";
-        Assert.assertEquals("I say: '${hello}'", Node.parse(s,true).textOwn());
+        Assert.assertEquals("I say: '${hello}'", Node.parse(s, true).textOwn());
 
         s = "<xml><xml>";
         Assert.assertEquals("xml", Node.parse(s).name());
@@ -64,5 +67,14 @@ public class NodeTest {
         Assert.assertEquals("lo", Node.parse(s).textOwn());
 
 
+    }
+
+    @Test
+    public void html() throws IOException {
+        String s = "";
+        for (File f : new File("test/resources/xml").listFiles()) {
+            System.out.println("parsing: "+f);
+            Node.parse(f, true);
+        }
     }
 }

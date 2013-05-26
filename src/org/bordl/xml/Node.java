@@ -5,10 +5,9 @@ package org.bordl.xml;
  * Date: 12/24/12
  */
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import org.bordl.utils.io.FileUtils;
+
+import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +24,7 @@ public class Node {
     protected Node parent;
 
     private static final Set<String> selfClosedTags = new HashSet<String>();
+    private static final Set<String> anotherLanguageTags = new HashSet<String>();
 
     static {
         selfClosedTags.add("area");
@@ -44,6 +44,9 @@ public class Node {
         selfClosedTags.add("track");
         selfClosedTags.add("wbr");
         selfClosedTags.add("!doctype");
+
+        anotherLanguageTags.add("script");
+        anotherLanguageTags.add("style");
     }
 
     public Node(String name) {
@@ -431,10 +434,12 @@ public class Node {
         boolean comment = false;
         boolean inTag = false;
         boolean inGroovy = false;
+        boolean inAnotherLanguageTag = false;
         char quote = 0, ch;
         outer:
         while (i < s.length) {
             ch = s[i];
+
             if (gsp && inGroovy) {
                 switch (ch) {
                     case '}': {
@@ -463,12 +468,26 @@ public class Node {
                 i++;
                 continue;
             }
-            if (checkClose && html && s[i] != '/' && xml.name.equals("script")) {
+
+            if (!inTag && inAnotherLanguageTag) {
+                String t;
+                if (ch == '>' && (t = sb.toString().trim()).endsWith("</" + xml.name)) {
+                    xml.add(new TextNode(t.substring(0, t.length() - 2 - xml.name.length())));
+                    sb.setLength(0);
+                    break outer;
+                }
+                sb.append(ch);
+                i++;
+                continue;
+            }
+
+            if (checkClose && html && s[i] != '/' && inAnotherLanguageTag) {
                 sb.append('<').append(s[i]);
                 i++;
                 checkClose = false;
                 continue;
             }
+
             switch (s[i]) {
                 case '"': {
                     if (comment || !inTag) {
@@ -495,7 +514,7 @@ public class Node {
                         sb.append(s[i]);
                         break;
                     }
-                    if (sb.length() > 0 && !(html && xml.name.equals("script"))) {
+                    if (sb.length() > 0 && !(html && inAnotherLanguageTag)) {
                         xml.add(new TextNode(sb.toString()));
                         sb.setLength(0);
                     }
@@ -514,6 +533,7 @@ public class Node {
                         name = false;
                         if (!end) {
                             xml.name(sb.toString());
+                            inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
                             sb.setLength(0);
                             attribute = true;
                         }
@@ -550,7 +570,7 @@ public class Node {
 //                    if ("script".equals(xml.name)) {
 //                        System.out.println();
 //                    }
-                    if (html && (inString || ("script".equals(xml.name) && !sb.toString().equals(xml.name)))) {
+                    if (html && (inString || (inAnotherLanguageTag && !inTag && !sb.toString().equals(xml.name)))) {
                         sb.append('>');
                         break;
                     }
@@ -575,12 +595,14 @@ public class Node {
                         name = false;
                         if (!end) {
                             xml.name(sb.toString());
+                            inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
                             sb.setLength(0);
                         } else {
                             if (xml.name() == null) {
                                 xml.name(sb.toString());
+                                inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
                                 sb.setLength(0);
-                            } else if (!sb.toString().equals(xml.name()))
+                            } else if (!sb.toString().equals(xml.name))
                                 throw new IllegalStateException("illegal close tag: " + sb.toString() + ". close tag must be: " + xml.name());
                         }
                     }
@@ -657,5 +679,18 @@ public class Node {
             sb.setLength(0);
         }
         return i;
+    }
+
+    public static void main(String[] args) throws IOException {
+//        String s = "<head>\n" +
+//                "    <script src=\"video.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\n" +
+//                "\n" +
+//                "    <script type=\"text/javascript\">\n" +
+//                "        VideoJS.setupAllWhenReady();\n" +
+//                "    </script>" +
+//                "</head>";
+//
+        String s = FileUtils.text("/home/moxa/IdeaProjects/WVC/views/UploadController/index_temp.gsp");
+        System.out.println(Node.parse(s, true, true));
     }
 }

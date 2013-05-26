@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<form id="form" action="/upload" enctype="multipart/form-data" method="post">
+    <input type="file" name="filename"/>
+    <input type="button" value="upload" onclick="upload(1);">
+</form>
+</body>
+</html>
+<script>
+    function upload(id) {
+        parent.start(id);
+        document.getElementById("form").submit();
+        document.getElementById("form").style.display = 'none';
+    }
+</script>

@@ -1,4 +1,4 @@
-package org.bordl.utils;
+package org.bordl.utils.io;
 
 import java.io.IOException;
 import java.io.InputStream;

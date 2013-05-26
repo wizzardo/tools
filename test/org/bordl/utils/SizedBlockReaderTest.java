@@ -4,6 +4,8 @@
  */
 package org.bordl.utils;
 
+import org.bordl.utils.io.SizedBlockReader;
+import org.bordl.utils.io.SizedBlockWriter;
 import org.bordl.utils.security.MD5;
 import org.junit.Test;
 

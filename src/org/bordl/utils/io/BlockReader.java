@@ -1,4 +1,6 @@
-package org.bordl.utils;
+package org.bordl.utils.io;
+
+import org.bordl.utils.BoyerMoore;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +26,7 @@ public class BlockReader {
     private long blockLength = 0;
     private long limit = 0;
     private long totalRead = 0;
+    private ProgressListener progressListener;
 
     public BlockReader(InputStream in, byte[] separator) {
         this.separator = Arrays.copyOf(separator, separator.length);
@@ -35,6 +38,11 @@ public class BlockReader {
     public BlockReader(InputStream in, byte[] separator, long limit) {
         this(in, separator);
         this.limit = limit;
+    }
+
+    public BlockReader(InputStream in, byte[] separator, long limit, ProgressListener progressListener) {
+        this(in, separator, limit);
+        this.progressListener = progressListener;
     }
 
     public InputStream getInputStream() throws IOException {
@@ -109,6 +117,14 @@ public class BlockReader {
                 }
             }
         }
+
+        if (progressListener != null) {
+            if (totalRead != limit)
+                progressListener.setProgress((int) (totalRead * 100f / limit));
+            else
+                progressListener.setProgress(100);
+        }
+
         if (r != -1) {
             findedIndex = bm.search(b, off, r);
             if (findedIndex != -1) {
