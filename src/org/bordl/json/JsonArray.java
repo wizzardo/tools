@@ -21,18 +21,20 @@ public class JsonArray extends ArrayList<JsonItem> {
         if (from == to) {
             return;
         }
-        String value = new String(s, from, to - from);
 
         if (s[from] == '"' && s[to - 1] == '"') {
-            value = value.substring(1, value.length() - 1);
+            from++;
+            to--;
+            String value = JsonObject.unescape(s, from, to);
             json.add(new JsonItem(value));
-        } else if (value.equals("null")) {
-            json.add(null);
-        } else if (value.equals("true")) {
+        } else if (to - from == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l') {
+            json.add(new JsonItem(null));
+        } else if (to - from == 4 && s[from] == 'e' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e') {
             json.add(new JsonItem(true));
-        } else if (value.equals("false")) {
+        } else if (to - from == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e') {
             json.add(new JsonItem(false));
         } else {
+            String value = JsonObject.unescape(s, from, to);
             json.add(new JsonItem(value));
         }
     }
@@ -53,7 +55,7 @@ public class JsonArray extends ArrayList<JsonItem> {
             }
             switch (ch) {
                 case '"': {
-                    inString=s[i - 1] != '\\';
+                    inString = s[i - 1] != '\\';
                     break;
                 }
                 case ',': {
@@ -93,11 +95,17 @@ public class JsonArray extends ArrayList<JsonItem> {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        toString(sb);
+        toJson(sb);
         return sb.toString();
     }
 
-    public String toString(StringBuilder sb) {
+    public String toJson() {
+        StringBuilder sb = new StringBuilder();
+        toJson(sb);
+        return sb.toString();
+    }
+
+    void toJson(StringBuilder sb) {
         sb.append('[');
         boolean comma = false;
         for (JsonItem item : this) {
@@ -107,6 +115,13 @@ public class JsonArray extends ArrayList<JsonItem> {
             item.toJson(sb);
         }
         sb.append(']');
-        return sb.toString();
+    }
+
+    public JsonArray append(Object ob) {
+        if (ob instanceof JsonItem) {
+            add((JsonItem) ob);
+        } else
+            add(new JsonItem(ob));
+        return this;
     }
 }

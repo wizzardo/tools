@@ -8,10 +8,11 @@ public class JsonItem {
     private Object ob;
 
     public JsonItem(Object ob) {
-        if (ob.getClass() == String.class) {
-            this.ob=JsonObject.unescape(String.valueOf(ob));
-        } else
-            this.ob = ob;
+        this.ob = ob;
+    }
+
+    public boolean isNull() {
+        return ob == null;
     }
 
     public String asString() {
@@ -27,6 +28,9 @@ public class JsonItem {
     }
 
     public Long asLong(Long def) {
+        if (ob == null)
+            return def;
+
         if (ob instanceof Long) {
             return (Long) ob;
         }
@@ -44,11 +48,54 @@ public class JsonItem {
     }
 
     public Integer asInteger(Integer def) {
-        if (ob instanceof Integer) {
+        if (ob == null)
+            return def;
+
+        if (ob instanceof Integer)
             return (Integer) ob;
-        }
+
         try {
             Integer i = Integer.parseInt(ob.toString());
+            ob = i;
+            return i;
+        } catch (NumberFormatException ex) {
+        }
+        return def;
+    }
+
+    public Byte asByte() {
+        return asByte(null);
+    }
+
+    public Byte asByte(Byte def) {
+        if (ob == null)
+            return def;
+
+        if (ob instanceof Byte) {
+            return (Byte) ob;
+        }
+        try {
+            Byte i = Byte.parseByte(ob.toString());
+            ob = i;
+            return i;
+        } catch (NumberFormatException ex) {
+        }
+        return def;
+    }
+
+    public Short asShort() {
+        return asShort(null);
+    }
+
+    public Short asShort(Short def) {
+        if (ob == null)
+            return def;
+
+        if (ob instanceof Short) {
+            return (Short) ob;
+        }
+        try {
+            Short i = Short.parseShort(ob.toString());
             ob = i;
             return i;
         } catch (NumberFormatException ex) {
@@ -61,6 +108,9 @@ public class JsonItem {
     }
 
     public Double asDouble(Double def) {
+        if (ob == null)
+            return def;
+
         if (ob instanceof Double) {
             return (Double) ob;
         }
@@ -78,6 +128,9 @@ public class JsonItem {
     }
 
     public Float asFloat(Float def) {
+        if (ob == null)
+            return def;
+
         if (ob instanceof Float) {
             return (Float) ob;
         }
@@ -95,6 +148,9 @@ public class JsonItem {
     }
 
     public Boolean asBoolean(Boolean def) {
+        if (ob == null)
+            return def;
+
         if (ob instanceof Boolean) {
             return (Boolean) ob;
         }
@@ -120,6 +176,7 @@ public class JsonItem {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getAs(Class<T> clazz) {
         if (String.class == clazz) {
             return (T) asString();
@@ -133,36 +190,32 @@ public class JsonItem {
             return (T) asBoolean();
         } else if (Float.class == clazz || float.class == clazz) {
             return (T) asFloat();
+        } else if (Byte.class == clazz || byte.class == clazz) {
+            return (T) asByte();
+        } else if (Short.class == clazz || short.class == clazz) {
+            return (T) asShort();
         }
         return null;
     }
 
     public String toString() {
-        return String.valueOf(ob);
+        return toJson();
     }
 
     public String toJson() {
-        if (ob instanceof JsonObject) {
-            return ob.toString();
-        }
-        if (ob instanceof JsonArray) {
-            return ob.toString();
-        }
-        if (ob.getClass() == String.class) {
-            return "\"" + JsonObject.escape(ob.toString()) + "\"";
-        }
-        return String.valueOf(ob);
+        StringBuilder sb = new StringBuilder();
+        toJson(sb);
+        return sb.toString();
     }
 
-
-    public void toJson(StringBuilder sb) {
+    void toJson(StringBuilder sb) {
         if (ob instanceof JsonObject) {
-            ((JsonObject) ob).toString(sb);
+            ((JsonObject) ob).toJson(sb);
         } else if (ob instanceof JsonArray) {
-            ((JsonArray) ob).toString(sb);
+            ((JsonArray) ob).toJson(sb);
         } else if (ob.getClass() == String.class) {
             sb.append('"').append(JsonObject.escape(ob.toString())).append('"');
         } else
-            sb.append(String.valueOf(ob));
+            sb.append(ob);
     }
 }

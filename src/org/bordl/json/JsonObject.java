@@ -79,18 +79,16 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         if (s[from] == '"' && s[to - 1] == '"') {
             from++;
             to--;
-            String value = new String(s, from, to - from);
+            String value = JsonObject.unescape(s, from, to);
             json.put(key, new JsonItem(value));
-            return;
-        }
-        String value = new String(s, from, to - from);
-        if (value.equals("null")) {
-            json.put(key, null);
-        } else if (value.equals("true")) {
+        } else if (to - from == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l') {
+            json.put(key, new JsonItem(null));
+        } else if (to - from == 4 && s[from] == 'e' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e') {
             json.put(key, new JsonItem(true));
-        } else if (value.equals("false")) {
+        } else if (to - from == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e') {
             json.put(key, new JsonItem(false));
         } else {
+            String value = JsonObject.unescape(s, from, to);
             json.put(key, new JsonItem(value));
         }
     }
@@ -112,7 +110,7 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
             }
             switch (ch) {
                 case '"': {
-                    inString=s[i - 1] != '\\';
+                    inString = s[i - 1] != '\\';
                     break;
                 }
                 case ':': {
@@ -202,13 +200,20 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         }//for
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        toString(sb);
+        toJson(sb);
         return sb.toString();
     }
 
-    public void toString(StringBuilder sb) {
+    public String toJson() {
+        StringBuilder sb = new StringBuilder();
+        toJson(sb);
+        return sb.toString();
+    }
+
+    void toJson(StringBuilder sb) {
         sb.append('{');
         boolean comma = false;
         for (Map.Entry<String, JsonItem> entry : entrySet()) {
@@ -217,17 +222,22 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
             comma = true;
             if (entry.getValue() == null)
                 sb.append(entry.getKey()).append(":null");
-            else
-                sb.append(entry.getKey()).append(':').append(entry.getValue().toJson());
+            else {
+                sb.append(entry.getKey()).append(':');
+                entry.getValue().toJson(sb);
+            }
         }
         sb.append('}');
     }
 
-    public static String unescape(String s) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char ch = s.charAt(i);
-            if (i > 0 && s.charAt(i - 1) == '\\') {
+    public static String unescape(char[] s, int from, int to) {
+        StringBuilder sb = new StringBuilder(to - from);
+        char ch, prev = 0;
+        for (int i = from; i < to; i++) {
+            ch = s[i];
+            if (prev == '\\') {
+                sb.append(s, from, i - from);
+
                 switch (ch) {
                     case '"':
                         sb.setCharAt(sb.length() - 1, '"');
@@ -254,11 +264,19 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                         sb.setCharAt(sb.length() - 1, '/');
                         break;
                 }
-            } else {
-                sb.append(ch);
+
+                from = i + 1;
             }
+            prev = ch;
+        }
+        if (from < to) {
+            sb.append(s, from, to - from);
         }
         return sb.toString();
+    }
+
+    public boolean isNull(String key) {
+        return get(key).isNull();
     }
 
     public String getAsString(String key) {
@@ -325,4 +343,17 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         JsonItem item = get(key);
         return item == null ? null : item.asJsonArray();
     }
+
+    public static <T> T bind(String json, Class<T> clazz) {
+        return Binder.fromJSON(clazz, parse(json).asJsonObject());
+    }
+
+    public JsonObject append(String key, Object ob) {
+        if (ob instanceof JsonItem) {
+            put(key, (JsonItem) ob);
+        } else
+            put(key, new JsonItem(ob));
+        return this;
+    }
+
 }
