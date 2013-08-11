@@ -6,10 +6,11 @@ package org.bordl.utils;
  */
 
 import org.bordl.utils.security.Base64;
-import org.bordl.utils.security.MD5;
 
 import java.io.*;
 import java.net.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -20,9 +21,17 @@ import java.util.logging.Logger;
  */
 public class HttpClient {
 
-    private static String createPostParameters(Map<String, String> params) {
-        return createPostParameters(params, null);
-    }
+    private static ThreadLocal<SimpleDateFormat> dateFormatThreadLocal = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        public SimpleDateFormat get() {
+            SimpleDateFormat format = super.get();
+            if (format == null) {           //Sat, 09-Aug-2014 13:12:45 GMT
+                format = new SimpleDateFormat("EEE, dd-MMM-yyyy kk:mm:ss z", Locale.US);
+                this.set(format);
+            }
+            return format;
+        }
+    };
 
     private static String createPostParameters(Map<String, String> params, String urlEncoding) {
         if (params == null || params.isEmpty()) {
@@ -137,6 +146,25 @@ public class HttpClient {
         }
     }
 
+    public static class Cookie {
+        String key;
+        String value;
+        String path;
+        String domain;
+        Date expired;
+
+        public Cookie(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            //Set-Cookie: RMID=732423sdfs73242; expires=Fri, 31 Dec 2010 23:59:59 GMT; path=/; domain=.example.net
+            return key + "=" + value + "; expires=" + expired + "; path=" + path + "; domain=" + domain;
+        }
+    }
+
     public static class Connection {
 
         private int maxRetryCount = 0;
@@ -209,6 +237,29 @@ public class HttpClient {
             return this;
         }
 
+        public Connection cookie(Cookie cookie) {
+            headers.put("Cookie", cookie.key + "=" + cookie.value);
+            return this;
+        }
+
+        public Connection setCookie(Cookie cookie) {
+            return cookie(cookie);
+        }
+
+        public Connection cookies(List<Cookie> cookies) {
+            headers.put("Cookie", CollectionUtils.join(CollectionUtils.collect(cookies, new CollectionUtils.Closure<String, Cookie>() {
+                @Override
+                public String execute(Cookie it) {
+                    return it.key + "=" + it.value;
+                }
+            }), "; "));
+            return this;
+        }
+
+        public Connection setCookies(List<Cookie> cookies) {
+            return cookies(cookies);
+        }
+
         public Connection setReferer(String referer) {
             headers.put("Referer", referer);
             return this;
@@ -240,7 +291,7 @@ public class HttpClient {
         }
 
         public Connection disableRedirects() {
-            redirects=false;
+            redirects = false;
             return this;
         }
 
@@ -287,6 +338,42 @@ public class HttpClient {
 
         public HttpURLConnection connect() throws IOException {
             return connect(0);
+        }
+
+        public List<Cookie> getCookies() throws IOException {
+            HttpURLConnection connection = connect();
+            //Set-Cookie: RMID=732423sdfs73242; expires=Fri, 31 Dec 2010 23:59:59 GMT; path=/; domain=.example.net
+            List<Cookie> cookies = new ArrayList<Cookie>();
+
+            for (String raw : connection.getHeaderFields().get("Set-Cookie")) {
+                String[] data = raw.split("; ");
+                String[] kv = data[0].split("=", 2);
+
+                Cookie cookie = new Cookie(kv[0], kv[1]);
+
+                kv = data[1].split("=", 2);
+                try {
+                    cookie.expired = dateFormatThreadLocal.get().parse(kv[1]);
+                } catch (ParseException ignore) {
+                }
+
+                if (data.length > 2) {
+                    kv = data[2].split("=", 2);
+                    cookie.path = kv[1];
+                } else {
+                    cookie.path = "/";
+                }
+
+                if (data.length > 3) {
+                    kv = data[3].split("=", 2);
+                    cookie.domain = kv[1];
+                }else{
+                    cookie.domain=connection.getURL().getHost();
+                }
+                cookies.add(cookie);
+            }
+
+            return cookies;
         }
 
         public String getAsString() throws IOException {
@@ -429,18 +516,26 @@ public class HttpClient {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ParseException {
 
-        byte[] bytes = new byte[1024 * 100];
-        Random r = new Random();
-        r.nextBytes(bytes);
+//        byte[] bytes = new byte[1024 * 100];
+//        Random r = new Random();
+//        r.nextBytes(bytes);
+//
+//        String md5 = MD5.getMD5AsString(bytes);
+//
+//        HttpClient.connect("http://localhost:8080/upload")
+//                .method(HttpClient.ConnectionMethod.POST)
+//                .addParameter("textField", "ololo")
+//                .addByteArray("file", bytes, "test_data.bin")
+//                .getAsString();
 
-        String md5 = MD5.getMD5AsString(bytes);
+        System.out.println(dateFormatThreadLocal.get().parse("Sat, 09-Aug-2014 13:12:45 GMT"));
 
-        HttpClient.connect("http://localhost:8080/upload")
-                .method(HttpClient.ConnectionMethod.POST)
-                .addParameter("textField", "ololo")
-                .addByteArray("file", bytes, "test_data.bin")
-                .getAsString();
+        System.out.println();
+
+        for (Cookie cookie : HttpClient.connect("http://www.lokata.ru/").getCookies()) {
+            System.out.println(cookie);
+        }
     }
 }

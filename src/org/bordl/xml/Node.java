@@ -148,7 +148,32 @@ public class Node {
     }
 
     public String toString() {
-        return "node " + name + " attributes: " + attributes + " children: " + children;
+        return toString("", new StringBuilder());
+    }
+
+    private String toString(String offset, StringBuilder sb) {
+        sb.append(offset);
+        sb.append(name);
+        if (attributes != null) {
+            String s;
+            if ((s = attributes.get("id")) != null) {
+                sb.append("#").append(s);
+            }
+            if ((s = attributes.get("class")) != null) {
+                for (String clazz : s.split(" ")) {
+                    sb.append(".").append(clazz);
+                }
+            }
+            for (Map.Entry<String, String> attr : attributes.entrySet()) {
+                if (attr.getKey().endsWith("id") || attr.getKey().endsWith("class"))
+                    continue;
+                sb.append("[").append(attr.getKey()).append("=").append(attr.getValue()).append("]");
+            }
+        }
+        if (children != null)
+            for (Node child : children)
+                child.toString(offset + "\t", sb.append("\n"));
+        return sb.toString();
     }
 
     public String name() {

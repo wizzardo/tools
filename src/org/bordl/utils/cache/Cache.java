@@ -35,11 +35,19 @@ public class Cache<K, V> {
     }
 
     public V get(K k) {
-        return getFromCache(k, computable);
+        return getFromCache(k, computable, false);
+    }
+
+    public V get(K k, boolean updateTTL) {
+        return getFromCache(k, computable, updateTTL);
     }
 
     public V get(K k, Computable<K, V> computable) {
-        return getFromCache(k, computable);
+        return getFromCache(k, computable, false);
+    }
+
+    public V get(K k, Computable<K, V> computable, boolean updateTTL) {
+        return getFromCache(k, computable, updateTTL);
     }
 
     public static interface Computable<K, V> {
@@ -89,7 +97,7 @@ public class Cache<K, V> {
         }
     }
 
-    private V getFromCache(final K key, Computable<K, V> c) {
+    private V getFromCache(final K key, Computable<K, V> c, boolean updateTTL) {
         Holder<V> f = cache.get(key);
         if (f == null) {
             if (c == null) {
@@ -102,6 +110,8 @@ public class Cache<K, V> {
                 ft.run(c, key);
                 updateTimingCache(key);
             }
+        } else if (updateTTL) {
+            updateTimingCache(key);
         }
         return f.get();
     }
@@ -109,6 +119,14 @@ public class Cache<K, V> {
     public void put(final K key, final V value) {
         cache.put(key, new Holder<V>(value));
         updateTimingCache(key);
+    }
+
+    public boolean putIfAbsent(final K key, final V value) {
+        if (cache.putIfAbsent(key, new Holder<V>(value)) == null) {
+            updateTimingCache(key);
+            return true;
+        }
+        return false;
     }
 
     private void updateTimingCache(final K key) {

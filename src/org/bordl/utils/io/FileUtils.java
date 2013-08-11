@@ -68,9 +68,13 @@ public class FileUtils {
         }
         try {
             out.write(bytes, offset, length);
-            out.close();
         } catch (IOException e) {
             throw new WrappedException(e);
+        } finally {
+            try {
+                out.close();
+            } catch (IOException ignored) {
+            }
         }
     }
 
