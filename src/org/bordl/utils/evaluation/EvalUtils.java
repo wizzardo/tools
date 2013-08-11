@@ -4,6 +4,8 @@
  */
 package org.bordl.utils.evaluation;
 
+import org.bordl.utils.CollectionUtils;
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -124,11 +126,46 @@ public class EvalUtils {
     }
 
     private static boolean isList(String s) {
-        if (!s.startsWith("[") || !s.endsWith("]")) {
-            return false;
-        }
-        return true;
+        return s.startsWith("[") && s.endsWith("]");
     }
+
+    private static boolean isClosure(String exp) {
+        return exp.startsWith("{") && exp.endsWith("}");
+    }
+
+    static List<String> getLines(String exp) {
+        List<String> list = new ArrayList<String>();
+
+        StringBuilder sb = new StringBuilder();
+        char last = 0, stringChar = 0;
+        boolean inString = false;
+        for (char c : exp.toCharArray()) {
+            if (inString) {
+                if (c == stringChar && last != '\\') {
+                    inString = false;
+                }
+            } else {
+                if (c == ';' || c == '\n') {
+                    String value = sb.toString().trim();
+                    if (value.length() > 0)
+                        list.add(value);
+                    sb.setLength(0);
+                    continue;
+                }
+                if (c == '"' || c == '\'') {
+                    inString = true;
+                }
+            }
+            last = c;
+            sb.append(c);
+        }
+        String value = sb.toString().trim();
+        if (value.length() > 0)
+            list.add(sb.toString().trim());
+
+        return list;
+    }
+
 
     public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions) {
 //        System.out.println("try to prepare: " + exp);
@@ -148,6 +185,16 @@ public class EvalUtils {
         if (model == null) {
             model = new HashMap<String, Object>();
         }
+
+        if (isClosure(exp)) {
+            exp = exp.substring(1, exp.length() - 1).trim();
+            ClosureExpression closure = new ClosureExpression();
+            for (String s : getLines(exp)) {
+                closure.add(prepare(s, model, functions));
+            }
+            return closure;
+        }
+
         {
             if (exp.equals("null")) {
                 return Expression.Holder.NULL;
@@ -428,9 +475,9 @@ public class EvalUtils {
         }
         String field = exp.substring(last).trim();
         if (field.length() > 0 && !field.equals("null") && !field.equals(")")) {
-//            if (thatObject == null)
-//                thatObject = new Expression.Holder(field);
-//            else
+            if (thatObject == null)
+                thatObject = new Expression.Holder(field);
+            else
             thatObject = new Function(thatObject, field);
         }
         if (methodName != null) {
@@ -603,4 +650,19 @@ public class EvalUtils {
 
     private static final Pattern actions = Pattern.compile("\\+\\+|--|\\.\\.|\\*=?|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
 
+    static {
+        Function.setMethod(Collection.class, "collect", new CollectionUtils.Closure3<Object, Object, ClosureExpression, Map>() {
+            @Override
+            public Object execute(Object it, ClosureExpression closure, Map model) {
+                Map<String, Object> local = new HashMap<String, Object>(model);
+                List l = new ArrayList();
+                Collection c = (Collection) it;
+                for (Object ob : c) {
+                    local.put("it", ob);
+                    l.add(closure.get(local));
+                }
+                return l;
+            }
+        });
+    }
 }

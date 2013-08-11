@@ -4,6 +4,7 @@
  */
 package org.bordl.utils.evaluation;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.awt.*;
@@ -377,6 +378,59 @@ public class EvalUtilsTest {
         assertTrue(ob1 != ob3);
         assertTrue(ob1.equals(ob3));
 
+    }
+
+    @Test
+    public void testClosure() throws Exception {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+
+
+        Assert.assertTrue(EvalUtils.prepare("{ it.toUpperCase() }") instanceof ClosureExpression);
+
+        model.put("it","upper");
+        Assert.assertEquals("UPPER",EvalUtils.prepare("{ it.toUpperCase() }").get(model));
+
+
+        Assert.assertEquals("UP",EvalUtils.prepare("{ " +
+                "it=it.substring(0,2)\n" +
+                "it.toUpperCase()\n" +
+                " }").get(model));
+        Assert.assertEquals("up",model.get("it"));
+
+
+        model.clear();
+        EvalUtils.evaluate("def l = ['a','b','c']", model);
+        Assert.assertEquals("[A, B, C]", EvalUtils.evaluate("l.collect({it.toUpperCase()})", model).toString());
+    }
+
+    @Test
+    public void testGetLines() throws Exception {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+
+        String s = "ololo";
+        List<String> l = EvalUtils.getLines(s);
+        Assert.assertEquals(1, l.size());
+        Assert.assertEquals(s, l.get(0));
+
+        s = "int i = 1; i++;";
+        l = EvalUtils.getLines(s);
+        Assert.assertEquals(2, l.size());
+        Assert.assertEquals("int i = 1", l.get(0));
+        Assert.assertEquals("i++", l.get(1));
+
+        s = "String s = \"abc;\"";
+        l = EvalUtils.getLines(s);
+        Assert.assertEquals(1, l.size());
+        Assert.assertEquals(s, l.get(0));
+
+        s = "int i = 1; i++; \n i=\";;\n\n\".length()";
+        l = EvalUtils.getLines(s);
+        Assert.assertEquals(3, l.size());
+        Assert.assertEquals("int i = 1", l.get(0));
+        Assert.assertEquals("i++", l.get(1));
+        Assert.assertEquals("i=\";;\n\n\".length()", l.get(2));
     }
 
 
