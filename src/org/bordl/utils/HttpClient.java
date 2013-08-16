@@ -15,6 +15,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.DeflaterInputStream;
+import java.util.zip.GZIPInputStream;
 
 /**
  * @author Moxa
@@ -46,7 +48,7 @@ public class HttpClient {
                 try {
                     sb.append(URLEncoder.encode(entry.getValue(), urlEncoding));
                 } catch (UnsupportedEncodingException ex) {
-                    Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else {
                 sb.append(entry.getValue());
@@ -81,7 +83,7 @@ public class HttpClient {
         try {
             return getContentAsString(conn.getInputStream(), charset);
         } catch (IOException e) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, e);
         }
         return null;
     }
@@ -122,13 +124,13 @@ public class HttpClient {
             }
             return out.toByteArray();
         } catch (IOException e) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, e);
         }
         return null;
     }
 
-    public static Connection connect(String url) {
-        return new Connection(url);
+    public static Request connect(String url) {
+        return new Request(url);
     }
 
     public static enum ConnectionMethod {
@@ -165,183 +167,32 @@ public class HttpClient {
         }
     }
 
-    public static class Connection {
+    public static class Response {
+        private HttpURLConnection connection;
 
-        private int maxRetryCount = 0;
-        private long pauseBetweenRetries = 0;
-        private ConnectionMethod method = ConnectionMethod.GET;
-        private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
-        private HashMap<String, String> headers = new HashMap<String, String>();
-        private HashMap<String, byte[]> dataArrays = new HashMap<String, byte[]>();
-        private HashMap<String, String> dataTypes = new HashMap<String, String>();
-        private String url;
-        private String json;
-        private boolean multipart = false;
-        private String charsetForEncoding;
-        private Proxy proxy;
-        private boolean redirects = true;
-
-        public Connection(String url) {
-            this.url = url;
-            headers.put("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.187 Safari/535.1");
-//            headers.put("Accept-Charset", "windows-1251,utf-8;q=0.7,*;q=0.3");
+        protected Response(HttpURLConnection connection){
+            this.connection=connection;
         }
 
-        public Connection setMaxRetryCount(int n) {
-            maxRetryCount = n;
-            return this;
+        public String getAsString() throws IOException {
+            return getAsString("utf-8");
         }
 
-        public Connection setBasicAuthentication(String user, String password) {
-            header("Authorization", "Basic " + Base64.encodeToString((user + ":" + password).getBytes()));
-            return this;
+        public byte[] getAsBytes() throws IOException {
+            InputStream inputStream = connection.getInputStream();
+            if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
+                inputStream = new GZIPInputStream(inputStream);
+            else if ("deflate".equals(connection.getHeaderField("Content-Encoding")))
+                inputStream = new DeflaterInputStream(inputStream);
+            return getContent(inputStream);
         }
 
-        public Connection setProxy(Proxy proxy) {
-            this.proxy = proxy;
-            return this;
-        }
-
-        public Connection maxRetryCount(int n) {
-            maxRetryCount = n;
-            return this;
-        }
-
-        public Connection setPauseBetweenRetries(long pause) {
-            pauseBetweenRetries = pause;
-            return this;
-        }
-
-        public Connection pauseBetweenRetries(long pause) {
-            pauseBetweenRetries = pause;
-            return this;
-        }
-
-        public Connection setMethod(ConnectionMethod method) {
-            this.method = method;
-            return this;
-        }
-
-        public Connection method(ConnectionMethod method) {
-            this.method = method;
-            return this;
-        }
-
-        public Connection setCookie(String cookie) {
-            headers.put("Cookie", cookie);
-            return this;
-        }
-
-        public Connection cookie(String cookie) {
-            headers.put("Cookie", cookie);
-            return this;
-        }
-
-        public Connection cookie(Cookie cookie) {
-            headers.put("Cookie", cookie.key + "=" + cookie.value);
-            return this;
-        }
-
-        public Connection setCookie(Cookie cookie) {
-            return cookie(cookie);
-        }
-
-        public Connection cookies(List<Cookie> cookies) {
-            headers.put("Cookie", CollectionUtils.join(CollectionUtils.collect(cookies, new CollectionUtils.Closure<String, Cookie>() {
-                @Override
-                public String execute(Cookie it) {
-                    return it.key + "=" + it.value;
-                }
-            }), "; "));
-            return this;
-        }
-
-        public Connection setCookies(List<Cookie> cookies) {
-            return cookies(cookies);
-        }
-
-        public Connection setReferer(String referer) {
-            headers.put("Referer", referer);
-            return this;
-        }
-
-        public Connection referer(String referer) {
-            headers.put("Referer", referer);
-            return this;
-        }
-
-        public Connection setJson(String json) {
-            this.json = json;
-            return this;
-        }
-
-        public Connection json(String json) {
-            this.json = json;
-            return this;
-        }
-
-        public Connection addParameter(String key, String value) {
-            params.put(key, value);
-            return this;
-        }
-
-        public Connection setUrlEncoding(String charset) {
-            charsetForEncoding = charset;
-            return this;
-        }
-
-        public Connection disableRedirects() {
-            redirects = false;
-            return this;
-        }
-
-        public Connection addFile(String key, File value) {
-            return addFile(key, value.getAbsolutePath());
-        }
-
-        public Connection addFile(String key, String path) {
-            multipart = true;
-            method = ConnectionMethod.POST;
-            params.put(key, "file://" + path);
-            return this;
-        }
-
-        public Connection addByteArray(String key, byte[] array, String name) {
-            return addByteArray(key, array, name, null);
-        }
-
-        public Connection addByteArray(String key, byte[] array, String name, String type) {
-            multipart = true;
-            method = ConnectionMethod.POST;
-            params.put(key, "array://" + name);
-            dataArrays.put(key, array);
-            if (type != null) {
-                dataTypes.put(key, type);
-            }
-            return this;
-        }
-
-        public Connection data(String key, String value) {
-            params.put(key, value);
-            return this;
-        }
-
-        public Connection setHeader(String key, String value) {
-            headers.put(key, value);
-            return this;
-        }
-
-        public Connection header(String key, String value) {
-            headers.put(key, value);
-            return this;
-        }
-
-        public HttpURLConnection connect() throws IOException {
-            return connect(0);
+        public String getAsString(String charset) throws IOException {
+            byte[] bytes = getAsBytes();
+            return new String(bytes, charset);
         }
 
         public List<Cookie> getCookies() throws IOException {
-            HttpURLConnection connection = connect();
             //Set-Cookie: RMID=732423sdfs73242; expires=Fri, 31 Dec 2010 23:59:59 GMT; path=/; domain=.example.net
             List<Cookie> cookies = new ArrayList<Cookie>();
 
@@ -376,29 +227,193 @@ public class HttpClient {
             return cookies;
         }
 
-        public String getAsString() throws IOException {
-            return getContentAsString(connect());
+        public String getHeader(String key) {
+            return connection.getHeaderField(key);
         }
 
-        public byte[] getAsBytes() throws IOException {
-            return getContent(connect().getInputStream());
+        public int getResponseCode() throws IOException {
+            return connection.getResponseCode();
+        }
+    }
+
+    public static class Request {
+
+        private int maxRetryCount = 0;
+        private long pauseBetweenRetries = 0;
+        private ConnectionMethod method = ConnectionMethod.GET;
+        private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
+        private HashMap<String, String> headers = new HashMap<String, String>();
+        private HashMap<String, byte[]> dataArrays = new HashMap<String, byte[]>();
+        private HashMap<String, String> dataTypes = new HashMap<String, String>();
+        private String url;
+        private String json;
+        private boolean multipart = false;
+        private String charsetForEncoding;
+        private Proxy proxy;
+        private boolean redirects = true;
+
+        public Request(String url) {
+            this.url = url;
+            headers.put("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.187 Safari/535.1");
+            headers.put("Accept-Encoding", "gzip, deflate");
+//            headers.put("Accept-Charset", "windows-1251,utf-8;q=0.7,*;q=0.3");
         }
 
-        public String getAsString(String charset) throws IOException {
-            return getContentAsString(connect(), charset);
+        public Request setMaxRetryCount(int n) {
+            maxRetryCount = n;
+            return this;
         }
 
-        public HttpURLConnection get() throws IOException {
+        public Request setBasicAuthentication(String user, String password) {
+            header("Authorization", "Basic " + Base64.encodeToString((user + ":" + password).getBytes()));
+            return this;
+        }
+
+        public Request setProxy(Proxy proxy) {
+            this.proxy = proxy;
+            return this;
+        }
+
+        public Request maxRetryCount(int n) {
+            maxRetryCount = n;
+            return this;
+        }
+
+        public Request setPauseBetweenRetries(long pause) {
+            pauseBetweenRetries = pause;
+            return this;
+        }
+
+        public Request pauseBetweenRetries(long pause) {
+            pauseBetweenRetries = pause;
+            return this;
+        }
+
+        public Request setMethod(ConnectionMethod method) {
+            this.method = method;
+            return this;
+        }
+
+        public Request method(ConnectionMethod method) {
+            this.method = method;
+            return this;
+        }
+
+        public Request setCookies(String cookie) {
+            headers.put("Cookie", cookie);
+            return this;
+        }
+
+        public Request cookies(String cookie) {
+            headers.put("Cookie", cookie);
+            return this;
+        }
+
+        public Request cookies(List<Cookie> cookies) {
+            headers.put("Cookie", CollectionUtils.join(CollectionUtils.collect(cookies, new CollectionUtils.Closure<String, Cookie>() {
+                @Override
+                public String execute(Cookie it) {
+                    return it.key + "=" + it.value;
+                }
+            }), "; "));
+            return this;
+        }
+
+        public Request setCookies(List<Cookie> cookies) {
+            return cookies(cookies);
+        }
+
+        public Request setReferer(String referer) {
+            headers.put("Referer", referer);
+            return this;
+        }
+
+        public Request referer(String referer) {
+            headers.put("Referer", referer);
+            return this;
+        }
+
+        public Request setJson(String json) {
+            this.json = json;
+            return this;
+        }
+
+        public Request json(String json) {
+            this.json = json;
+            return this;
+        }
+
+        public Request addParameter(String key, String value) {
+            params.put(key, value);
+            return this;
+        }
+
+        public Request setUrlEncoding(String charset) {
+            charsetForEncoding = charset;
+            return this;
+        }
+
+        public Request disableRedirects() {
+            redirects = false;
+            return this;
+        }
+
+        public Request addFile(String key, File value) {
+            return addFile(key, value.getAbsolutePath());
+        }
+
+        public Request addFile(String key, String path) {
+            multipart = true;
+            method = ConnectionMethod.POST;
+            params.put(key, "file://" + path);
+            return this;
+        }
+
+        public Request addByteArray(String key, byte[] array, String name) {
+            return addByteArray(key, array, name, null);
+        }
+
+        public Request addByteArray(String key, byte[] array, String name, String type) {
+            multipart = true;
+            method = ConnectionMethod.POST;
+            params.put(key, "array://" + name);
+            dataArrays.put(key, array);
+            if (type != null) {
+                dataTypes.put(key, type);
+            }
+            return this;
+        }
+
+        public Request data(String key, String value) {
+            params.put(key, value);
+            return this;
+        }
+
+        public Request setHeader(String key, String value) {
+            headers.put(key, value);
+            return this;
+        }
+
+        public Request header(String key, String value) {
+            headers.put(key, value);
+            return this;
+        }
+
+        public Response connect() throws IOException {
+            return connect(0);
+        }
+
+        public Response get() throws IOException {
             setMethod(ConnectionMethod.GET);
             return connect(0);
         }
 
-        public HttpURLConnection post() throws IOException {
+        public Response post() throws IOException {
             setMethod(ConnectionMethod.POST);
             return connect(0);
         }
 
-        private HttpURLConnection connect(int retryNumber) throws IOException {
+        private Response connect(int retryNumber) throws IOException {
             try {
                 if (method.equals(ConnectionMethod.GET)) {
                     url = createURL(url, params);
@@ -472,14 +487,14 @@ public class HttpClient {
                         out.close();
                     }
                 }
-                return c;
+                return new Response(c);
             } catch (SocketTimeoutException e) {
-                Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, e);
+                Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, e);
                 if (retryNumber < maxRetryCount) {
                     try {
                         Thread.sleep(pauseBetweenRetries);
                     } catch (InterruptedException ex1) {
-                        Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex1);
+                        Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, ex1);
                     }
                     return connect(++retryNumber);
                 }
@@ -530,12 +545,14 @@ public class HttpClient {
 //                .addByteArray("file", bytes, "test_data.bin")
 //                .getAsString();
 
-        System.out.println(dateFormatThreadLocal.get().parse("Sat, 09-Aug-2014 13:12:45 GMT"));
+//        System.out.println(dateFormatThreadLocal.get().parse("Sat, 09-Aug-2014 13:12:45 GMT"));
+//
+//        System.out.println();
+//
+//        for (Cookie cookie : HttpClient.connect("http://www.lokata.ru/").connect().getCookies()) {
+//            System.out.println(cookie);
+//        }
 
-        System.out.println();
-
-        for (Cookie cookie : HttpClient.connect("http://www.lokata.ru/").getCookies()) {
-            System.out.println(cookie);
-        }
+        System.out.println(HttpClient.connect("http://habrahabr.ru/").get().getAsString());
     }
 }
