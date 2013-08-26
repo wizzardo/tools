@@ -192,12 +192,16 @@ class Function extends Expression {
 
     public Field prepareField(Object instance) {
         if (field == null && fieldName != null) {
-            try {
-                field = instance.getClass().getField(fieldName);
-                fieldName = null;
-            } catch (NoSuchFieldException e) {
-                throw new WrappedException(e);
-            }
+            Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
+            while (clazz != null && field == null)
+                try {
+                    field = clazz.getDeclaredField(fieldName);
+                    fieldName = null;
+                } catch (NoSuchFieldException ignored) {
+                    clazz = clazz.getSuperclass();
+                }
+            if (field == null)
+                throw new WrappedException(new NoSuchFieldException(fieldName));
         }
         return field;
     }

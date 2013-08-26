@@ -202,6 +202,7 @@ public class EvalUtilsTest {
         assertEquals(2, EvalUtils.evaluate("Math.abs(-1)+Math.abs(-1)", null));
         assertEquals(2d, EvalUtils.evaluate("Math.sqrt(2+2)", null));
         assertEquals(4d, EvalUtils.evaluate("Math.pow(2,(2*2)/(2))", null));
+        assertEquals(Math.PI, EvalUtils.evaluate("Math.PI"));
 
         System.out.println("test constructors");
         assertEquals("ololo", EvalUtils.evaluate("new String(\"ololo\")", null));

@@ -170,15 +170,26 @@ public class HttpClient {
     public static class Response {
         private HttpURLConnection connection;
 
-        protected Response(HttpURLConnection connection){
-            this.connection=connection;
+        protected Response(HttpURLConnection connection) {
+            this.connection = connection;
         }
 
-        public String getAsString() throws IOException {
-            return getAsString("utf-8");
+        public String asString() throws IOException {
+            String encoding = connection.getHeaderField("Content-Type");
+            if (encoding != null) {
+                int i = encoding.indexOf("charset=");
+                if (i > 0) {
+                    encoding = encoding.substring(i + "charset=".length());
+                } else {
+                    encoding = "utf-8";
+                }
+            } else {
+                encoding = "utf-8";
+            }
+            return asString(encoding);
         }
 
-        public byte[] getAsBytes() throws IOException {
+        public byte[] asBytes() throws IOException {
             InputStream inputStream = connection.getInputStream();
             if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
                 inputStream = new GZIPInputStream(inputStream);
@@ -187,8 +198,8 @@ public class HttpClient {
             return getContent(inputStream);
         }
 
-        public String getAsString(String charset) throws IOException {
-            byte[] bytes = getAsBytes();
+        public String asString(String charset) throws IOException {
+            byte[] bytes = asBytes();
             return new String(bytes, charset);
         }
 
@@ -218,8 +229,8 @@ public class HttpClient {
                 if (data.length > 3) {
                     kv = data[3].split("=", 2);
                     cookie.domain = kv[1];
-                }else{
-                    cookie.domain=connection.getURL().getHost();
+                } else {
+                    cookie.domain = connection.getURL().getHost();
                 }
                 cookies.add(cookie);
             }
@@ -553,6 +564,6 @@ public class HttpClient {
 //            System.out.println(cookie);
 //        }
 
-        System.out.println(HttpClient.connect("http://habrahabr.ru/").get().getAsString());
+        System.out.println(HttpClient.connect("http://habrahabr.ru/").get().asString());
     }
 }
