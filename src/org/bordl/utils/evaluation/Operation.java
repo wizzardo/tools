@@ -714,54 +714,16 @@ class Operation extends Expression {
         return ((Number) ob1).doubleValue() <= ((Number) ob2).doubleValue();
     }
 
-    private static Object e(Object ob1, Object ob2) {
-        if (ob1 == null || ob2 == null) {
-            return ob1 == ob2;
-        }
-        if (ob1 instanceof Double || ob2 instanceof Double) {
-            return ((Number) ob1).doubleValue() == ((Number) ob2).doubleValue();
-        }
-        if (ob1 instanceof Float || ob2 instanceof Float) {
-            return ((Number) ob1).floatValue() == ((Number) ob2).floatValue();
-        }
-        if (ob1 instanceof Long || ob2 instanceof Long) {
-            return ((Number) ob1).longValue() == ((Number) ob2).longValue();
-        }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return ((Number) ob1).intValue() == ((Number) ob2).intValue();
-        }
-        if (ob1 instanceof Short || ob2 instanceof Short) {
-            return ((Number) ob1).shortValue() == ((Number) ob2).shortValue();
-        }
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return ((Number) ob1).byteValue() == ((Number) ob2).byteValue();
-        }
-        return ob1 == ob2;
+    private static boolean e(Object ob1, Object ob2) {
+        if(ob1 == null || ob2 == null)
+            return false;
+        if(ob1 == ob2)
+            return true;
+        return ob1.equals(ob2);
     }
 
     private static Object ne(Object ob1, Object ob2) {
-        if (ob1 == null || ob2 == null) {
-            return ob1 != ob2;
-        }
-        if (ob1 instanceof Double || ob2 instanceof Double) {
-            return ((Number) ob1).doubleValue() != ((Number) ob2).doubleValue();
-        }
-        if (ob1 instanceof Float || ob2 instanceof Float) {
-            return ((Number) ob1).floatValue() != ((Number) ob2).floatValue();
-        }
-        if (ob1 instanceof Long || ob2 instanceof Long) {
-            return ((Number) ob1).longValue() != ((Number) ob2).longValue();
-        }
-        if (ob1 instanceof Integer || ob2 instanceof Integer) {
-            return ((Number) ob1).intValue() != ((Number) ob2).intValue();
-        }
-        if (ob1 instanceof Short || ob2 instanceof Short) {
-            return ((Number) ob1).shortValue() != ((Number) ob2).shortValue();
-        }
-        if (ob1 instanceof Byte || ob2 instanceof Byte) {
-            return ((Number) ob1).byteValue() != ((Number) ob2).byteValue();
-        }
-        return ob1 != ob2;
+        return !e(ob1,ob2);
     }
 
     private static Object multiply(Object ob1, Object ob2) {

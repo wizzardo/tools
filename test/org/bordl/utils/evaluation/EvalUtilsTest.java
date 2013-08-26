@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -330,7 +331,7 @@ public class EvalUtilsTest {
         model = new HashMap<String, Object>();
         assertTrue(EvalUtils.evaluate("def m = [:]", model) instanceof Map);
         assertTrue(EvalUtils.evaluate("m.a = [:]", model) instanceof Map);
-        assertEquals(1, EvalUtils.evaluate("m.[\"a\"][\"b\"] = 1", model));
+        assertEquals(1, EvalUtils.evaluate("m[\"a\"][\"b\"] = 1", model));
         assertEquals(1, EvalUtils.evaluate("m.a.b = 1", model));
 
 
@@ -364,6 +365,7 @@ public class EvalUtilsTest {
         model.put("it", 0);
         assertEquals("style=\"font-size: 20px;\"", EvalUtils.evaluate(" it == pageNumber ? 'style=\"font-size: 20px;\"' : ''", model));
 
+        assertNotNull(EvalUtils.evaluate("Math.sin((1+2)/(3))"));
     }
 
     @Test
@@ -377,31 +379,150 @@ public class EvalUtilsTest {
         Object ob3 = eh.get(null);
         assertTrue(ob1 != ob3);
         assertTrue(ob1.equals(ob3));
+    }
 
+    @Test
+    public void testTrimBrackets() throws Exception {
+        Assert.assertEquals("sin((1+2)/(3))", EvalUtils.trimBrackets("sin((1+2)/(3))"));
+        Assert.assertEquals("sin((1+2)/3)", EvalUtils.trimBrackets("(sin((1+2)/3))"));
+        Assert.assertEquals("sin((1+2)/3)", EvalUtils.trimBrackets("((sin((1+2)/3)))"));
+    }
+
+    @Test
+    public void testGetParts() throws Exception {
+        List<String> l = EvalUtils.getParts("sin(1)+2");
+        Assert.assertEquals(3, l.size());
+        Assert.assertEquals("sin", l.get(0));
+        Assert.assertEquals("(1)", l.get(1));
+        Assert.assertEquals("+2", l.get(2));
+
+        l = EvalUtils.getParts("sin(1)");
+        Assert.assertEquals(2, l.size());
+        Assert.assertEquals("sin", l.get(0));
+        Assert.assertEquals("(1)", l.get(1));
+
+        l = EvalUtils.getParts("'(olo)'+1");
+        Assert.assertEquals(1, l.size());
+        Assert.assertEquals("'(olo)'+1", l.get(0));
+
+        l = EvalUtils.getParts("(1+2)*3");
+        Assert.assertEquals(2, l.size());
+        Assert.assertEquals("(1+2)", l.get(0));
+        Assert.assertEquals("*3", l.get(1));
+
+        l = EvalUtils.getParts("'qwe'.concat('rty')");
+        Assert.assertEquals(3, l.size());
+        Assert.assertEquals("'qwe'", l.get(0));
+        Assert.assertEquals(".concat", l.get(1));
+        Assert.assertEquals("('rty')", l.get(2));
+
+        l = EvalUtils.getParts("('qwe').concat('rty')");
+        Assert.assertEquals(3, l.size());
+        Assert.assertEquals("('qwe')", l.get(0));
+        Assert.assertEquals(".concat", l.get(1));
+        Assert.assertEquals("('rty')", l.get(2));
+
+        l = EvalUtils.getParts("k[0]");
+        Assert.assertEquals(2, l.size());
+        Assert.assertEquals("k", l.get(0));
+        Assert.assertEquals("[0]", l.get(1));
+
+        l = EvalUtils.getParts("k[0].x");
+        Assert.assertEquals(3, l.size());
+        Assert.assertEquals("k", l.get(0));
+        Assert.assertEquals("[0]", l.get(1));
+        Assert.assertEquals(".x", l.get(2));
+
+        l = EvalUtils.getParts("k[0][1]");
+        Assert.assertEquals(3, l.size());
+        Assert.assertEquals("k", l.get(0));
+        Assert.assertEquals("[0]", l.get(1));
+        Assert.assertEquals("[1]", l.get(2));
     }
 
     @Test
     public void testClosure() throws Exception {
         Map<String, Object> model = new HashMap<String, Object>();
-        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
-
 
         Assert.assertTrue(EvalUtils.prepare("{ it.toUpperCase() }") instanceof ClosureExpression);
 
-        model.put("it","upper");
-        Assert.assertEquals("UPPER",EvalUtils.prepare("{ it.toUpperCase() }").get(model));
+        model.put("it", "upper");
+        Assert.assertEquals("UPPER", EvalUtils.prepare("{ it.toUpperCase() }").get(model));
 
 
-        Assert.assertEquals("UP",EvalUtils.prepare("{ " +
+        Assert.assertEquals("UP", EvalUtils.prepare("{ " +
                 "it=it.substring(0,2)\n" +
                 "it.toUpperCase()\n" +
                 " }").get(model));
-        Assert.assertEquals("up",model.get("it"));
+        Assert.assertEquals("up", model.get("it"));
 
 
         model.clear();
         EvalUtils.evaluate("def l = ['a','b','c']", model);
         Assert.assertEquals("[A, B, C]", EvalUtils.evaluate("l.collect({it.toUpperCase()})", model).toString());
+
+
+        model.clear();
+        model.put("s", "upper");
+        Assert.assertEquals("UPPER", EvalUtils.prepare("{s -> s.toUpperCase() }").get(model));
+        Assert.assertEquals("UPPER", EvalUtils.prepare("{String s -> s.toUpperCase() }").get(model));
+        Assert.assertEquals("UPPER", EvalUtils.prepare("{def s -> s.toUpperCase() }").get(model));
+    }
+
+    @Test
+    public void testCollections() throws Exception {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        model.clear();
+        EvalUtils.evaluate("def l = ['a','b','c']", model);
+        Assert.assertEquals("[A, B, C]", EvalUtils.evaluate("l.collect({it.toUpperCase()})", model).toString());
+
+        model.clear();
+        EvalUtils.evaluate("def l = ['a','b','c']", model);
+        Assert.assertEquals("a", EvalUtils.evaluate("l.find({it=='a' || it=='b'})", model).toString());
+
+        model.clear();
+        EvalUtils.evaluate("def l = ['a','b','c']", model);
+        Assert.assertEquals("[a, b]", EvalUtils.evaluate("l.findAll({it=='a' || it=='b'})", model).toString());
+
+        model.clear();
+        EvalUtils.evaluate("def l = ['a','b','c']", model);
+        Assert.assertEquals("[a, b, c, d]", EvalUtils.evaluate("l << 'd'", model).toString());
+        Assert.assertEquals("[a, b, c, d, e]", EvalUtils.evaluate("l += 'e'", model).toString());
+        Assert.assertEquals("[a, b, c, d, e, [f]]", EvalUtils.evaluate("l << ['f']", model).toString());
+        Assert.assertEquals("[a, b, c, d, e, [f], g]", EvalUtils.evaluate("l += ['g']", model).toString());
+
+
+//        Assert.assertEquals("[a, b, c, d, e]", EvalUtils.evaluate("['a','b'] + 'c' + ['d','e']", model).toString());
+
+        //TODO [1,2,3]*.multiply(2) == [2,4,6]
+
+        model.clear();
+        EvalUtils.evaluate("def l = ['a','b','c']", model);
+        EvalUtils.evaluate("def r = []", model);
+        EvalUtils.evaluate("l.each({r << it.toUpperCase()})", model);
+        Assert.assertEquals("[A, B, C]", model.get("r").toString());
+
+        model.clear();
+        EvalUtils.evaluate("def l = ['a','b','c']", model);
+        EvalUtils.evaluate("def r = []", model);
+        EvalUtils.evaluate("l.eachWithIndex({it,i -> r << i+'_'+ it.toUpperCase()})", model);
+        Assert.assertEquals("[0_A, 1_B, 2_C]", model.get("r").toString());
+
+        model.clear();
+        EvalUtils.evaluate("def l = [1,2,3]", model);
+        Assert.assertTrue((Boolean) EvalUtils.evaluate("l.every({it < 5})", model));
+        Assert.assertTrue(!(Boolean) EvalUtils.evaluate("l.every({it < 3})", model));
+        Assert.assertTrue((Boolean) EvalUtils.evaluate("l.any({it > 2})", model));
+        Assert.assertTrue(!(Boolean) EvalUtils.evaluate("l.any({it > 3})", model));
+
+        Assert.assertEquals(1, EvalUtils.evaluate("l.findIndexOf({it == 2})", model));
+        Assert.assertEquals(-1, EvalUtils.evaluate("l.findIndexOf({it == 4})", model));
+
+        //TODO [1,2,3].sum() == 6
+
+        Assert.assertEquals("1-2-3", EvalUtils.evaluate("l.join('-')", model).toString());
+//        Assert.assertEquals("1-2-3", EvalUtils.evaluate("l.inject('counting')", model).toString());
     }
 
     @Test

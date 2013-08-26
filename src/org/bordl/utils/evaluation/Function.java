@@ -28,9 +28,9 @@ class Function extends Expression {
     private String fieldName;
     private boolean hardcodeChecked = false;
     private boolean metaChecked = false;
-    private CollectionUtils.Closure3<Object, Object, ClosureExpression, Map> metaMethod;
+    private CollectionUtils.Closure3<Object, Object, Map, Object[]> metaMethod;
 
-    private static Map<Class, Map<String, CollectionUtils.Closure3<Object, Object, ClosureExpression, Map>>> metaMethods = new HashMap<Class, Map<String, CollectionUtils.Closure3<Object, Object, ClosureExpression, Map>>>();
+    private static Map<Class, Map<String, CollectionUtils.Closure3<Object, Object, Map, Object[]>>> metaMethods = new HashMap<Class, Map<String, CollectionUtils.Closure3<Object, Object, Map, Object[]>>>();
 
     public Function(Expression thatObject, Method method, Expression[] args) {
         this.thatObject = thatObject;
@@ -101,18 +101,23 @@ class Function extends Expression {
                 chechMeta(instance);
                 metaChecked = true;
             }
-            if (metaMethod != null) {
-                return metaMethod.execute(instance, (ClosureExpression) args[0], model);
-            }
 
             if (args != null) {
                 arr = new Object[args.length];
 //            System.out.println("try resolve args:");
                 for (int i = 0; i < arr.length; i++) {
 //                System.out.println(i+"\t"+args[i]);
-                    arr[i] = args[i].get(model);
+                    if (args[i] instanceof ClosureExpression)
+                        arr[i] = args[i];
+                    else
+                        arr[i] = args[i].get(model);
                 }
             }
+
+            if (metaMethod != null) {
+                return metaMethod.execute(instance, model, arr);
+            }
+
 
             if (fieldName != null || field != null) {
                 if (instance instanceof Map) {
@@ -153,10 +158,10 @@ class Function extends Expression {
     }
 
     private boolean chechMeta(Object instance) {
-        if (args != null && instance != null && args.length == 1 && args[0] instanceof ClosureExpression) {
-            Map<String, CollectionUtils.Closure3<Object, Object, ClosureExpression, Map>> methods;
+        if (args != null && instance != null) {
+            Map<String, CollectionUtils.Closure3<Object, Object, Map, Object[]>> methods;
             Class clazz = instance.getClass();
-            CollectionUtils.Closure3<Object, Object, ClosureExpression, Map> closure = null;
+            CollectionUtils.Closure3<Object, Object, Map, Object[]> closure = null;
             while (clazz != null && ((methods = metaMethods.get(clazz)) == null || (closure = methods.get(methodName)) == null)) {
                 clazz = clazz.getSuperclass();
             }
@@ -174,11 +179,11 @@ class Function extends Expression {
         return false;
     }
 
-    private CollectionUtils.Closure3<Object, Object, ClosureExpression, Map> findMeta(Class[] classes) {
-        CollectionUtils.Closure3<Object, Object, ClosureExpression, Map> closure = null;
-        Map<String, CollectionUtils.Closure3<Object, Object, ClosureExpression, Map>> methods;
+    private CollectionUtils.Closure3<Object, Object, Map, Object[]> findMeta(Class[] classes) {
+        CollectionUtils.Closure3<Object, Object, Map, Object[]> closure = null;
+        Map<String, CollectionUtils.Closure3<Object, Object, Map, Object[]>> methods;
         for (Class i : classes) {
-            if (closure==null && ((methods = metaMethods.get(i)) == null || (closure = methods.get(methodName)) == null)) {
+            if (closure == null && ((methods = metaMethods.get(i)) == null || (closure = methods.get(methodName)) == null)) {
                 closure = findMeta(i.getInterfaces());
             }
         }
@@ -311,10 +316,10 @@ class Function extends Expression {
         return field;
     }
 
-    public static void setMethod(Class clazz, String methodName, CollectionUtils.Closure3<Object, Object, ClosureExpression, Map> c) {
-        Map<String, CollectionUtils.Closure3<Object, Object, ClosureExpression, Map>> methods = metaMethods.get(clazz);
+    public static void setMethod(Class clazz, String methodName, CollectionUtils.Closure3<Object, Object, Map, Object[]> c) {
+        Map<String, CollectionUtils.Closure3<Object, Object, Map, Object[]>> methods = metaMethods.get(clazz);
         if (methods == null) {
-            methods = new HashMap<String, CollectionUtils.Closure3<Object, Object, ClosureExpression, Map>>();
+            methods = new HashMap<String, CollectionUtils.Closure3<Object, Object, Map, Object[]>>();
             metaMethods.put(clazz, methods);
         }
         methods.put(methodName, c);

@@ -17,7 +17,7 @@ public class EvalUtils {
     static final String CONSTRUCTOR = "%constructor%";
     static EvaluatingStrategy defaultEvaluatingStrategy;
 
-    private static int countOpenBrackets(String s, int from, int to) {
+    protected static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
         for (int i = from; i < to; i++) {
             if (s.charAt(i) == '(' || s.charAt(i) == '[' || s.charAt(i) == '{') {
@@ -29,7 +29,7 @@ public class EvalUtils {
         return n;
     }
 
-    private static boolean inString(String s, int from, int to) {
+    protected static boolean inString(String s, int from, int to) {
         boolean inString = false;
         char quote = 0;
         for (int i = from; i < to; i++) {
@@ -43,6 +43,73 @@ public class EvalUtils {
             }
         }
         return inString;
+    }
+
+    protected static LinkedList<String> getParts(String s) {
+        LinkedList<String> l = new LinkedList<String>();
+        boolean inString = false;
+        char quote = 0;
+        char[] chars = s.toCharArray();
+        int from = 0;
+        int brackets = 0;
+        int squareBrackets = 0;
+        for (int i = 0; i < chars.length; i++) {
+            if (!inString) {
+                switch (chars[i]) {
+                    case '"':
+                    case '\'': {
+                        quote = chars[i];
+                        inString = true;
+                        break;
+                    }
+                    case '(': {
+                        if (brackets == 0 && i != from) {
+                            l.add(new String(chars, from, i - from));
+                            from = i;
+                        }
+                        brackets++;
+                        break;
+                    }
+                    case '[': {
+                        if (squareBrackets == 0 && i != from) {
+                            l.add(new String(chars, from, i - from));
+                            from = i;
+                        }
+                        squareBrackets++;
+                        break;
+                    }
+                    case ')': {
+                        brackets--;
+                        if (brackets == 0) {
+                            l.add(new String(chars, from, i + 1 - from));
+                            from = i + 1;
+                        }
+                        break;
+                    }
+                    case ']': {
+                        squareBrackets--;
+                        if (squareBrackets == 0) {
+                            l.add(new String(chars, from, i + 1 - from));
+                            from = i + 1;
+                        }
+                        break;
+                    }
+                    case '.': {
+                        if (brackets == 0 && i != from) {
+                            l.add(new String(chars, from, i - from));
+                            from = i;
+                        }
+                        break;
+                    }
+                }
+            } else if ((chars[i] == quote) && i > 1 && chars[i - 1] != '\\') {
+                inString = false;
+            }
+        }
+        if (from != chars.length) {
+            l.add(new String(chars, from, chars.length - from));
+        }
+        return l;
     }
 
     public static enum EvaluatingStrategy {
@@ -69,13 +136,16 @@ public class EvalUtils {
             String t = s.substring(db + 2);
             Matcher m = brackets.matcher(t);
             int brackets = 2;
+            boolean innerBrackets = false;
             while (m.find()) {
                 if (m.group().equals("(")) {
+                    if (brackets < 2)
+                        innerBrackets = true;
                     brackets++;
                 } else if (m.group().equals(")")) {
                     brackets--;
                 }
-                if (brackets == 0 && m.start() > 0 && t.charAt(m.start() - 1) == ')') {
+                if (!innerBrackets && brackets == 0 && m.start() > 0 && t.charAt(m.start() - 1) == ')') {
                     return trimBrackets(s.substring(0, db + 1) + t.substring(0, m.start() - 1) + t.substring(m.start()));
                 }
             }
@@ -189,10 +259,30 @@ public class EvalUtils {
         if (isClosure(exp)) {
             exp = exp.substring(1, exp.length() - 1).trim();
             ClosureExpression closure = new ClosureExpression();
-            for (String s : getLines(exp)) {
+            List<String> lines = getLines(exp);
+            String firstLine = lines.get(0);
+            firstLine = closure.parseArguments(firstLine);
+            if (firstLine.length() == 0)
+                lines.remove(0);
+            else
+                lines.set(0, firstLine);
+
+            for (String s : lines) {
                 closure.add(prepare(s, model, functions));
             }
             return closure;
+        }
+
+        {
+            List<String> lines = getLines(exp);
+            if (lines.size() > 1) {
+                ClosureExpression closure = new ClosureExpression();
+                for (String s : lines) {
+                    closure.add(prepare(s, model, functions));
+                }
+                return closure;
+            }
+
         }
 
         {
@@ -389,100 +479,67 @@ public class EvalUtils {
         }
 
 
-        Pattern p = Pattern.compile("[\\.\\(\\)\\[\\]]");
-        Matcher m = p.matcher(exp);
-        int last = 0;
-        int brackets = 0;
-        while (m.find()) {
-//                System.out.println("last: " + last);
-            if (m.group().equals("(") || m.group().equals("[")) {
-                brackets++;
-            } else if (m.group().equals(")") || m.group().equals("]")) {
-                brackets--;
+        List<String> parts = getParts(exp);
+        String last = null;
+//        System.out.println(exp);
+        while (!parts.isEmpty()) {
+            String temp = parts.toString();
+            if (temp.equals(last))
+                throw new IllegalStateException("loop at " + exp + "\t\t" + parts);
+            last = temp;
+
+
+            if (thatObject == null && parts.size() == 1 && parts.get(0).equals(exp)) {
+                thatObject = new Expression.Holder(parts.remove(0));
+                continue;
             }
-//                System.out.println(brackets + ":\t" + exp.substring(last, m.start() + 1));
-            if (brackets == 0 || (thatObject != null && methodName == null && brackets == 1)) {
-//                    System.out.println("brackets==0");
-                if (last == m.start() && !m.group().equals("[")) {
-                    last = m.end();
-                    if (thatObject != null && methodName != null) {
-                        Function function = new Function(thatObject, methodName, null);
-                        thatObject = function;
-                        methodName = null;
+            if (thatObject == null) {
+                thatObject = prepare(parts.remove(0), model, functions);
+                continue;
+            }
+            //.concat("ololo")
+            if (parts.size() >= 2 && parts.get(0).startsWith(".") && parts.get(1).startsWith("(") && parts.get(1).endsWith(")")) {
+                methodName = parts.remove(0).substring(1);
+                Expression[] args = null;
+                String argsRaw = trimBrackets(parts.remove(0));
+                if (argsRaw.length() > 0) {
+                    List<String> arr = parseArgs(argsRaw);
+                    args = new Expression[arr.size()];
+                    for (int i = 0; i < arr.size(); i++) {
+                        args[i] = prepare(arr.get(i), model, functions);
                     }
-                    continue;
                 }
-                if (thatObject == null) {
-//                    System.out.println("thatObject: " + exp.substring(last, m.start()));
-//                    System.out.println("thatObject2: " + exp.substring(0, m.start()));
-                    if (last == 1 && m.group().endsWith("]")) { // init map
-//                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last - 1, m.end())), model, functions));
-                        thatObject = prepare(exp.substring(last - 1, m.end()), model, functions);
-                    } else {                                     // index or ordinary brackets
-//                        thatObject = new Expression(prepare(Expression.clean(exp.substring(last, m.start())), model, functions));
-                        thatObject = prepare(exp.substring(last, m.start()), model, functions);
+                thatObject = new Function(thatObject, methodName, args);
+                //("ololo")
+            } else if (parts.get(0).startsWith("(") && parts.get(0).endsWith(")")) {
+                Expression[] args = null;
+                String argsRaw = trimBrackets(parts.remove(0));
+                if (argsRaw.length() > 0) {
+                    List<String> arr = parseArgs(argsRaw);
+                    args = new Expression[arr.size()];
+                    for (int i = 0; i < arr.size(); i++) {
+                        args[i] = prepare(arr.get(i), model, functions);
                     }
-                } else if (methodName == null && !(thatObject instanceof UserFunction)) {
-                    if (m.group().equals(".")) { //chain of maps
-//                        thatObject = new Expression(new Function(thatObject, exp.substring(last, m.start())));
-                        thatObject = new Function(thatObject, exp.substring(last, m.start()));
-                        methodName = null;
-                    } else {
-                        methodName = exp.substring(last, m.start());
-//                    System.out.println("methodName: " + methodName);
-                    }
+                }
+                if (thatObject instanceof UserFunction) {
+                    UserFunction function = (UserFunction) thatObject;
+                    function.setArgs(args);
+                    function.setUserFunctions(functions);
                 } else {
-                    if (countOpenBrackets(exp, last, m.start()) != 0) {
-                        continue;
-                    }
-//                    System.out.println("prepare args: " + exp.substring(last, m.start()));
-                    String argsRaw = exp.substring(last, m.start());
-                    if (m.group().equals(".") && argsRaw.matches("\\d+")) {
-                        continue;
-                    }
-                    if (methodName != null && methodName.length() == 0 && m.group().equals("]")) {
-//                        thatObject = new Expression(new Operation(thatObject, new Expression(prepare(argsRaw, model, functions)), Operator.GET));
-                        thatObject = new Operation(thatObject, prepare(argsRaw, model, functions), Operator.GET);
-                        methodName = null;
-                    } else {
-                        Expression[] args = null;
-                        if (argsRaw.length() > 0) {
-                            List<String> arr = parseArgs(argsRaw);
-                            args = new Expression[arr.size()];
-                            for (int i = 0; i < arr.size(); i++) {
-                                args[i] = prepare(arr.get(i), model, functions);
-                            }
-                        }
-                        if (thatObject instanceof UserFunction) {
-//                        System.out.println("set args: "+Arrays.toString(args));
-                            UserFunction function = (UserFunction) thatObject;
-                            function.setArgs(args);
-                            function.setUserFunctions(functions);
-                        } else {
-                            Function function = new Function(thatObject, methodName, args);
-//                        System.out.println("function: " + function);
-                            thatObject = function;
-                            methodName = null;
-                        }
-                    }
+                    thatObject = new Function(thatObject, methodName, args);
                 }
-//                    System.out.println("ololololo " + brackets);
-                last = m.end();
+                //.x
+            } else if (parts.get(0).startsWith(".")) {
+                String field = parts.remove(0).substring(1);
+                thatObject = new Function(thatObject, field);
+                //[0]
+            } else if (parts.get(0).startsWith("[") && parts.get(0).endsWith("]")) {
+                String argsRaw = parts.remove(0);
+                argsRaw = argsRaw.substring(1, argsRaw.length() - 1);
+                thatObject = new Operation(thatObject, prepare(argsRaw, model, functions), Operator.GET);
             }
-            if (last == m.start()) {
-                last = m.end();
-            }
         }
-        String field = exp.substring(last).trim();
-        if (field.length() > 0 && !field.equals("null") && !field.equals(")")) {
-            if (thatObject == null)
-                thatObject = new Expression.Holder(field);
-            else
-            thatObject = new Function(thatObject, field);
-        }
-        if (methodName != null) {
-            thatObject = new Function(thatObject, methodName, null);
-        }
+
         return thatObject;
     }
 
@@ -651,18 +708,124 @@ public class EvalUtils {
     private static final Pattern actions = Pattern.compile("\\+\\+|--|\\.\\.|\\*=?|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
 
     static {
-        Function.setMethod(Collection.class, "collect", new CollectionUtils.Closure3<Object, Object, ClosureExpression, Map>() {
+        Function.setMethod(Collection.class, "collect", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
             @Override
-            public Object execute(Object it, ClosureExpression closure, Map model) {
-                Map<String, Object> local = new HashMap<String, Object>(model);
+            public Object execute(Object it, Map model, Object[] args) {
                 List l = new ArrayList();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 Collection c = (Collection) it;
                 for (Object ob : c) {
-                    local.put("it", ob);
-                    l.add(closure.get(local));
+                    l.add(closure.get(model, ob));
                 }
                 return l;
             }
         });
+        Function.setMethod(Collection.class, "find", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                Collection c = (Collection) it;
+                ClosureExpression closure = (ClosureExpression) args[0];
+                for (Object ob : c) {
+                    if ((Boolean) closure.get(model, ob)) {
+                        return ob;
+                    }
+                }
+                return null;
+            }
+        });
+        Function.setMethod(Collection.class, "findAll", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                List l = new ArrayList();
+                Collection c = (Collection) it;
+                ClosureExpression closure = (ClosureExpression) args[0];
+                for (Object ob : c) {
+                    if ((Boolean) closure.get(model, ob)) {
+                        l.add(ob);
+                    }
+                }
+                return l;
+            }
+        });
+        Function.setMethod(Collection.class, "findIndexOf", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                Collection c = (Collection) it;
+                ClosureExpression closure = (ClosureExpression) args[0];
+                int i = 0;
+                for (Object ob : c) {
+                    if ((Boolean) closure.get(model, ob)) {
+                        return i;
+                    }
+                    i++;
+                }
+                return -1;
+            }
+        });
+        Function.setMethod(Collection.class, "each", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                Collection c = (Collection) it;
+                ClosureExpression closure = (ClosureExpression) args[0];
+                for (Object ob : c) {
+                    closure.get(model, ob);
+                }
+                return null;
+            }
+        });
+        Function.setMethod(Collection.class, "eachWithIndex", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                Collection c = (Collection) it;
+                ClosureExpression closure = (ClosureExpression) args[0];
+                int i = 0;
+                for (Object ob : c) {
+                    closure.get(model, ob, i++);
+                }
+                return null;
+            }
+        });
+        Function.setMethod(Collection.class, "every", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                Collection c = (Collection) it;
+                ClosureExpression closure = (ClosureExpression) args[0];
+                for (Object ob : c) {
+                    if (!(Boolean) closure.get(model, ob))
+                        return false;
+                }
+                return true;
+            }
+        });
+        Function.setMethod(Collection.class, "any", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                Collection c = (Collection) it;
+                ClosureExpression closure = (ClosureExpression) args[0];
+                for (Object ob : c) {
+                    if ((Boolean) closure.get(model, ob))
+                        return true;
+                }
+                return false;
+            }
+        });
+        Function.setMethod(Collection.class, "join", new CollectionUtils.Closure3<Object, Object, Map, Object[]>() {
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                StringBuilder sb = new StringBuilder();
+                Collection c = (Collection) it;
+                for (Object ob : c) {
+                    if (sb.length() != 0) {
+                        sb.append(args[0]);
+                    }
+                    sb.append(ob);
+                }
+                return sb.toString();
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        System.out.println(trimBrackets("sin((1+2)/(3))"));
     }
 }
