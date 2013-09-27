@@ -1,5 +1,7 @@
 package org.bordl.utils.cache;
 
+import org.bordl.utils.WrappedException;
+
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -27,7 +29,7 @@ public class Cache<K, V> {
     }
 
     public Cache(long lifetimeSec, Computable<K, V> computable) {
-        this(lifetimeSec, lifetimeSec / 2, computable);
+        this(lifetimeSec, lifetimeSec == 0 ? -1 : lifetimeSec / 2, computable);
     }
 
     public Cache(long lifetimeSec) {
@@ -90,6 +92,10 @@ public class Cache<K, V> {
 
         public void run(Computable<K, V> c, K k) {
             v = c.compute(k);
+            done();
+        }
+
+        void done() {
             synchronized (this) {
                 done = true;
                 this.notifyAll();
@@ -107,8 +113,14 @@ public class Cache<K, V> {
             f = cache.putIfAbsent(key, ft);
             if (f == null) {
                 f = ft;
-                ft.run(c, key);
-                updateTimingCache(key);
+                try {
+                    ft.run(c, key);
+                } catch (Exception e) {
+                    ft.done();
+                    throw new WrappedException(e);
+                } finally {
+                    updateTimingCache(key);
+                }
             }
         } else if (updateTTL) {
             updateTimingCache(key);
@@ -165,8 +177,10 @@ public class Cache<K, V> {
         public CacheControl(long checkPeriodSec) {
             setDaemon(true);
             this.checkPeriod = checkPeriodSec * 1000;
-            if (checkPeriodSec <= 0) {
+            if (checkPeriodSec < 0) {
                 enabled = false;
+            } else if (checkPeriodSec == 0) {
+                this.checkPeriod = 500;
             }
         }
 

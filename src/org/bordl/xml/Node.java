@@ -5,9 +5,12 @@ package org.bordl.xml;
  * Date: 12/24/12
  */
 
-import org.bordl.utils.io.FileUtils;
+import org.bordl.utils.CollectionUtils;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,16 +59,18 @@ public class Node {
     protected Node() {
     }
 
-    public void attribute(String attributeName, String value) {
+    public Node attribute(String attributeName, String value) {
         if (attributes == null)
             attributes = new LinkedHashMap<String, String>();
         attributes.put(attributeName, value);
+        return this;
     }
 
-    public void attr(String attributeName, String value) {
+    public Node attr(String attributeName, String value) {
         if (attributes == null)
             attributes = new LinkedHashMap<String, String>();
         attributes.put(attributeName, value);
+        return this;
     }
 
     public String attribute(String attributeName) {
@@ -136,11 +141,25 @@ public class Node {
         return sb.toString();
     }
 
-    public void add(Node node) {
+    public Node add(Node node) {
         if (children == null)
             children = new ArrayList<Node>();
         children.add(node);
         node.parent = this;
+        return this;
+    }
+
+    public Node addText(String text) {
+        return add(new TextNode(text));
+    }
+
+    public Node addComment(String text) {
+        return add(new CommentNode(text));
+    }
+
+    public Node execute(CollectionUtils.Closure<Void, Node> closure) {
+        closure.execute(this);
+        return this;
     }
 
     public Node parent() {
@@ -706,6 +725,63 @@ public class Node {
         return i;
     }
 
+    public String toXML() {
+        return toXML(false);
+    }
+
+    public String toXML(boolean prettyPrint) {
+        StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding='UTF-8' ?>");
+        if (prettyPrint)
+            sb.append("\n");
+        return toXML("", sb, prettyPrint);
+    }
+
+    private String toXML(String offset, StringBuilder sb, boolean prettyPrint) {
+        if (prettyPrint)
+            sb.append(offset);
+
+        if (this instanceof TextNode) {
+            sb.append(text());
+            if (prettyPrint)
+                sb.append("\n");
+        } else {
+            sb.append("<").append(name);
+
+            if (attributes != null) {
+                for (Map.Entry<String, String> attr : attributes.entrySet()) {
+                    sb.append(" ").append(attr.getKey()).append("=\"").append(escape(attr.getValue())).append("\"");
+                }
+            }
+            if (children != null) {
+                sb.append(">");
+                if (prettyPrint)
+                    sb.append("\n");
+
+                for (Node child : children)
+                    child.toXML(offset + "\t", sb, prettyPrint);
+
+                if (prettyPrint)
+                    sb.append(offset);
+                sb.append("</").append(name).append(">");
+            } else
+                sb.append("/>");
+
+            if (prettyPrint)
+                sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+    private String escape(String s) {
+        return s
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                ;
+    }
+
     public static void main(String[] args) throws IOException {
 //        String s = "<head>\n" +
 //                "    <script src=\"video.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\n" +
@@ -715,7 +791,19 @@ public class Node {
 //                "    </script>" +
 //                "</head>";
 //
-        String s = FileUtils.text("/home/moxa/IdeaProjects/WVC/views/UploadController/index_temp.gsp");
-        System.out.println(Node.parse(s, true, true));
+
+//        String s = FileUtils.text("/home/moxa/IdeaProjects/WVC/views/UploadController/index_temp.gsp");
+//        System.out.println(Node.parse(s, true, true));
+
+
+//        Node xml = new Node("notice").attr("version", "version")
+//                .add(new Node("api-key").addText("key"))
+//                .add(
+//                        new Node("notifier")
+//                                .add(new Node("name").addText("name"))
+//                                .add(new Node("version").addText("version"))
+//                                .add(new Node("url").addText("url").addComment("ololo"))
+//                );
+//        System.out.println(xml.toXML());
     }
 }

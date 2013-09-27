@@ -233,6 +233,11 @@ public class ImageUtils {
         return resize(im, scale);
     }
 
+    public static BufferedImage resizeToFit(BufferedImage im, int width, int height) throws IOException {
+        double scale = Math.min((width * 1.0) / im.getWidth(), (height * 1.0) / im.getHeight());
+        return resize(im, scale);
+    }
+
     public static BufferedImage resize(BufferedImage im, double scale) {
         BufferedImage img = new BufferedImage((int) (Math.round((im.getWidth() * scale))), (int) (Math.round((im.getHeight() * scale))), im.getType());
         Image imgg = im.getScaledInstance(img.getWidth(), img.getHeight(), Image.SCALE_SMOOTH);

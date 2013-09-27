@@ -247,6 +247,16 @@ public class HttpClient {
         }
     }
 
+    public static enum ContentType {
+        BINARY("application/octet-stream");
+
+        public final String text;
+
+        ContentType(String text) {
+            this.text = text;
+        }
+    }
+
     public static class Request {
 
         private int maxRetryCount = 0;
@@ -257,11 +267,11 @@ public class HttpClient {
         private HashMap<String, byte[]> dataArrays = new HashMap<String, byte[]>();
         private HashMap<String, String> dataTypes = new HashMap<String, String>();
         private String url;
-        private String json;
         private boolean multipart = false;
         private String charsetForEncoding;
         private Proxy proxy;
         private boolean redirects = true;
+        private byte[] data;
 
         public Request(String url) {
             this.url = url;
@@ -345,12 +355,38 @@ public class HttpClient {
         }
 
         public Request setJson(String json) {
-            this.json = json;
-            return this;
+            return json(json);
         }
 
         public Request json(String json) {
-            this.json = json;
+            try {
+                data = json.getBytes("utf-8");
+            } catch (UnsupportedEncodingException ignored) {
+            }
+            setContentType("application/json; charset=utf-8");
+            return this;
+        }
+
+        public Request setXml(String xml) {
+            return xml(xml);
+        }
+
+        public Request xml(String xml) {
+            try {
+                data = xml.getBytes("utf-8");
+            } catch (UnsupportedEncodingException ignored) {
+            }
+            setContentType("text/xml; charset=utf-8");
+            return this;
+        }
+
+        public Request setData(byte[] data, String contentType) {
+            return data(data, contentType);
+        }
+
+        public Request data(byte[] data, String contentType) {
+            this.data = data;
+            setContentType(contentType);
             return this;
         }
 
@@ -444,16 +480,13 @@ public class HttpClient {
                 if (method.equals(ConnectionMethod.POST)) {
                     c.setDoOutput(true);
                     if (!multipart) {
-                        String data;
-                        if (json != null) {
-                            c.addRequestProperty("Content-Type", "application/json; charset=utf-8");
-                            data = json;
-                        } else {
+                        if (data == null) {
                             c.addRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                            data = createPostParameters(params, charsetForEncoding);
+                            data = createPostParameters(params, charsetForEncoding).getBytes(charsetForEncoding);
                         }
-                        c.addRequestProperty("Content-Length", String.valueOf(data.length()));
-                        OutputStreamWriter out = new OutputStreamWriter(c.getOutputStream());
+
+                        c.addRequestProperty("Content-Length", String.valueOf(data.length));
+                        OutputStream out = c.getOutputStream();
                         out.write(data);
                         out.flush();
                         out.close();
@@ -539,6 +572,11 @@ public class HttpClient {
 
         public String url() {
             return url;
+        }
+
+        public Request setContentType(String contentType) {
+            setHeader("Content-Type", contentType);
+            return this;
         }
     }
 

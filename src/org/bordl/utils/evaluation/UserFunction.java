@@ -11,7 +11,6 @@ import java.util.Map;
  */
 public class UserFunction extends Expression {
     private Expression eh;
-    private String exp;
     private String[] argsNames;
     private String name;
     private Expression[] args;
