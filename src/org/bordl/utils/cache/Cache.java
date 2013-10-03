@@ -1,7 +1,5 @@
 package org.bordl.utils.cache;
 
-import org.bordl.utils.WrappedException;
-
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -13,10 +11,11 @@ import java.util.logging.Logger;
  */
 public class Cache<K, V> {
 
-    private final ConcurrentHashMap<K, Holder<V>> cache = new ConcurrentHashMap<K, Holder<V>>();
-    private final ConcurrentLinkedQueue<Entry<K, Long>> timings = new ConcurrentLinkedQueue<Entry<K, Long>>();
+    private final ConcurrentHashMap<K, Holder<K, V>> cache = new ConcurrentHashMap<K, Holder<K, V>>();
+    private final ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
     private long lifetime;
     private Computable<K, V> computable;
+    private volatile boolean removeOnFail = true;
 
     public Cache(long lifetimeSec, long checkPeriodSec, Computable<K, V> computable) {
         this.lifetime = lifetimeSec * 1000;
@@ -57,21 +56,33 @@ public class Cache<K, V> {
         public V compute(K k);
     }
 
+    public void setRemoveOnFail(boolean removeOnFail) {
+        this.removeOnFail = removeOnFail;
+    }
+
+    public boolean isRemoveOnFail() {
+        return removeOnFail;
+    }
+
     public void clear() {
         timings.clear();
         cache.clear();
     }
 
-    private class Holder<V> {
+    private class Holder<K, V> {
 
         protected V v;
+        protected K k;
         protected boolean done = false;
+        protected long validUntil;
 
-        public Holder() {
+        public Holder(K k) {
+            this.k = k;
         }
 
-        public Holder(V v) {
+        public Holder(K k, V v) {
             this.v = v;
+            this.k = k;
             done = true;
         }
 
@@ -81,8 +92,7 @@ public class Cache<K, V> {
                     while (!done) {
                         try {
                             this.wait();
-                        } catch (InterruptedException ex) {
-                            //ignore
+                        } catch (InterruptedException ignored) {
                         }
                     }
                 }
@@ -101,51 +111,67 @@ public class Cache<K, V> {
                 this.notifyAll();
             }
         }
+
+        public void setValidUntil(long validUntil) {
+            this.validUntil = validUntil;
+        }
+
+        public long getValidUntil() {
+            return validUntil;
+        }
+
+        public K getKey() {
+            return k;
+        }
     }
 
     private V getFromCache(final K key, Computable<K, V> c, boolean updateTTL) {
-        Holder<V> f = cache.get(key);
+        Holder<K, V> f = cache.get(key);
         if (f == null) {
             if (c == null) {
                 return null;
             }
-            Holder<V> ft = new Holder<V>();
+            Holder<K, V> ft = new Holder<K, V>(key);
             f = cache.putIfAbsent(key, ft);
             if (f == null) {
                 f = ft;
                 try {
                     ft.run(c, key);
-                } catch (Exception e) {
-                    ft.done();
-                    throw new WrappedException(e);
                 } finally {
-                    updateTimingCache(key);
+                    ft.done();
+                    if (removeOnFail)
+                        cache.remove(key);
+                    else
+                        updateTimingCache(f);
                 }
             }
         } else if (updateTTL) {
-            updateTimingCache(key);
+            updateTimingCache(f);
         }
         return f.get();
     }
 
     public void put(final K key, final V value) {
-        cache.put(key, new Holder<V>(value));
-        updateTimingCache(key);
+        Holder<K, V> h = new Holder<K, V>(key, value);
+        cache.put(key, h);
+        updateTimingCache(h);
     }
 
     public boolean putIfAbsent(final K key, final V value) {
-        if (cache.putIfAbsent(key, new Holder<V>(value)) == null) {
-            updateTimingCache(key);
+        Holder<K, V> h = new Holder<K, V>(key, value);
+        if (cache.putIfAbsent(key, h) == null) {
+            updateTimingCache(h);
             return true;
         }
         return false;
     }
 
-    private void updateTimingCache(final K key) {
+    private void updateTimingCache(final Holder<K, V> key) {
         final Long timing = lifetime + System.currentTimeMillis();
-        timings.add(new Entry<K, Long>() {
+        key.setValidUntil(timing);
+        timings.add(new Entry<Holder<K, V>, Long>() {
             @Override
-            public K getKey() {
+            public Holder<K, V> getKey() {
                 return key;
             }
 
@@ -186,16 +212,19 @@ public class Cache<K, V> {
 
         @Override
         public void run() {
-            Entry<K, Long> entry = null;
+            Entry<Holder<K, V>, Long> entry = null;
             while (enabled) {
                 try {
                     Thread.sleep(checkPeriod);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(Cache.class.getName()).log(Level.SEVERE, null, ex);
                 }
+                Holder<K, V> h;
                 Long time = System.currentTimeMillis();
                 while ((entry = timings.peek()) != null && entry.getValue().compareTo(time) < 0) {
-                    cache.remove(timings.poll().getKey());
+                    h = timings.poll().getKey();
+                    if (h.validUntil < time)
+                        cache.remove(h.getKey());
                 }
             }
         }
