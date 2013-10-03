@@ -133,13 +133,15 @@ public class Cache<K, V> {
             }
             Holder<K, V> ft = new Holder<K, V>(key);
             f = cache.putIfAbsent(key, ft);
+            boolean failed = true;
             if (f == null) {
                 f = ft;
                 try {
                     ft.run(c, key);
+                    failed = false;
                 } finally {
                     ft.done();
-                    if (removeOnFail)
+                    if (failed && removeOnFail)
                         cache.remove(key);
                     else
                         updateTimingCache(f);
