@@ -79,7 +79,6 @@ public class FileTools {
     }
 
     public static byte[] bytes(File file) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
         InputStream in;
 
         try {
@@ -88,11 +87,11 @@ public class FileTools {
             throw new WrappedException(e);
         }
 
-        byte[] b = new byte[1024 * 50];
-        int r;
+        byte[] b = new byte[(int) file.length()];
+        int r, total = 0;
         try {
-            while ((r = in.read(b)) != -1) {
-                out.write(b, 0, r);
+            while ((r = in.read(b, total, b.length - total)) != -1) {
+                total += r;
             }
         } catch (IOException e) {
             throw new WrappedException(e);
@@ -103,7 +102,7 @@ public class FileTools {
             }
         }
 
-        return out.toByteArray();
+        return b;
     }
 
 }
