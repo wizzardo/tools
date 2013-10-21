@@ -1,13 +1,82 @@
 package org.bordl.utils;
 
 import java.io.*;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class ZipUtils {
+
+    public static class ZipBuilder {
+        private List<ZipBuilderEntry> entries = new ArrayList<ZipBuilderEntry>();
+
+        public ZipBuilder append(String name, byte[] bytes) {
+            entries.add(new BytesEntry(name, bytes));
+            return this;
+        }
+
+        public ZipBuilder append(File f) {
+            entries.add(new FileEntry(f));
+            return this;
+        }
+
+        public void zip(OutputStream out) throws IOException {
+            ZipOutputStream zipout = new ZipOutputStream(out);
+            for (ZipBuilderEntry entry : entries) {
+                entry.write(zipout);
+            }
+            zipout.close();
+        }
+    }
+
+    private static interface ZipBuilderEntry {
+        public void write(ZipOutputStream out) throws IOException;
+    }
+
+    private static class BytesEntry implements ZipBuilderEntry {
+        private String name;
+        private byte[] bytes;
+
+        private BytesEntry(String name, byte[] bytes) {
+            this.name = name;
+            this.bytes = bytes;
+        }
+
+        @Override
+        public void write(ZipOutputStream out) throws IOException {
+            ZipEntry entry = new ZipEntry(name);
+            entry.setMethod(ZipEntry.DEFLATED);
+            out.putNextEntry(entry);
+            out.write(bytes);
+        }
+    }
+
+    private static class FileEntry implements ZipBuilderEntry {
+        private File file;
+
+        private FileEntry(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public void write(ZipOutputStream out) throws IOException {
+            if (file.isFile()) {
+                FileInputStream in = new FileInputStream(file);
+                ZipEntry entry = new ZipEntry(file.getName());
+                entry.setMethod(ZipEntry.DEFLATED);
+                out.putNextEntry(entry);
+                int r;
+                byte[] b = new byte[10240];
+                while ((r = in.read(b)) != -1) {
+                    out.write(b, 0, r);
+                }
+                in.close();
+            } else {
+                zip(out, file);
+            }
+        }
+    }
 
     public static void unzip(File zipFile, File outDir) {
         ZipInputStream zip = null;
@@ -81,11 +150,8 @@ public class ZipUtils {
     public static void zip(File toZip) {
         ZipOutputStream zipout = null;
         try {
-            File startDir = toZip.getParentFile();
             zipout = new ZipOutputStream(new FileOutputStream(toZip.getAbsolutePath() + ".zip"));
-            LinkedList<File> files = new LinkedList<File>();
-            getFiles(files, toZip);
-            zipping(zipout, files, startDir);
+            zip(zipout, toZip);
             zipout.close();
         } catch (IOException ex) {
             throw new WrappedException(ex);
@@ -97,6 +163,13 @@ public class ZipUtils {
                 }
             }
         }
+    }
+
+    public static void zip(ZipOutputStream out, File toZip) {
+        File startDir = toZip.getParentFile();
+        LinkedList<File> files = new LinkedList<File>();
+        getFiles(files, toZip);
+        zipping(out, files, startDir);
     }
 
     public static List<File> getFiles(List<File> files, File f) {
@@ -120,7 +193,7 @@ public class ZipUtils {
                 File f = files.get(i - 1);
                 in = new FileInputStream(f);
                 ZipEntry entry = new ZipEntry(f.getAbsolutePath().substring(startDir.getAbsolutePath().length() + 1));
-                System.out.println(i + "/" + files.size() + " " + entry);
+//                System.out.println(i + "/" + files.size() + " " + entry);
                 entry.setMethod(ZipEntry.DEFLATED);
                 zipout.putNextEntry(entry);
                 int r;

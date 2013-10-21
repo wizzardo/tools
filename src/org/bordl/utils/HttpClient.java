@@ -190,7 +190,7 @@ public class HttpClient {
         }
 
         public byte[] asBytes() throws IOException {
-            InputStream inputStream = connection.getInputStream();
+            InputStream inputStream = connection.getResponseCode() < 400 ? connection.getInputStream() : connection.getErrorStream();
             if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
                 inputStream = new GZIPInputStream(inputStream);
             else if ("deflate".equals(connection.getHeaderField("Content-Encoding")))
@@ -331,12 +331,13 @@ public class HttpClient {
         }
 
         public Request cookies(List<Cookie> cookies) {
-            headers.put("Cookie", CollectionUtils.join(CollectionUtils.collect(cookies, new CollectionUtils.Closure<String, Cookie>() {
-                @Override
-                public String execute(Cookie it) {
-                    return it.key + "=" + it.value;
-                }
-            }), "; "));
+            StringBuilder sb = new StringBuilder();
+            for (Cookie c : cookies) {
+                if (sb.length() > 0)
+                    sb.append("; ");
+                sb.append(c.key).append("=").append(c.value);
+            }
+            headers.put("Cookie", sb.toString());
             return this;
         }
 
@@ -462,7 +463,7 @@ public class HttpClient {
 
         private Response connect(int retryNumber) throws IOException {
             try {
-                if (method.equals(ConnectionMethod.GET)) {
+                if (method == ConnectionMethod.GET || (method == ConnectionMethod.POST && data != null)) {
                     url = createURL(url, params);
                 }
                 URL u = new URL(url);
