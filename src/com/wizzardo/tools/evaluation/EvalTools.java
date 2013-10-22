@@ -34,11 +34,11 @@ public class EvalTools {
         char quote = 0;
         for (int i = from; i < to; i++) {
             if (!inString) {
-                if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i > 1 && s.charAt(i - 1) != '\\'))) {
+                if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i >= 1 && s.charAt(i - 1) != '\\'))) {
                     quote = s.charAt(i);
                     inString = true;
                 }
-            } else if ((s.charAt(i) == quote) && i > 1 && s.charAt(i - 1) != '\\') {
+            } else if ((s.charAt(i) == quote) && i >= 1 && s.charAt(i - 1) != '\\') {
                 inString = false;
             }
         }

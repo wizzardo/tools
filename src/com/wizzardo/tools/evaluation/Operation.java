@@ -176,7 +176,7 @@ class Operation extends Expression {
         //System.out.println(ob1 + "\t" + operator + "\t" + ob2);
         switch (operator) {
             case PLUS: {
-                result = plus(ob1, ob2);
+                result = plus(ob1, ob2, operator);
                 break;
             }
             case MINUS: {
@@ -484,7 +484,7 @@ class Operation extends Expression {
                 }
             }
             case PLUS_EQUAL: {
-                Object r = plus(left, right);
+                Object r = plus(left, right, operator);
                 model.put(key, r);
                 return r;
             }
@@ -542,7 +542,7 @@ class Operation extends Expression {
                 }
             }
             case PLUS_EQUAL: {
-                Object r = plus(left, right);
+                Object r = plus(left, right, operator);
                 field.set(thatObject, r);
                 return r;
             }
@@ -569,7 +569,7 @@ class Operation extends Expression {
         throw new UnsupportedOperationException("Not yet implemented:" + operator);
     }
 
-    private static Object plus(Object ob1, Object ob2) {
+    private static Object plus(Object ob1, Object ob2, Operator o) {
         if (ob1 instanceof Number && ob2 instanceof Number) {
             if (ob1 instanceof Double || ob2 instanceof Double) {
                 return ((Number) ob1).doubleValue() + ((Number) ob2).doubleValue();
@@ -593,14 +593,36 @@ class Operation extends Expression {
         } else {
             if (ob1 instanceof Collection) {
                 if (ob2 instanceof Collection) {
-                    ((Collection) ob1).addAll((Collection) ob2);
+                    if (o == Operator.PLUS) {
+                        Collection c = createNewCollection((Collection) ob1);
+                        c.addAll((Collection) ob2);
+                        return c;
+                    } else
+                        ((Collection) ob1).addAll((Collection) ob2);
                     return ob1;
                 } else {
-                    ((Collection) ob1).add(ob2);
+                    if (o == Operator.PLUS) {
+                        Collection c = createNewCollection((Collection) ob1);
+                        c.add(ob2);
+                        return c;
+                    } else
+                        ((Collection) ob1).add(ob2);
                     return ob1;
                 }
             }
             return String.valueOf(ob1) + String.valueOf(ob2);
+        }
+    }
+
+    private static Collection createNewCollection(Collection c) {
+        try {
+            Collection l = c.getClass().newInstance();
+            l.addAll(c);
+            return l;
+        } catch (InstantiationException e) {
+            throw new WrappedException(e);
+        } catch (IllegalAccessException e) {
+            throw new WrappedException(e);
         }
     }
 
@@ -715,15 +737,15 @@ class Operation extends Expression {
     }
 
     private static boolean e(Object ob1, Object ob2) {
-        if(ob1 == null || ob2 == null)
+        if (ob1 == null || ob2 == null)
             return false;
-        if(ob1 == ob2)
+        if (ob1 == ob2)
             return true;
         return ob1.equals(ob2);
     }
 
     private static Object ne(Object ob1, Object ob2) {
-        return !e(ob1,ob2);
+        return !e(ob1, ob2);
     }
 
     private static Object multiply(Object ob1, Object ob2) {

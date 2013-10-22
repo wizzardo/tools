@@ -90,7 +90,7 @@ public class FileTools {
         byte[] b = new byte[(int) file.length()];
         int r, total = 0;
         try {
-            while ((r = in.read(b, total, b.length - total)) != -1) {
+            while (b.length - total > 0 && (r = in.read(b, total, b.length - total)) != -1) {
                 total += r;
             }
         } catch (IOException e) {

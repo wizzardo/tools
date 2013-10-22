@@ -242,6 +242,10 @@ public class HttpClient {
             return connection.getHeaderField(key);
         }
 
+        public Map<String, List<String>> getHeaders() {
+            return connection.getHeaderFields();
+        }
+
         public int getResponseCode() throws IOException {
             return connection.getResponseCode();
         }

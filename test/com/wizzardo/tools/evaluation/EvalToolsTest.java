@@ -486,15 +486,18 @@ public class EvalToolsTest {
 
         model.clear();
         EvalTools.evaluate("def l = ['a','b','c']", model);
+        assertEquals("[a, b, c, d]", EvalTools.evaluate("l + 'd'", model).toString());
+        assertEquals("[a, b, c, d]", EvalTools.evaluate("l + ['d']", model).toString());
+        assertEquals("[a, b, c]", EvalTools.evaluate("l", model).toString());
         assertEquals("[a, b, c, d]", EvalTools.evaluate("l << 'd'", model).toString());
         assertEquals("[a, b, c, d, e]", EvalTools.evaluate("l += 'e'", model).toString());
         assertEquals("[a, b, c, d, e, [f]]", EvalTools.evaluate("l << ['f']", model).toString());
         assertEquals("[a, b, c, d, e, [f], g]", EvalTools.evaluate("l += ['g']", model).toString());
-
-
-//        Assert.assertEquals("[a, b, c, d, e]", EvalTools.evaluate("['a','b'] + 'c' + ['d','e']", model).toString());
+        assertEquals("[a, b, c]", EvalTools.evaluate("['a','b'] + 'c'", model).toString());
+        assertEquals("[a, b, c, d, e]", EvalTools.evaluate("['a','b'] + 'c' + ['d','e']", model).toString());
 
         //TODO [1,2,3]*.multiply(2) == [2,4,6]
+        //TODO - * for collections
 
         model.clear();
         EvalTools.evaluate("def l = ['a','b','c']", model);
@@ -522,6 +525,10 @@ public class EvalToolsTest {
 
         assertEquals("1-2-3", EvalTools.evaluate("l.join('-')", model).toString());
 //        Assert.assertEquals("1-2-3", EvalTools.evaluate("l.inject('counting')", model).toString());
+
+        model.clear();
+        EvalTools.evaluate("def l = new java.util.HashSet()", model);
+        assertEquals("[1, 2, 3]", EvalTools.evaluate("l << 1 << 2 << 3 << 3", model).toString());
     }
 
     @Test
