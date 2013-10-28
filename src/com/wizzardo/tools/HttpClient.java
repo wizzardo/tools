@@ -35,23 +35,28 @@ public class HttpClient {
         }
     };
 
-    private static String createPostParameters(Map<String, String> params, String urlEncoding) {
+    private static String createPostParameters(Map<String, List<String>> params, String urlEncoding) throws UnsupportedEncodingException {
         if (params == null || params.isEmpty()) {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        Iterator<Map.Entry<String, String>> iter = params.entrySet().iterator();
+        Iterator<Map.Entry<String, List<String>>> iter = params.entrySet().iterator();
         while (iter.hasNext()) {
-            Map.Entry<String, String> entry = iter.next();
-            sb.append(entry.getKey()).append("=");
-            if (urlEncoding != null) {
-                try {
-                    sb.append(URLEncoder.encode(entry.getValue(), urlEncoding));
-                } catch (UnsupportedEncodingException ex) {
-                    Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, ex);
+            Map.Entry<String, List<String>> entry = iter.next();
+
+            boolean and = false;
+            for (String value : entry.getValue()) {
+                if (and)
+                    sb.append('&');
+                else
+                    and = true;
+
+                sb.append(entry.getKey()).append("=");
+                if (urlEncoding != null) {
+                    sb.append(URLEncoder.encode(value, urlEncoding));
+                } else {
+                    sb.append(URLEncoder.encode(value, "utf-8"));
                 }
-            } else {
-                sb.append(entry.getValue());
             }
             if (iter.hasNext()) {
                 sb.append("&");
@@ -60,22 +65,14 @@ public class HttpClient {
         return sb.toString();
     }
 
-    private static String createURL(String url, Map<String, String> params) throws UnsupportedEncodingException {
+    private static String createURL(String url, Map<String, List<String>> params) throws UnsupportedEncodingException {
         if (params == null || params.isEmpty()) {
             return url;
         }
         StringBuilder sb = new StringBuilder(url);
-        Iterator<Map.Entry<String, String>> iter = params.entrySet().iterator();
-        if (iter.hasNext()) {
-            sb.append("?");
-        }
-        while (iter.hasNext()) {
-            Map.Entry<String, String> entry = iter.next();
-            sb.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), "utf-8"));
-            if (iter.hasNext()) {
-                sb.append("&");
-            }
-        }
+        if (!params.isEmpty())
+            sb.append("?").append(createPostParameters(params, null));
+
         return sb.toString();
     }
 
@@ -266,13 +263,13 @@ public class HttpClient {
         private int maxRetryCount = 0;
         private long pauseBetweenRetries = 0;
         private ConnectionMethod method = ConnectionMethod.GET;
-        private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
+        private LinkedHashMap<String, List<String>> params = new LinkedHashMap<String, List<String>>();
         private HashMap<String, String> headers = new HashMap<String, String>();
         private HashMap<String, byte[]> dataArrays = new HashMap<String, byte[]>();
         private HashMap<String, String> dataTypes = new HashMap<String, String>();
         private String url;
         private boolean multipart = false;
-        private String charsetForEncoding;
+        private String charsetForEncoding = "utf-8";
         private Proxy proxy;
         private boolean redirects = true;
         private byte[] data;
@@ -396,7 +393,22 @@ public class HttpClient {
         }
 
         public Request addParameter(String key, String value) {
-            params.put(key, value);
+            List<String> l = params.get(key);
+            if (l == null) {
+                l = new ArrayList<String>();
+                params.put(key, l);
+            }
+            l.add(value);
+            return this;
+        }
+
+        public Request addParameters(String key, List<String> values) {
+            List<String> l = params.get(key);
+            if (l == null) {
+                l = new ArrayList<String>();
+                params.put(key, l);
+            }
+            l.addAll(values);
             return this;
         }
 
@@ -417,7 +429,7 @@ public class HttpClient {
         public Request addFile(String key, String path) {
             multipart = true;
             method = ConnectionMethod.POST;
-            params.put(key, "file://" + path);
+            addParameter(key, "file://" + path);
             return this;
         }
 
@@ -428,7 +440,7 @@ public class HttpClient {
         public Request addByteArray(String key, byte[] array, String name, String type) {
             multipart = true;
             method = ConnectionMethod.POST;
-            params.put(key, "array://" + name);
+            addParameter(key, "array://" + name);
             dataArrays.put(key, array);
             if (type != null) {
                 dataTypes.put(key, type);
@@ -437,7 +449,12 @@ public class HttpClient {
         }
 
         public Request data(String key, String value) {
-            params.put(key, value);
+            addParameter(key, value);
+            return this;
+        }
+
+        public Request data(String key, List<String> values) {
+            addParameters(key, values);
             return this;
         }
 
@@ -501,35 +518,37 @@ public class HttpClient {
                         c.setRequestProperty("Content-Length", String.valueOf(getLength()));
 //                        c.setChunkedStreamingMode(10240);
                         OutputStream out = c.getOutputStream();
-                        for (Map.Entry<String, String> param : params.entrySet()) {
-                            out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
-                            String type = dataTypes.get(param.getKey()) != null ? dataTypes.get(param.getKey()) : "application/octet-stream";
-                            if (param.getValue().startsWith("file://")) {
-                                File f = new File(param.getValue().substring(7));
-                                out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + f.getName() + "\"\r\n").getBytes());
-                                out.write(("Content-Type: " + type + "\r\n").getBytes());
-                                out.write("\r\n".getBytes());
-                                FileInputStream in = new FileInputStream(f);
-                                int r = 0;
-                                byte[] b = new byte[10240];
+                        for (Map.Entry<String, List<String>> param : params.entrySet()) {
+                            for (String value : param.getValue()) {
+                                out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
+                                String type = dataTypes.get(param.getKey()) != null ? dataTypes.get(param.getKey()) : "application/octet-stream";
+                                if (value.startsWith("file://")) {
+                                    File f = new File(value.substring(7));
+                                    out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + f.getName() + "\"\r\n").getBytes());
+                                    out.write(("Content-Type: " + type + "\r\n").getBytes());
+                                    out.write("\r\n".getBytes());
+                                    FileInputStream in = new FileInputStream(f);
+                                    int r = 0;
+                                    byte[] b = new byte[10240];
 //                                long rr = 0;
-                                while ((r = in.read(b)) != -1) {
-                                    out.write(b, 0, r);
-                                    out.flush();
+                                    while ((r = in.read(b)) != -1) {
+                                        out.write(b, 0, r);
+                                        out.flush();
 //                                    rr += r;
 //                                    System.out.println(100f * rr / f.length());
+                                    }
+                                    in.close();
+                                } else if (value.startsWith("array://")) {
+                                    out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + value.substring(8) + "\"\r\n").getBytes());
+                                    out.write(("Content-Type: " + type + "\r\n").getBytes());
+                                    out.write("\r\n".getBytes());
+                                    out.write(dataArrays.get(param.getKey()));
+                                } else {
+                                    out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"" + "\r\n\r\n").getBytes());
+                                    out.write(value.getBytes());
                                 }
-                                in.close();
-                            } else if (param.getValue().startsWith("array://")) {
-                                out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + param.getValue().substring(8) + "\"\r\n").getBytes());
-                                out.write(("Content-Type: " + type + "\r\n").getBytes());
                                 out.write("\r\n".getBytes());
-                                out.write(dataArrays.get(param.getKey()));
-                            } else {
-                                out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"" + "\r\n\r\n").getBytes());
-                                out.write((param.getValue()).getBytes());
                             }
-                            out.write("\r\n".getBytes());
                         }
                         out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ--".getBytes());
                         out.flush();
@@ -554,17 +573,19 @@ public class HttpClient {
         private int getLength() {
             int l = 0;
             l += "------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".length() * (params.size() + 1) + 2;
-            for (Entry<String, String> en : params.entrySet()) {
-                if (en.getValue().startsWith("file://") || en.getValue().startsWith("array://")) {
-                    String type = dataTypes.get(en.getKey()) != null ? dataTypes.get(en.getKey()) : "application/octet-stream";
-                    l += ("Content-Type: " + type + "\r\n").length();
-                    if (en.getValue().startsWith("file://")) {
-                        l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + new File(en.getValue().substring(7)).getName().getBytes().length + en.getValue().length();
+            for (Entry<String, List<String>> en : params.entrySet()) {
+                for (String value : en.getValue()) {
+                    if (value.startsWith("file://") || value.startsWith("array://")) {
+                        String type = dataTypes.get(en.getKey()) != null ? dataTypes.get(en.getKey()) : "application/octet-stream";
+                        l += ("Content-Type: " + type + "\r\n").length();
+                        if (value.startsWith("file://")) {
+                            l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + new File(value.substring(7)).getName().getBytes().length + value.length();
+                        } else {
+                            l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + dataArrays.get(en.getKey()).length + value.length();
+                        }
                     } else {
-                        l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + dataArrays.get(en.getKey()).length + en.getValue().length();
+                        l += "Content-Disposition: form-data; name=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + value.getBytes().length;
                     }
-                } else {
-                    l += "Content-Disposition: form-data; name=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + en.getValue().getBytes().length;
                 }
             }
 //            System.out.println(l);
