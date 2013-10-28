@@ -748,7 +748,7 @@ class Operation extends Expression {
         return !e(ob1, ob2);
     }
 
-    private static Object multiply(Object ob1, Object ob2) {
+    static Object multiply(Object ob1, Object ob2) {
         if (ob1 instanceof Double || ob2 instanceof Double) {
             return ((Number) ob1).doubleValue() * ((Number) ob2).doubleValue();
         }

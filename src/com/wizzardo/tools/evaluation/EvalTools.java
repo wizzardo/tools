@@ -7,6 +7,7 @@ package com.wizzardo.tools.evaluation;
 import com.wizzardo.tools.CollectionTools;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +17,7 @@ import java.util.regex.Pattern;
 public class EvalTools {
     static final String CONSTRUCTOR = "%constructor%";
     static EvaluatingStrategy defaultEvaluatingStrategy;
+    private static AtomicInteger variableCounter = new AtomicInteger();
 
     protected static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
@@ -27,6 +29,10 @@ public class EvalTools {
             }
         }
         return n;
+    }
+
+    protected static String getTempVariableName() {
+        return "__tempVariable_" + variableCounter.incrementAndGet();
     }
 
     protected static boolean inString(String s, int from, int to) {
@@ -53,6 +59,7 @@ public class EvalTools {
         int from = 0;
         int brackets = 0;
         int squareBrackets = 0;
+        int curlyBraces = 0;
         for (int i = 0; i < chars.length; i++) {
             if (!inString) {
                 switch (chars[i]) {
@@ -63,15 +70,23 @@ public class EvalTools {
                         break;
                     }
                     case '(': {
-                        if (brackets == 0 && i != from) {
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
                             l.add(new String(chars, from, i - from));
                             from = i;
                         }
                         brackets++;
                         break;
                     }
+                    case '{': {
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
+                            l.add(new String(chars, from, i - from));
+                            from = i;
+                        }
+                        curlyBraces++;
+                        break;
+                    }
                     case '[': {
-                        if (squareBrackets == 0 && i != from) {
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
                             l.add(new String(chars, from, i - from));
                             from = i;
                         }
@@ -80,7 +95,15 @@ public class EvalTools {
                     }
                     case ')': {
                         brackets--;
-                        if (brackets == 0) {
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
+                            l.add(new String(chars, from, i + 1 - from));
+                            from = i + 1;
+                        }
+                        break;
+                    }
+                    case '}': {
+                        curlyBraces--;
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
                             l.add(new String(chars, from, i + 1 - from));
                             from = i + 1;
                         }
@@ -88,14 +111,14 @@ public class EvalTools {
                     }
                     case ']': {
                         squareBrackets--;
-                        if (squareBrackets == 0) {
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
                             l.add(new String(chars, from, i + 1 - from));
                             from = i + 1;
                         }
                         break;
                     }
                     case '.': {
-                        if (brackets == 0 && i != from) {
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from && i > 0 && chars[i - 1] != '*') {
                             l.add(new String(chars, from, i - from));
                             from = i;
                         }
@@ -175,6 +198,7 @@ public class EvalTools {
         }
         boolean quotesSingle = false;
         boolean quotesDouble = false;
+        int brackets = 0;
         for (int i = 1; i < s.length(); i++) {
             switch (s.charAt(i)) {
                 case '\'':
@@ -185,8 +209,18 @@ public class EvalTools {
                     if (!quotesSingle)
                         quotesDouble = !quotesDouble;
                     break;
+                case '[': {
+                    if (!quotesSingle && !quotesDouble)
+                        brackets++;
+                    break;
+                }
+                case ']': {
+                    if (!quotesSingle && !quotesDouble)
+                        brackets--;
+                    break;
+                }
                 case ':':
-                    if (!quotesSingle && !quotesDouble) {
+                    if (!quotesSingle && !quotesDouble && brackets == 0) {
                         return true;
                     }
                     break;
@@ -497,8 +531,10 @@ public class EvalTools {
                 thatObject = prepare(parts.remove(0), model, functions);
                 continue;
             }
+
             //.concat("ololo")
-            if (parts.size() >= 2 && parts.get(0).startsWith(".") && parts.get(1).startsWith("(") && parts.get(1).endsWith(")")) {
+            if (parts.size() >= 2 && parts.get(0).startsWith(".")
+                    && ((parts.get(1).startsWith("(") && parts.get(1).endsWith(")")) || (parts.get(1).startsWith("{") && parts.get(1).endsWith("}")))) {
                 methodName = parts.remove(0).substring(1);
                 Expression[] args = null;
                 String argsRaw = trimBrackets(parts.remove(0));
@@ -510,6 +546,21 @@ public class EvalTools {
                     }
                 }
                 thatObject = new Function(thatObject, methodName, args);
+
+                //*.concat("ololo")
+            } else if (parts.size() >= 1 && parts.get(0).startsWith("*.")) {
+                String var = getTempVariableName();
+                Expression[] args = new Expression[1];
+                methodName = parts.remove(0).substring(1);
+                String argsRaw;
+                if (parts.size() >= 1 && parts.get(0).startsWith("(") && parts.get(0).endsWith(")"))
+                    argsRaw = parts.remove(0);
+                else
+                    argsRaw = "";
+
+                args[0] = prepare("{" + var + " -> " + var + methodName + argsRaw + "}", model, functions);
+                thatObject = new Function(thatObject, "collect", args);
+
                 //("ololo")
             } else if (parts.get(0).startsWith("(") && parts.get(0).endsWith(")")) {
                 Expression[] args = null;
@@ -528,10 +579,12 @@ public class EvalTools {
                 } else {
                     thatObject = new Function(thatObject, methodName, args);
                 }
+
                 //.x
             } else if (parts.get(0).startsWith(".")) {
                 String field = parts.remove(0).substring(1);
                 thatObject = new Function(thatObject, field);
+
                 //[0]
             } else if (parts.get(0).startsWith("[") && parts.get(0).endsWith("]")) {
                 String argsRaw = parts.remove(0);
@@ -705,7 +758,7 @@ public class EvalTools {
     }
 
 
-    private static final Pattern actions = Pattern.compile("\\+\\+|--|\\.\\.|\\*=?|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
+    private static final Pattern actions = Pattern.compile("\\+\\+|--|\\.\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
 
     static {
         Function.setMethod(Collection.class, "collect", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
@@ -821,6 +874,17 @@ public class EvalTools {
                     sb.append(ob);
                 }
                 return sb.toString();
+            }
+        });
+
+        Function.setMethod(Number.class, "multiply", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+
+            @Override
+            public Object execute(Object it, Map model, Object[] args) {
+                if (args.length != 1)
+                    throw new MissingMethodException(it.getClass(), "multiply", args);
+
+                return Operation.multiply(it, args[0]);
             }
         });
     }

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Moxa
@@ -268,7 +269,7 @@ public class EvalToolsTest {
         assertEquals(1, ((List) model.get("x")).get(0));
         assertEquals("[1, 2, 3]", EvalTools.evaluate("x << 2 << 3", model).toString());
         assertEquals("[1, 2, 3, 4]", EvalTools.evaluate("x + 4", model).toString());
-        assertEquals("[1, 2, 3, 4, 5]", EvalTools.evaluate("x += 5", model).toString());
+        assertEquals("[1, 2, 3, 5]", EvalTools.evaluate("x += 5", model).toString());
 
         assertEquals(1, ((List) EvalTools.evaluate("[1,[2,3]]", null)).get(0));
         assertEquals("[2, 3]", ((List) EvalTools.evaluate("[1,[2,3]]", null)).get(1).toString());
@@ -332,6 +333,8 @@ public class EvalToolsTest {
         assertTrue(EvalTools.evaluate("m.a = [:]", model) instanceof Map);
         assertEquals(1, EvalTools.evaluate("m[\"a\"][\"b\"] = 1", model));
         assertEquals(1, EvalTools.evaluate("m.a.b = 1", model));
+
+        assertEquals("[{id=1}, {id=2}, {id=3}]", EvalTools.evaluate("[[id:1],[id:2],[id:3]]").toString());
 
 
         assertEquals(5, EvalTools.evaluate("(0..5).size()", null));
@@ -496,7 +499,12 @@ public class EvalToolsTest {
         assertEquals("[a, b, c]", EvalTools.evaluate("['a','b'] + 'c'", model).toString());
         assertEquals("[a, b, c, d, e]", EvalTools.evaluate("['a','b'] + 'c' + ['d','e']", model).toString());
 
-        //TODO [1,2,3]*.multiply(2) == [2,4,6]
+
+        assertEquals("[2, 4, 6]", EvalTools.evaluate("[1, 2, 3].collect{ it * 2 }", model).toString());
+        assertEquals("[2, 4, 6]", EvalTools.evaluate("[1,2,3]*.multiply(2)", model).toString());
+
+        assertEquals("[1, 2, 3]", EvalTools.evaluate("[[id:1],[id:2],[id:3]]*.id", model).toString());
+
         //TODO - * for collections
 
         model.clear();
