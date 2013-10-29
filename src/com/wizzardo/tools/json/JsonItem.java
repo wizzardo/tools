@@ -35,7 +35,14 @@ public class JsonItem {
             return (Long) ob;
         }
         try {
-            Long l = Long.parseLong(ob.toString());
+            Long l;
+            String s = ob.toString();
+            if (s.startsWith("+"))
+                s = s.substring(1);
+            if (s.startsWith("0x"))
+                l = Long.parseLong(s.substring(2), 16);
+            else
+                l = Long.parseLong(s);
             ob = l;
             return l;
         } catch (NumberFormatException ex) {
@@ -55,7 +62,14 @@ public class JsonItem {
             return (Integer) ob;
 
         try {
-            Integer i = Integer.parseInt(ob.toString());
+            Integer i;
+            String s = ob.toString();
+            if (s.startsWith("+"))
+                s = s.substring(1);
+            if (s.startsWith("0x"))
+                i = (int) Long.parseLong(s.substring(2), 16);
+            else
+                i = Integer.parseInt(s);
             ob = i;
             return i;
         } catch (NumberFormatException ex) {
@@ -75,7 +89,14 @@ public class JsonItem {
             return (Byte) ob;
         }
         try {
-            Byte i = Byte.parseByte(ob.toString());
+            Byte i;
+            String s = ob.toString();
+            if (s.startsWith("+"))
+                s = s.substring(1);
+            if (s.startsWith("0x"))
+                i = (byte) Long.parseLong(s.substring(2), 16);
+            else
+                i = Byte.parseByte(s);
             ob = i;
             return i;
         } catch (NumberFormatException ex) {
@@ -95,7 +116,14 @@ public class JsonItem {
             return (Short) ob;
         }
         try {
-            Short i = Short.parseShort(ob.toString());
+            Short i;
+            String s = ob.toString();
+            if (s.startsWith("+"))
+                s = s.substring(1);
+            if (s.startsWith("0x"))
+                i = (short) Long.parseLong(s.substring(2), 16);
+            else
+                i = Short.parseShort(s);
             ob = i;
             return i;
         } catch (NumberFormatException ex) {
@@ -115,7 +143,11 @@ public class JsonItem {
             return (Double) ob;
         }
         try {
-            Double d = Double.parseDouble(ob.toString());
+            Double d;
+            String s = ob.toString();
+            if (s.startsWith("+"))
+                s = s.substring(1);
+            d = Double.parseDouble(s);
             ob = d;
             return d;
         } catch (NumberFormatException ex) {
@@ -135,7 +167,11 @@ public class JsonItem {
             return (Float) ob;
         }
         try {
-            Float f = Float.parseFloat(ob.toString());
+            Float f;
+            String s = ob.toString();
+            if (s.startsWith("+"))
+                s = s.substring(1);
+            f = Float.parseFloat(s);
             ob = f;
             return f;
         } catch (NumberFormatException ex) {

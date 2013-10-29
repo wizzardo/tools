@@ -56,7 +56,7 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
             to--;
         }
         String key = new String(s, from, to - from);
-        if (key.charAt(0) == '"' && key.charAt(key.length() - 1) == '"') {
+        if ((key.charAt(0) == '"' && key.charAt(key.length() - 1) == '"') || key.charAt(0) == '\'' && key.charAt(key.length() - 1) == '\'') {
             key = key.substring(1, key.length() - 1);
         }
         return key;
@@ -76,7 +76,7 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
             return;
         }
 
-        if (s[from] == '"' && s[to - 1] == '"') {
+        if ((s[from] == '"' && s[to - 1] == '"') || (s[from] == '\'' && s[to - 1] == '\'')) {
             from++;
             to--;
             String value = JsonObject.unescape(s, from, to);
@@ -98,11 +98,12 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         String key = null;
         boolean inString = false;
         char ch;
+        char quote = 0;
         outer:
         while (i < s.length) {
             ch = s[i];
             if (inString) {
-                if (ch == '"' && s[i - 1] != '\\') {
+                if (ch == quote && s[i - 1] != '\\') {
                     inString = false;
                 }
                 i++;
@@ -111,6 +112,12 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
             switch (ch) {
                 case '"': {
                     inString = s[i - 1] != '\\';
+                    quote = '"';
+                    break;
+                }
+                case '\'': {
+                    inString = s[i - 1] != '\\';
+                    quote = '\'';
                     break;
                 }
                 case ':': {
