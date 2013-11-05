@@ -74,20 +74,44 @@ public class ImageTools {
         return src.getSubimage(x, y, Math.abs(x2 - x1), Math.abs(y2 - y1));
     }
 
-    public static BufferedImage getImage(File f) throws IOException {
-        return ImageIO.read(f);
-    }
-
-    public static BufferedImage getImage(String f) throws IOException {
-        return ImageIO.read(new File(f));
-    }
-
     public static BufferedImage read(File f) throws IOException {
+        if (f.getName().toLowerCase().endsWith("jpg")) {
+            try {
+                return readByToolkit(f, BufferedImage.TYPE_INT_RGB);
+            } catch (Exception ignored) {
+            }
+        }
+        return read(f);
+    }
+
+    public static BufferedImage read(File f, int imageType) throws IOException {
+        try {
+            return readByToolkit(f, imageType);
+        } catch (Exception ignored) {
+        }
         return ImageIO.read(f);
     }
 
     public static BufferedImage read(String f) throws IOException {
-        return ImageIO.read(new File(f));
+        return read(new File(f));
+    }
+
+    public static BufferedImage read(String f, int imageType) throws IOException {
+        return read(new File(f), imageType);
+    }
+
+    private static BufferedImage readByToolkit(File f, int imageType) throws IOException {
+        Image image = Toolkit.getDefaultToolkit().createImage(f.getAbsolutePath());
+        while (image.getWidth(null) < 0)
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException ignored) {
+            }
+        BufferedImage img = new BufferedImage(image.getWidth(null), image.getHeight(null), imageType);
+        Graphics g = img.getGraphics();
+        g.drawImage(image, 0, 0, null);
+        g.dispose();
+        return img;
     }
 
     public static BufferedImage read(InputStream in) throws IOException {
