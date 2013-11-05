@@ -4,17 +4,15 @@
  */
 package com.wizzardo.tools;
 
-import javax.imageio.IIOImage;
+import com.wizzardo.tools.image.JpegEncoder;
+import com.wizzardo.tools.image.Lanczos3Filter;
+import com.wizzardo.tools.image.ResampleOp;
+
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
 import java.io.*;
-import java.util.Iterator;
 
 /**
  * @author Moxa
@@ -34,26 +32,18 @@ public class ImageTools {
         return im;
     }
 
-    public static void saveJPG(BufferedImage im, String file, float quality) throws IOException {
+    public static void saveJPG(BufferedImage im, String file, int quality) throws IOException {
         saveJPG(im, new FileOutputStream(file), quality);
     }
 
-    public static void saveJPG(BufferedImage im, File file, float quality) throws IOException {
+    public static void saveJPG(BufferedImage im, File file, int quality) throws IOException {
         saveJPG(im, new FileOutputStream(file), quality);
     }
 
-    public static void saveJPG(BufferedImage im, OutputStream out, float quality) throws IOException {
-        Iterator iter = ImageIO.getImageWritersByFormatName("jpeg");
-        ImageWriter writer = (ImageWriter) iter.next();
-        ImageWriteParam iwp = writer.getDefaultWriteParam();
-        iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        iwp.setCompressionQuality(quality);
-        IIOImage image = new IIOImage(im, null, null);
-        ImageOutputStream output = new MemoryCacheImageOutputStream(out);
-        writer.setOutput(output);
-        writer.write(null, image, iwp);
-        writer.dispose();
-        output.close();
+    public static void saveJPG(BufferedImage im, OutputStream out, int quality) throws IOException {
+        JpegEncoder encoder = new JpegEncoder(im, quality, out);
+        encoder.Compress();
+        out.close();
     }
 
     public static void savePNG(BufferedImage im, String file) throws IOException {
@@ -263,11 +253,10 @@ public class ImageTools {
     }
 
     public static BufferedImage resize(BufferedImage im, double scale) {
-        BufferedImage img = new BufferedImage((int) (Math.round((im.getWidth() * scale))), (int) (Math.round((im.getHeight() * scale))), im.getType());
-        Image imgg = im.getScaledInstance(img.getWidth(), img.getHeight(), Image.SCALE_SMOOTH);
-        Graphics2D gr = (Graphics2D) img.getGraphics();
-        gr.drawImage(imgg, 0, 0, null);
-        return img;
+        int width = (int) (im.getWidth()*scale + 0.5f);
+        int height= (int) (im.getHeight()*scale + 0.5f);
+        ResampleOp resizeOp = new ResampleOp(new Lanczos3Filter(), width, height);
+        return  resizeOp.filter(im, null);
     }
 
     public static BufferedImage applyAlphaMask(BufferedImage src, BufferedImage mask) {
