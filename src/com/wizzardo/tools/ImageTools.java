@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
 import java.io.*;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Moxa
@@ -71,7 +72,7 @@ public class ImageTools {
             } catch (Exception ignored) {
             }
         }
-        return read(f);
+        return ImageIO.read(f);
     }
 
     public static BufferedImage read(File f, int imageType) throws IOException {
@@ -90,8 +91,27 @@ public class ImageTools {
         return read(new File(f), imageType);
     }
 
-    private static BufferedImage readByToolkit(File f, int imageType) throws IOException {
+    private static class LoadListener implements ImageObserver {
+        private CountDownLatch latch = new CountDownLatch(1);
+
+        @Override
+        public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {
+            if (infoflags != ALLBITS)
+                return true;
+            latch.countDown();
+            return false;
+        }
+
+        public void await() throws InterruptedException {
+            latch.await();
+        }
+    }
+
+    private static BufferedImage readByToolkit(File f, int imageType) throws IOException, InterruptedException {
         Image image = Toolkit.getDefaultToolkit().createImage(f.getAbsolutePath());
+        LoadListener obs = new LoadListener();
+        Toolkit.getDefaultToolkit().prepareImage(image, -1, -1, obs);
+        obs.await();
         while (image.getWidth(null) < 0)
             try {
                 Thread.sleep(1);
@@ -253,10 +273,10 @@ public class ImageTools {
     }
 
     public static BufferedImage resize(BufferedImage im, double scale) {
-        int width = (int) (im.getWidth()*scale + 0.5f);
-        int height= (int) (im.getHeight()*scale + 0.5f);
+        int width = (int) (im.getWidth() * scale + 0.5f);
+        int height = (int) (im.getHeight() * scale + 0.5f);
         ResampleOp resizeOp = new ResampleOp(new Lanczos3Filter(), width, height);
-        return  resizeOp.filter(im, null);
+        return resizeOp.filter(im, null);
     }
 
     public static BufferedImage applyAlphaMask(BufferedImage src, BufferedImage mask) {

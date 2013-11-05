@@ -5,6 +5,7 @@ import java.awt.image.DataBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -25,7 +26,14 @@ public class ResampleOp extends AdvancedResizeOp {
     private int dstWidth;
     private int dstHeight;
 
-    private static ExecutorService threadPool = Executors.newFixedThreadPool(4);
+    private static ExecutorService threadPool = Executors.newFixedThreadPool(4, new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    });
 
     static class SubSamplingData {
         private final int[] arrN; // individual - per row or per column - nr of contributions
@@ -99,7 +107,7 @@ public class ResampleOp extends AdvancedResizeOp {
                 srcImg.getType() == BufferedImage.TYPE_BYTE_INDEXED ||
                 srcImg.getType() == BufferedImage.TYPE_CUSTOM)
             srcImg = Utils.convert(srcImg, srcImg.getColorModel().hasAlpha() ?
-                    BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+                    BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR);
 
         this.nrChannels = Utils.nrChannels(srcImg);
         assert nrChannels > 0;
@@ -118,7 +126,7 @@ public class ResampleOp extends AdvancedResizeOp {
         final CountDownLatch horizontalLatch = new CountDownLatch(numberOfThreads);
         for (int i = 1; i < numberOfThreads; i++) {
             final int finalI = i;
-            threadPool.submit(new Runnable() {
+            threadPool.execute(new Runnable() {
                 public void run() {
                     try {
                         horizontallyFromSrcToWork(scrImgCopy, workPixelsCopy, finalI, numberOfThreads);
@@ -146,7 +154,7 @@ public class ResampleOp extends AdvancedResizeOp {
         final CountDownLatch verticalLatch = new CountDownLatch(numberOfThreads);
         for (int i = 1; i < numberOfThreads; i++) {
             final int finalI = i;
-            threadPool.submit(new Runnable() {
+            threadPool.execute(new Runnable() {
                 public void run() {
                     try {
                         verticalFromWorkToDst(workPixelsCopy, outPixelsCopy, finalI, numberOfThreads);
