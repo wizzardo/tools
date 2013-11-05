@@ -7,6 +7,9 @@ package com.wizzardo.tools;
 
 import com.wizzardo.tools.security.Base64;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
 import java.text.ParseException;
@@ -273,6 +276,8 @@ public class HttpClient {
         private Proxy proxy;
         private boolean redirects = true;
         private byte[] data;
+        private HostnameVerifier hostnameVerifier;
+        private SSLSocketFactory sslFactory;
 
         public Request(String url) {
             this.url = url;
@@ -482,6 +487,16 @@ public class HttpClient {
             return connect(0);
         }
 
+        public Request setHostnameVerifier(HostnameVerifier hv) {
+            this.hostnameVerifier = hv;
+            return this;
+        }
+
+        public Request setSSLSocketFactory(SSLSocketFactory sslFactory) {
+            this.sslFactory = sslFactory;
+            return this;
+        }
+
         private Response connect(int retryNumber) throws IOException {
             try {
                 if (method == ConnectionMethod.GET || (method == ConnectionMethod.POST && data != null)) {
@@ -498,6 +513,14 @@ public class HttpClient {
                 c.setRequestMethod(method.toString());
                 for (Map.Entry<String, String> header : headers.entrySet()) {
                     c.setRequestProperty(header.getKey(), header.getValue());
+                }
+                if (hostnameVerifier != null && url.startsWith("https")) {
+                    HttpsURLConnection https = (HttpsURLConnection) c;
+                    https.setHostnameVerifier(hostnameVerifier);
+                }
+                if (sslFactory != null && url.startsWith("https")) {
+                    HttpsURLConnection https = (HttpsURLConnection) c;
+                    https.setSSLSocketFactory(sslFactory);
                 }
                 if (method.equals(ConnectionMethod.POST)) {
                     c.setDoOutput(true);
