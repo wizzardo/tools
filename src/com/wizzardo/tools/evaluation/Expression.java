@@ -41,8 +41,7 @@ public abstract class Expression {
         public Holder(String exp, boolean hardcoded) {
             if (hardcoded)
                 result = exp;
-            else
-                this.exp = exp;
+            this.exp = exp;
             this.hardcoded = hardcoded;
         }
 

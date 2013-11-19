@@ -22,14 +22,25 @@ public class TemplateBuilder extends Expression {
 
     @Override
     public Object get(Map<String, Object> model) {
+        if (hardcoded)
+            return result;
+
         if (parts.isEmpty())
             return "";
 
         StringBuilder sb = new StringBuilder();
-        for (Expression e : parts)
+        boolean hardcoded = false;
+        for (Expression e : parts) {
             sb.append(e.get(model));
+            hardcoded |= e.hardcoded;
+        }
+        String result = sb.toString();
+        if (hardcoded) {
+            super.hardcoded = hardcoded;
+            super.result = result;
+        }
 
-        return sb.toString();
+        return result;
     }
 
     public TemplateBuilder append(Expression e) {
