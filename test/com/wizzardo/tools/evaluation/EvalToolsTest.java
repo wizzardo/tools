@@ -559,6 +559,13 @@ public class EvalToolsTest {
         assertEquals("b + 1 = 2", EvalTools.evaluate("\"b + 1 = ${a.b+1}\"", model));
         assertEquals("a: {b=1}", EvalTools.evaluate("\"a: $a\"", model));
 
+        Expression e = EvalTools.prepareTemplate("a: $a");
+        assertEquals("a: {b=1}", e.get(model));
+        assertFalse(e.hardcoded);
+
+        e = EvalTools.prepareTemplate("a: hardcode");
+        assertEquals("a: hardcode", e.get(model));
+        assertTrue(e.hardcoded);
     }
 
     @Test

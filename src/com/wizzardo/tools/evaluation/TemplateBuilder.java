@@ -29,10 +29,10 @@ public class TemplateBuilder extends Expression {
             return "";
 
         StringBuilder sb = new StringBuilder();
-        boolean hardcoded = false;
+        boolean hardcoded = true;
         for (Expression e : parts) {
             sb.append(e.get(model));
-            hardcoded |= e.hardcoded;
+            hardcoded &= e.hardcoded;
         }
         String result = sb.toString();
         if (hardcoded) {
