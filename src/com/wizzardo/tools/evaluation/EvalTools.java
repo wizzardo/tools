@@ -270,6 +270,10 @@ public class EvalTools {
         return list;
     }
 
+    public static Expression prepareTemplate(String exp) {
+        return prepare(exp, null, null, true);
+    }
+
     public static Expression prepare(String exp) {
         return prepare(exp, null);
     }
