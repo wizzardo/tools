@@ -15,15 +15,11 @@ public class TextTools {
         return s == null || s.length() == 0;
     }
 
-    public static int getInt(String s) {
-        return getInt(s, -1);
+    public static float asFloat(String s) {
+        return asFloat(s, -1);
     }
 
-    public static float getFloat(String s) {
-        return getFloat(s, -1);
-    }
-
-    public static float getFloat(String s, float def) {
+    public static float asFloat(String s, float def) {
         try {
             return Float.parseFloat(s);
         } catch (NumberFormatException ex) {
@@ -35,18 +31,12 @@ public class TextTools {
         return def;
     }
 
-    public static List<String> asListAndTrim(String[] arr) {
-        ArrayList<String> l = new ArrayList<String>(arr.length);
-        for (String s : arr) {
-            s = s.trim();
-            if (s.length() > 0) {
-                l.add(s);
-            }
-        }
-        return l;
+    public static int asInt(String s) {
+        return asInt(s, -1);
     }
 
-    public static int getInt(String s, int def) {
+
+    public static int asInt(String s, int def) {
         try {
             return Integer.parseInt(s);
         } catch (NumberFormatException ignore) {
@@ -54,7 +44,11 @@ public class TextTools {
         return def;
     }
 
-    public static long getLong(String s, long def) {
+    public static long asLong(String s) {
+        return asLong(s, -1);
+    }
+
+    public static long asLong(String s, long def) {
         try {
             return Long.parseLong(s);
         } catch (NumberFormatException ignore) {
@@ -62,11 +56,11 @@ public class TextTools {
         return def;
     }
 
-    public static double getDouble(String s) {
-        return getDouble(s, -1);
+    public static double asDouble(String s) {
+        return asDouble(s, -1);
     }
 
-    public static double getDouble(String s, double def) {
+    public static double asDouble(String s, double def) {
         try {
             return Double.parseDouble(s);
         } catch (NumberFormatException ex) {
@@ -76,10 +70,6 @@ public class TextTools {
             }
         }
         return def;
-    }
-
-    public static String removeAllNbsp(String s) {
-        return s.replaceAll("\u00A0", "");
     }
 
     public static List<String> findAll(String s, Pattern p) {
@@ -103,7 +93,14 @@ public class TextTools {
         return null;
     }
 
-    public static String removeAllButNumber(String s) {
-        return s.replaceAll("[^\\.\\d]+", "");
+    public static List<String> asListAndTrim(String[] arr) {
+        ArrayList<String> l = new ArrayList<String>(arr.length);
+        for (String s : arr) {
+            s = s.trim();
+            if (s.length() > 0) {
+                l.add(s);
+            }
+        }
+        return l;
     }
 }
