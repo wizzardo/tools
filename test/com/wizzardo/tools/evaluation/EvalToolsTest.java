@@ -32,26 +32,26 @@ public class EvalToolsTest {
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
 
 
-        assertEquals(1, EvalTools.evaluate("java.lang.Math.abs(-1)", null));
+        assertEquals(1, EvalTools.evaluate("java.lang.Math.abs(-1)"));
 
-        assertEquals(1, EvalTools.evaluate("(1)", new HashMap<String, Object>()));
-        assertEquals(1, EvalTools.evaluate("((1))", new HashMap<String, Object>()));
-        assertEquals(2, EvalTools.evaluate("1+1", new HashMap<String, Object>()));
-        assertEquals(2.0, EvalTools.evaluate("1+1.0", new HashMap<String, Object>()));
-        assertEquals(5, EvalTools.evaluate("1+1+3", new HashMap<String, Object>()));
-        assertEquals("olo123", EvalTools.evaluate("\"olo\"+1+(1+1)+3", new HashMap<String, Object>()));
-        assertEquals("olo123", EvalTools.evaluate("'olo'+1+(1+1)+3", new HashMap<String, Object>()));
-        assertEquals("OLO123", EvalTools.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()", new HashMap<String, Object>()));
-        assertEquals("ololo", EvalTools.evaluate("\"olo\".concat(\"lo\")", new HashMap<String, Object>()));
+        assertEquals(1, EvalTools.evaluate("(1)"));
+        assertEquals(1, EvalTools.evaluate("((1))"));
+        assertEquals(2, EvalTools.evaluate("1+1"));
+        assertEquals(2.0, EvalTools.evaluate("1+1.0"));
+        assertEquals(5, EvalTools.evaluate("1+1+3"));
+        assertEquals("olo123", EvalTools.evaluate("\"olo\"+1+(1+1)+3"));
+        assertEquals("olo123", EvalTools.evaluate("'olo'+1+(1+1)+3"));
+        assertEquals("OLO123", EvalTools.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()"));
+        assertEquals("ololo", EvalTools.evaluate("\"olo\".concat(\"lo\")"));
 
         model.put("ololo", "qwerty");
         model.put("qwe", "  ololo  ");
         model.put("length111", "111");
         assertEquals("QWERTYOLOLO123", EvalTools.evaluate("ololo.concat(qwe.trim().substring(2)).concat(qwe.trim().substring(length111.length()) + 123).toUpperCase()", model));
 
-        assertEquals(5f, EvalTools.evaluate("10f/2", new HashMap<String, Object>()));
-        assertEquals(7, EvalTools.evaluate("1+2*3", new HashMap<String, Object>()));
-        assertEquals(9, EvalTools.evaluate("1+2*(1+3)", new HashMap<String, Object>()));
+        assertEquals(5f, EvalTools.evaluate("10f/2"));
+        assertEquals(7, EvalTools.evaluate("1+2*3"));
+        assertEquals(9, EvalTools.evaluate("1+2*(1+3)"));
 
 
         model = new HashMap<String, Object>();
@@ -80,9 +80,9 @@ public class EvalToolsTest {
         assertEquals(3, model.get("i"));
 
 
-        assertEquals(true, EvalTools.evaluate("true", new HashMap<String, Object>()));
-        assertEquals(false, EvalTools.evaluate("false", new HashMap<String, Object>()));
-        assertEquals(true, EvalTools.evaluate("!false", new HashMap<String, Object>()));
+        assertEquals(true, EvalTools.evaluate("true"));
+        assertEquals(false, EvalTools.evaluate("false"));
+        assertEquals(true, EvalTools.evaluate("!false"));
 
 
         model = new HashMap<String, Object>();
@@ -111,14 +111,14 @@ public class EvalToolsTest {
         assertEquals(-1, model.get("i"));
 
 
-        assertEquals(true, EvalTools.evaluate("1>0", new HashMap<String, Object>()));
-        assertEquals(true, EvalTools.evaluate("1>=1", new HashMap<String, Object>()));
-        assertEquals(true, EvalTools.evaluate("5>\"123\".length()", new HashMap<String, Object>()));
-        assertEquals(false, EvalTools.evaluate("1>\"123\".length()", new HashMap<String, Object>()));
-        assertEquals(false, EvalTools.evaluate("1<0", new HashMap<String, Object>()));
-        assertEquals(true, EvalTools.evaluate("2<=1*2", new HashMap<String, Object>()));
-        assertEquals(true, EvalTools.evaluate("2>=1*2", new HashMap<String, Object>()));
-        assertEquals(true, EvalTools.evaluate("2== 1 +(3-2)*2-1", new HashMap<String, Object>()));
+        assertEquals(true, EvalTools.evaluate("1>0"));
+        assertEquals(true, EvalTools.evaluate("1>=1"));
+        assertEquals(true, EvalTools.evaluate("5>\"123\".length()"));
+        assertEquals(false, EvalTools.evaluate("1>\"123\".length()"));
+        assertEquals(false, EvalTools.evaluate("1<0"));
+        assertEquals(true, EvalTools.evaluate("2<=1*2"));
+        assertEquals(true, EvalTools.evaluate("2>=1*2"));
+        assertEquals(true, EvalTools.evaluate("2== 1 +(3-2)*2-1"));
 
 
         model = new HashMap<String, Object>();
@@ -196,19 +196,19 @@ public class EvalToolsTest {
         assertEquals(true, EvalTools.evaluate("true&&(false|!true) | 3>2 ", model));
 
         System.out.println("test static methods");
-        assertEquals(1, EvalTools.evaluate("java.lang.Math.abs(-1)", null));
-        assertEquals(1, EvalTools.evaluate("Math.abs(-1)", null));
-        assertEquals(2, EvalTools.evaluate("Math.abs(-1)+Math.abs(-1)", null));
-        assertEquals(2d, EvalTools.evaluate("Math.sqrt(2+2)", null));
-        assertEquals(4d, EvalTools.evaluate("Math.pow(2,(2*2)/(2))", null));
+        assertEquals(1, EvalTools.evaluate("java.lang.Math.abs(-1)"));
+        assertEquals(1, EvalTools.evaluate("Math.abs(-1)"));
+        assertEquals(2, EvalTools.evaluate("Math.abs(-1)+Math.abs(-1)"));
+        assertEquals(2d, EvalTools.evaluate("Math.sqrt(2+2)"));
+        assertEquals(4d, EvalTools.evaluate("Math.pow(2,(2*2)/(2))"));
         assertEquals(Math.PI, EvalTools.evaluate("Math.PI"));
 
         System.out.println("test constructors");
-        assertEquals("ololo", EvalTools.evaluate("new String(\"ololo\")", null));
+        assertEquals("ololo", EvalTools.evaluate("new String(\"ololo\")"));
 
         System.out.println("test fields");
-        assertEquals(1, EvalTools.evaluate("new java.awt.Point(1,2).x", null));
-        assertEquals(3, EvalTools.evaluate("new java.awt.Point(1,2).x + new java.awt.Point(1,2).y", null));
+        assertEquals(1, EvalTools.evaluate("new java.awt.Point(1,2).x"));
+        assertEquals(3, EvalTools.evaluate("new java.awt.Point(1,2).x + new java.awt.Point(1,2).y"));
 
 
         System.out.println("test user functions");
@@ -237,7 +237,7 @@ public class EvalToolsTest {
         assertEquals(9, EvalTools.evaluate("z(5) - z(2)", null, functions));
 
         functions = new HashMap<String, UserFunction>();
-        functions.put("y", new UserFunction("y", "2*2", null));
+        functions.put("y", new UserFunction("y", "2*2"));
         assertEquals(4, EvalTools.evaluate("y()", null, functions));
 
         model = new HashMap<String, Object>();
@@ -248,7 +248,7 @@ public class EvalToolsTest {
         assertEquals(10, EvalTools.evaluate("it(0,10)", model, functions));
         assertEquals(10, model.get("x"));
 
-        assertEquals(true, EvalTools.evaluate("(Math.sin((3.1416/2))) > 0", new HashMap<String, Object>()));
+        assertEquals(true, EvalTools.evaluate("(Math.sin((3.1416/2))) > 0"));
 
         model = new HashMap<String, Object>();
         model.put("x", 0);
@@ -271,13 +271,13 @@ public class EvalToolsTest {
         assertEquals("[1, 2, 3, 4]", EvalTools.evaluate("x + 4", model).toString());
         assertEquals("[1, 2, 3, 5]", EvalTools.evaluate("x += 5", model).toString());
 
-        assertEquals(1, ((List) EvalTools.evaluate("[1,[2,3]]", null)).get(0));
-        assertEquals("[2, 3]", ((List) EvalTools.evaluate("[1,[2,3]]", null)).get(1).toString());
+        assertEquals(1, ((List) EvalTools.evaluate("[1,[2,3]]")).get(0));
+        assertEquals("[2, 3]", ((List) EvalTools.evaluate("[1,[2,3]]")).get(1).toString());
 
-        assertEquals("qwerty", ((Map) EvalTools.evaluate("[qwe:\"qwerty\"]", null)).get("qwe").toString());
-        assertEquals("qwe\",rty", ((Map) EvalTools.evaluate("[qwe:\"qwe\\\",rty\"]", null)).get("qwe").toString());
-        assertEquals(1, ((Map) ((Map) EvalTools.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]]", null)).get("olo")).get("asd"));
-        assertEquals(1, EvalTools.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]].olo.asd", null));
+        assertEquals("qwerty", ((Map) EvalTools.evaluate("[qwe:\"qwerty\"]")).get("qwe").toString());
+        assertEquals("qwe\",rty", ((Map) EvalTools.evaluate("[qwe:\"qwe\\\",rty\"]")).get("qwe").toString());
+        assertEquals(1, ((Map) ((Map) EvalTools.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]]")).get("olo")).get("asd"));
+        assertEquals(1, EvalTools.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]].olo.asd"));
 
         model = new HashMap<String, Object>();
         model.put("x", 1);
@@ -337,8 +337,8 @@ public class EvalToolsTest {
         assertEquals("[{id=1}, {id=2}, {id=3}]", EvalTools.evaluate("[[id:1],[id:2],[id:3]]").toString());
 
 
-        assertEquals(5, EvalTools.evaluate("(0..5).size()", null));
-        assertEquals(5, EvalTools.evaluate("(1+2-3 .. 5).size()", null));
+        assertEquals(5, EvalTools.evaluate("(0..5).size()"));
+        assertEquals(5, EvalTools.evaluate("(1+2-3 .. 5).size()"));
 
         model = new HashMap<String, Object>();
         EvalTools.evaluate("def x=0..10", model);
@@ -373,7 +373,7 @@ public class EvalToolsTest {
     @Test
     public void testClone() throws Exception {
         String exp = "1+\"ololo\".substring(2)";
-        Expression eh = EvalTools.prepare(exp, null);
+        Expression eh = EvalTools.prepare(exp);
         Object ob1 = eh.get(null);
         Object ob2 = eh.get(null);
         assertTrue(ob1 == ob2);
@@ -505,8 +505,6 @@ public class EvalToolsTest {
 
         assertEquals("[1, 2, 3]", EvalTools.evaluate("[[id:1],[id:2],[id:3]]*.id", model).toString());
 
-        //TODO - * for collections
-
         model.clear();
         EvalTools.evaluate("def l = ['a','b','c']", model);
         EvalTools.evaluate("def r = []", model);
@@ -537,6 +535,30 @@ public class EvalToolsTest {
         model.clear();
         EvalTools.evaluate("def l = new java.util.HashSet()", model);
         assertEquals("[1, 2, 3]", EvalTools.evaluate("l << 1 << 2 << 3 << 3", model).toString());
+    }
+
+    @Test
+    public void testStringTemplates() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        assertEquals("hello world", EvalTools.evaluate("\"hello world\""));
+
+        model.put("world", "world?");
+        assertEquals("hello world?!", EvalTools.evaluate("\"hello $world!\"", model));
+        assertEquals("hello world?!", EvalTools.evaluate("\"hello ${world}!\"", model));
+        assertEquals("hello world?", EvalTools.evaluate("\"hello ${world}\"", model));
+        assertEquals("world?", EvalTools.evaluate("\"${world}\"", model));
+        assertEquals("world? hello!", EvalTools.evaluate("\"${world} hello!\"", model));
+
+        model.clear();
+        Map m = new HashMap();
+        m.put("b",1);
+        model.put("a",m);
+        assertEquals("b = 1", EvalTools.evaluate("\"b = $a.b\"", model));
+        assertEquals("b = 1", EvalTools.evaluate("\"b = ${a.b}\"", model));
+        assertEquals("b + 1 = 2", EvalTools.evaluate("\"b + 1 = ${a.b+1}\"", model));
+        assertEquals("a: {b=1}", EvalTools.evaluate("\"a: $a\"", model));
+
     }
 
     @Test

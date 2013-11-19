@@ -19,6 +19,16 @@ public class EvalTools {
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
 
+    private static final Pattern NEW = Pattern.compile("new ([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
+    private static final Pattern CLASS = Pattern.compile("([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
+    private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
+    private static final Pattern COMMA = Pattern.compile(",");
+    private static final Pattern LIST = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
+    private static final Pattern VARIABLE = Pattern.compile("\\$\\{([^\\{\\}]+)\\}|\\$([\\.a-z]+[\\.a-zA-Z]*)");
+    private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
+    private static final Pattern DEF = Pattern.compile("def +([a-z]+[a-zA-Z_\\d]*)$");
+    private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
+
     protected static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
         for (int i = from; i < to; i++) {
@@ -143,21 +153,11 @@ public class EvalTools {
         EvalTools.defaultEvaluatingStrategy = defaultEvaluatingStrategy;
     }
 
-    public static Expression prepare(String exp) {
-        return prepare(exp, null, new HashMap<String, UserFunction>());
-    }
-
-    public static Expression prepare(String exp, Map<String, Object> model) {
-        return prepare(exp, model, new HashMap<String, UserFunction>());
-    }
-
-    private static Pattern brackets = Pattern.compile("[\\(\\)]");
-
     public static String trimBrackets(String s) {
         int db = s.indexOf("((");
         if (db != -1) {
             String t = s.substring(db + 2);
-            Matcher m = brackets.matcher(t);
+            Matcher m = BRACKETS.matcher(t);
             int brackets = 2;
             boolean innerBrackets = false;
             while (m.find()) {
@@ -175,7 +175,7 @@ public class EvalTools {
         }
 
         if (s.startsWith("(") && s.endsWith(")")) {
-            Matcher m = brackets.matcher(s);
+            Matcher m = BRACKETS.matcher(s);
             int brackets = 0;
             while (m.find()) {
                 if (m.group().equals("(")) {
@@ -270,24 +270,71 @@ public class EvalTools {
         return list;
     }
 
+    public static Expression prepare(String exp) {
+        return prepare(exp, null);
+    }
+
+    public static Expression prepare(String exp, Map<String, Object> model) {
+        return prepare(exp, model, null);
+    }
 
     public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions) {
+        return prepare(exp, model, functions, false);
+    }
+
+    public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions, boolean isTemplate) {
 //        System.out.println("try to prepare: " + exp);
         if (exp == null) {
             return null;
         }
-        exp = exp.trim();
-        String trimmed = trimBrackets(exp);
-        while (trimmed != exp) {
-            exp = trimmed;
-            trimmed = trimBrackets(exp);
+        if (!isTemplate) {
+            exp = exp.trim();
+            String trimmed = trimBrackets(exp);
+            while (trimmed != exp) {
+                exp = trimmed;
+                trimmed = trimBrackets(exp);
+            }
+            if (exp.length() == 0) {
+                return null;
+            }
         }
-        if (exp.length() == 0) {
-            return null;
-        }
+
+        if (isTemplate && exp.length() == 0)
+            return new Expression.Holder("", true);
 
         if (model == null) {
             model = new HashMap<String, Object>();
+        }
+
+        if (functions == null) {
+            functions = new HashMap<String, UserFunction>();
+        }
+
+        {
+            if (!isTemplate && exp.startsWith("\"") && exp.endsWith("\"") && inString(exp, 0, exp.length() - 1)) {
+                return prepare(exp.substring(1, exp.length() - 1), model, functions, true);
+            }
+
+            if (isTemplate) {
+                Matcher m = VARIABLE.matcher(exp);
+                TemplateBuilder tb = new TemplateBuilder();
+                int last = 0;
+                while (m.find()) {
+                    if (m.start() != last) {
+                        tb.append(exp.substring(last, m.start()));
+                    }
+                    String sub = m.group(1);
+                    if (sub == null) {
+                        sub = m.group(2);
+                    }
+                    tb.append(prepare(sub, model, functions, false));
+                    last = m.end();
+                }
+                if (last != exp.length()) {
+                    tb.append(exp.substring(last, exp.length()));
+                }
+                return tb;
+            }
         }
 
         if (isClosure(exp)) {
@@ -331,8 +378,7 @@ public class EvalTools {
                 return new Expression.Holder(exp);
             }
             {
-                Pattern p = Pattern.compile("def +([a-z]+[a-zA-Z_\\d]*)$");
-                Matcher m = p.matcher(exp);
+                Matcher m = DEF.matcher(exp);
                 if (m.find()) {
                     model.put(m.group(1), null);
                     return new Expression.Holder(m.group(1));
@@ -341,7 +387,7 @@ public class EvalTools {
         }
 
         {
-            Matcher m = actions.matcher(exp);
+            Matcher m = ACTIONS.matcher(exp);
             List<String> exps = new ArrayList<String>();
             List<Operation> operations = new ArrayList<Operation>();
             int last = 0;
@@ -467,8 +513,7 @@ public class EvalTools {
         Expression thatObject = null;
         String methodName = null;
         {
-            Pattern p = Pattern.compile("new ([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
-            Matcher m = p.matcher(exp);
+            Matcher m = NEW.matcher(exp);
             if (m.find()) {
                 Class clazz = findClass(m.group().substring(4));
                 if (clazz != null) {
@@ -480,8 +525,7 @@ public class EvalTools {
         }
 
         if (thatObject == null) {
-            Pattern p = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
-            Matcher m = p.matcher(exp);
+            Matcher m = LIST.matcher(exp);
             if (m.find()) {
                 thatObject = new Expression.Holder(m.group(1));
                 exp = exp.substring(m.group(1).length());
@@ -489,8 +533,7 @@ public class EvalTools {
         }
 
         if (thatObject == null) {
-            Pattern p = Pattern.compile("([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
-            Matcher m = p.matcher(exp);
+            Matcher m = CLASS.matcher(exp);
             if (m.find()) {
                 Class clazz = findClass(m.group());
                 if (clazz != null) {
@@ -501,8 +544,7 @@ public class EvalTools {
         }
 
         if (thatObject == null) {
-            Pattern p = Pattern.compile("^([a-z_]+\\w*)\\(.+");
-            Matcher m = p.matcher(exp);
+            Matcher m = FUNCTION.matcher(exp);
             if (m.find()) {
 //                System.out.println("find user function: " + m.group(1) + "\t from " + exp);
 //                System.out.println("available functions: " + functions);
@@ -627,8 +669,7 @@ public class EvalTools {
 
     private static List<String> parseArgs(String argsRaw) {
         ArrayList<String> l = new ArrayList<String>();
-        Pattern p = Pattern.compile(",");
-        Matcher m = p.matcher(argsRaw);
+        Matcher m = COMMA.matcher(argsRaw);
         int last = 0;
         while (m.find()) {
             if (countOpenBrackets(argsRaw, last, m.start()) == 0) {
@@ -744,21 +785,19 @@ public class EvalTools {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T evaluate(String exp, Map<String, Object> model) throws Exception {
+    public static <T> T evaluate(String exp, Map<String, Object> model) {
 //        System.out.println("evaluate: " + exp + "\t" + model);
         Expression ex = prepare(exp, model);
         return (T) ex.get(model);
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T evaluate(String exp, Map<String, Object> model, Map<String, UserFunction> functions) throws Exception {
+    public static <T> T evaluate(String exp, Map<String, Object> model, Map<String, UserFunction> functions) {
 //        System.out.println("evaluate: " + exp + "\t" + model);
         Expression ex = prepare(exp, model, functions);
         return (T) ex.get(model);
     }
 
-
-    private static final Pattern actions = Pattern.compile("\\+\\+|--|\\.\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
 
     static {
         Function.setMethod(Collection.class, "collect", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {

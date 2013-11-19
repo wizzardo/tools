@@ -38,6 +38,14 @@ public abstract class Expression {
             this.exp = exp;
         }
 
+        public Holder(String exp, boolean hardcoded) {
+            if (hardcoded)
+                result = exp;
+            else
+                this.exp = exp;
+            this.hardcoded = hardcoded;
+        }
+
         public Holder(Class clazz) {
             hardcoded = true;
             this.result = clazz;

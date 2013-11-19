@@ -1,7 +1,9 @@
 package com.wizzardo.tools;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -140,17 +142,22 @@ public class ZipTools {
             } catch (IOException ignore) {
             }
         }
-        return b[0] == 80 && b[1] == 75;
+        return isZip(b);
     }
 
-    public static void zip(String file) {
-        zip(new File(file));
+    public static boolean isZip(byte[] bytes) {
+        return bytes != null && bytes.length >= 2 && bytes[0] == 80 && bytes[1] == 75;
     }
 
-    public static void zip(File toZip) {
+    public static File zip(String file) {
+        return zip(new File(file));
+    }
+
+    public static File zip(File toZip) {
         ZipOutputStream zipout = null;
+        File zip = new File(toZip.getAbsolutePath() + ".zip");
         try {
-            zipout = new ZipOutputStream(new FileOutputStream(toZip.getAbsolutePath() + ".zip"));
+            zipout = new ZipOutputStream(new FileOutputStream(zip));
             zip(zipout, toZip);
             zipout.close();
         } catch (IOException ex) {
@@ -163,6 +170,7 @@ public class ZipTools {
                 }
             }
         }
+        return zip;
     }
 
     public static void zip(ZipOutputStream out, File toZip) {
@@ -193,7 +201,6 @@ public class ZipTools {
                 File f = files.get(i - 1);
                 in = new FileInputStream(f);
                 ZipEntry entry = new ZipEntry(f.getAbsolutePath().substring(startDir.getAbsolutePath().length() + 1));
-//                System.out.println(i + "/" + files.size() + " " + entry);
                 entry.setMethod(ZipEntry.DEFLATED);
                 zipout.putNextEntry(entry);
                 int r;
@@ -212,6 +219,5 @@ public class ZipTools {
                 }
             }
         }
-
     }
 }
