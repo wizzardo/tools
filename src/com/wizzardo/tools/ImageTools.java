@@ -41,6 +41,12 @@ public class ImageTools {
         saveJPG(im, new FileOutputStream(file), quality);
     }
 
+    public static byte[] saveJPGtoBytes(BufferedImage im, int quality) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        saveJPG(im, bytes, quality);
+        return bytes.toByteArray();
+    }
+
     public static void saveJPG(BufferedImage im, OutputStream out, int quality) throws IOException {
         JpegEncoder encoder = new JpegEncoder(im, quality, out);
         encoder.Compress();
@@ -59,6 +65,12 @@ public class ImageTools {
         ImageIO.write(im, "png", out);
     }
 
+    public static byte[] savePNGtoBytes(BufferedImage im) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        ImageIO.write(im, "png", bytes);
+        return bytes.toByteArray();
+    }
+
     public static BufferedImage crop(BufferedImage src, int x1, int y1, int x2, int y2) {
         int x = x1 > x2 ? x2 : x1;
         int y = y1 > y2 ? y2 : y1;
@@ -73,6 +85,14 @@ public class ImageTools {
             }
         }
         return ImageIO.read(f);
+    }
+
+    public static BufferedImage read(byte[] bytes) throws IOException {
+        return ImageIO.read(new ByteArrayInputStream(bytes));
+    }
+
+    public static BufferedImage read(InputStream in) throws IOException {
+        return ImageIO.read(in);
     }
 
     public static BufferedImage read(File f, int imageType) throws IOException {
@@ -122,10 +142,6 @@ public class ImageTools {
         g.drawImage(image, 0, 0, null);
         g.dispose();
         return img;
-    }
-
-    public static BufferedImage read(InputStream in) throws IOException {
-        return ImageIO.read(in);
     }
 
     public static BufferedImage trim(BufferedImage src) {
