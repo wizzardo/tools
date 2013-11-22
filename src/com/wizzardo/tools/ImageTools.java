@@ -4,21 +4,34 @@
  */
 package com.wizzardo.tools;
 
+import com.sun.image.codec.jpeg.JPEGCodec;
+import com.sun.image.codec.jpeg.JPEGImageDecoder;
 import com.wizzardo.tools.image.JpegEncoder;
 import com.wizzardo.tools.image.Lanczos3Filter;
 import com.wizzardo.tools.image.ResampleOp;
+import com.wizzardo.tools.io.FileTools;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.color.ColorSpace;
+import java.awt.color.ICC_ColorSpace;
+import java.awt.color.ICC_Profile;
 import java.awt.image.*;
 import java.io.*;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Moxa
  */
 public class ImageTools {
+    private static ICC_Profile CMYK_PROFILE;
+
+    public static void setCmykProfile(File iccProfile) throws IOException {
+        setCmykProfile(new FileInputStream(iccProfile));
+    }
+
+    public static void setCmykProfile(InputStream iccProfile) throws IOException {
+        CMYK_PROFILE = ICC_Profile.getInstance(iccProfile);
+    }
 
     public static BufferedImage toGrayScale2(BufferedImage source) {
         BufferedImageOp op = new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_GRAY), null);
@@ -78,70 +91,56 @@ public class ImageTools {
     }
 
     public static BufferedImage read(File f) throws IOException {
-        if (f.getName().toLowerCase().endsWith("jpg")) {
-            try {
-                return readByToolkit(f, BufferedImage.TYPE_INT_RGB);
-            } catch (Exception ignored) {
-            }
-        }
-        return ImageIO.read(f);
+        return read(FileTools.bytes(f));
     }
 
     public static BufferedImage read(byte[] bytes) throws IOException {
-        return ImageIO.read(new ByteArrayInputStream(bytes));
+        if (CMYK_PROFILE == null)
+            return read(new ByteArrayInputStream(bytes));
+
+        try {
+            return ImageIO.read(new ByteArrayInputStream(bytes));
+        } catch (javax.imageio.IIOException e) {
+            return readAndConvertFromCMYK(new ByteArrayInputStream(bytes));
+        }
     }
 
     public static BufferedImage read(InputStream in) throws IOException {
         return ImageIO.read(in);
     }
 
-    public static BufferedImage read(File f, int imageType) throws IOException {
-        try {
-            return readByToolkit(f, imageType);
-        } catch (Exception ignored) {
+    public static BufferedImage readAndConvertFromCMYK(InputStream in) throws IOException {
+        if (CMYK_PROFILE == null)
+            throw new IOException("You need to setup CMYK profile first by method setCmykProfile");
+        return readAndConvertFromCMYK(in, CMYK_PROFILE);
+    }
+
+    public static BufferedImage readAndConvertFromCMYK(InputStream in, ICC_Profile cmykProfile) throws IOException {
+        JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
+        BufferedImage src = decoder.decodeAsBufferedImage();
+        WritableRaster srcRaster = src.getRaster();
+        //prepare result image
+        BufferedImage result = new BufferedImage(srcRaster.getWidth(), srcRaster.getHeight(), BufferedImage.TYPE_INT_RGB);
+        WritableRaster resultRaster = result.getRaster();
+        //prepare icc profiles
+        ColorSpace sRGBColorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+
+        //invert k channel
+        for (int x = srcRaster.getMinX(); x < srcRaster.getWidth(); x++) {
+            for (int y = srcRaster.getMinY(); y < srcRaster.getHeight(); y++) {
+                float[] pixel = srcRaster.getPixel(x, y, (float[]) null);
+                pixel[3] = 255f - pixel[3];
+                srcRaster.setPixel(x, y, pixel);
+            }
         }
-        return ImageIO.read(f);
+        //convert
+        ColorConvertOp cmykToRgb = new ColorConvertOp(new ICC_ColorSpace(cmykProfile), sRGBColorSpace, null);
+        cmykToRgb.filter(srcRaster, resultRaster);
+        return result;
     }
 
     public static BufferedImage read(String f) throws IOException {
         return read(new File(f));
-    }
-
-    public static BufferedImage read(String f, int imageType) throws IOException {
-        return read(new File(f), imageType);
-    }
-
-    private static class LoadListener implements ImageObserver {
-        private CountDownLatch latch = new CountDownLatch(1);
-
-        @Override
-        public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {
-            if (infoflags != ALLBITS)
-                return true;
-            latch.countDown();
-            return false;
-        }
-
-        public void await() throws InterruptedException {
-            latch.await();
-        }
-    }
-
-    private static BufferedImage readByToolkit(File f, int imageType) throws IOException, InterruptedException {
-        Image image = Toolkit.getDefaultToolkit().createImage(f.getAbsolutePath());
-        LoadListener obs = new LoadListener();
-        Toolkit.getDefaultToolkit().prepareImage(image, -1, -1, obs);
-        obs.await();
-        while (image.getWidth(null) < 0)
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException ignored) {
-            }
-        BufferedImage img = new BufferedImage(image.getWidth(null), image.getHeight(null), imageType);
-        Graphics g = img.getGraphics();
-        g.drawImage(image, 0, 0, null);
-        g.dispose();
-        return img;
     }
 
     public static BufferedImage trim(BufferedImage src) {
