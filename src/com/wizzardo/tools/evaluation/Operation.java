@@ -24,16 +24,42 @@ class Operation extends Expression {
     private int start, end;
 
     public Operation(Expression leftPart, Expression rightPart, Operator operator) {
-        this.leftPart = leftPart;
-        this.rightPart = rightPart;
+        this.leftPart = wrapBooleanOperationLeft(leftPart, operator);
+        this.rightPart = wrapBooleanOperationRight(rightPart, operator);
         this.operator = operator;
     }
 
     public Operation(Expression leftPart, Operator operator, int start, int end) {
-        this.leftPart = leftPart;
+        this.leftPart = wrapBooleanOperationLeft(leftPart, operator);
         this.operator = operator;
         this.start = start;
         this.end = end;
+    }
+
+    private Expression wrapBooleanOperationLeft(Expression exp, Operator operator) {
+        switch (operator) {
+            case AND:
+            case AND2:
+            case OR:
+            case OR2:
+            case TERNARY:
+                if (exp != null)
+                    return new AsBooleanExpression(exp);
+        }
+        return exp;
+    }
+
+    private Expression wrapBooleanOperationRight(Expression exp, Operator operator) {
+        switch (operator) {
+            case AND:
+            case AND2:
+            case OR:
+            case OR2:
+            case NOT:
+                if (exp != null)
+                    return new AsBooleanExpression(exp);
+        }
+        return exp;
     }
 
     @Override
@@ -51,7 +77,7 @@ class Operation extends Expression {
     }
 
     public void setLeftPart(Expression leftPart) {
-        this.leftPart = leftPart;
+        this.leftPart = wrapBooleanOperationLeft(leftPart, operator);
     }
 
     public Expression getRightPart() {
@@ -59,15 +85,11 @@ class Operation extends Expression {
     }
 
     public void setRightPart(Expression rightPart) {
-        this.rightPart = rightPart;
+        this.rightPart = wrapBooleanOperationRight(rightPart, operator);
     }
 
     public Operator getOperator() {
         return operator;
-    }
-
-    public void setOperator(Operator operator) {
-        this.operator = operator;
     }
 
     public Expression leftPart() {
@@ -75,7 +97,7 @@ class Operation extends Expression {
     }
 
     public void leftPart(Expression leftPart) {
-        this.leftPart = leftPart;
+        setLeftPart(leftPart);
     }
 
     public Expression rightPart() {
@@ -83,15 +105,11 @@ class Operation extends Expression {
     }
 
     public void rightPart(Expression rightPart) {
-        this.rightPart = rightPart;
+        setRightPart(rightPart);
     }
 
     public Operator operator() {
         return operator;
-    }
-
-    public void operator(Operator operator) {
-        this.operator = operator;
     }
 
     public int getEnd() {

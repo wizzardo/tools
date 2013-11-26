@@ -19,10 +19,11 @@ public class EvalTools {
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
 
-    private static final Pattern NEW = Pattern.compile("new ([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
-    private static final Pattern CLASS = Pattern.compile("([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
+    private static final Pattern NEW = Pattern.compile("^new ([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
+    private static final Pattern CLASS = Pattern.compile("^([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
     private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
     private static final Pattern COMMA = Pattern.compile(",");
+    private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
     private static final Pattern LIST = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$\\{([^\\{\\}]+)\\}|\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
@@ -39,6 +40,37 @@ public class EvalTools {
             }
         }
         return n;
+    }
+
+    protected static int findCloseBracket(String s, int from) {
+        return findCloseBracket(s, from, s.length());
+    }
+
+    protected static int findCloseBracket(String s, int from, int to) {
+        int n = 1;
+        boolean inString = false;
+        char quote = 0;
+        int i;
+        for (i = from; i < to && n > 0; i++) {
+            if (!inString) {
+                if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i >= 1 && s.charAt(i - 1) != '\\'))) {
+                    quote = s.charAt(i);
+                    inString = true;
+                    continue;
+                }
+                if (s.charAt(i) == '(' || s.charAt(i) == '[' || s.charAt(i) == '{') {
+                    n++;
+                } else if (s.charAt(i) == ')' || s.charAt(i) == ']' || s.charAt(i) == '}') {
+                    n--;
+                }
+            } else if ((s.charAt(i) == quote) && i >= 1 && s.charAt(i - 1) != '\\') {
+                inString = false;
+            }
+        }
+        if (n == 0)
+            return i - 1;
+        else
+            return -1;
     }
 
     protected static String getTempVariableName() {
@@ -238,26 +270,230 @@ public class EvalTools {
     }
 
     static List<String> getLines(String exp) {
+        return getLines(exp, false);
+    }
+
+    static class Statement {
+        Type type = Type.BLOCK;
+        String statement;
+        String body;
+        String optional;
+        Statement bodyStatement;
+        Statement optionalStatement;
+
+        public Statement(String statement) {
+            this.statement = statement;
+        }
+
+        public Statement() {
+        }
+
+        public Expression prepare(Map<String, Object> model, Map<String, UserFunction> functions) {
+            switch (type) {
+                case IF: {
+                    List<String> args = getLines(statement,true);
+                    if (args.size() > 1)
+                        throw new IllegalStateException("more then one statement in condition: " + statement);
+
+                    AsBooleanExpression condition = new AsBooleanExpression(EvalTools.prepare(args.get(0), model, functions));
+                    Expression then = bodyStatement != null ? bodyStatement.prepare(model, functions) : EvalTools.prepare(body, model, functions);
+                    Expression elseExpression = optionalStatement != null ? optionalStatement.prepare(model, functions) : EvalTools.prepare(optional, model, functions);
+                    if (elseExpression == null)
+                        return new IfExpression(condition, then);
+                    else
+                        return new IfExpression(condition, then, elseExpression);
+                }
+                default:
+                    throw new IllegalStateException("not implemented yet");
+            }
+        }
+
+        static enum Type {
+            FOR, WHILE, IF, BLOCK;
+        }
+    }
+
+    static List<Statement> getStatements(String s) {
+        List<Statement> statements = new ArrayList<Statement>();
+        Matcher m = IF_FOR_WHILE.matcher(s);
+        int start = 0;
+        int to = s.length();
+        while (m.find(start)) {
+            if (m.start() != start) {
+                statements.add(new Statement(s.substring(start, m.start())));
+            }
+
+            Statement statement = new Statement();
+            start = getBlock(s, m.start(), to, statement);
+
+            statements.add(statement.bodyStatement);
+        }
+        if (start != to) {
+            String sub = s.substring(start, to).trim();
+            if (sub.length() > 0)
+                statements.add(new Statement(sub));
+        }
+        return statements;
+    }
+
+    static int getBlock(String s, int from, int to, Statement statement) {
+        Matcher m = IF_FOR_WHILE.matcher(s);
+        int start = from;
+        if (m.find(start)) {
+            if (m.start() >= to || m.end() >= to)
+                return -1;
+
+            int close = findCloseBracket(s, m.end());
+            if (close < 0)
+                throw new IllegalStateException("can't find closing bracket in expression: " + s);
+
+            Statement inner = new Statement();
+
+            if (statement.bodyStatement == null)
+                statement.bodyStatement = inner;
+            else
+                statement.optionalStatement = inner;
+
+            inner.type = Statement.Type.valueOf(m.group(1).toUpperCase());
+            inner.statement = s.substring(m.end(), close);
+
+            char ch = 0;
+            for (start = close + 1; start < to; start++) {
+                ch = s.charAt(start);
+                if (ch != ' ' && ch != '\n' && ch != '\t')
+                    break;
+            }
+            if (start == to)
+                throw new IllegalStateException("can't find block: " + s.substring(from, to));
+
+            if (ch == '{') {
+                start++;
+                close = findCloseBracket(s, start, to);
+
+                if (close < 0)
+                    throw new IllegalStateException("can't find closing bracket in expression: " + s.substring(from, to));
+
+                inner.body = s.substring(start, close);
+                start = close + 1;
+
+
+                if (inner.type == Statement.Type.IF) {
+                    for (; start < to; start++) {
+                        ch = s.charAt(start);
+                        if (ch != ' ' && ch != '\n' && ch != '\t')
+                            break;
+                    }
+
+                    if (!(start < to - 4 && s.startsWith("else", start)))
+                        return start;
+
+                    start += 4;
+                    ch = s.charAt(start);
+                    if (ch != ' ' && ch != '\n' && ch != '\t' && ch != '{' && ch != ';')
+                        return start - 4;
+
+                    for (; start < to; start++) {
+                        ch = s.charAt(start);
+                        if (ch != ' ' && ch != '\n' && ch != '\t')
+                            break;
+                    }
+
+                    if (start == to)
+                        throw new IllegalStateException("can't find block: " + s.substring(from, to));
+
+                    start++;
+                    if (ch == '{') {
+                        close = findCloseBracket(s, start, to);
+
+                        if (close < 0)
+                            throw new IllegalStateException("can't find closing bracket in expression: " + s.substring(from, to));
+
+                        inner.optional = s.substring(start, close);
+                        start = close + 1;
+                    } else {
+                        return getBlock(s, start, to, inner);
+                    }
+                }
+            } else {
+                return getBlock(s, start, to, inner);
+            }
+        } else {
+            char last = 0, stringChar = 0;
+            boolean inString = false;
+            int brackets = 0;
+            char c;
+            for (int i = from; i < to; i++) {
+                c = s.charAt(i);
+                if (inString) {
+                    if (c == stringChar && last != '\\') {
+                        inString = false;
+                    }
+                } else {
+                    if (c == '(' || c == '[' || c == '{') {
+                        brackets++;
+                    } else if (c == ')' || c == ']' || c == '}') {
+                        brackets--;
+                    }
+
+
+                    if (brackets == 0) {
+                        if (c == ';' || c == '\n') {
+                            if (statement.body == null)
+                                statement.body = s.substring(start, i).trim();
+                            else
+                                statement.optional = s.substring(start, i).trim();
+
+                            return i + (c == ';' ? 1 : 0);
+                        }
+                        if (c == '"' || c == '\'') {
+                            inString = true;
+                        }
+                    }
+                }
+                last = c;
+            }
+        }
+
+        if (statement.body == null)
+            statement.body = s.substring(start, to).trim();
+        else
+            statement.optional = s.substring(start, to).trim();
+        return to;
+    }
+
+    static List<String> getLines(String exp, boolean ignoreNewLine) {
         List<String> list = new ArrayList<String>();
 
         StringBuilder sb = new StringBuilder();
         char last = 0, stringChar = 0;
         boolean inString = false;
+        int brackets = 0;
         for (char c : exp.toCharArray()) {
             if (inString) {
                 if (c == stringChar && last != '\\') {
                     inString = false;
                 }
             } else {
-                if (c == ';' || c == '\n') {
-                    String value = sb.toString().trim();
-                    if (value.length() > 0)
-                        list.add(value);
-                    sb.setLength(0);
-                    continue;
+                if (c == '(' || c == '[' || c == '{') {
+                    brackets++;
+                } else if (c == ')' || c == ']' || c == '}') {
+                    brackets--;
                 }
-                if (c == '"' || c == '\'') {
-                    inString = true;
+
+                if (ignoreNewLine && c == '\n')
+                    continue;
+
+                if (brackets == 0) {
+                    if (c == ';' || c == '\n') {
+                        String value = sb.toString().trim();
+                        if (value.length() > 0)
+                            list.add(value);
+                        sb.setLength(0);
+                        continue;
+                    }
+                    if (c == '"' || c == '\'') {
+                        inString = true;
+                    }
                 }
             }
             last = c;
@@ -359,15 +595,37 @@ public class EvalTools {
         }
 
         {
-            List<String> lines = getLines(exp);
-            if (lines.size() > 1) {
-                ClosureExpression closure = new ClosureExpression();
-                for (String s : lines) {
-                    closure.add(prepare(s, model, functions));
-                }
-                return closure;
-            }
+            List<Statement> statements = getStatements(exp);
+            ClosureExpression closure = new ClosureExpression();
+            for (Statement s : statements) {
+                switch (s.type) {
+                    case IF:
+                    case FOR:
+                    case WHILE:
+                        closure.add(s.prepare(model, functions));
+                        break;
 
+                    case BLOCK: {
+                        List<String> lines = getLines(s.statement);
+                        if (lines.size() > 1) {
+                            ClosureExpression inner = new ClosureExpression();
+                            for (String line : lines) {
+                                inner.add(prepare(line, model, functions));
+                            }
+                            closure.add(inner);
+                        } else if (statements.size() > 1) {
+                            closure.add(prepare(s.statement, model, functions));
+                        }
+                        break;
+                    }
+
+                    default:
+                        throw new IllegalStateException("not implemented yet");
+                }
+
+            }
+            if (!closure.isEmpty())
+                return closure;
         }
 
         {
@@ -658,6 +916,11 @@ public class EvalTools {
         } catch (ClassNotFoundException e) {
             //ignore
         }
+        try {
+            return ClassLoader.getSystemClassLoader().loadClass("java.util." + s);
+        } catch (ClassNotFoundException e) {
+            //ignore
+        }
         if (imports != null) {
             for (String imp : imports) {
                 if (imp.endsWith("." + s))
@@ -930,9 +1193,5 @@ public class EvalTools {
                 return Operation.multiply(it, args[0]);
             }
         });
-    }
-
-    public static void main(String[] args) {
-        System.out.println(trimBrackets("sin((1+2)/(3))"));
     }
 }

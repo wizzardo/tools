@@ -233,7 +233,7 @@ class Function extends Expression {
             if (m.getName().equals(method) && ((m.getParameterTypes().length == 0 && argsClasses == null) || m.getParameterTypes().length == argsClasses.length)) {
 //                System.out.println("check args");
                 for (int i = 0; i < m.getParameterTypes().length; i++) {
-                    if (!(m.getParameterTypes()[i].equals(argsClasses[i])
+                    if (!(m.getParameterTypes()[i].isAssignableFrom(argsClasses[i])
                             || (boxing.containsKey(m.getParameterTypes()[i]) && boxing.get(m.getParameterTypes()[i]).equals(argsClasses[i]))
                             || (boxing.containsKey(m.getParameterTypes()[i]) && boxing.containsValue(argsClasses[i])))
                             ) {

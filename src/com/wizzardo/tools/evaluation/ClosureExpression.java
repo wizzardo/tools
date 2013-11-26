@@ -75,7 +75,7 @@ public class ClosureExpression extends Expression {
         return firstLine;
     }
 
-    public static void main(String[] args) {
-        System.out.println("qwe qwe".split(" ").length);
+    public boolean isEmpty() {
+        return expressions.isEmpty();
     }
 }

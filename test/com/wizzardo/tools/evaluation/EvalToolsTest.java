@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Moxa
@@ -552,8 +551,8 @@ public class EvalToolsTest {
 
         model.clear();
         Map m = new HashMap();
-        m.put("b",1);
-        model.put("a",m);
+        m.put("b", 1);
+        model.put("a", m);
         assertEquals("b = 1", EvalTools.evaluate("\"b = $a.b\"", model));
         assertEquals("b = 1", EvalTools.evaluate("\"b = ${a.b}\"", model));
         assertEquals("b + 1 = 2", EvalTools.evaluate("\"b + 1 = ${a.b+1}\"", model));
@@ -609,5 +608,155 @@ public class EvalToolsTest {
                 "i*=2;";
         assertEquals(2, EvalTools.evaluate(s, model));
 
+    }
+
+    @Test
+    public void testIf() throws Exception {
+        Map<String, Object> model = new HashMap<String, Object>();
+        List<EvalTools.Statement> l;
+        EvalTools.Statement s;
+
+        l = EvalTools.getStatements("if(true) { System.out.println(\"true\"); }");
+        assertEquals(1, l.size());
+        s = l.get(0);
+        assertEquals("true", s.statement);
+        assertEquals(" System.out.println(\"true\"); ", s.body);
+
+        l = EvalTools.getStatements("if(true) System.out.println(\"true\");");
+        assertEquals(1, l.size());
+        s = l.get(0);
+        assertEquals("true", s.statement);
+        assertEquals("System.out.println(\"true\")", s.body);
+
+        l = EvalTools.getStatements("if(true)" +
+                "System.out.println(\"true\");"+
+                "System.out.println(\"other\");");
+        assertEquals(2, l.size());
+        s = l.get(0);
+        assertEquals("true", s.statement);
+        assertEquals("System.out.println(\"true\")", s.body);
+        assertEquals("System.out.println(\"other\");", l.get(1).statement);
+
+        l = EvalTools.getStatements("if(true) if(!false)" +
+                "System.out.println(\"true\");"+
+                "System.out.println(\"other\");");
+        assertEquals(2, l.size());
+        s = l.get(0);
+        assertEquals("true", s.statement);
+        assertEquals("!false", s.bodyStatement.statement);
+        assertEquals("System.out.println(\"true\")", s.bodyStatement.body);
+        assertEquals("System.out.println(\"other\");", l.get(1).statement);
+
+
+        String exp = "if(\ni\n>\n0\n)\n" +
+                " i=i*2;" +
+                "i";
+
+        model.put("i", 1);
+        assertEquals(2, EvalTools.evaluate(exp, model));
+        model.put("i", 2);
+        assertEquals(4, EvalTools.evaluate(exp, model));
+        model.put("i", -1);
+        assertEquals(-1, EvalTools.evaluate(exp, model));
+
+
+        exp = "if(i>0){" +
+                " i=i*2;" +
+                "i=i+3}" +
+                "i";
+
+        model.put("i", 1);
+        assertEquals(5, EvalTools.evaluate(exp, model));
+        model.put("i", 2);
+        assertEquals(7, EvalTools.evaluate(exp, model));
+        model.put("i", -1);
+        assertEquals(-1, EvalTools.evaluate(exp, model));
+    }
+
+    @Test
+    public void testTruth() {
+        // http://groovy.codehaus.org/Groovy+Truth
+
+//        def a = true
+//        def b = true
+//        def c = false
+//        assert a
+//        assert a && b
+//        assert a || c
+//        assert !c
+
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        model.put("a", true);
+        model.put("b", true);
+        model.put("c", false);
+        assertEquals(true, EvalTools.evaluate("a", model));
+        assertEquals(true, EvalTools.evaluate("a && b", model));
+        assertEquals(true, EvalTools.evaluate("a || c", model));
+        assertEquals(true, EvalTools.evaluate("!c", model));
+
+
+//        def numbers = [1,2,3]
+//        assert numbers //true, as numbers in not empty
+//        numbers = []
+//        assert !numbers //true, as numbers is now an empty collection
+
+        EvalTools.evaluate("def numbers = [1,2,3]", model);
+        assertEquals(true, EvalTools.evaluate("true && numbers", model));
+        EvalTools.evaluate("numbers = []", model);
+        assertEquals(true, EvalTools.evaluate("!numbers", model));
+
+
+//        assert ![].iterator() // false because the Iterator is empty
+//        assert [0].iterator() // true because the Iterator has a next element
+//        def v = new Vector()
+//        assert !v.elements()  // false because the Enumeration is empty
+//        v.add(new Object())
+//        assert v.elements()   // true because the Enumeration has more elements
+
+        assertEquals(true, EvalTools.evaluate("![].iterator()", model));
+        assertEquals(true, EvalTools.evaluate("true || [0].iterator()", model));
+        EvalTools.evaluate("def v = new Vector()", model);
+        assertEquals(true, EvalTools.evaluate("!v.elements()", model));
+        EvalTools.evaluate("new Object()", model);
+        EvalTools.evaluate("v.add(new Object())", model);
+        assertEquals(true, EvalTools.evaluate("true && v.elements()", model));
+
+
+//        assert ['one':1]
+//        assert ![:]
+
+        assertEquals(true, EvalTools.evaluate("true && ['one':1]", model));
+        assertEquals(true, EvalTools.evaluate("![:]", model));
+
+
+//        assert 'This is true'
+//        assert !''
+//        //GStrings
+//        def s = ''
+//        assert !("$s")
+//        s = 'x'
+//        assert ("$s")
+
+        assertEquals(true, EvalTools.evaluate("true && 'This is true'", model));
+        assertEquals(true, EvalTools.evaluate("!''", model));
+        EvalTools.evaluate("def s = ''", model);
+        assertEquals(true, EvalTools.evaluate("!\"$s\"", model));
+        EvalTools.evaluate("s = 'x'", model);
+        assertEquals(true, EvalTools.evaluate("true && \"$s\"", model));
+
+
+//        assert !0 //yeah, 0s are false, like in Perl
+//        assert 1  //this is also true for all other number types
+
+        assertEquals(true, EvalTools.evaluate("!0", model));
+        assertEquals(true, EvalTools.evaluate("true && 1", model));
+
+
+//        assert new Object()
+//        assert !null
+
+        assertEquals(true, EvalTools.evaluate("true && new Object()", model));
+        assertEquals(true, EvalTools.evaluate("!null", model));
     }
 }
