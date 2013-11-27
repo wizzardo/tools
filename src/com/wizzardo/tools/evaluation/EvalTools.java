@@ -26,7 +26,7 @@ public class EvalTools {
     private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
     private static final Pattern LIST = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$\\{([^\\{\\}]+)\\}|\\$([\\.a-z]+[\\.a-zA-Z]*)");
-    private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
+    private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
     private static final Pattern DEF = Pattern.compile("def +([a-z]+[a-zA-Z_\\d]*)$");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
 
@@ -160,7 +160,13 @@ public class EvalTools {
                         break;
                     }
                     case '.': {
-                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from && i > 0 && chars[i - 1] != '*') {
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
+                            if (i > 0 && (chars[i - 1] == '*' || chars[i - 1] == '?'))
+                                if (i - from == 1)
+                                    continue;
+                                else
+                                    i--;
+
                             l.add(new String(chars, from, i - from));
                             from = i;
                         }
@@ -688,6 +694,9 @@ public class EvalTools {
                         continue;
                     }
                 }
+                if ("?.".equals(m.group()))
+                    continue;
+
 //                System.out.println(m.group());
                 if (countOpenBrackets(exp, last, m.start()) == 0 && !inString(exp, last, m.start())) {
                     exps.add(exp.substring(last, m.start()).trim());
@@ -868,6 +877,21 @@ public class EvalTools {
                 }
                 thatObject = new Function(thatObject, methodName, args);
 
+                //?.concat("ololo")
+            } else if (parts.size() >= 2 && parts.get(0).startsWith("?.")
+                    && ((parts.get(1).startsWith("(") && parts.get(1).endsWith(")")) || (parts.get(1).startsWith("{") && parts.get(1).endsWith("}")))) {
+                methodName = parts.remove(0).substring(2);
+                Expression[] args = null;
+                String argsRaw = trimBrackets(parts.remove(0));
+                if (argsRaw.length() > 0) {
+                    List<String> arr = parseArgs(argsRaw);
+                    args = new Expression[arr.size()];
+                    for (int i = 0; i < arr.size(); i++) {
+                        args[i] = prepare(arr.get(i), model, functions);
+                    }
+                }
+                thatObject = new Function(thatObject, methodName, args,true);
+
                 //*.concat("ololo")
             } else if (parts.size() >= 1 && parts.get(0).startsWith("*.")) {
                 String var = getTempVariableName();
@@ -905,6 +929,11 @@ public class EvalTools {
             } else if (parts.get(0).startsWith(".")) {
                 String field = parts.remove(0).substring(1);
                 thatObject = new Function(thatObject, field);
+
+                //?.x
+            } else if (parts.get(0).startsWith("?.")) {
+                String field = parts.remove(0).substring(2);
+                thatObject = new Function(thatObject, field, true);
 
                 //[0]
             } else if (parts.get(0).startsWith("[") && parts.get(0).endsWith("]")) {

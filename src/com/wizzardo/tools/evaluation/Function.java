@@ -28,6 +28,7 @@ class Function extends Expression {
     private String fieldName;
     private boolean hardcodeChecked = false;
     private boolean metaChecked = false;
+    private boolean safeNavigation = false;
     private CollectionTools.Closure3<Object, Object, Map, Object[]> metaMethod;
 
     private static Map<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Object[]>>> metaMethods = new HashMap<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Object[]>>>();
@@ -38,10 +39,24 @@ class Function extends Expression {
         this.args = args;
     }
 
+    public Function(Expression thatObject, Method method, Expression[] args, boolean safeNavigation) {
+        this.thatObject = thatObject;
+        this.method = method;
+        this.args = args;
+        this.safeNavigation = safeNavigation;
+    }
+
     public Function(Expression thatObject, String methodName, Expression[] args) {
         this.thatObject = thatObject;
         this.args = args;
         this.methodName = methodName;
+    }
+
+    public Function(Expression thatObject, String methodName, Expression[] args, boolean safeNavigation) {
+        this.thatObject = thatObject;
+        this.args = args;
+        this.methodName = methodName;
+        this.safeNavigation = safeNavigation;
     }
 
     public Function(Constructor constructor, Expression[] args) {
@@ -59,9 +74,21 @@ class Function extends Expression {
         this.fieldName = fieldName;
     }
 
+    public Function(Expression thatObject, String fieldName, boolean safeNavigation) {
+        this.thatObject = thatObject;
+        this.fieldName = fieldName;
+        this.safeNavigation = safeNavigation;
+    }
+
     public Function(Expression thatObject, Field field) {
         this.thatObject = thatObject;
         this.field = field;
+    }
+
+    public Function(Expression thatObject, Field field, boolean safeNavigation) {
+        this.thatObject = thatObject;
+        this.field = field;
+        this.safeNavigation = safeNavigation;
     }
 
     @Override
@@ -77,15 +104,15 @@ class Function extends Expression {
             return new Function(constructor, args);
         }
         if (field != null) {
-            return new Function(thatObject, field);
+            return new Function(thatObject, field, safeNavigation);
         }
         if (fieldName != null) {
-            return new Function(thatObject, fieldName);
+            return new Function(thatObject, fieldName, safeNavigation);
         }
         if (method != null) {
-            return new Function(thatObject.clone(), method, args);
+            return new Function(thatObject.clone(), method, args, safeNavigation);
         }
-        return new Function(thatObject.clone(), methodName, args);
+        return new Function(thatObject.clone(), methodName, args, safeNavigation);
     }
 
     public Object get(Map<String, Object> model) {
@@ -97,6 +124,10 @@ class Function extends Expression {
 //        System.out.println("evaluate method: "+toString());
 
             Object instance = thatObject.get(model);
+
+            if (safeNavigation && instance == null)
+                return null;
+
             if (!metaChecked) {
                 chechMeta(instance);
                 metaChecked = true;
@@ -117,7 +148,6 @@ class Function extends Expression {
             if (metaMethod != null) {
                 return metaMethod.execute(instance, model, arr);
             }
-
 
             if (fieldName != null || field != null) {
                 if (instance instanceof Map) {

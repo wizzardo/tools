@@ -177,6 +177,7 @@ class Operation extends Expression {
         }
         if (rightPart != null
                 && operator != Operator.TERNARY
+                && operator != Operator.ELVIS
                 && operator != Operator.AND2
                 && operator != Operator.OR2
                 && operator != Operator.EQUAL
@@ -301,6 +302,13 @@ class Operation extends Expression {
             }
             case RANGE: {
                 result = createRange(ob1, ob2);
+                break;
+            }
+            case ELVIS: {
+                if (AsBooleanExpression.toBoolean(ob1)) {
+                    result = ob1;
+                } else
+                    result = rightPart.get(model);
                 break;
             }
             default:

@@ -34,6 +34,7 @@ enum Operator {
     LOWER("<", Operator.Requirement.BOTH, 1, true),
     GREATE(">", Operator.Requirement.BOTH, 1, true),
     TERNARY("?", Operator.Requirement.BOTH, 4, true),
+    ELVIS("?:", Operator.Requirement.BOTH, 4, true),
     COLON(":", Operator.Requirement.BOTH, 4, true),
     GET("%get%", Operator.Requirement.BOTH, 0, false);
     private static final Map<String, Operator> operators = new HashMap<String, Operator>();

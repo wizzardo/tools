@@ -367,6 +367,23 @@ public class EvalToolsTest {
         assertEquals("style=\"font-size: 20px;\"", EvalTools.evaluate(" it == pageNumber ? 'style=\"font-size: 20px;\"' : ''", model));
 
         assertNotNull(EvalTools.evaluate("Math.sin((1+2)/(3))"));
+
+
+        model = new HashMap<String, Object>();
+        assertEquals("false", EvalTools.evaluate("m?.a ?: 'false'", model));
+        assertEquals("false", EvalTools.evaluate("m?.a?.b ?: 'false'", model));
+        assertEquals("{a={b=true}}", EvalTools.evaluate("m = [a:[b:'true']]", model).toString());
+        assertEquals("true", EvalTools.evaluate("m?.a?.b ?: 'false'", model));
+
+        model = new HashMap<String, Object>();
+        assertEquals("false", EvalTools.evaluate("a?.concat('b') ?: 'false'", model));
+        model.put("a","a");
+        assertEquals("ab", EvalTools.evaluate("a?.concat('b') ?: 'false'", model));
+
+        model = new HashMap<String, Object>();
+        model.put("i",1);
+        assertEquals(1, EvalTools.evaluate("i++?:0", model));
+        assertEquals(2, EvalTools.evaluate("i", model));
     }
 
     @Test
@@ -433,6 +450,19 @@ public class EvalToolsTest {
         Assert.assertEquals("k", l.get(0));
         Assert.assertEquals("[0]", l.get(1));
         Assert.assertEquals(".x", l.get(2));
+
+        l = EvalTools.getParts("k[0]?.x");
+        Assert.assertEquals(3, l.size());
+        Assert.assertEquals("k", l.get(0));
+        Assert.assertEquals("[0]", l.get(1));
+        Assert.assertEquals("?.x", l.get(2));
+
+        l = EvalTools.getParts("k[0]?.x?.y");
+        Assert.assertEquals(4, l.size());
+        Assert.assertEquals("k", l.get(0));
+        Assert.assertEquals("[0]", l.get(1));
+        Assert.assertEquals("?.x", l.get(2));
+        Assert.assertEquals("?.y", l.get(3));
 
         l = EvalTools.getParts("k[0][1]");
         Assert.assertEquals(3, l.size());

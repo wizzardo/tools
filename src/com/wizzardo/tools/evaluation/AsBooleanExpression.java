@@ -29,34 +29,37 @@ public class AsBooleanExpression extends Expression {
             return result;
 
         Object r = condition.get(model);
-        Boolean result;
-        if (r == null) {
-            result = false;
-        } else if (r instanceof Boolean) {
-            result = (Boolean) r;
-        } else if (r instanceof String) {
-            result = ((String) r).length() > 0;
-        } else if (r instanceof Collection) {
-            result = !((Collection) r).isEmpty();
-        } else if (r instanceof Map) {
-            result = !((Map) r).isEmpty();
-        } else if (r instanceof Number) {
-            result = ((Number) r).doubleValue() != 0;
-        } else if (r instanceof Iterator) {
-            result = ((Iterator) r).hasNext();
-        } else if (r instanceof Enumeration) {
-            result = ((Enumeration) r).hasMoreElements();
-        }
-//        else if (r instanceof Matcher) {
-//            Matcher m = (Matcher) r;
-//            result = m.start() != -1; }
-        else {
-            result = true;
-        }
+        Boolean result = toBoolean(r);
 
         if (condition.hardcoded)
             this.result = result;
 
         return result;
+    }
+
+    public static Boolean toBoolean(Object r) {
+        if (r == null) {
+            return false;
+        } else if (r instanceof Boolean) {
+            return (Boolean) r;
+        } else if (r instanceof String) {
+            return ((String) r).length() > 0;
+        } else if (r instanceof Collection) {
+            return !((Collection) r).isEmpty();
+        } else if (r instanceof Map) {
+            return !((Map) r).isEmpty();
+        } else if (r instanceof Number) {
+            return ((Number) r).doubleValue() != 0;
+        } else if (r instanceof Iterator) {
+            return ((Iterator) r).hasNext();
+        } else if (r instanceof Enumeration) {
+            return ((Enumeration) r).hasMoreElements();
+        }
+//        else if (r instanceof Matcher) {
+//            Matcher m = (Matcher) r;
+//            result = m.start() != -1; }
+        else {
+            return true;
+        }
     }
 }
