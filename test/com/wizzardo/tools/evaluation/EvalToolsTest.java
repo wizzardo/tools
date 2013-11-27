@@ -615,6 +615,7 @@ public class EvalToolsTest {
         Map<String, Object> model = new HashMap<String, Object>();
         List<EvalTools.Statement> l;
         EvalTools.Statement s;
+        String exp;
 
         l = EvalTools.getStatements("if(true) { System.out.println(\"true\"); }");
         assertEquals(1, l.size());
@@ -629,7 +630,7 @@ public class EvalToolsTest {
         assertEquals("System.out.println(\"true\")", s.body);
 
         l = EvalTools.getStatements("if(true)" +
-                "System.out.println(\"true\");"+
+                "System.out.println(\"true\");" +
                 "System.out.println(\"other\");");
         assertEquals(2, l.size());
         s = l.get(0);
@@ -638,7 +639,7 @@ public class EvalToolsTest {
         assertEquals("System.out.println(\"other\");", l.get(1).statement);
 
         l = EvalTools.getStatements("if(true) if(!false)" +
-                "System.out.println(\"true\");"+
+                "System.out.println(\"true\");" +
                 "System.out.println(\"other\");");
         assertEquals(2, l.size());
         s = l.get(0);
@@ -648,7 +649,7 @@ public class EvalToolsTest {
         assertEquals("System.out.println(\"other\");", l.get(1).statement);
 
 
-        String exp = "if(\ni\n>\n0\n)\n" +
+        exp = "if(\ni\n>\n0\n)\n" +
                 " i=i*2;" +
                 "i";
 
@@ -671,6 +672,79 @@ public class EvalToolsTest {
         assertEquals(7, EvalTools.evaluate(exp, model));
         model.put("i", -1);
         assertEquals(-1, EvalTools.evaluate(exp, model));
+
+
+        exp = "if(i>0)" +
+                " i=i*2;" +
+                "else " +
+                " i*=-1;" +
+                "i";
+
+        model.put("i", 2);
+        assertEquals(4, EvalTools.evaluate(exp, model));
+        model.put("i", -2);
+        assertEquals(2, EvalTools.evaluate(exp, model));
+
+
+        exp = "if(i>0){" +
+                " i=i*2;" +
+                "i++;}" +
+                "else " +
+                " i*=-1;" +
+                "i";
+
+        model.put("i", 2);
+        assertEquals(5, EvalTools.evaluate(exp, model));
+        model.put("i", -2);
+        assertEquals(2, EvalTools.evaluate(exp, model));
+
+
+        exp = "if(i>0)" +
+                " i=i*2;" +
+                "else {" +
+                " i*=-1;" +
+                " i++;" +
+                "}" +
+                "i";
+
+        model.put("i", 2);
+        assertEquals(4, EvalTools.evaluate(exp, model));
+        model.put("i", -2);
+        assertEquals(3, EvalTools.evaluate(exp, model));
+
+
+        exp = "if(i==0)" +
+                " i=1;" +
+                "else if(i==1)" +
+                " i=2;" +
+                "else" +
+                " i=3;" +
+                "i";
+
+        model.put("i", 0);
+        assertEquals(1, EvalTools.evaluate(exp, model));
+        model.put("i", 1);
+        assertEquals(2, EvalTools.evaluate(exp, model));
+        model.put("i", -1);
+        assertEquals(3, EvalTools.evaluate(exp, model));
+
+
+        exp = "if(i>0) if(i<5)" +
+                " i=2;" +
+                "else if(i<10)" +
+                " i=3;" +
+                "else" +
+                " i=4;" +
+                "i";
+
+        model.put("i", 1);
+        assertEquals(2, EvalTools.evaluate(exp, model));
+        model.put("i", 7);
+        assertEquals(3, EvalTools.evaluate(exp, model));
+        model.put("i", 15);
+        assertEquals(4, EvalTools.evaluate(exp, model));
+        model.put("i", 0);
+        assertEquals(0, EvalTools.evaluate(exp, model));
     }
 
     @Test

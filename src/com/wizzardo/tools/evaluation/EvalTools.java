@@ -291,7 +291,7 @@ public class EvalTools {
         public Expression prepare(Map<String, Object> model, Map<String, UserFunction> functions) {
             switch (type) {
                 case IF: {
-                    List<String> args = getLines(statement,true);
+                    List<String> args = getLines(statement, true);
                     if (args.size() > 1)
                         throw new IllegalStateException("more then one statement in condition: " + statement);
 
@@ -340,6 +340,10 @@ public class EvalTools {
         Matcher m = IF_FOR_WHILE.matcher(s);
         int start = from;
         if (m.find(start)) {
+            String before = s.substring(start, m.start()).trim();
+            if (before.length() > 0) {
+                return getStringBlock(s, from, to, statement);
+            }
             if (m.start() >= to || m.end() >= to)
                 return -1;
 
@@ -349,7 +353,7 @@ public class EvalTools {
 
             Statement inner = new Statement();
 
-            if (statement.bodyStatement == null)
+            if (statement.bodyStatement == null && statement.body == null)
                 statement.bodyStatement = inner;
             else
                 statement.optionalStatement = inner;
@@ -376,89 +380,102 @@ public class EvalTools {
                 inner.body = s.substring(start, close);
                 start = close + 1;
 
-
-                if (inner.type == Statement.Type.IF) {
-                    for (; start < to; start++) {
-                        ch = s.charAt(start);
-                        if (ch != ' ' && ch != '\n' && ch != '\t')
-                            break;
-                    }
-
-                    if (!(start < to - 4 && s.startsWith("else", start)))
-                        return start;
-
-                    start += 4;
-                    ch = s.charAt(start);
-                    if (ch != ' ' && ch != '\n' && ch != '\t' && ch != '{' && ch != ';')
-                        return start - 4;
-
-                    for (; start < to; start++) {
-                        ch = s.charAt(start);
-                        if (ch != ' ' && ch != '\n' && ch != '\t')
-                            break;
-                    }
-
-                    if (start == to)
-                        throw new IllegalStateException("can't find block: " + s.substring(from, to));
-
-                    start++;
-                    if (ch == '{') {
-                        close = findCloseBracket(s, start, to);
-
-                        if (close < 0)
-                            throw new IllegalStateException("can't find closing bracket in expression: " + s.substring(from, to));
-
-                        inner.optional = s.substring(start, close);
-                        start = close + 1;
-                    } else {
-                        return getBlock(s, start, to, inner);
-                    }
-                }
+                if (inner.type == Statement.Type.IF)
+                    return getElse(s, start, to, inner);
+                return start;
             } else {
-                return getBlock(s, start, to, inner);
+                start = getBlock(s, start, to, inner);
+
+                if (inner.type == Statement.Type.IF)
+                    return getElse(s, start, to, inner);
+                return start;
+
             }
         } else {
-            char last = 0, stringChar = 0;
-            boolean inString = false;
-            int brackets = 0;
-            char c;
-            for (int i = from; i < to; i++) {
-                c = s.charAt(i);
-                if (inString) {
-                    if (c == stringChar && last != '\\') {
-                        inString = false;
+            return getStringBlock(s, from, to, statement);
+        }
+    }
+
+    static int getStringBlock(String s, int from, int to, Statement statement) {
+        char last = 0, stringChar = 0;
+        boolean inString = false;
+        int brackets = 0;
+        char c;
+        for (int i = from; i < to; i++) {
+            c = s.charAt(i);
+            if (inString) {
+                if (c == stringChar && last != '\\') {
+                    inString = false;
+                }
+            } else {
+                if (c == '(' || c == '[' || c == '{') {
+                    brackets++;
+                } else if (c == ')' || c == ']' || c == '}') {
+                    brackets--;
+                }
+
+                if (brackets == 0) {
+                    if (c == ';' || c == '\n') {
+                        if (statement.bodyStatement == null && statement.body == null)
+                            statement.body = s.substring(from, i).trim();
+                        else
+                            statement.optional = s.substring(from, i).trim();
+
+                        return i + (c == ';' ? 1 : 0);
                     }
-                } else {
-                    if (c == '(' || c == '[' || c == '{') {
-                        brackets++;
-                    } else if (c == ')' || c == ']' || c == '}') {
-                        brackets--;
-                    }
-
-
-                    if (brackets == 0) {
-                        if (c == ';' || c == '\n') {
-                            if (statement.body == null)
-                                statement.body = s.substring(start, i).trim();
-                            else
-                                statement.optional = s.substring(start, i).trim();
-
-                            return i + (c == ';' ? 1 : 0);
-                        }
-                        if (c == '"' || c == '\'') {
-                            inString = true;
-                        }
+                    if (c == '"' || c == '\'') {
+                        inString = true;
                     }
                 }
-                last = c;
             }
+            last = c;
+        }
+        if (statement.bodyStatement == null && statement.body == null)
+            statement.body = s.substring(from, to).trim();
+        else
+            statement.optional = s.substring(from, to).trim();
+        return to;
+    }
+
+    static int getElse(String s, int from, int to, Statement statement) {
+        int start = from;
+        char ch;
+        int close;
+        for (; start < to; start++) {
+            ch = s.charAt(start);
+            if (ch != ' ' && ch != '\n' && ch != '\t')
+                break;
         }
 
-        if (statement.body == null)
-            statement.body = s.substring(start, to).trim();
-        else
-            statement.optional = s.substring(start, to).trim();
-        return to;
+        if (!(start < to - 4 && s.startsWith("else", start)))
+            return start;
+
+        start += 4;
+        ch = s.charAt(start);
+        if (ch != ' ' && ch != '\n' && ch != '\t' && ch != '{' && ch != ';')
+            return start - 4;
+
+        for (; start < to; start++) {
+            ch = s.charAt(start);
+            if (ch != ' ' && ch != '\n' && ch != '\t')
+                break;
+        }
+
+        if (start == to)
+            throw new IllegalStateException("can't find block: " + s.substring(from, to));
+
+        if (ch == '{') {
+            start++;
+            close = findCloseBracket(s, start, to);
+
+            if (close < 0)
+                throw new IllegalStateException("can't find closing bracket in expression: " + s.substring(from, to));
+
+            statement.optional = s.substring(start, close);
+            return close + 1;
+        } else {
+            return getBlock(s, start, to, statement);
+        }
     }
 
     static List<String> getLines(String exp, boolean ignoreNewLine) {
