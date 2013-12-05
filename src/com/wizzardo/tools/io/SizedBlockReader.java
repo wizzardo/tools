@@ -1,12 +1,13 @@
 package com.wizzardo.tools.io;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
  * @author Moxa
  */
-public class SizedBlockReader {
+public class SizedBlockReader implements Closeable {
 
     private InputStream in;
     private long blockLength = 0;

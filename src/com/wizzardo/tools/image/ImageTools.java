@@ -2,13 +2,10 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.wizzardo.tools;
+package com.wizzardo.tools.image;
 
 import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGImageDecoder;
-import com.wizzardo.tools.image.JpegEncoder;
-import com.wizzardo.tools.image.Lanczos3Filter;
-import com.wizzardo.tools.image.ResampleOp;
 import com.wizzardo.tools.io.FileTools;
 
 import javax.imageio.ImageIO;

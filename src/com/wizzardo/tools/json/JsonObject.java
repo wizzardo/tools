@@ -2,6 +2,7 @@ package com.wizzardo.tools.json;
 
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -352,7 +353,18 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     public static <T> T bind(String json, Class<T> clazz) {
-        return Binder.fromJSON(clazz, parse(json).asJsonObject());
+        try {
+            return Binder.fromJSON(clazz, parse(json));
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (InstantiationException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        return null;
     }
 
     public JsonObject append(String key, Object ob) {

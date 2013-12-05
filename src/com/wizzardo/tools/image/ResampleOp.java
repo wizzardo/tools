@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Morten Nobel-Joergensen
  * @author Heinz Doerr
  */
-public class ResampleOp extends AdvancedResizeOp {
+class ResampleOp extends AdvancedResizeOp {
     private final int MAX_CHANNEL_VALUE = 255;
 
     private int nrChannels;

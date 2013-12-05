@@ -44,14 +44,36 @@ public class CacheTest {
         });
 
         try {
-             cache.get(1);
+            cache.get(1);
         } catch (Exception e) {
         }
 
         try {
-             cache.get(1);
+            cache.get(1);
         } catch (Exception e) {
         }
 
+    }
+
+    @Test
+    public void testTTL() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Cache.Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        });
+
+        cache.get("foo", true);
+        Thread.sleep(500);
+        cache.get("bar");
+
+        Assert.assertEquals(2,cache.size());
+
+        Thread.sleep(1001);
+        Assert.assertEquals(1,cache.size());
+
+        Thread.sleep(500);
+        Assert.assertEquals(0,cache.size());
     }
 }

@@ -2,6 +2,7 @@ package com.wizzardo.tools.io;
 
 import com.wizzardo.tools.BoyerMoore;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
@@ -12,7 +13,7 @@ import java.util.logging.Logger;
 /**
  * @author Moxa
  */
-public class BlockReader {
+public class BlockReader implements Closeable {
 
     private PushbackInputStream in;
     private byte[] buffer, dynamicBuffer;

@@ -1,4 +1,6 @@
-package com.wizzardo.tools;
+package com.wizzardo.tools.io;
+
+import com.wizzardo.tools.WrappedException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -25,10 +27,13 @@ public class ZipTools {
 
         public void zip(OutputStream out) throws IOException {
             ZipOutputStream zipout = new ZipOutputStream(out);
-            for (ZipBuilderEntry entry : entries) {
-                entry.write(zipout);
+            try {
+                for (ZipBuilderEntry entry : entries) {
+                    entry.write(zipout);
+                }
+            } finally {
+                IOTools.close(zipout);
             }
-            zipout.close();
         }
     }
 
@@ -64,16 +69,16 @@ public class ZipTools {
         @Override
         public void write(ZipOutputStream out) throws IOException {
             if (file.isFile()) {
-                FileInputStream in = new FileInputStream(file);
-                ZipEntry entry = new ZipEntry(file.getName());
-                entry.setMethod(ZipEntry.DEFLATED);
-                out.putNextEntry(entry);
-                int r;
-                byte[] b = new byte[10240];
-                while ((r = in.read(b)) != -1) {
-                    out.write(b, 0, r);
+                FileInputStream in = null;
+                try {
+                    in = new FileInputStream(file);
+                    ZipEntry entry = new ZipEntry(file.getName());
+                    entry.setMethod(ZipEntry.DEFLATED);
+                    out.putNextEntry(entry);
+                    IOTools.copy(in, out);
+                } finally {
+                    IOTools.close(in);
                 }
-                in.close();
             } else {
                 zip(out, file);
             }
@@ -95,30 +100,17 @@ public class ZipTools {
                 }
                 FileOutputStream out = null;
                 try {
-                    out = new FileOutputStream(outFile);
-                    while ((r = zip.read(b)) != -1) {
-                        out.write(b, 0, r);
-                    }
+                    IOTools.copy(zip, out, b);
                 } catch (IOException ex) {
                     throw new WrappedException(ex);
                 } finally {
-                    if (out != null) {
-                        try {
-                            out.close();
-                        } catch (IOException ignore) {
-                        }
-                    }
+                    IOTools.close(out);
                 }
             }
         } catch (IOException ex) {
             throw new WrappedException(ex);
         } finally {
-            if (zip != null) {
-                try {
-                    zip.close();
-                } catch (IOException ignore) {
-                }
-            }
+            IOTools.close(zip);
         }
     }
 
@@ -137,10 +129,7 @@ public class ZipTools {
         } catch (IOException ex) {
             throw new WrappedException(ex);
         } finally {
-            try {
-                in.close();
-            } catch (IOException ignore) {
-            }
+            IOTools.close(in);
         }
         return isZip(b);
     }
@@ -159,16 +148,10 @@ public class ZipTools {
         try {
             zipout = new ZipOutputStream(new FileOutputStream(zip));
             zip(zipout, toZip);
-            zipout.close();
         } catch (IOException ex) {
             throw new WrappedException(ex);
         } finally {
-            if (zipout != null) {
-                try {
-                    zipout.close();
-                } catch (IOException ignore) {
-                }
-            }
+            IOTools.close(zipout);
         }
         return zip;
     }
@@ -196,6 +179,7 @@ public class ZipTools {
 
     public static void zipping(ZipOutputStream zipout, List<File> files, File startDir) {
         FileInputStream in = null;
+        byte[] b = new byte[50*1024];
         for (int i = 1; i <= files.size(); i++) {
             try {
                 File f = files.get(i - 1);
@@ -203,20 +187,11 @@ public class ZipTools {
                 ZipEntry entry = new ZipEntry(f.getAbsolutePath().substring(startDir.getAbsolutePath().length() + 1));
                 entry.setMethod(ZipEntry.DEFLATED);
                 zipout.putNextEntry(entry);
-                int r;
-                byte[] b = new byte[1048576];
-                while ((r = in.read(b)) != -1) {
-                    zipout.write(b, 0, r);
-                }
+                IOTools.copy(in,zipout,b);
             } catch (IOException ex) {
                 throw new WrappedException(ex);
             } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException ignore) {
-                    }
-                }
+                IOTools.close(in);
             }
         }
     }

@@ -5,6 +5,7 @@ package com.wizzardo.tools;
  * and open the template in the editor.
  */
 
+import com.wizzardo.tools.io.IOTools;
 import com.wizzardo.tools.security.Base64;
 
 import javax.net.ssl.HostnameVerifier;
@@ -16,8 +17,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
 
@@ -83,9 +82,8 @@ public class HttpClient {
         try {
             return getContentAsString(conn.getInputStream(), charset);
         } catch (IOException e) {
-            Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, e);
+            throw new WrappedException(e);
         }
-        return null;
     }
 
     /**
@@ -108,7 +106,7 @@ public class HttpClient {
             try {
                 return new String(out, charset);
             } catch (UnsupportedEncodingException ex) {
-                Logger.getLogger(HttpClient.class.getName()).log(Level.SEVERE, null, ex);
+                throw new WrappedException(ex);
             }
         }
         return null;
@@ -116,17 +114,12 @@ public class HttpClient {
 
     public static byte[] getContent(InputStream in) {
         try {
-            int r;
-            byte[] b = new byte[10240];
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            while ((r = in.read(b)) != -1) {
-                out.write(b, 0, r);
-            }
-            return out.toByteArray();
+            return IOTools.bytes(in);
         } catch (IOException e) {
-            Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, e);
+            throw new WrappedException(e);
+        } finally {
+            IOTools.close(in);
         }
-        return null;
     }
 
     public static Request connect(String url) {
@@ -580,12 +573,11 @@ public class HttpClient {
                 }
                 return new Response(c);
             } catch (SocketTimeoutException e) {
-                Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, e);
                 if (retryNumber < maxRetryCount) {
                     try {
                         Thread.sleep(pauseBetweenRetries);
                     } catch (InterruptedException ex1) {
-                        Logger.getLogger(Request.class.getName()).log(Level.SEVERE, null, ex1);
+                        throw new WrappedException(ex1);
                     }
                     return connect(++retryNumber);
                 }

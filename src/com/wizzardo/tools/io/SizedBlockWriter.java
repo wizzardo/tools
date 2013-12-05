@@ -1,12 +1,14 @@
 package com.wizzardo.tools.io;
 
+import java.io.Closeable;
+import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
  * @author Moxa
  */
-public class SizedBlockWriter {
+public class SizedBlockWriter implements Closeable, Flushable {
 
     private OutputStream out;
     private long blockLength = 0;

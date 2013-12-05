@@ -1,7 +1,7 @@
 package com.wizzardo.tools.image;
 
 
-public class Lanczos3Filter implements ResampleFilter {
+class Lanczos3Filter implements ResampleFilter {
     private final static float PI_FLOAT = (float) Math.PI;
 
     private float sincModified(float value) {

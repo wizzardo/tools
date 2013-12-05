@@ -12,7 +12,6 @@ package com.wizzardo.tools.image;
 // studwww.eurecom.fr/~raemy.
 // It borrows a great deal of code and structure from the Independent
 // Jpeg Group's Jpeg 6a library, Copyright Thomas G. Lane.
-// See license.txt for details.
 
 import java.awt.*;
 import java.awt.image.PixelGrabber;

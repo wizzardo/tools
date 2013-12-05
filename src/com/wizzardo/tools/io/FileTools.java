@@ -71,10 +71,7 @@ public class FileTools {
         } catch (IOException e) {
             throw new WrappedException(e);
         } finally {
-            try {
-                out.close();
-            } catch (IOException ignored) {
-            }
+            IOTools.close(out);
         }
     }
 
@@ -96,10 +93,7 @@ public class FileTools {
         } catch (IOException e) {
             throw new WrappedException(e);
         } finally {
-            try {
-                in.close();
-            } catch (IOException ignore) {
-            }
+            IOTools.close(in);
         }
 
         return b;

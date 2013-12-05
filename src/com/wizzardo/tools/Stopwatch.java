@@ -7,18 +7,18 @@ package com.wizzardo.tools;
 /**
  * @author Moxa
  */
-public class Chrono {
+public class Stopwatch {
 
     private long start;
     private long stop = -1;
     private String message;
     private boolean nano;
 
-    public Chrono(String message) {
+    public Stopwatch(String message) {
         this(message, false);
     }
 
-    public Chrono(String message, boolean nano) {
+    public Stopwatch(String message, boolean nano) {
         this.message = message;
         this.nano = nano;
         restart();
@@ -70,5 +70,16 @@ public class Chrono {
      */
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public long getDuration() {
+        if (stop == -1) {
+            stop();
+        }
+        return stop - start;
+    }
+
+    public boolean isNano() {
+        return nano;
     }
 }

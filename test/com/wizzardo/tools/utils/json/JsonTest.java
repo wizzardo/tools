@@ -1,12 +1,13 @@
 package com.wizzardo.tools.utils.json;
 
 import com.wizzardo.tools.json.JsonArray;
+import com.wizzardo.tools.json.JsonBuilder;
 import com.wizzardo.tools.json.JsonObject;
 import org.junit.Assert;
-import com.wizzardo.tools.json.JsonBuilder;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -108,7 +109,7 @@ public class JsonTest {
         assertEquals(4, JsonBuilder.parse(s).asJsonObject().size());
     }
 
-    public static class SimpleClass {
+    private static class SimpleClass {
         int i;
         public Integer integer;
         public float f;
@@ -119,6 +120,14 @@ public class JsonTest {
         public boolean flag;
         public int[] array;
         public ArrayList<Integer> list;
+    }
+
+    private static class Child extends SimpleClass {
+        private int value;
+    }
+
+    private static class Parent {
+        private List<Child> children;
     }
 
     @Test
@@ -154,7 +163,85 @@ public class JsonTest {
         assertEquals(new Integer(1), r.list.get(0));
         assertEquals(new Integer(2), r.list.get(1));
         assertEquals(new Integer(3), r.list.get(2));
+
+
+        s = "{" +
+                "i:1," +
+                "integer:2," +
+                "f:3.1," +
+                "d:4.1," +
+                "l:5," +
+                "b:6," +
+                "s:\"ololo lo lo\"," +
+                "flag:true," +
+                "array:[1,2,3]," +
+                "list:[1,2,3]," +
+                "value:3" +
+                "}";
+        Child child = JsonObject.bind(s, Child.class);
+        assertEquals(child.value, 3);
+        assertEquals(child.i, 1);
+        assertEquals(child.integer, new Integer(2));
+        assertTrue(child.f > 3.f && child.f < 3.2f);
+        assertTrue(child.d > 4.d && child.d < 4.2);
+        assertEquals(child.l, 5l);
+        assertEquals(child.b, 6);
+        assertEquals(child.s, "ololo lo lo");
+        assertEquals(child.flag, true);
+
+        assertEquals(child.array.length, 3);
+        assertEquals(child.array[0], 1);
+        assertEquals(child.array[1], 2);
+        assertEquals(child.array[2], 3);
+
+        assertEquals(child.list.size(), 3);
+        assertEquals(new Integer(1), child.list.get(0));
+        assertEquals(new Integer(2), child.list.get(1));
+        assertEquals(new Integer(3), child.list.get(2));
+
+
+        s = "{" +
+                "i:1," +
+                "integer:2," +
+                "f:3.1," +
+                "d:4.1," +
+                "l:5," +
+                "b:6," +
+                "s:\"ololo lo lo\"," +
+                "flag:true," +
+                "array:[1,2,3]," +
+                "list:[1,2,3]," +
+                "value:3" +
+                "}";
+        s = "{children:[" + s + "," + s + "," + s + "]}";
+        Parent parent = JsonObject.bind(s, Parent.class);
+        assertEquals(3, parent.children.size());
+        for (int i = 0; i < 3; i++) {
+            child = parent.children.get(0);
+
+            assertEquals(child.value, 3);
+            assertEquals(child.i, 1);
+            assertEquals(child.integer, new Integer(2));
+            assertTrue(child.f > 3.f && child.f < 3.2f);
+            assertTrue(child.d > 4.d && child.d < 4.2);
+            assertEquals(child.l, 5l);
+            assertEquals(child.b, 6);
+            assertEquals(child.s, "ololo lo lo");
+            assertEquals(child.flag, true);
+
+            assertEquals(child.array.length, 3);
+            assertEquals(child.array[0], 1);
+            assertEquals(child.array[1], 2);
+            assertEquals(child.array[2], 3);
+
+            assertEquals(child.list.size(), 3);
+            assertEquals(new Integer(1), child.list.get(0));
+            assertEquals(new Integer(2), child.list.get(1));
+            assertEquals(new Integer(3), child.list.get(2));
+        }
+
     }
+
 
     @Test
     public void testJson5() {
@@ -165,9 +252,9 @@ public class JsonTest {
                 "    this: 'is a \n" +
                 "multi-line string',\n" +
                 "\n" +
-            //    "    // this is an inline comment\n" +          //comments not supported yet
+                //    "    // this is an inline comment\n" +          //comments not supported yet
                 "    here: 'is another'," +
-            //    " // inline comment\n" +
+                //    " // inline comment\n" +
                 "\n" +
 //                "    /* this is a block comment\n" +
 //                "       that continues on another line */\n" +
@@ -175,8 +262,8 @@ public class JsonTest {
                 "    hex: 0xDEADbeef,\n" +
                 "    half: .5,\n" +
                 "    delta: +10,\n" +
-            //    "    to: Infinity," +                 // also not supportes
-            //    "   // and beyond!\n" +
+                //    "    to: Infinity," +                 // also not supportes
+                //    "   // and beyond!\n" +
                 "\n" +
                 "    finally: 'a trailing comma',\n" +
                 "    oh: [\n" +

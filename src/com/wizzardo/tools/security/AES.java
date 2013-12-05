@@ -1,25 +1,17 @@
 package com.wizzardo.tools.security;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.wizzardo.tools.WrappedException;
+import com.wizzardo.tools.io.IOTools;
+
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import java.io.*;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
 
 /**
- *
  * @author moxa
  */
 public class AES {
@@ -35,14 +27,13 @@ public class AES {
             kg.init(128);
             return kg.generateKey();
         } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         }
-        return null;
     }
 
-    /** 
+    /**
      * 16 chars max,  128-bit encription
-     **/
+     */
     public static SecretKey generateKey(String key) {
         return generateKey(key.getBytes());
     }
@@ -51,9 +42,9 @@ public class AES {
         return generateKey(MD5.getMD5(key.getBytes()));
     }
 
-    /** 
+    /**
      * 16 bytes max,  128-bit encription
-     **/
+     */
     public static SecretKey generateKey(final byte[] key) {
         return new SecretKey() {
 
@@ -92,31 +83,31 @@ public class AES {
             key = kg.generateKey();
             init();
         } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } catch (NoSuchPaddingException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } catch (InvalidKeyException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } catch (InvalidAlgorithmParameterException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         }
     }
 
-    /** 
+    /**
      * 16 chars max,  128-bit encription
-     **/
+     */
     public AES(SecretKey key) {
         try {
             this.key = key;
             init();
         } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } catch (NoSuchPaddingException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } catch (InvalidKeyException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         } catch (InvalidAlgorithmParameterException ex) {
-            Logger.getLogger(AES.class.getName()).log(Level.SEVERE, null, ex);
+            throw new WrappedException(ex);
         }
     }
 
@@ -124,9 +115,9 @@ public class AES {
         this(generateKey(key));
     }
 
-    /** 
+    /**
      * 16 chars max,  128-bit encription
-     **/
+     */
     public AES(String key) {
         this(generateKey(key.getBytes()));
     }
@@ -169,31 +160,29 @@ public class AES {
     public void decrypt(InputStream in, OutputStream out) {
         try {
             CipherInputStream inc = new CipherInputStream(in, dcipher);
-            int r = 0;
-            byte[] b = new byte[10240];
-            while ((r = inc.read(b)) != -1) {
-                out.write(b, 0, r);
-                out.flush();
-            }
-            out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            IOTools.copy(inc, out);
+        } catch (IOException e) {
+            throw new WrappedException(e);
+        } finally {
+            IOTools.close(in);
+            IOTools.close(out);
         }
     }
 
     public void encrypt(InputStream in, OutputStream out) {
         try {
             out = new CipherOutputStream(out, ecipher);
-            int r = 0;
-            byte[] b = new byte[10240];
-            while ((r = in.read(b)) != -1) {
-                out.write(b, 0, r);
-                out.flush();
-            }
+            IOTools.copy(in, out);
             out.write(ecipher.doFinal());
-            out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new WrappedException(e);
+        } catch (BadPaddingException e) {
+            throw new WrappedException(e);
+        } catch (IllegalBlockSizeException e) {
+            throw new WrappedException(e);
+        } finally {
+            IOTools.close(in);
+            IOTools.close(out);
         }
     }
 }
