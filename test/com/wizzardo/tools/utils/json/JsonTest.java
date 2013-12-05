@@ -1,7 +1,6 @@
 package com.wizzardo.tools.utils.json;
 
 import com.wizzardo.tools.json.JsonArray;
-import com.wizzardo.tools.json.JsonBuilder;
 import com.wizzardo.tools.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -69,44 +68,6 @@ public class JsonTest {
 
         s = "{qwe:\"qw\\\"e\"}";
         assertEquals("qw\"e", JsonObject.parse(s).asJsonObject().getAsString("qwe"));
-    }
-
-    @Test
-    public void parse2() {
-        String s;
-
-        s = "{a: true \n}";
-        assertEquals(true, JsonBuilder.parse(s).asJsonObject().get("a").asBoolean());
-        s = "{}";
-        assertEquals(0, JsonBuilder.parse(s).asJsonObject().size());
-
-        s = "{qwe:qwe}";
-        assertEquals(1, JsonBuilder.parse(s).asJsonObject().size());
-        s = "{qwe:qwe, qwee:qweqw}";
-        assertEquals(2, JsonBuilder.parse(s).asJsonObject().size());
-        s = "{\"qwe\":\"qwe\"}";
-        assertEquals(1, JsonBuilder.parse(s).asJsonObject().size());
-        s = "{\"qwe\":\"qwe\", \"qwe\"e:\"qweqw\"}";
-        assertEquals(2, JsonBuilder.parse(s).asJsonObject().size());
-
-
-        s = "{qwe:[1,2,3], qwee:qweqw}";
-        assertEquals(3, JsonBuilder.parse(s).asJsonObject().getAsJsonArray("qwe").size());
-        s = "{qwe:qwe, qwee:[1,2,3]}";
-        assertEquals(3, JsonBuilder.parse(s).asJsonObject().getAsJsonArray("qwee").size());
-        s = "{qwe:qwe, qwee:[1,2,3],ewq:qwe}";
-        assertEquals(3, JsonBuilder.parse(s).asJsonObject().size());
-
-        s = "[{},{},{}]";
-        assertEquals(3, JsonBuilder.parse(s).asJsonArray().size());
-        s = "[{qwe:qwe},{},{}]";
-        assertEquals(1, JsonBuilder.parse(s).asJsonArray().get(0).asJsonObject().size());
-
-        s = "[{qwe:qwe},{},{qwe: true \n},werwr]";
-        assertEquals(4, JsonBuilder.parse(s).asJsonArray().size());
-        assertEquals(true, JsonBuilder.parse(s).asJsonArray().get(2).asJsonObject().getAsBoolean("qwe"));
-        s = "{qwe:{qwe:qwe},rew:{},qw:{qwe: true \n},werwr:rew}";
-        assertEquals(4, JsonBuilder.parse(s).asJsonObject().size());
     }
 
     private static class SimpleClass {
