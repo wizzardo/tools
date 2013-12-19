@@ -487,4 +487,27 @@ public class ImageTools {
     public static String toString(Color c) {
         return "[" + c.getAlpha() + "," + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + "]";
     }
+
+    public static BufferedImage rotate(BufferedImage img, double angle) {
+        double angleRadians = Math.toRadians(angle);
+        int width = img.getWidth();
+        int height = img.getHeight();
+        double x = width / 2;
+        double y = height / 2;
+
+        double cos = Math.abs(Math.cos(angleRadians));
+        double sin = Math.abs(Math.sin(angleRadians));
+
+        int w = (int) (width * cos + height * sin + 0.5);
+        int h = (int) (width * sin + height * cos + 0.5);
+        BufferedImage result = new BufferedImage(w, h, img.getType());
+
+        Graphics2D g = result.createGraphics();
+        g.translate((w - img.getWidth()) / 2, (h - img.getHeight()) / 2);
+        g.rotate(angleRadians, x, y);
+        g.drawRenderedImage(img, null);
+        g.dispose();
+
+        return result;
+    }
 }
