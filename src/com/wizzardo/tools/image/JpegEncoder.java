@@ -26,15 +26,13 @@ import java.util.ArrayList;
 */
 
 public class JpegEncoder {
-    Thread runner;
     BufferedOutputStream outStream;
-    Image image;
     JpegInfo JpegObj;
     Huffman Huf;
     DCT dct;
     int imageHeight, imageWidth;
     int Quality;
-    int code;
+
     public static int[] jpegNaturalOrder = {
             0, 1, 8, 16, 9, 2, 3, 10,
             17, 24, 32, 25, 18, 11, 4, 5,
@@ -64,30 +62,18 @@ public class JpegEncoder {
         imageWidth = JpegObj.imageWidth;
         outStream = new BufferedOutputStream(out);
         dct = new DCT(Quality);
-        Huf = new Huffman(imageWidth, imageHeight);
+        Huf = new Huffman();
     }
 
-    public void setQuality(int quality) {
-        dct = new DCT(quality);
-    }
-
-    public int getQuality() {
-        return Quality;
-    }
-
-    public void Compress() {
+    public void Compress() throws IOException {
         WriteHeaders(outStream);
         WriteCompressedData(outStream);
         WriteEOI(outStream);
-        try {
-            outStream.flush();
-        } catch (IOException e) {
-            System.out.println("IO Error: " + e.getMessage());
-        }
+        outStream.flush();
     }
 
-    public void WriteCompressedData(BufferedOutputStream outStream) {
-        int offset, i, j, r, c, a, b, temp = 0;
+    void WriteCompressedData(BufferedOutputStream outStream) throws IOException {
+        int i, j, r, c, a, b;
         int comp, xpos, ypos, xblockoffset, yblockoffset;
         float inputArray[][];
         float dctArray1[][] = new float[8][8];
@@ -101,9 +87,6 @@ public class JpegEncoder {
          */
 
         int lastDCvalue[] = new int[JpegObj.NumberOfComponents];
-        int zeroArray[] = new int[64]; // initialized to hold all zeros
-        int Width = 0, Height = 0;
-        int nothing = 0, not;
         int MinBlockWidth, MinBlockHeight;
 // This initial setting of MinBlockWidth and MinBlockHeight is done to
 // ensure they start with values larger than will actually be the case.
@@ -113,14 +96,11 @@ public class JpegEncoder {
             MinBlockWidth = Math.min(MinBlockWidth, JpegObj.BlockWidth[comp]);
             MinBlockHeight = Math.min(MinBlockHeight, JpegObj.BlockHeight[comp]);
         }
-        xpos = 0;
         for (r = 0; r < MinBlockHeight; r++) {
             for (c = 0; c < MinBlockWidth; c++) {
                 xpos = c * 8;
                 ypos = r * 8;
                 for (comp = 0; comp < JpegObj.NumberOfComponents; comp++) {
-                    Width = JpegObj.BlockWidth[comp];
-                    Height = JpegObj.BlockHeight[comp];
                     inputArray = (float[][]) JpegObj.Components[comp];
 
                     for (i = 0; i < JpegObj.VsampFactor[comp]; i++) {
@@ -159,12 +139,12 @@ public class JpegEncoder {
         Huf.flushBuffer(outStream);
     }
 
-    public void WriteEOI(BufferedOutputStream out) {
+    void WriteEOI(BufferedOutputStream out) throws IOException {
         byte[] EOI = {(byte) 0xFF, (byte) 0xD9};
         WriteMarker(EOI, out);
     }
 
-    public void WriteHeaders(BufferedOutputStream out) {
+    void WriteHeaders(BufferedOutputStream out) throws IOException {
         int i, j, index, offset, length;
         int tempArray[];
 
@@ -196,15 +176,14 @@ public class JpegEncoder {
         WriteArray(JFIF, out);
 
 // Comment Header
-        String comment = new String();
-        comment = JpegObj.getComment();
-        length = comment.length();
+        byte[] comment = JpegObj.getComment().getBytes();
+        length = comment.length;
         byte COM[] = new byte[length + 4];
         COM[0] = (byte) 0xFF;
         COM[1] = (byte) 0xFE;
         COM[2] = (byte) ((length >> 8) & 0xFF);
         COM[3] = (byte) (length & 0xFF);
-        System.arraycopy(JpegObj.Comment.getBytes(), 0, COM, 4, JpegObj.Comment.length());
+        System.arraycopy(comment, 0, COM, 4, comment.length);
         WriteArray(COM, out);
 
 // The DQT header
@@ -298,22 +277,14 @@ public class JpegEncoder {
 
     }
 
-    void WriteMarker(byte[] data, BufferedOutputStream out) {
-        try {
-            out.write(data, 0, 2);
-        } catch (IOException e) {
-            System.out.println("IO Error: " + e.getMessage());
-        }
+    void WriteMarker(byte[] data, BufferedOutputStream out) throws IOException {
+        out.write(data, 0, 2);
     }
 
-    void WriteArray(byte[] data, BufferedOutputStream out) {
+    void WriteArray(byte[] data, BufferedOutputStream out) throws IOException {
         int i, length;
-        try {
-            length = (((int) (data[2] & 0xFF)) << 8) + (int) (data[3] & 0xFF) + 2;
-            out.write(data, 0, length);
-        } catch (IOException e) {
-            System.out.println("IO Error: " + e.getMessage());
-        }
+        length = (((int) (data[2] & 0xFF)) << 8) + (int) (data[3] & 0xFF) + 2;
+        out.write(data, 0, length);
     }
 }
 
@@ -328,27 +299,22 @@ class DCT {
     /**
      * DCT Block Size - default 8
      */
-    public int N = 8;
+    private int N = 8;
 
-    /**
-     * Image Quality (0-100) - default 80 (good image / good compression)
-     */
-    public int QUALITY = 80;
-
-    public Object quantum[] = new Object[2];
-    public Object Divisors[] = new Object[2];
+    Object quantum[] = new Object[2];
+    private Object Divisors[] = new Object[2];
 
     /**
      * Quantitization Matrix for luminace.
      */
-    public int quantum_luminance[] = new int[N * N];
-    public double DivisorsLuminance[] = new double[N * N];
+    private int quantum_luminance[] = new int[N * N];
+    private double DivisorsLuminance[] = new double[N * N];
 
     /**
      * Quantitization Matrix for chrominance.
      */
-    public int quantum_chrominance[] = new int[N * N];
-    public double DivisorsChrominance[] = new double[N * N];
+    private int quantum_chrominance[] = new int[N * N];
+    private double DivisorsChrominance[] = new double[N * N];
 
     /**
      * Constructs a new DCT object. Initializes the cosine transform matrix
@@ -471,7 +437,7 @@ class DCT {
 // implemented.
 //                        DivisorsLuminance[index] = ((double) quantum_luminance[index]) << 3;
 // The divisors for the AAN method (the float method used in jpeg 6a library.
-                DivisorsLuminance[index] = (double) ((double) 1.0 / ((double) quantum_luminance[index] * AANscaleFactor[i] * AANscaleFactor[j] * (double) 8.0));
+                DivisorsLuminance[index] = (1.0 / ((double) quantum_luminance[index] * AANscaleFactor[i] * AANscaleFactor[j] * 8.0));
                 index++;
             }
         }
@@ -558,7 +524,7 @@ class DCT {
 // implemented.
 //                        DivisorsChrominance[index] = ((double) quantum_chrominance[index]) << 3;
 // The divisors for the AAN method (the float method used in jpeg 6a library.
-                DivisorsChrominance[index] = (double) ((double) 1.0 / ((double) quantum_chrominance[index] * AANscaleFactor[i] * AANscaleFactor[j] * (double) 8.0));
+                DivisorsChrominance[index] = (1.0 / ((double) quantum_chrominance[index] * AANscaleFactor[i] * AANscaleFactor[j] * 8.0));
                 index++;
             }
         }
@@ -574,44 +540,10 @@ class DCT {
     }
 
     /*
-     * This method preforms forward DCT on a block of image data using
-     * the literal method specified for a 2-D Discrete Cosine Transform.
-     * It is included as a curiosity and can give you an idea of the
-     * difference in the compression result (the resulting image quality)
-     * by comparing its output to the output of the AAN method below.
-     * It is ridiculously inefficient.
-     */
-
-// For now the final output is unusable.  The associated quantization step
-// needs some tweaking.  If you get this part working, please let me know.
-
-    public double[][] forwardDCTExtreme(float input[][]) {
-        double output[][] = new double[N][N];
-        double tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
-        double tmp10, tmp11, tmp12, tmp13;
-        double z1, z2, z3, z4, z5, z11, z13;
-        int i;
-        int j;
-        int v, u, x, y;
-        for (v = 0; v < 8; v++) {
-            for (u = 0; u < 8; u++) {
-                for (x = 0; x < 8; x++) {
-                    for (y = 0; y < 8; y++) {
-                        output[v][u] += ((double) input[x][y]) * Math.cos(((double) (2 * x + 1) * (double) u * Math.PI) / (double) 16) * Math.cos(((double) (2 * y + 1) * (double) v * Math.PI) / (double) 16);
-                    }
-                }
-                output[v][u] *= (double) (0.25) * ((u == 0) ? ((double) 1.0 / Math.sqrt(2)) : (double) 1.0) * ((v == 0) ? ((double) 1.0 / Math.sqrt(2)) : (double) 1.0);
-            }
-        }
-        return output;
-    }
-
-
-    /*
      * This method preforms a DCT on a block of image data using the AAN
      * method as implemented in the IJG Jpeg-6a library.
      */
-    public double[][] forwardDCT(float input[][]) {
+    double[][] forwardDCT(float input[][]) {
         double output[][] = new double[N][N];
         double tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
         double tmp10, tmp11, tmp12, tmp13;
@@ -714,7 +646,7 @@ class DCT {
     /*
     * This method quantitizes data and rounds it to the nearest integer.
     */
-    public int[] quantizeBlock(double inputData[][], int code) {
+    int[] quantizeBlock(double inputData[][], int code) {
         int outputData[] = new int[N * N];
         int i, j;
         int index;
@@ -730,25 +662,6 @@ class DCT {
 
         return outputData;
     }
-
-    /*
-    * This is the method for quantizing a block DCT'ed with forwardDCTExtreme
-    * This method quantitizes data and rounds it to the nearest integer.
-    */
-    public int[] quantizeBlockExtreme(double inputData[][], int code) {
-        int outputData[] = new int[N * N];
-        int i, j;
-        int index;
-        index = 0;
-        for (i = 0; i < 8; i++) {
-            for (j = 0; j < 8; j++) {
-                outputData[index] = (int) (Math.round(inputData[i][j] / (double) (((int[]) (quantum[code]))[index])));
-                index++;
-            }
-        }
-
-        return outputData;
-    }
 }
 
 // This class was modified by James R. Weeks on 3/27/98.
@@ -757,23 +670,14 @@ class DCT {
 
 class Huffman {
     int bufferPutBits, bufferPutBuffer;
-    public int ImageHeight;
-    public int ImageWidth;
-    public int DC_matrix0[][];
-    public int AC_matrix0[][];
-    public int DC_matrix1[][];
-    public int AC_matrix1[][];
-    public Object DC_matrix[];
-    public Object AC_matrix[];
-    public int code;
-    public int NumOfDCTables;
-    public int NumOfACTables;
-    public int[] bitsDCluminance = {0x00, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0};
-    public int[] valDCluminance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-    public int[] bitsDCchrominance = {0x01, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
-    public int[] valDCchrominance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-    public int[] bitsACluminance = {0x10, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d};
-    public int[] valACluminance =
+    private int[][][] DC_matrix;
+    private int[][][] AC_matrix;
+    private int[] bitsDCluminance = {0x00, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0};
+    private int[] valDCluminance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+    private int[] bitsDCchrominance = {0x01, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
+    private int[] valDCchrominance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+    private int[] bitsACluminance = {0x10, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d};
+    private int[] valACluminance =
             {0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
                     0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
                     0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08,
@@ -795,9 +699,9 @@ class Huffman {
                     0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
                     0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
                     0xf9, 0xfa};
-    public int[] bitsACchrominance = {0x11, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77};
-    ;
-    public int[] valACchrominance =
+    private int[] bitsACchrominance = {0x11, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77};
+
+    private int[] valACchrominance =
             {0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
                     0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,
                     0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91,
@@ -819,14 +723,14 @@ class Huffman {
                     0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9,
                     0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
                     0xf9, 0xfa};
-    public java.util.List<int[]> bits;
-    public java.util.List<int[]> val;
+    java.util.List<int[]> bits;
+    java.util.List<int[]> val;
 
     /*
      * jpegNaturalOrder[i] is the natural-order position of the i'th element
      * of zigzag order.
      */
-    public static int[] jpegNaturalOrder = {
+    private static int[] jpegNaturalOrder = {
             0, 1, 8, 16, 9, 2, 3, 10,
             17, 24, 32, 25, 18, 11, 4, 5,
             12, 19, 26, 33, 40, 48, 41, 34,
@@ -840,7 +744,7 @@ class Huffman {
     /*
     * The Huffman class constructor
     */
-    public Huffman(int Width, int Height) {
+    public Huffman() {
 
         bits = new ArrayList<int[]>();
         bits.add(bitsDCluminance);
@@ -853,10 +757,6 @@ class Huffman {
         val.add(valDCchrominance);
         val.add(valACchrominance);
         initHuf();
-        code = code;
-        ImageWidth = Width;
-        ImageHeight = Height;
-
     }
 
     /**
@@ -864,11 +764,8 @@ class Huffman {
      * data.
      */
 
-    public void HuffmanBlockEncoder(BufferedOutputStream outStream, int zigzag[], int prec, int DCcode, int ACcode) {
+    void HuffmanBlockEncoder(BufferedOutputStream outStream, int zigzag[], int prec, int DCcode, int ACcode) throws IOException {
         int temp, temp2, nbits, k, r, i;
-
-        NumOfDCTables = 2;
-        NumOfACTables = 2;
 
 // The DC portion
 
@@ -883,7 +780,7 @@ class Huffman {
             temp >>= 1;
         }
 //        if (nbits > 11) nbits = 11;
-        bufferIt(outStream, ((int[][]) DC_matrix[DCcode])[nbits][0], ((int[][]) DC_matrix[DCcode])[nbits][1]);
+        bufferIt(outStream, (DC_matrix[DCcode])[nbits][0], (DC_matrix[DCcode])[nbits][1]);
         // The arguments in bufferIt are code and size.
         if (nbits != 0) {
             bufferIt(outStream, temp2, nbits);
@@ -898,7 +795,7 @@ class Huffman {
                 r++;
             } else {
                 while (r > 15) {
-                    bufferIt(outStream, ((int[][]) AC_matrix[ACcode])[0xF0][0], ((int[][]) AC_matrix[ACcode])[0xF0][1]);
+                    bufferIt(outStream, (AC_matrix[ACcode])[0xF0][0], (AC_matrix[ACcode])[0xF0][1]);
                     r -= 16;
                 }
                 temp2 = temp;
@@ -911,7 +808,7 @@ class Huffman {
                     nbits++;
                 }
                 i = (r << 4) + nbits;
-                bufferIt(outStream, ((int[][]) AC_matrix[ACcode])[i][0], ((int[][]) AC_matrix[ACcode])[i][1]);
+                bufferIt(outStream, (AC_matrix[ACcode])[i][0], (AC_matrix[ACcode])[i][1]);
                 bufferIt(outStream, temp2, nbits);
 
                 r = 0;
@@ -919,7 +816,7 @@ class Huffman {
         }
 
         if (r > 0) {
-            bufferIt(outStream, ((int[][]) AC_matrix[ACcode])[0][0], ((int[][]) AC_matrix[ACcode])[0][1]);
+            bufferIt(outStream, (AC_matrix[ACcode])[0][0], (AC_matrix[ACcode])[0][1]);
         }
 
     }
@@ -927,7 +824,7 @@ class Huffman {
 // Uses an integer long (32 bits) buffer to store the Huffman encoded bits
 // and sends them to outStream by the byte.
 
-    void bufferIt(BufferedOutputStream outStream, int code, int size) {
+    void bufferIt(BufferedOutputStream outStream, int code, int size) throws IOException {
         int PutBuffer = code;
         int PutBits = bufferPutBits;
 
@@ -938,17 +835,9 @@ class Huffman {
 
         while (PutBits >= 8) {
             int c = ((PutBuffer >> 16) & 0xFF);
-            try {
-                outStream.write(c);
-            } catch (IOException e) {
-                System.out.println("IO Error: " + e.getMessage());
-            }
+            outStream.write(c);
             if (c == 0xFF) {
-                try {
-                    outStream.write(0);
-                } catch (IOException e) {
-                    System.out.println("IO Error: " + e.getMessage());
-                }
+                outStream.write(0);
             }
             PutBuffer <<= 8;
             PutBits -= 8;
@@ -958,33 +847,21 @@ class Huffman {
 
     }
 
-    void flushBuffer(BufferedOutputStream outStream) {
+    void flushBuffer(BufferedOutputStream outStream) throws IOException {
         int PutBuffer = bufferPutBuffer;
         int PutBits = bufferPutBits;
         while (PutBits >= 8) {
             int c = ((PutBuffer >> 16) & 0xFF);
-            try {
-                outStream.write(c);
-            } catch (IOException e) {
-                System.out.println("IO Error: " + e.getMessage());
-            }
+            outStream.write(c);
             if (c == 0xFF) {
-                try {
-                    outStream.write(0);
-                } catch (IOException e) {
-                    System.out.println("IO Error: " + e.getMessage());
-                }
+                outStream.write(0);
             }
             PutBuffer <<= 8;
             PutBits -= 8;
         }
         if (PutBits > 0) {
             int c = ((PutBuffer >> 16) & 0xFF);
-            try {
-                outStream.write(c);
-            } catch (IOException e) {
-                System.out.println("IO Error: " + e.getMessage());
-            }
+            outStream.write(c);
         }
     }
 
@@ -994,13 +871,13 @@ class Huffman {
     * library.
     */
 
-    public void initHuf() {
-        DC_matrix0 = new int[12][2];
-        DC_matrix1 = new int[12][2];
-        AC_matrix0 = new int[255][2];
-        AC_matrix1 = new int[255][2];
-        DC_matrix = new Object[2];
-        AC_matrix = new Object[2];
+    private void initHuf() {
+        int[][] DC_matrix0 = new int[12][2];
+        int[][] DC_matrix1 = new int[12][2];
+        int[][] AC_matrix0 = new int[255][2];
+        int[][] AC_matrix1 = new int[255][2];
+        DC_matrix = new int[2][][];
+        AC_matrix = new int[2][][];
         int p, l, i, lastp, si, code;
         int[] huffsize = new int[257];
         int[] huffcode = new int[257];
@@ -1141,36 +1018,34 @@ class Huffman {
  */
 
 class JpegInfo {
-    String Comment;
-    public Image imageobj;
-    public int imageHeight;
-    public int imageWidth;
-    public int BlockWidth[];
-    public int BlockHeight[];
+    private String comment;
+    private Image imageobj;
+    int imageHeight;
+    int imageWidth;
+    int BlockWidth[];
+    int BlockHeight[];
 
     // the following are set as the default
-    public int Precision = 8;
-    public int NumberOfComponents = 3;
-    public Object Components[];
-    public int[] CompID = {1, 2, 3};
-    public int[] HsampFactor = {1, 1, 1};
-    public int[] VsampFactor = {1, 1, 1};
-    public int[] QtableNumber = {0, 1, 1};
-    public int[] DCtableNumber = {0, 1, 1};
-    public int[] ACtableNumber = {0, 1, 1};
-    public boolean[] lastColumnIsDummy = {false, false, false};
-    public boolean[] lastRowIsDummy = {false, false, false};
-    public int Ss = 0;
-    public int Se = 63;
-    public int Ah = 0;
-    public int Al = 0;
-    public int compWidth[], compHeight[];
-    public int MaxHsampFactor;
-    public int MaxVsampFactor;
+    int Precision = 8;
+    int NumberOfComponents = 3;
+    float[][][] Components;
+    int[] CompID = {1, 2, 3};
+    int[] HsampFactor = {1, 1, 1};
+    int[] VsampFactor = {1, 1, 1};
+    int[] QtableNumber = {0, 1, 1};
+    int[] DCtableNumber = {0, 1, 1};
+    int[] ACtableNumber = {0, 1, 1};
+    boolean[] lastColumnIsDummy = {false, false, false};
+    boolean[] lastRowIsDummy = {false, false, false};
+    int Ss = 0;
+    int Se = 63;
+    int Ah = 0;
+    int Al = 0;
+    private int compWidth[], compHeight[];
 
 
     public JpegInfo(Image image) {
-        Components = new Object[NumberOfComponents];
+        Components = new float[NumberOfComponents][][];
         compWidth = new int[NumberOfComponents];
         compHeight = new int[NumberOfComponents];
         BlockWidth = new int[NumberOfComponents];
@@ -1178,16 +1053,16 @@ class JpegInfo {
         imageobj = image;
         imageWidth = image.getWidth(null);
         imageHeight = image.getHeight(null);
-        Comment = "JPEG Encoder Copyright 1998, James R. Weeks and BioElectroMech.  ";
+        comment = "JPEG Encoder Copyright 1998, James R. Weeks and BioElectroMech.  ";
         getYCCArray();
     }
 
     public void setComment(String comment) {
-        Comment.concat(comment);
+        this.comment = comment;
     }
 
     public String getComment() {
-        return Comment;
+        return comment;
     }
 
     /*
@@ -1204,15 +1079,15 @@ class JpegInfo {
 // However, for a situation where memory overhead is a concern, this may be
 // the only choice.
         PixelGrabber grabber = new PixelGrabber(imageobj.getSource(), 0, 0, imageWidth, imageHeight, values, 0, imageWidth);
-        MaxHsampFactor = 1;
-        MaxVsampFactor = 1;
+        int maxHsampFactor = 1;
+        int maxVsampFactor = 1;
         for (y = 0; y < NumberOfComponents; y++) {
-            MaxHsampFactor = Math.max(MaxHsampFactor, HsampFactor[y]);
-            MaxVsampFactor = Math.max(MaxVsampFactor, VsampFactor[y]);
+            maxHsampFactor = Math.max(maxHsampFactor, HsampFactor[y]);
+            maxVsampFactor = Math.max(maxVsampFactor, VsampFactor[y]);
         }
         for (y = 0; y < NumberOfComponents; y++) {
-            compWidth[y] = (((imageWidth % 8 != 0) ? ((int) Math.ceil((double) imageWidth / 8.0)) * 8 : imageWidth) / MaxHsampFactor) * HsampFactor[y];
-            if (compWidth[y] != ((imageWidth / MaxHsampFactor) * HsampFactor[y])) {
+            compWidth[y] = (((imageWidth % 8 != 0) ? ((int) Math.ceil((double) imageWidth / 8.0)) * 8 : imageWidth) / maxHsampFactor) * HsampFactor[y];
+            if (compWidth[y] != ((imageWidth / maxHsampFactor) * HsampFactor[y])) {
                 lastColumnIsDummy[y] = true;
             }
             // results in a multiple of 8 for compWidth
@@ -1220,28 +1095,19 @@ class JpegInfo {
             // event that someone tries to compress an 16 x 16 pixel image
             // which would of course be worse than pointless
             BlockWidth[y] = (int) Math.ceil((double) compWidth[y] / 8.0);
-            compHeight[y] = (((imageHeight % 8 != 0) ? ((int) Math.ceil((double) imageHeight / 8.0)) * 8 : imageHeight) / MaxVsampFactor) * VsampFactor[y];
-            if (compHeight[y] != ((imageHeight / MaxVsampFactor) * VsampFactor[y])) {
+            compHeight[y] = (((imageHeight % 8 != 0) ? ((int) Math.ceil((double) imageHeight / 8.0)) * 8 : imageHeight) / maxVsampFactor) * VsampFactor[y];
+            if (compHeight[y] != ((imageHeight / maxVsampFactor) * VsampFactor[y])) {
                 lastRowIsDummy[y] = true;
             }
             BlockHeight[y] = (int) Math.ceil((double) compHeight[y] / 8.0);
         }
         try {
-            if (grabber.grabPixels() != true) {
-                try {
-                    throw new AWTException("Grabber returned false: " + grabber.status());
-                } catch (Exception e) {
-                }
-                ;
-            }
-        } catch (InterruptedException e) {
+            grabber.grabPixels();
+        } catch (InterruptedException ignored) {
         }
-        ;
         float Y[][] = new float[compHeight[0]][compWidth[0]];
         float Cr1[][] = new float[compHeight[0]][compWidth[0]];
         float Cb1[][] = new float[compHeight[0]][compWidth[0]];
-        float Cb2[][] = new float[compHeight[1]][compWidth[1]];
-        float Cr2[][] = new float[compHeight[2]][compWidth[2]];
         int index = 0;
         for (y = 0; y < imageHeight; ++y) {
             for (x = 0; x < imageWidth; ++x) {

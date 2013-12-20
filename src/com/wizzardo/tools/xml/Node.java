@@ -781,29 +781,4 @@ public class Node {
                 .replace(">", "&gt;")
                 ;
     }
-
-    public static void main(String[] args) throws IOException {
-//        String s = "<head>\n" +
-//                "    <script src=\"video.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\n" +
-//                "\n" +
-//                "    <script type=\"text/javascript\">\n" +
-//                "        VideoJS.setupAllWhenReady();\n" +
-//                "    </script>" +
-//                "</head>";
-//
-
-//        String s = FileTools.text("/home/moxa/IdeaProjects/WVC/views/UploadController/index_temp.gsp");
-//        System.out.println(Node.parse(s, true, true));
-
-
-//        Node xml = new Node("notice").attr("version", "version")
-//                .add(new Node("api-key").addText("key"))
-//                .add(
-//                        new Node("notifier")
-//                                .add(new Node("name").addText("name"))
-//                                .add(new Node("version").addText("version"))
-//                                .add(new Node("url").addText("url").addComment("ololo"))
-//                );
-//        System.out.println(xml.toXML());
-    }
 }

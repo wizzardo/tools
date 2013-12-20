@@ -130,23 +130,6 @@ public class Line {
         double b = (sy * sxx - sxy * sx) / d;
         return new Line(a, b);
     }
-//    public static void main(String[] args) {
-////        Line l = new Line(-2, -1, 2, 1);
-////        System.out.println(l);
-////        System.out.println(l.getLength(new Point(0, 0), new Point(2, 1)));
-////        System.out.println(l.getY(4));
-////        System.out.println(l.getPoint(0, -l.getLength(new Point(0, 0), new Point(2, 1))));
-////        System.out.println(l.getPoint(0, l.getLength(new Point(0, 0), new Point(2, 1))));
-////        System.out.println(l);
-////        System.out.println(l.getNormal(2));
-////        System.out.println(l.getNormal(2).getPoint(2, 4.472135954999579));
-////        System.out.println(l.getNormal(2).getPoint(2, -4.472135954999579));
-//        Line l = approximate(new Point[]{new Point(0, 1), new Point(1, 0), new Point(2, 1)});
-//        System.out.println(l.getY(0));
-//        System.out.println(l.getY(1));
-//        System.out.println(l.getY(2));
-//        System.out.println(l);
-//    }
 
     public static class F {
 
