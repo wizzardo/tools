@@ -243,7 +243,7 @@ public class BlockReaderTest {
         final PipedInputStream in = new PipedInputStream(out, 1024 * 1024);
         final byte[] separator = "!!!!separator!!!!".getBytes();
         long time = System.currentTimeMillis();
-        final int k = 100;
+        final int k = 10;
         final int parts = 10240;
 
         ProgressListener pl = new ProgressListener() {
@@ -306,7 +306,7 @@ public class BlockReaderTest {
             time = System.currentTimeMillis() - time;
             System.out.println("end reading: " + time + "ms for " + t + " bytes");
             System.out.println("speed: " + (t / 1024f / 1024f) / (time / 1000f) + " MB/s");
-            assertEquals(100, n);
+            assertEquals(k, n);
             LinkedList<Integer> list = new LinkedList<Integer>(hashMapOut.keySet());
             Collections.sort(list);
             for (Integer i : list) {

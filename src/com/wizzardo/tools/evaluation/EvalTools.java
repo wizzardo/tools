@@ -890,7 +890,7 @@ public class EvalTools {
                         args[i] = prepare(arr.get(i), model, functions);
                     }
                 }
-                thatObject = new Function(thatObject, methodName, args,true);
+                thatObject = new Function(thatObject, methodName, args, true);
 
                 //*.concat("ololo")
             } else if (parts.size() >= 1 && parts.get(0).startsWith("*.")) {
@@ -948,7 +948,7 @@ public class EvalTools {
 
 
     private static Class findClass(String s) {
-        return findClass(s, null);
+        return findClass(s, (String[]) null);
     }
 
     private static Class findClass(String s, String... imports) {

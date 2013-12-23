@@ -1,7 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.Pair;
-import sun.org.mozilla.javascript.internal.WrappedException;
+import com.wizzardo.tools.WrappedException;
 
 import java.lang.reflect.*;
 import java.util.*;

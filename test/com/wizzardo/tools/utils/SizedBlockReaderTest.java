@@ -96,8 +96,8 @@ public class SizedBlockReaderTest {
                 int i = 1;
                 while (i < 1000) {
                     try {
-                        writer.setBlockLength(1024 * 10 * 1024);
-                        for (int j = 0; j < 1024 * 10; j++) {
+                        writer.setBlockLength(1024 * 1024);
+                        for (int j = 0; j < 1024; j++) {
                             int n = random.nextInt(data.length);
                             writer.write(data[n]);
                             md5Out.update(data[n], 0, data[n].length);
