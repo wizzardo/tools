@@ -245,7 +245,10 @@ public class HttpClient {
     }
 
     public static enum ContentType {
-        BINARY("application/octet-stream");
+        BINARY("application/octet-stream"),
+        JSON("application/json; charset=utf-8"),
+        XML("text/xml; charset=utf-8"),
+        ;
 
         public final String text;
 
@@ -363,7 +366,7 @@ public class HttpClient {
                 data = json.getBytes("utf-8");
             } catch (UnsupportedEncodingException ignored) {
             }
-            setContentType("application/json; charset=utf-8");
+            setContentType(ContentType.JSON);
             return this;
         }
 
@@ -376,7 +379,7 @@ public class HttpClient {
                 data = xml.getBytes("utf-8");
             } catch (UnsupportedEncodingException ignored) {
             }
-            setContentType("text/xml; charset=utf-8");
+            setContentType(ContentType.XML);
             return this;
         }
 
@@ -537,7 +540,7 @@ public class HttpClient {
                         for (Map.Entry<String, List<String>> param : params.entrySet()) {
                             for (String value : param.getValue()) {
                                 out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
-                                String type = dataTypes.get(param.getKey()) != null ? dataTypes.get(param.getKey()) : "application/octet-stream";
+                                String type = dataTypes.get(param.getKey()) != null ? dataTypes.get(param.getKey()) : ContentType.BINARY.text;
                                 if (value.startsWith("file://")) {
                                     File f = new File(value.substring(7));
                                     out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + f.getName() + "\"\r\n").getBytes());
@@ -591,7 +594,7 @@ public class HttpClient {
             for (Entry<String, List<String>> en : params.entrySet()) {
                 for (String value : en.getValue()) {
                     if (value.startsWith("file://") || value.startsWith("array://")) {
-                        String type = dataTypes.get(en.getKey()) != null ? dataTypes.get(en.getKey()) : "application/octet-stream";
+                        String type = dataTypes.get(en.getKey()) != null ? dataTypes.get(en.getKey()) : ContentType.BINARY.text;
                         l += ("Content-Type: " + type + "\r\n").length();
                         if (value.startsWith("file://")) {
                             l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + new File(value.substring(7)).getName().getBytes().length + value.length();
@@ -617,6 +620,11 @@ public class HttpClient {
 
         public Request setContentType(String contentType) {
             setHeader("Content-Type", contentType);
+            return this;
+        }
+
+        public Request setContentType(ContentType contentType) {
+            setHeader("Content-Type", contentType.text);
             return this;
         }
     }
