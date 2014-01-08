@@ -70,7 +70,7 @@ public class CacheTest {
 
         Assert.assertEquals(2,cache.size());
 
-        Thread.sleep(1001);
+        Thread.sleep(1010);
         Assert.assertEquals(1,cache.size());
 
         Thread.sleep(500);

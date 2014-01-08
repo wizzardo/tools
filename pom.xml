@@ -4,9 +4,31 @@
     <groupId>com.wizzardo.tools</groupId>
     <artifactId>tools</artifactId>
     <packaging>jar</packaging>
-    <version>0.1</version>
+    <version>0.2</version>
     <name>tools</name>
+    <description>Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other</description>
     <url>https://github.com/wizzardo/Tools</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:wizzardo/Tools.git</connection>
+        <developerConnection>scm:git:git@github.com:wizzardo/Tools.git</developerConnection>
+        <url>https://github.com/wizzardo/Tools</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>Wizzardo</id>
+            <name>Mikhail Bobrutskov</name>
+            <email>wizzardobox@gmail.com</email>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
@@ -16,6 +38,12 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
 
     <build>
         <directory>out</directory>
@@ -42,6 +70,47 @@
                     <outputDirectory>out</outputDirectory>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 </project>
