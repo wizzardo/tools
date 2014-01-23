@@ -30,6 +30,15 @@ public class UserFunction extends Expression {
     }
 
     @Override
+    public void setVariable(Variable v) {
+        if (eh != null)
+            eh.setVariable(v);
+        if (args != null)
+            for (Expression e : args)
+                e.setVariable(v);
+    }
+
+    @Override
     public UserFunction clone() {
         String[] args = null;
         if (argsNames != null) {

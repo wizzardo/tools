@@ -19,6 +19,11 @@ public class AsBooleanExpression extends Expression {
     }
 
     @Override
+    public void setVariable(Variable v) {
+        condition.setVariable(v);
+    }
+
+    @Override
     public Expression clone() {
         return new AsBooleanExpression(condition.clone());
     }

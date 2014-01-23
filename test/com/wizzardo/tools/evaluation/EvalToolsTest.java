@@ -463,6 +463,18 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void testVariable() throws Exception {
+        Expression eh;
+
+        eh = EvalTools.prepare("a=2");
+        Variable a = new Variable("a",0);
+        eh.setVariable(a);
+        eh.get();
+
+        Assert.assertEquals(2,a.get());
+    }
+
+    @Test
     public void testGetParts() throws Exception {
         List<String> l = EvalTools.getParts("sin(1)+2");
         Assert.assertEquals(3, l.size());

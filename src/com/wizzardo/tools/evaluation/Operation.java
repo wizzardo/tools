@@ -10,6 +10,7 @@ import com.wizzardo.tools.WrappedException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +62,14 @@ class Operation extends Expression {
                     return new AsBooleanExpression(exp);
         }
         return exp;
+    }
+
+    @Override
+    public void setVariable(Variable v) {
+        if (leftPart != null)
+            leftPart.setVariable(v);
+        if (rightPart != null)
+            rightPart.setVariable(v);
     }
 
     @Override
@@ -159,36 +168,40 @@ class Operation extends Expression {
         return false;
     }
 
+    private static EnumSet<Operator> leftPartNotIn = EnumSet.of(
+            Operator.EQUAL,
+            Operator.PLUS2,
+            Operator.MINUS2,
+            Operator.PLUS_EQUAL,
+            Operator.MINUS_EQUAL,
+            Operator.DIVIDE_EQUAL,
+            Operator.MULTIPLY_EQUAL
+    );
+
+    private static EnumSet<Operator> rightPartNotIn = EnumSet.of(
+            Operator.TERNARY,
+            Operator.ELVIS,
+            Operator.AND2,
+            Operator.OR2,
+            Operator.EQUAL,
+            Operator.PLUS2,
+            Operator.PLUS_EQUAL,
+            Operator.MINUS_EQUAL,
+            Operator.DIVIDE_EQUAL,
+            Operator.MULTIPLY_EQUAL
+    );
+
     public Object get(Map<String, Object> model) {
         if (hardcoded)
             return result;
         //System.out.println("execute: " + this);
         Object ob1 = null;
         Object ob2 = null;
-        if (leftPart != null
-                && operator != Operator.EQUAL
-                && operator != Operator.PLUS2
-                && operator != Operator.MINUS2
-                && operator != Operator.PLUS_EQUAL
-                && operator != Operator.MINUS_EQUAL
-                && operator != Operator.DIVIDE_EQUAL
-                && operator != Operator.MULTIPLY_EQUAL
-                ) {
+        if (leftPart != null && !leftPartNotIn.contains(operator)) {
             ob1 = leftPart.get(model);
         }
-        if (rightPart != null
-                && operator != Operator.TERNARY
-                && operator != Operator.ELVIS
-                && operator != Operator.AND2
-                && operator != Operator.OR2
-                && operator != Operator.EQUAL
-                && operator != Operator.PLUS2
-                && operator != Operator.MINUS2
-                && operator != Operator.PLUS_EQUAL
-                && operator != Operator.MINUS_EQUAL
-                && operator != Operator.DIVIDE_EQUAL
-                && operator != Operator.MULTIPLY_EQUAL
-                ) {
+
+        if (rightPart != null && !rightPartNotIn.contains(operator)) {
             ob2 = rightPart.get(model);
         }
         Object result = null;
@@ -568,9 +581,82 @@ class Operation extends Expression {
             } else if (rightPart != null) {
                 ob2 = rightPart.get(model);
             }
+
+            Variable v = getVariable(leftPart, rightPart);
+            if (v != null)
+                return variableSetAndReturn(v, ob1, ob2, operator);
+
             return mapSetAndReturn(leftPart != null ? leftPart.raw() : rightPart.raw(), model, ob1, ob2, operator);
         }
         return null;
+    }
+
+    private static Variable getVariable(Expression leftPart, Expression rightPart) {
+        Variable v = null;
+        if (leftPart != null) {
+            if (leftPart instanceof Holder)
+                return ((Holder) leftPart).variable;
+        } else if (rightPart != null && rightPart instanceof Holder)
+            return ((Holder) rightPart).variable;
+        return null;
+    }
+
+    private static Object variableSetAndReturn(Variable v, Object left, Object right, Operator operator) {
+        switch (operator) {
+            case PLUS2: {
+                //post-increment
+                if (left != null) {
+                    Object r = increment(left);
+                    v.set(r);
+                    return left;
+                }
+                //pre-increment
+                if (right != null) {
+                    Object ob = increment(right);
+                    v.set(ob);
+                    return ob;
+                }
+            }
+            case MINUS2: {
+                //post-decrement
+                if (left != null) {
+                    Object r = decrement(left);
+                    v.set(r);
+                    return left;
+                }
+                //pre-decrement
+                if (right != null) {
+                    Object ob = decrement(right);
+                    v.set(ob);
+                    return ob;
+                }
+            }
+            case PLUS_EQUAL: {
+                Object r = plus(left, right, operator);
+                v.set(r);
+                return r;
+            }
+            case MINUS_EQUAL: {
+                Object r = minus(left, right);
+                v.set(r);
+                return r;
+            }
+            case MULTIPLY_EQUAL: {
+                Object r = multiply(left, right);
+                v.set(r);
+                return r;
+            }
+            case DIVIDE_EQUAL: {
+                Object r = divide(left, right);
+                v.set(r);
+                return r;
+            }
+            case EQUAL: {
+                v.set(right);
+                return right;
+            }
+        }
+        throw new UnsupportedOperationException("Not yet implemented:" + operator);
     }
 
     private static Object mapSetAndReturn(Object key, Map model, Object left, Object right, Operator operator) {

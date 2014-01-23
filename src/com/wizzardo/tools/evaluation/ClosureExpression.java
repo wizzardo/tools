@@ -17,6 +17,12 @@ public class ClosureExpression extends Expression {
     private Pair<String, Class>[] args;
 
     @Override
+    public void setVariable(Variable v) {
+        for (Expression e : expressions)
+            e.setVariable(v);
+    }
+
+    @Override
     public Expression clone() {
         throw new UnsupportedOperationException("Not implemented yet.");
     }

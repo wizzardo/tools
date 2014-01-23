@@ -24,6 +24,13 @@ public class IfExpression extends Expression {
     private Expression elseStatement;
 
     @Override
+    public void setVariable(Variable v) {
+        condition.setVariable(v);
+        if (elseStatement != null)
+            elseStatement.setVariable(v);
+    }
+
+    @Override
     public Expression clone() {
         if (elseStatement != null)
             return new IfExpression((AsBooleanExpression) condition.clone(), thenStatement.clone(), elseStatement.clone());

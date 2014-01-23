@@ -1113,9 +1113,9 @@ public class EvalTools {
 
 
     static {
-        Function.setMethod(Collection.class, "collect", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "collect", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 List l = new ArrayList();
                 ClosureExpression closure = (ClosureExpression) args[0];
                 Collection c = (Collection) it;
@@ -1125,9 +1125,9 @@ public class EvalTools {
                 return l;
             }
         });
-        Function.setMethod(Collection.class, "find", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "find", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
                 ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
@@ -1138,9 +1138,9 @@ public class EvalTools {
                 return null;
             }
         });
-        Function.setMethod(Collection.class, "findAll", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "findAll", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 List l = new ArrayList();
                 Collection c = (Collection) it;
                 ClosureExpression closure = (ClosureExpression) args[0];
@@ -1152,9 +1152,9 @@ public class EvalTools {
                 return l;
             }
         });
-        Function.setMethod(Collection.class, "findIndexOf", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "findIndexOf", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
                 ClosureExpression closure = (ClosureExpression) args[0];
                 int i = 0;
@@ -1167,9 +1167,9 @@ public class EvalTools {
                 return -1;
             }
         });
-        Function.setMethod(Collection.class, "each", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "each", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
                 ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
@@ -1178,9 +1178,9 @@ public class EvalTools {
                 return null;
             }
         });
-        Function.setMethod(Collection.class, "eachWithIndex", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "eachWithIndex", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
                 ClosureExpression closure = (ClosureExpression) args[0];
                 int i = 0;
@@ -1190,9 +1190,9 @@ public class EvalTools {
                 return null;
             }
         });
-        Function.setMethod(Collection.class, "every", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "every", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
                 ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
@@ -1202,9 +1202,9 @@ public class EvalTools {
                 return true;
             }
         });
-        Function.setMethod(Collection.class, "any", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "any", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
                 ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
@@ -1214,14 +1214,14 @@ public class EvalTools {
                 return false;
             }
         });
-        Function.setMethod(Collection.class, "join", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Collection.class, "join", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 StringBuilder sb = new StringBuilder();
                 Collection c = (Collection) it;
                 for (Object ob : c) {
                     if (sb.length() != 0) {
-                        sb.append(args[0]);
+                        sb.append(args[0].get(model));
                     }
                     sb.append(ob);
                 }
@@ -1229,14 +1229,14 @@ public class EvalTools {
             }
         });
 
-        Function.setMethod(Number.class, "multiply", new CollectionTools.Closure3<Object, Object, Map, Object[]>() {
+        Function.setMethod(Number.class, "multiply", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
 
             @Override
-            public Object execute(Object it, Map model, Object[] args) {
+            public Object execute(Object it, Map model, Expression[] args) {
                 if (args.length != 1)
                     throw new MissingMethodException(it.getClass(), "multiply", args);
 
-                return Operation.multiply(it, args[0]);
+                return Operation.multiply(it, args[0].get(model));
             }
         });
     }

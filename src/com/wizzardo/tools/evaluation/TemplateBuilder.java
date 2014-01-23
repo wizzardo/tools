@@ -12,6 +12,12 @@ public class TemplateBuilder extends Expression {
     private List<Expression> parts = new ArrayList<Expression>();
 
     @Override
+    public void setVariable(Variable v) {
+        for (Expression e : parts)
+            e.setVariable(v);
+    }
+
+    @Override
     public Expression clone() {
         TemplateBuilder tb = new TemplateBuilder();
         for (Expression e : parts) {

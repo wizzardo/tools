@@ -27,6 +27,7 @@ public abstract class Expression {
 
         protected Expression inner;
         protected boolean parsed = false;
+        protected Variable variable;
 
         private Holder() {
         }
@@ -71,6 +72,15 @@ public abstract class Expression {
         }
 
         @Override
+        public void setVariable(Variable v) {
+            if (hardcoded)
+                return;
+
+            if (exp.equals(v.getName()))
+                variable = v;
+        }
+
+        @Override
         public Expression clone() {
             if (inner != null) {
                 return new Holder(inner.clone());
@@ -88,6 +98,9 @@ public abstract class Expression {
         public Object get(Map<String, Object> model) {
             if (hardcoded)
                 return result;
+
+            if (variable != null)
+                return variable.get();
 
             if (exp != null) {
                 if (!parsed) {
@@ -114,7 +127,17 @@ public abstract class Expression {
         public MapExpression(Map<String, Expression> map) {
             this.map = map;
         }
+
         public MapExpression() {
+        }
+
+        @Override
+        public void setVariable(Variable v) {
+            if (map == null)
+                return;
+
+            for (Map.Entry<String, Expression> e : map.entrySet())
+                e.getValue().setVariable(v);
         }
 
         @Override
@@ -171,6 +194,15 @@ public abstract class Expression {
         }
 
         @Override
+        public void setVariable(Variable v) {
+            if (collection == null)
+                return;
+
+            for (Expression e : collection)
+                e.setVariable(v);
+        }
+
+        @Override
         public Expression clone() {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
@@ -201,9 +233,15 @@ public abstract class Expression {
         return exp;
     }
 
+    public abstract void setVariable(Variable v);
+
     public abstract Expression clone();
 
     public abstract Object get(Map<String, Object> model);
+
+    public Object get() {
+        return get(null);
+    }
 
     static Object parse(String exp) {
         if (exp == null) {
