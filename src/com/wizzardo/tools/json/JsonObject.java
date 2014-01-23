@@ -271,6 +271,13 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                     case '/':
                         sb.setCharAt(sb.length() - 1, '/');
                         break;
+                    case 'u':
+                        if (to <= i + 5)
+                            throw new IndexOutOfBoundsException("can't decode unicode character");
+                        int hexVal = Integer.parseInt(new String(s, i + 1, 4), 16);
+                        sb.setCharAt(sb.length() - 1, (char) hexVal);
+                        i += 4;
+                        break;
                 }
 
                 from = i + 1;

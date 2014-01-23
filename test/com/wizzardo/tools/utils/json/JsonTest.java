@@ -256,4 +256,10 @@ public class JsonTest {
 
 
     }
+
+    @Test
+    public void testUnicode() {
+        String myString = "\\u0048\\u0065\\u006C\\u006C\\u006F World";
+        Assert.assertEquals("Hello World", JsonObject.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
+    }
 }
