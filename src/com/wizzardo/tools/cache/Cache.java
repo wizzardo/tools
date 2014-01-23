@@ -14,10 +14,10 @@ public class Cache<K, V> {
     private final ConcurrentHashMap<K, Holder<K, V>> cache = new ConcurrentHashMap<K, Holder<K, V>>();
     private final ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
     private long lifetime;
-    private Computable<K, V> computable;
+    private Computable<? super K, ? extends V> computable;
     private volatile boolean removeOnFail = true;
 
-    public Cache(long lifetimeSec, long checkPeriodSec, Computable<K, V> computable) {
+    public Cache(long lifetimeSec, long checkPeriodSec, Computable<? super K, ? extends V> computable) {
         this.lifetime = lifetimeSec * 1000;
         this.computable = computable;
         new CacheControl(checkPeriodSec).start();
@@ -27,7 +27,7 @@ public class Cache<K, V> {
         this(lifetimeSec, checkPeriodSec, null);
     }
 
-    public Cache(long lifetimeSec, Computable<K, V> computable) {
+    public Cache(long lifetimeSec, Computable<? super K, ? extends V> computable) {
         this(lifetimeSec, lifetimeSec == 0 ? -1 : lifetimeSec / 2, computable);
     }
 
@@ -43,11 +43,11 @@ public class Cache<K, V> {
         return getFromCache(k, computable, updateTTL);
     }
 
-    public V get(K k, Computable<K, V> computable) {
+    public V get(K k, Computable<? super K, ? extends V> computable) {
         return getFromCache(k, computable, false);
     }
 
-    public V get(K k, Computable<K, V> computable, boolean updateTTL) {
+    public V get(K k, Computable<? super K, ? extends V> computable, boolean updateTTL) {
         return getFromCache(k, computable, updateTTL);
     }
 
@@ -100,7 +100,7 @@ public class Cache<K, V> {
             return v;
         }
 
-        public void run(Computable<K, V> c, K k) {
+        public void run(Computable<? super K, ? extends V> c, K k) {
             v = c.compute(k);
             done();
         }
@@ -125,7 +125,7 @@ public class Cache<K, V> {
         }
     }
 
-    private V getFromCache(final K key, Computable<K, V> c, boolean updateTTL) {
+    private V getFromCache(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
         Holder<K, V> f = cache.get(key);
         if (f == null) {
             if (c == null) {

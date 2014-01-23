@@ -11,13 +11,13 @@ import java.util.regex.Pattern;
  */
 public class CollectionTools {
 
-    public static <T> void each(Iterable<T> c, Closure<Void, T> closure) {
+    public static <T> void each(Iterable<T> c, Closure<Void, ? super T> closure) {
         for (T t : c) {
             closure.execute(t);
         }
     }
 
-    public static <T> void eachWithIndex(Iterable<T> c, Closure2<Void, Integer, T> closure) {
+    public static <T> void eachWithIndex(Iterable<T> c, Closure2<Void, Integer, ? super T> closure) {
         int i = 0;
         for (T t : c) {
             closure.execute(i, t);
@@ -25,7 +25,7 @@ public class CollectionTools {
         }
     }
 
-    public static <T, R> List<R> collect(Iterable<T> c, Closure<R, T> closure) {
+    public static <T, R> List<R> collect(Iterable<T> c, Closure<R, ? super T> closure) {
         List<R> l = new ArrayList<R>();
         for (T t : c) {
             l.add(closure.execute(t));
@@ -42,7 +42,7 @@ public class CollectionTools {
         return l;
     }
 
-    public static <T> List<T> grep(Iterable<T> c, Closure<Boolean, T> closure) {
+    public static <T> List<T> grep(Iterable<T> c, Closure<Boolean, ? super T> closure) {
         List<T> l = new ArrayList<T>();
         for (T t : c) {
             if (closure.execute(t))
@@ -87,7 +87,7 @@ public class CollectionTools {
         return l;
     }
 
-    public static <T> List<T> findAll(Iterable<T> c, Closure<Boolean, T> closure) {
+    public static <T> List<T> findAll(Iterable<T> c, Closure<Boolean, ? super T> closure) {
         List<T> l = new ArrayList<T>();
         for (T t : c) {
             if (closure.execute(t))
@@ -96,7 +96,7 @@ public class CollectionTools {
         return l;
     }
 
-    public static <T> T find(Iterable<T> c, Closure<Boolean, T> closure) {
+    public static <T> T find(Iterable<T> c, Closure<Boolean, ? super T> closure) {
         for (T t : c) {
             if (closure.execute(t))
                 return t;
@@ -104,7 +104,7 @@ public class CollectionTools {
         return null;
     }
 
-    public static <T> boolean every(Iterable<T> c, Closure<Boolean, T> closure) {
+    public static <T> boolean every(Iterable<T> c, Closure<Boolean, ? super T> closure) {
         boolean b = true;
         for (T t : c) {
             b &= closure.execute(t);
@@ -115,7 +115,7 @@ public class CollectionTools {
         return b;
     }
 
-    public static <T> boolean any(Iterable<T> c, Closure<Boolean, T> closure) {
+    public static <T> boolean any(Iterable<T> c, Closure<Boolean, ? super T> closure) {
         for (T t : c) {
             if (closure.execute(t)) {
                 return true;
