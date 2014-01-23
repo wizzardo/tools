@@ -775,10 +775,10 @@ public class EvalTools {
 
         {
             if (exp.equals("[]")) {
-                return new Expression.CollectionExpression(new ArrayList());
+                return new Expression.CollectionExpression();
             }
             if (exp.equals("[:]")) {
-                return new Expression.MapExpression(new LinkedHashMap());
+                return new Expression.MapExpression();
             }
             if (isMap(exp)) {
                 Map<String, Expression> map = new LinkedHashMap<String, Expression>();
@@ -788,11 +788,11 @@ public class EvalTools {
                 return new Expression.MapExpression(map);
             }
             if (isList(exp)) {
-                ArrayList l = new ArrayList();
+                List<Expression> l = new ArrayList<Expression>();
                 exp = exp.substring(1, exp.length() - 1);
                 List<String> arr = parseArgs(exp);
-                for (int i = 0; i < arr.size(); i++) {
-                    l.add(prepare(arr.get(i), model, functions));
+                for (String anArr : arr) {
+                    l.add(prepare(anArr, model, functions));
                 }
                 return new Expression.CollectionExpression(l);
             }

@@ -6,10 +6,7 @@ package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.WrappedException;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,10 +109,12 @@ public abstract class Expression {
     }
 
     public static class MapExpression extends Expression {
-        protected Map map;
+        protected Map<String, Expression> map;
 
-        public MapExpression(Map map) {
+        public MapExpression(Map<String, Expression> map) {
             this.map = map;
+        }
+        public MapExpression() {
         }
 
         @Override
@@ -125,8 +124,9 @@ public abstract class Expression {
 
         @Override
         public Object get(Map<String, Object> model) {
-//            Object result = this.result;
-//            if (result == null) {
+            if (map == null)
+                return new HashMap();
+
             Map r = null;
             try {
                 r = map.getClass().newInstance();
@@ -135,32 +135,39 @@ public abstract class Expression {
             } catch (IllegalAccessException e) {
                 throw new WrappedException(e);
             }
-            Iterator<Map.Entry> i = ((Set<Map.Entry>) map.entrySet()).iterator();
+            Iterator<Map.Entry<String, Expression>> i = map.entrySet().iterator();
             while (i.hasNext()) {
                 Map.Entry entry = i.next();
                 r.put(String.valueOf(entry.getKey()), ((Expression) entry.getValue()).get(model));
             }
-//                result = r;
-//            }
             return r;
         }
 
         @Override
         public String toString() {
-            return "new " + map.getClass();
+            if (map != null)
+                return "new " + map.getClass();
+            else
+                return "new LinkedHashMap";
         }
     }
 
     public static class CollectionExpression extends Expression {
-        protected Collection collection;
+        protected Collection<Expression> collection;
 
-        public CollectionExpression(Collection collection) {
+        public CollectionExpression(Collection<Expression> collection) {
             this.collection = collection;
+        }
+
+        public CollectionExpression() {
         }
 
         @Override
         public String toString() {
-            return "new " + collection.getClass();
+            if (collection != null)
+                return "new " + collection.getClass();
+            else
+                return "new ArrayList";
         }
 
         @Override
@@ -170,8 +177,9 @@ public abstract class Expression {
 
         @Override
         public Object get(Map<String, Object> model) {
-//            Object result = this.result;
-//            if (result == null) {
+            if (collection == null)
+                return new ArrayList();
+
             Collection r = null;
             try {
                 r = collection.getClass().newInstance();
@@ -180,13 +188,10 @@ public abstract class Expression {
             } catch (IllegalAccessException e) {
                 throw new WrappedException(e);
             }
-            Iterator i = collection.iterator();
+            Iterator<Expression> i = collection.iterator();
             while (i.hasNext()) {
-                r.add(((Expression) i.next()).get(model));
+                r.add(i.next().get(model));
             }
-//                result = r;
-//            }
-//            return result;
             return r;
         }
     }
