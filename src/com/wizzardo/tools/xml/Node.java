@@ -568,6 +568,9 @@ public class Node {
                     inTag = true;
                     break;
                 }
+                case '\r':
+                case '\n':
+                case '\t':
                 case ' ': {
                     if (comment) {
                         sb.append(s[i]);
@@ -592,7 +595,7 @@ public class Node {
                     if (!inString && inTag) {
                         attribute = true;
                     } else if (sb.length() != 0) {
-                        sb.append(' ');
+                        sb.append(s[i]);
                     }
                     break;
                 }
@@ -680,12 +683,6 @@ public class Node {
                     }
                     end = true;
                     checkClose = false;
-                    break;
-                }
-                case '\n': {
-                    if (sb.length() != 0) {
-                        sb.append('\n');
-                    }
                     break;
                 }
                 case '{': {
