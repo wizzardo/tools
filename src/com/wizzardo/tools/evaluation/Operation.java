@@ -22,6 +22,7 @@ class Operation extends Expression {
     private Expression rightPart;
     private Operator operator;
     private int start, end;
+    private boolean checkedForSimplify = false;
 
     public Operation(Expression leftPart, Expression rightPart, Operator operator) {
         this.leftPart = wrapBooleanOperationLeft(leftPart, operator);
@@ -315,9 +316,94 @@ class Operation extends Expression {
                 throw new UnsupportedOperationException("Not yet implemented:" + this.operator);
         }
         hardcoded = (leftPart == null || leftPart.hardcoded) && (rightPart == null || rightPart.hardcoded);
-        if (hardcoded)
+        if (hardcoded) {
             this.result = result;
+            return result;
+        }
+        if (!checkedForSimplify) {
+            if (leftPart != null && leftPart.hardcoded && leftPart.result instanceof Number) {
+                if (checkForSimplify(operator, rightPart))
+                    switchHardcodedParts(this, (Operation) rightPart);
+
+            } else if (rightPart != null && rightPart.hardcoded && rightPart.result instanceof Number) {
+                if (checkForSimplify(operator, leftPart))
+                    switchHardcodedParts(this, (Operation) leftPart);
+            }
+            checkedForSimplify = true;
+        }
+
         return result;
+    }
+
+    private void switchHardcodedParts(Operation from, Operation to) {
+        if (from.rightPart != null && from.rightPart.hardcoded) {
+            if (!to.leftPart.hardcoded) {
+                Expression temp = to.leftPart;
+                to.leftPart = from.rightPart;
+                from.rightPart = temp;
+                if (from.operator != to.operator && (from.operator == Operator.MINUS || from.operator == Operator.DIVIDE)) {
+                    switchParts(to);
+                    switchOperators(from, to);
+                }
+            } else {
+                Expression temp = to.rightPart;
+                to.rightPart = from.rightPart;
+                from.rightPart = temp;
+                switchOperators(from, to);
+            }
+        }
+
+//        else if (from.leftPart != null && from.leftPart.hardcoded) {
+//            if (!to.leftPart.hardcoded) {
+//                Expression temp = to.leftPart;
+//                to.leftPart = from.leftPart;
+//                from.leftPart = temp;
+//            } else {
+//                Expression temp = to.rightPart;
+//                to.rightPart = from.leftPart;
+//                from.leftPart = temp;
+//            }
+//        }
+
+    }
+
+    private void switchParts(Operation op) {
+        Expression temp = op.leftPart;
+        op.leftPart = op.rightPart;
+        op.rightPart = temp;
+    }
+
+    private void switchOperators(Operation from, Operation to) {
+        if (from.operator != to.operator) {
+            Operator temp = from.operator;
+            from.operator = to.operator;
+            to.operator = temp;
+        }
+    }
+
+    private boolean checkForSimplify(Operator operator, Expression anotherPart) {
+        if (operator != Operator.PLUS && operator != Operator.MINUS
+                && operator != Operator.MULTIPLY && operator != Operator.DIVIDE)
+            return false;
+
+        if (anotherPart == null || !(anotherPart instanceof Operation))
+            return false;
+
+        Operation op = (Operation) anotherPart;
+        if (op.operator != Operator.PLUS && op.operator != Operator.MINUS
+                && op.operator != Operator.MULTIPLY && op.operator != Operator.DIVIDE)
+            return false;
+
+        if ((operator == Operator.PLUS || operator == Operator.MINUS) && (op.operator == Operator.MULTIPLY || op.operator == Operator.DIVIDE))
+            return false;
+        if ((operator == Operator.MULTIPLY || operator == Operator.DIVIDE) && (op.operator == Operator.PLUS || op.operator == Operator.MINUS))
+            return false;
+
+        if ((op.leftPart == null || !(op.leftPart.hardcoded && op.leftPart.result instanceof Number))
+                && (op.rightPart == null || !(op.rightPart.hardcoded && op.rightPart.result instanceof Number)))
+            return false;
+
+        return true;
     }
 
     private static Range createRange(Object ob1, Object ob2) {

@@ -89,28 +89,24 @@ public abstract class Expression {
 
         @Override
         public Object get(Map<String, Object> model) {
-            if (hardcoded) {
+            if (hardcoded)
                 return result;
-            }
-            Object result = this.result;
-            if (result == null)
-                if (exp != null) {
-                    if (!parsed) {
-                        result = parse(exp);
-                        parsed = true;
-                        if (result != null) {
-                            hardcoded = true;
-                            this.result = result;
-                            return result;
-                        }
+
+            if (exp != null) {
+                if (!parsed) {
+                    Object result = parse(exp);
+                    parsed = true;
+                    if (result != null) {
+                        hardcoded = true;
+                        this.result = result;
+                        return result;
                     }
-                    if (model.containsKey(exp)) {
-                        result = model.get(exp);
-                    }
-                } else if (inner != null) {
-                    result = inner.get(model);
                 }
-            return result;
+                return model.get(exp);
+            } else if (inner != null) {
+                return inner.get(model);
+            }
+            return null;
         }
 
     }

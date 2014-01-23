@@ -377,11 +377,11 @@ public class EvalToolsTest {
 
         model = new HashMap<String, Object>();
         assertEquals("false", EvalTools.evaluate("a?.concat('b') ?: 'false'", model));
-        model.put("a","a");
+        model.put("a", "a");
         assertEquals("ab", EvalTools.evaluate("a?.concat('b') ?: 'false'", model));
 
         model = new HashMap<String, Object>();
-        model.put("i",1);
+        model.put("i", 1);
         assertEquals(1, EvalTools.evaluate("i++?:0", model));
         assertEquals(2, EvalTools.evaluate("i", model));
     }
@@ -397,6 +397,62 @@ public class EvalToolsTest {
         Object ob3 = eh.get(null);
         assertTrue(ob1 != ob3);
         assertTrue(ob1.equals(ob3));
+    }
+
+    @Test
+    public void testSimplifying() throws Exception {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Expression eh;
+
+        eh = EvalTools.prepare("1 + a - 3");
+        model.put("a", 2);
+        Assert.assertEquals(0, eh.get(model));
+        Assert.assertEquals(0, eh.get(model));
+        Assert.assertTrue(((Operation) eh).leftPart().hardcoded);
+
+        eh = EvalTools.prepare("4 * a / 2");
+        model.put("a", 2);
+        Assert.assertEquals(4, eh.get(model));
+        Assert.assertEquals(4, eh.get(model));
+        Assert.assertTrue(((Operation) eh).leftPart().hardcoded);
+
+        eh = EvalTools.prepare("a + 2 - 3");
+        model.put("a", 2);
+        Assert.assertEquals(1, eh.get(model));
+        Assert.assertEquals(1, eh.get(model));
+        Assert.assertTrue(((Operation) eh).leftPart().hardcoded);
+
+        eh = EvalTools.prepare("a - 2 + 3");
+        model.put("a", 2);
+        Assert.assertEquals(3, eh.get(model));
+        Assert.assertEquals(3, eh.get(model));
+        Assert.assertTrue(((Operation) eh).leftPart().hardcoded);
+
+        eh = EvalTools.prepare("a * 6 / 3");
+        model.put("a", 4);
+        Assert.assertEquals(8, eh.get(model));
+        Assert.assertEquals(8, eh.get(model));
+        Assert.assertTrue(((Operation) eh).leftPart().hardcoded);
+
+        eh = EvalTools.prepare("a / 1 * 3");
+        model.put("a", 2);
+        Assert.assertEquals(6, eh.get(model));
+        Assert.assertEquals(6, eh.get(model));
+        Assert.assertTrue(((Operation) eh).leftPart().hardcoded);
+
+        eh = EvalTools.prepare("a - 3 + 'b'");
+        model.put("a", 2);
+        Assert.assertEquals("-1b", eh.get(model));
+        Assert.assertEquals("-1b", eh.get(model));
+        Assert.assertTrue(((Operation) eh).rightPart().hardcoded);
+        Assert.assertEquals("b",((Operation) eh).rightPart().result);
+
+        eh = EvalTools.prepare("a + 'b' + 2");
+        model.put("a", 2);
+        Assert.assertEquals("2b2", eh.get(model));
+        Assert.assertEquals("2b2", eh.get(model));
+        Assert.assertTrue(((Operation) eh).rightPart().hardcoded);
+        Assert.assertEquals(2,((Operation) eh).rightPart().result);
     }
 
     @Test
