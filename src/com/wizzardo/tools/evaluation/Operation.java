@@ -22,7 +22,7 @@ class Operation extends Expression {
     private Expression rightPart;
     private Operator operator;
     private int start, end;
-    private boolean checkedForSimplify = false;
+    private volatile boolean checkedForSimplify = false;
 
     public Operation(Expression leftPart, Expression rightPart, Operator operator) {
         this.leftPart = wrapBooleanOperationLeft(leftPart, operator);
@@ -320,19 +320,27 @@ class Operation extends Expression {
             this.result = result;
             return result;
         }
-        if (!checkedForSimplify) {
-            if (leftPart != null && leftPart.hardcoded && leftPart.result instanceof Number) {
-                if (checkForSimplify(operator, rightPart))
-                    switchHardcodedParts(this, (Operation) rightPart);
-
-            } else if (rightPart != null && rightPart.hardcoded && rightPart.result instanceof Number) {
-                if (checkForSimplify(operator, leftPart))
-                    switchHardcodedParts(this, (Operation) leftPart);
-            }
-            checkedForSimplify = true;
-        }
+        simplify();
 
         return result;
+    }
+
+    private void simplify() {
+        if (!checkedForSimplify) {
+            synchronized (this) {
+                if (!checkedForSimplify) {
+                    if (leftPart != null && leftPart.hardcoded && leftPart.result instanceof Number) {
+                        if (checkForSimplify(operator, rightPart))
+                            switchHardcodedParts(this, (Operation) rightPart);
+
+                    } else if (rightPart != null && rightPart.hardcoded && rightPart.result instanceof Number) {
+                        if (checkForSimplify(operator, leftPart))
+                            switchHardcodedParts(this, (Operation) leftPart);
+                    }
+                    checkedForSimplify = true;
+                }
+            }
+        }
     }
 
     private void switchHardcodedParts(Operation from, Operation to) {
