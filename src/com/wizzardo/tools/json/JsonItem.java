@@ -254,4 +254,34 @@ public class JsonItem {
         } else
             sb.append(ob);
     }
+
+    static JsonItem parse(char[] s, int from, int to) {
+        if (from == to) {
+            return null;
+        }
+        while ((from < to) && (s[from] <= ' ')) {
+            from++;
+        }
+        while ((from < to) && (s[to - 1] <= ' ')) {
+            to--;
+        }
+        if (from == to) {
+            return null;
+        }
+
+        if ((s[from] == '"' && s[to - 1] == '"') || (s[from] == '\'' && s[to - 1] == '\'')) {
+            from++;
+            to--;
+            return new JsonItem(JsonObject.unescape(s, from, to));
+        } else if (to - from == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l') {
+            return new JsonItem(null);
+        } else if (to - from == 4 && s[from] == 't' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e') {
+            return new JsonItem(true);
+        } else if (to - from == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e') {
+            return new JsonItem(false);
+        } else {
+            return new JsonItem(JsonObject.unescape(s, from, to));
+        }
+    }
+
 }

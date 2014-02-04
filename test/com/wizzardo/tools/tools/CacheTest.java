@@ -1,4 +1,4 @@
-package com.wizzardo.tools.utils;
+package com.wizzardo.tools.tools;
 
 import com.wizzardo.tools.cache.Cache;
 import org.junit.Assert;

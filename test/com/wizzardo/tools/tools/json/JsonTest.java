@@ -1,4 +1,4 @@
-package com.wizzardo.tools.utils.json;
+package com.wizzardo.tools.tools.json;
 
 import com.wizzardo.tools.json.JsonArray;
 import com.wizzardo.tools.json.JsonObject;
@@ -68,6 +68,12 @@ public class JsonTest {
 
         s = "{qwe:\"qw\\\"e\"}";
         assertEquals("qw\"e", JsonObject.parse(s).asJsonObject().getAsString("qwe"));
+
+        s = "{'1':{'2':{'3':'value'}}}";
+        assertEquals("value", JsonObject.parse(s).asJsonObject().getAsJsonObject("1").getAsJsonObject("2").getAsString("3"));
+
+        s = "[[[value]]]";
+        assertEquals("value", JsonObject.parse(s).asJsonArray().get(0).asJsonArray().get(0).asJsonArray().get(0).asString());
     }
 
     private static class SimpleClass {

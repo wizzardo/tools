@@ -64,45 +64,21 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     private static void parseValue(JsonObject json, String key, char[] s, int from, int to) {
-        if (from == to) {
-            return;
-        }
-        while ((from < to) && (s[from] <= ' ')) {
-            from++;
-        }
-        while ((from < to) && (s[to - 1] <= ' ')) {
-            to--;
-        }
-        if (from == to) {
-            return;
-        }
-
-        if ((s[from] == '"' && s[to - 1] == '"') || (s[from] == '\'' && s[to - 1] == '\'')) {
-            from++;
-            to--;
-            String value = JsonObject.unescape(s, from, to);
-            json.put(key, new JsonItem(value));
-        } else if (to - from == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l') {
-            json.put(key, new JsonItem(null));
-        } else if (to - from == 4 && s[from] == 'e' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e') {
-            json.put(key, new JsonItem(true));
-        } else if (to - from == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e') {
-            json.put(key, new JsonItem(false));
-        } else {
-            String value = JsonObject.unescape(s, from, to);
-            json.put(key, new JsonItem(value));
-        }
+        JsonItem item = JsonItem.parse(s, from, to);
+        if (item != null)
+            json.put(key, item);
     }
+
 
     static int parse(char[] s, int from, JsonObject json) {
         int i = ++from;
         String key = null;
         boolean inString = false;
-        char ch;
+        byte ch;
         char quote = 0;
         outer:
         while (i < s.length) {
-            ch = s[i];
+            ch = (byte) s[i];
             if (inString) {
                 if (ch == quote && s[i - 1] != '\\') {
                     inString = false;

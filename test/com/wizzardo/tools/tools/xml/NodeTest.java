@@ -1,4 +1,4 @@
-package com.wizzardo.tools.utils.xml;
+package com.wizzardo.tools.tools.xml;
 
 import com.wizzardo.tools.xml.Node;
 import org.junit.Assert;
