@@ -143,7 +143,7 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     public static void escape(String s, StringBuilder sb) {
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
-            switch (ch) {
+            switch ((byte) ch) {
                 case '"':
                     sb.append("\\\"");
                     break;
@@ -216,42 +216,42 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
     public static String unescape(char[] s, int from, int to) {
         StringBuilder sb = new StringBuilder(to - from);
-        char ch, prev = 0;
+        byte ch, prev = 0;
         for (int i = from; i < to; i++) {
-            ch = s[i];
+            ch = (byte) s[i];
             if (prev == '\\') {
-                sb.append(s, from, i - from);
+                sb.append(s, from, i - from - 1);
 
                 switch (ch) {
                     case '"':
-                        sb.setCharAt(sb.length() - 1, '"');
+                        sb.append('"');
                         break;
                     case '\\':
-                        sb.setCharAt(sb.length() - 1, '\\');
+                        sb.append('\\');
                         break;
                     case 'b':
-                        sb.setCharAt(sb.length() - 1, '\b');
+                        sb.append('\b');
                         break;
                     case 'f':
-                        sb.setCharAt(sb.length() - 1, '\f');
+                        sb.append('\f');
                         break;
                     case 'n':
-                        sb.setCharAt(sb.length() - 1, '\n');
+                        sb.append('\n');
                         break;
                     case 'r':
-                        sb.setCharAt(sb.length() - 1, '\r');
+                        sb.append('\r');
                         break;
                     case 't':
-                        sb.setCharAt(sb.length() - 1, '\t');
+                        sb.append('\t');
                         break;
                     case '/':
-                        sb.setCharAt(sb.length() - 1, '/');
+                        sb.append('/');
                         break;
                     case 'u':
                         if (to <= i + 5)
                             throw new IndexOutOfBoundsException("can't decode unicode character");
                         int hexVal = Integer.parseInt(new String(s, i + 1, 4), 16);
-                        sb.setCharAt(sb.length() - 1, (char) hexVal);
+                        sb.append((char) hexVal);
                         i += 4;
                         break;
                 }

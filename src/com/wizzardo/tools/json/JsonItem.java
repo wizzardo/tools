@@ -31,8 +31,8 @@ public class JsonItem {
         if (ob == null)
             return def;
 
-        if (ob instanceof Long) {
-            return (Long) ob;
+        if (ob instanceof Number) {
+            return ((Number) ob).longValue();
         }
         try {
             Long l;
@@ -58,8 +58,8 @@ public class JsonItem {
         if (ob == null)
             return def;
 
-        if (ob instanceof Integer)
-            return (Integer) ob;
+        if (ob instanceof Number)
+            return ((Number) ob).intValue();
 
         try {
             Integer i;
@@ -85,8 +85,8 @@ public class JsonItem {
         if (ob == null)
             return def;
 
-        if (ob instanceof Byte) {
-            return (Byte) ob;
+        if (ob instanceof Number) {
+            return ((Number) ob).byteValue();
         }
         try {
             Byte i;
@@ -112,8 +112,8 @@ public class JsonItem {
         if (ob == null)
             return def;
 
-        if (ob instanceof Short) {
-            return (Short) ob;
+        if (ob instanceof Number) {
+            return ((Number) ob).shortValue();
         }
         try {
             Short i;
@@ -139,8 +139,8 @@ public class JsonItem {
         if (ob == null)
             return def;
 
-        if (ob instanceof Double) {
-            return (Double) ob;
+        if (ob instanceof Number) {
+            return ((Number) ob).doubleValue();
         }
         try {
             Double d;
@@ -163,8 +163,8 @@ public class JsonItem {
         if (ob == null)
             return def;
 
-        if (ob instanceof Float) {
-            return (Float) ob;
+        if (ob instanceof Number) {
+            return ((Number) ob).floatValue();
         }
         try {
             Float f;
@@ -269,6 +269,7 @@ public class JsonItem {
             return null;
         }
 
+        JsonItem item;
         if ((s[from] == '"' && s[to - 1] == '"') || (s[from] == '\'' && s[to - 1] == '\'')) {
             from++;
             to--;
@@ -279,8 +280,40 @@ public class JsonItem {
             return new JsonItem(true);
         } else if (to - from == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e') {
             return new JsonItem(false);
+        } else if ((item = createInteger(s, from, to)) != null) {
+            return item;
         } else {
             return new JsonItem(JsonObject.unescape(s, from, to));
+        }
+    }
+
+    static JsonItem createInteger(char[] s, int from, int to) {
+        if (to - from > 20) //9223372036854775807 - max long - 19 characters
+            return null;
+
+        boolean minus = s[from] == '-';
+        if (minus)
+            from++;
+
+        if (from == to)
+            return null;
+
+        if (to - from > 10) {
+            long l = 0;
+            for (int i = from; i < to; i++) {
+                if (s[i] < '0' || s[i] > '9')
+                    return null;
+                l = l * 10 + s[i] - 48;
+            }
+            return minus ? new JsonItem(-l) : new JsonItem(l);
+        } else {
+            int l = 0;
+            for (int i = from; i < to; i++) {
+                if (s[i] < '0' || s[i] > '9')
+                    return null;
+                l = l * 10 + s[i] - 48;
+            }
+            return minus ? new JsonItem(-l) : new JsonItem(l);
         }
     }
 
