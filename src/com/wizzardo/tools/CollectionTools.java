@@ -135,43 +135,43 @@ public class CollectionTools {
         return sb.toString();
     }
 
-    public static abstract class Closure<R, T> {
+    public static interface Closure<R, T> {
         public abstract R execute(T it);
     }
 
-    public static abstract class Closure2<R, T1, T2> {
+    public static interface Closure2<R, T1, T2> {
         public abstract R execute(T1 it, T2 it2);
     }
 
-    public static abstract class Closure3<R, T1, T2, T3> {
+    public static interface Closure3<R, T1, T2, T3> {
         public abstract R execute(T1 it, T2 it2, T3 it3);
     }
 
-    public static abstract class Closure4<R, T1, T2, T3, T4> {
+    public static interface Closure4<R, T1, T2, T3, T4> {
         public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4);
     }
 
-    public static abstract class Closure5<R, T1, T2, T3, T4, T5> {
+    public static interface Closure5<R, T1, T2, T3, T4, T5> {
         public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5);
     }
 
-    public static abstract class Closure6<R, T1, T2, T3, T4, T5, T6> {
+    public static interface Closure6<R, T1, T2, T3, T4, T5, T6> {
         public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6);
     }
 
-    public static abstract class Closure7<R, T1, T2, T3, T4, T5, T6, T7> {
+    public static interface Closure7<R, T1, T2, T3, T4, T5, T6, T7> {
         public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7);
     }
 
-    public static abstract class Closure8<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
+    public static interface Closure8<R, T1, T2, T3, T4, T5, T6, T7, T8> {
         public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8);
     }
 
-    public static abstract class Closure9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
+    public static interface Closure9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
         public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9);
     }
 
-    public static abstract class Closure10<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> {
+    public static interface Closure10<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> {
         public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9, T10 it10);
     }
 
