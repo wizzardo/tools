@@ -78,50 +78,6 @@ public class HttpClient {
         return sb.toString();
     }
 
-    public static String getContentAsString(HttpURLConnection conn, String charset) {
-        try {
-            return getContentAsString(conn.getInputStream(), charset);
-        } catch (IOException e) {
-            throw new WrappedException(e);
-        }
-    }
-
-    /**
-     * use UTF-8 as default charset
-     */
-    public static String getContentAsString(HttpURLConnection conn) {
-        return getContentAsString(conn, "utf-8");
-    }
-
-    /**
-     * use UTF-8 as default charset
-     */
-    public static String getContentAsString(InputStream in) {
-        return getContentAsString(in, "utf-8");
-    }
-
-    public static String getContentAsString(InputStream in, String charset) {
-        byte[] out = getContent(in);
-        if (out != null) {
-            try {
-                return new String(out, charset);
-            } catch (UnsupportedEncodingException ex) {
-                throw new WrappedException(ex);
-            }
-        }
-        return null;
-    }
-
-    public static byte[] getContent(InputStream in) {
-        try {
-            return IOTools.bytes(in);
-        } catch (IOException e) {
-            throw new WrappedException(e);
-        } finally {
-            IOTools.close(in);
-        }
-    }
-
     public static Request connect(String url) {
         return new Request(url);
     }
@@ -183,12 +139,16 @@ public class HttpClient {
         }
 
         public byte[] asBytes() throws IOException {
+            return IOTools.bytes(asStream());
+        }
+
+        public InputStream asStream() throws IOException {
             InputStream inputStream = connection.getResponseCode() < 400 ? connection.getInputStream() : connection.getErrorStream();
             if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
                 inputStream = new GZIPInputStream(inputStream);
             else if ("deflate".equals(connection.getHeaderField("Content-Encoding")))
                 inputStream = new DeflaterInputStream(inputStream);
-            return getContent(inputStream);
+            return inputStream;
         }
 
         public String asString(String charset) throws IOException {
@@ -247,8 +207,7 @@ public class HttpClient {
     public static enum ContentType {
         BINARY("application/octet-stream"),
         JSON("application/json; charset=utf-8"),
-        XML("text/xml; charset=utf-8"),
-        ;
+        XML("text/xml; charset=utf-8"),;
 
         public final String text;
 

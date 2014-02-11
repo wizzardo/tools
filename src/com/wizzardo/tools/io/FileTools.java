@@ -59,6 +59,27 @@ public class FileTools {
         bytes(new File(file), bytes, offset, length);
     }
 
+    public static void bytes(String file, InputStream stream) {
+        bytes(new File(file), stream);
+    }
+
+    public static void bytes(File file, InputStream stream) {
+        FileOutputStream out;
+        try {
+            out = new FileOutputStream(file);
+        } catch (FileNotFoundException e) {
+            throw new WrappedException(e);
+        }
+
+        try {
+            IOTools.copy(stream, out);
+        } catch (IOException e) {
+            throw new WrappedException(e);
+        } finally {
+            IOTools.close(out);
+        }
+    }
+
     public static void bytes(File file, byte[] bytes, int offset, int length) {
         FileOutputStream out;
         try {
