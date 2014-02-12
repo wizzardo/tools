@@ -1,6 +1,7 @@
 package com.wizzardo.tools.tools;
 
 import com.wizzardo.tools.cache.Cache;
+import com.wizzardo.tools.cache.Computable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,7 +13,7 @@ public class CacheTest {
 
     @Test
     public void simpleCache() {
-        Cache<Integer, Integer> cache = new Cache<Integer, Integer>(1, new Cache.Computable<Integer, Integer>() {
+        Cache<Integer, Integer> cache = new Cache<Integer, Integer>(1, new Computable<Integer, Integer>() {
 
             @Override
             public Integer compute(Integer s) {
@@ -35,7 +36,7 @@ public class CacheTest {
 
     @Test
     public void exceptions() {
-        Cache<Integer, Integer> cache = new Cache<Integer, Integer>(0, new Cache.Computable<Integer, Integer>() {
+        Cache<Integer, Integer> cache = new Cache<Integer, Integer>(0, new Computable<Integer, Integer>() {
 
             @Override
             public Integer compute(Integer s) {
@@ -57,7 +58,7 @@ public class CacheTest {
 
     @Test
     public void testTTL() throws InterruptedException {
-        Cache<String, String> cache = new Cache<String, String>(1, new Cache.Computable<String, String>() {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
                 return s.toUpperCase();
@@ -68,12 +69,13 @@ public class CacheTest {
         Thread.sleep(500);
         cache.get("bar");
 
-        Assert.assertEquals(2,cache.size());
-
-        Thread.sleep(1010);
-        Assert.assertEquals(1,cache.size());
+        Thread.sleep(490);
+        Assert.assertEquals(2, cache.size());
 
         Thread.sleep(500);
-        Assert.assertEquals(0,cache.size());
+        Assert.assertEquals(1, cache.size());
+
+        Thread.sleep(20);
+        Assert.assertEquals(0, cache.size());
     }
 }
