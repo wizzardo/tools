@@ -5,7 +5,7 @@ package com.wizzardo.tools.json;
  * Date: 12/26/12
  */
 public class JsonItem {
-    private Object ob;
+    Object ob;
 
     public JsonItem(Object ob) {
         this.ob = ob;
@@ -210,6 +210,11 @@ public class JsonItem {
             return (JsonArray) ob;
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T getAs(Object value, Class<T> clazz) {
+        return new JsonItem(value).getAs(clazz);
     }
 
     @SuppressWarnings("unchecked")

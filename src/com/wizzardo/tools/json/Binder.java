@@ -1,7 +1,6 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.Pair;
-import com.wizzardo.tools.WrappedException;
+import com.wizzardo.tools.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -13,23 +12,130 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Binder {
 
-    private static Map<Class, List<Pair<Field, Serializer>>> cachedFields = new ConcurrentHashMap<Class, List<Pair<Field, Serializer>>>();
+    private static Map<Class, Map<String, Pair<Field, Serializer>>> cachedFields = new ConcurrentHashMap<Class, Map<String, Pair<Field, Serializer>>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
 //    private static Map<Class, List<Pair<Method, Serializer>>> cachedGetters = new ConcurrentHashMap<Class, List<Pair<Method, Serializer>>>();
 
-    private enum Serializer {
+    enum Serializer {
         STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT
     }
 
-    private static Serializer getReturnType(Method method) {
+
+    static <T> T createInstance(Class<T> clazz, Type generic) {
+        Serializer serializer = classToSerializer(clazz);
+
+        switch (serializer) {
+            case STRING:
+            case NUMBER_BOOLEAN: {
+                throw new IllegalArgumentException("can't create an instance of " + clazz);
+            }
+            case OBJECT: {
+                Constructor c = cachedConstructors.get(clazz);
+                if (c == null) {
+                    try {
+                        c = clazz.getDeclaredConstructor();
+                    } catch (NoSuchMethodException e) {
+                        throw new WrappedException(e);
+                    }
+                    c.setAccessible(true);
+                    cachedConstructors.put(clazz, c);
+                }
+                try {
+                    return (T) c.newInstance();
+                } catch (InstantiationException e) {
+                    throw new WrappedException(e);
+                } catch (IllegalAccessException e) {
+                    throw new WrappedException(e);
+                } catch (InvocationTargetException e) {
+                    throw new WrappedException(e);
+                }
+            }
+            case ARRAY: {
+                Object array = createArray(clazz, 0);
+                return (T) array;
+            }
+            case COLLECTION: {
+                Collection collection = createCollection(clazz);
+                return (T) collection;
+            }
+        }
+        return null;
+    }
+
+    public static Pair<Field, Serializer> getField(Class clazz, String key) {
+        Map<String, Pair<Field, Serializer>> fields = cachedFields.get(clazz);
+        if (fields == null) {
+            fields = new HashMap<String, Pair<Field, Serializer>>();
+            Class cl = clazz;
+            while (cl != null) {
+                Field[] ff = cl.getDeclaredFields();
+                for (Field field : ff) {
+//                    System.out.println("field " + field);
+                    if (
+                            !Modifier.isTransient(field.getModifiers())
+                                    && !Modifier.isStatic(field.getModifiers())
+                                    && !Modifier.isFinal(field.getModifiers())
+//                                    && !Modifier.isPrivate(field.getModifiers())
+//                                    && !Modifier.isProtected(field.getModifiers())
+                            ) {
+//                        System.out.println("add field " + field);
+                        field.setAccessible(true);
+                        fields.put(field.getName(), new Pair<Field, Serializer>(field, getReturnType(field)));
+                    }
+                }
+                cl = cl.getSuperclass();
+            }
+            cachedFields.put(clazz, fields);
+        }
+        return fields.get(key);
+    }
+
+    public static void setValue(Object object, String key, Object value) {
+        Class clazz = object.getClass();
+
+        Pair<Field, Serializer> pair = getField(clazz, key);
+        if (pair == null)
+            return;
+
+        Field field = pair.key;
+        Serializer s = pair.value;
+
+        try {
+            switch (s) {
+                case STRING:
+                case NUMBER_BOOLEAN:
+                    field.set(object, JsonItem.getAs(value, field.getType()));
+                    break;
+//                case ARRAY:
+//                    List l = (List) value;
+//                    Object array = createArray(field.getType(), l.size());
+//                    Class type = getArrayType(field.getType());
+//                    for (int i = 0; i < l.size(); i++) {
+//                        Array.set(array, i, JsonItem.getAs(l.get(i), type));
+//                    }
+//                    field.set(object, array);
+//                    break;
+//            case COLLECTION:
+//                field.set(object, fromJSON(field.getType(), value, field.getGenericType()));
+//                break;
+                default:
+                    field.set(object, value);
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
+
+    static Serializer getReturnType(Method method) {
         return classToSerializer(method.getReturnType());
     }
 
-    private static Serializer getReturnType(Field field) {
+    static Serializer getReturnType(Field field) {
         return classToSerializer(field.getType());
     }
 
-    private static Serializer classToSerializer(Class clazz) {
+    static Serializer classToSerializer(Class clazz) {
         if (String.class == clazz)
             return Serializer.STRING;
         else if (clazz.isPrimitive() || Boolean.class == clazz || Number.class.isAssignableFrom(clazz))
@@ -72,9 +178,9 @@ public class Binder {
                 }
                 instance = (T) c.newInstance();
 
-                List<Pair<Field, Serializer>> list = cachedFields.get(clazz);
+                Map<String, Pair<Field, Serializer>> list = cachedFields.get(clazz);
                 if (list == null) {
-                    list = new ArrayList<Pair<Field, Serializer>>();
+                    list = new HashMap<String, Pair<Field, Serializer>>();
                     Class cl = clazz;
                     while (cl != null) {
                         Field[] ff = cl.getDeclaredFields();
@@ -89,7 +195,7 @@ public class Binder {
                                     ) {
 //                        System.out.println("add field " + field);
                                 field.setAccessible(true);
-                                list.add(new Pair<Field, Serializer>(field, getReturnType(field)));
+                                list.put(field.getName(), new Pair<Field, Serializer>(field, getReturnType(field)));
                             }
                         }
                         cl = cl.getSuperclass();
@@ -97,7 +203,7 @@ public class Binder {
                     cachedFields.put(clazz, list);
                 }
 
-                for (Pair<Field, Serializer> pair : list) {
+                for (Pair<Field, Serializer> pair : list.values()) {
                     Field field = pair.key;
                     Serializer s = pair.value;
                     JsonObject jsonObject = json.asJsonObject();
@@ -157,96 +263,37 @@ public class Binder {
         return null;
     }
 
-    private static Collection createCollection(Class clazz) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    static Collection createCollection(Class clazz) {
         Constructor c = cachedConstructors.get(clazz);
-        if (c == null) {
-            if (clazz == List.class) {
-                c = ArrayList.class.getDeclaredConstructor();
-            } else if (clazz == Set.class) {
-                c = HashSet.class.getDeclaredConstructor();
-            } else {
-                c = clazz.getDeclaredConstructor();
+        try {
+            if (c == null) {
+                if (clazz == List.class) {
+                    c = ArrayList.class.getDeclaredConstructor();
+                } else if (clazz == Set.class) {
+                    c = HashSet.class.getDeclaredConstructor();
+                } else {
+                    c = clazz.getDeclaredConstructor();
+                }
+                cachedConstructors.put(clazz, c);
             }
-            cachedConstructors.put(clazz, c);
-        }
-        return (Collection) c.newInstance();
-    }
-
-    private static Object createArray(Class clazz, int size) {
-        if (clazz == int[].class) {
-            return new int[size];
-        }
-        if (clazz == String[].class) {
-            return new String[size];
-        }
-        if (clazz == double[].class) {
-            return new double[size];
-        }
-        if (clazz == long[].class) {
-            return new long[size];
-        }
-        if (clazz == boolean[].class) {
-            return new boolean[size];
-        }
-        if (clazz == char[].class) {
-            return new char[size];
-        }
-        if (clazz == float[].class) {
-            return new float[size];
-        }
-        if (clazz == byte[].class) {
-            return new byte[size];
-        }
-        if (clazz == short[].class) {
-            return new short[size];
-        }
-        ClassLoader cl = clazz.getClassLoader();
-        String name = clazz.getName();
-        name = name.substring(2, name.length() - 1);
-        try {
-            Class clazz2 = cl.loadClass(name);
-            return Array.newInstance(clazz2, size);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Class getArrayType(Class clazz) {
-        if (clazz == int[].class) {
-            return int.class;
-        }
-        if (clazz == String[].class) {
-            return String.class;
-        }
-        if (clazz == double[].class) {
-            return double.class;
-        }
-        if (clazz == long[].class) {
-            return long.class;
-        }
-        if (clazz == boolean[].class) {
-            return boolean.class;
-        }
-        if (clazz == char[].class) {
-            return char.class;
-        }
-        if (clazz == float[].class) {
-            return float.class;
-        }
-        if (clazz == byte[].class) {
-            return byte.class;
-        }
-        if (clazz == short[].class) {
-            return short.class;
-        }
-        ClassLoader cl = clazz.getClassLoader();
-        String name = clazz.getName();
-        name = name.substring(2, name.length() - 1);
-        try {
-            return cl.loadClass(name);
-        } catch (ClassNotFoundException e) {
+            return (Collection) c.newInstance();
+        } catch (IllegalAccessException e) {
+            throw new WrappedException(e);
+        } catch (NoSuchMethodException e) {
+            throw new WrappedException(e);
+        } catch (InstantiationException e) {
+            throw new WrappedException(e);
+        } catch (InvocationTargetException e) {
             throw new WrappedException(e);
         }
+    }
+
+    static Object createArray(Class clazz, int size) {
+        return Array.newInstance(clazz.getComponentType(), size);
+    }
+
+    static Class getArrayType(Class clazz) {
+        return clazz.getComponentType();
     }
 
     private static boolean isGetter(Method method, Class clazz) {
@@ -276,10 +323,10 @@ public class Binder {
 
         Set<String> fields = new HashSet<String>();
         boolean comma = false;
-        List<Pair<Field, Serializer>> list = cachedFields.get(src.getClass());
+        Map<String, Pair<Field, Serializer>> list = cachedFields.get(src.getClass());
         if (list == null) {
             Class clazz = src.getClass();
-            list = new ArrayList<Pair<Field, Serializer>>();
+            list = new HashMap<String, Pair<Field, Serializer>>();
             cachedFields.put(clazz, list);
             while (clazz != null) {
                 Field[] ff = clazz.getDeclaredFields();
@@ -293,14 +340,14 @@ public class Binder {
                             ) {
 //                        System.out.println("add field " + field);
                         field.setAccessible(true);
-                        list.add(new Pair<Field, Serializer>(field, getReturnType(field)));
+                        list.put(field.getName(), new Pair<Field, Serializer>(field, getReturnType(field)));
                     }
                 }
                 clazz = clazz.getSuperclass();
             }
         }
 
-        for (Pair<Field, Serializer> pair : list) {
+        for (Pair<Field, Serializer> pair : list.values()) {
             Field field = pair.key;
             try {
                 if (comma)
