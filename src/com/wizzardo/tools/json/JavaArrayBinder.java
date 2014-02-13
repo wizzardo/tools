@@ -79,4 +79,15 @@ public class JavaArrayBinder implements ArrayBinder {
 
         return new Pair<Class, Type>(cl, inner);
     }
+
+    @Override
+    public ObjectBinder getObjectBinder() {
+        return new JavaObjectBinder(getGeneric().key);
+    }
+
+    @Override
+    public ArrayBinder getArrayBinder() {
+        Pair<Class, Type> pair = getGeneric();
+        return new JavaArrayBinder(pair.key, pair.value);
+    }
 }

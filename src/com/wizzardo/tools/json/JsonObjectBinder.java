@@ -17,21 +17,31 @@ public class JsonObjectBinder implements ObjectBinder {
         this.json = new JsonObject();
     }
 
-    public void set(String key, Object value) {
+    public void put(String key, Object value) {
         json.put(key, new JsonItem(value));
     }
 
-    public void set(String key, JsonItem value) {
+    public void put(String key, JsonItem value) {
         json.put(key, value);
     }
 
     @Override
     public Object getObject() {
-        return new JsonItem(json);
+        return json;
     }
 
     @Override
     public Field getField(String key) {
         return null;
+    }
+
+    @Override
+    public ObjectBinder getObjectBinder(String key) {
+        return new JsonObjectBinder();
+    }
+
+    @Override
+    public ArrayBinder getArrayBinder(String key) {
+        return new JsonArrayBinder();
     }
 }

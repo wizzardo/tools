@@ -1,10 +1,6 @@
 package com.wizzardo.tools.json;
 
 
-import com.wizzardo.tools.*;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -21,53 +17,6 @@ public class JsonParser {
 
     private boolean inString = false;
     private byte quote = 0;
-
-    private ObjectBinder getObjectBinder(JsonBuilderItem builder, Class clazz) {
-        if (builder == null)
-            return getObjectBinder(clazz);
-
-        if (builder.object != null) {
-            Field f = builder.object.getField(builder.key);
-            return getObjectBinder(f.getType());
-        }
-
-        if (builder.array != null) {
-            return getObjectBinder(builder.array.getGeneric().key);
-        }
-
-        return getObjectBinder(clazz);
-    }
-
-    private ObjectBinder getObjectBinder(Class clazz) {
-        if (clazz == null)
-            return new JsonObjectBinder();
-        else
-            return new JavaObjectBinder(clazz);
-    }
-
-    private ArrayBinder getArrayBinder(JsonBuilderItem builder, Class clazz) {
-        if (builder == null)
-            return getArrayBinder(clazz, null);
-
-        if (builder.object != null) {
-            Field f = builder.object.getField(builder.key);
-            return getArrayBinder(f.getType(), f.getGenericType());
-        }
-
-        if (builder.array != null) {
-            Pair<Class, Type> pair = builder.array.getGeneric();
-            return getArrayBinder(pair.key, pair.value);
-        }
-
-        return getArrayBinder(clazz, null);
-    }
-
-    private ArrayBinder getArrayBinder(Class clazz, Type genereic) {
-        if (clazz == null)
-            return new JsonArrayBinder();
-        else
-            return new JavaArrayBinder(clazz, genereic);
-    }
 
     public int parse(byte[] b, int offset, int length) {
         return parse(b, offset, length, null);
@@ -114,7 +63,7 @@ public class JsonParser {
                     break;
                 }
                 case '{': {
-                    builder = new JsonBuilderItem(builder, getObjectBinder(builder, clazz));
+                    builder = new JsonBuilderItem(builder, Binder.getObjectBinder(builder, clazz));
                     from = i + 1;
                     break;
                 }
@@ -124,7 +73,7 @@ public class JsonParser {
                         builder.finished = true;
                         if (builder.parent != null) {
                             if (builder.parent.object != null)
-                                builder.parent.object.set(builder.parent.key, builder.object.getObject());
+                                builder.parent.object.put(builder.parent.key, builder.object.getObject());
                             else
                                 builder.parent.array.add(builder.object.getObject());
 
@@ -141,7 +90,7 @@ public class JsonParser {
                         builder.finished = true;
                         if (builder.parent != null) {
                             if (builder.parent.object != null)
-                                builder.parent.object.set(builder.parent.key, builder.array.getObject());
+                                builder.parent.object.put(builder.parent.key, builder.array.getObject());
                             else
                                 builder.parent.array.add(new JsonItem(builder.array));
 
@@ -153,7 +102,7 @@ public class JsonParser {
                     break;
                 }
                 case '[': {
-                    builder = new JsonBuilderItem(builder, getArrayBinder(builder, clazz));
+                    builder = new JsonBuilderItem(builder, Binder.getArrayBinder(builder, clazz));
                     from = i + 1;
                     break;
                 }
@@ -173,7 +122,7 @@ public class JsonParser {
         bufferLength = 0;
         bufferOffset = 0;
         if (item != null)
-            json.set(key, item);
+            json.put(key, item);
     }
 
     private void parseValue(ArrayBinder json, byte[] s, int from, int to) {
@@ -458,7 +407,7 @@ public class JsonParser {
         return JsonObject.parse(json);
     }
 
-    private static class JsonBuilderItem {
+    static class JsonBuilderItem {
         JsonBuilderItem parent;
         ObjectBinder object;
         ArrayBinder array;

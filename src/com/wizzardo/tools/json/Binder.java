@@ -21,6 +21,99 @@ public class Binder {
     }
 
 
+    static ObjectBinder getObjectBinder(JsonParser.JsonBuilderItem builder, Class clazz) {
+        if (builder == null)
+            return getObjectBinder(clazz);
+
+        if (builder.object != null) {
+            Field f = builder.object.getField(builder.key);
+            return getObjectBinder(f.getType());
+        }
+
+        if (builder.array != null) {
+            return getObjectBinder(builder.array.getGeneric().key);
+        }
+
+        return getObjectBinder(clazz);
+    }
+
+    static ObjectBinder getObjectBinder(ObjectBinder binder, String key, Class clazz) {
+        if (binder != null)
+            return getObjectBinder(binder, key);
+
+        return getObjectBinder(clazz);
+    }
+
+    static ObjectBinder getObjectBinder(ObjectBinder binder, String key) {
+        return getObjectBinder(binder.getField(key).getType());
+    }
+
+    static ObjectBinder getObjectBinder(ArrayBinder binder, Class clazz) {
+        if (binder != null)
+            return getObjectBinder(binder);
+
+        return getObjectBinder(clazz);
+    }
+
+    static ObjectBinder getObjectBinder(ArrayBinder binder) {
+        return getObjectBinder(binder.getGeneric().key);
+    }
+
+    static ObjectBinder getObjectBinder(Class clazz) {
+        if (clazz == null)
+            return new JsonObjectBinder();
+        else
+            return new JavaObjectBinder(clazz);
+    }
+
+    static ArrayBinder getArrayBinder(JsonParser.JsonBuilderItem builder, Class clazz) {
+        if (builder == null)
+            return getArrayBinder(clazz, null);
+
+        if (builder.object != null) {
+            Field f = builder.object.getField(builder.key);
+            return getArrayBinder(f.getType(), f.getGenericType());
+        }
+
+        if (builder.array != null) {
+            Pair<Class, Type> pair = builder.array.getGeneric();
+            return getArrayBinder(pair.key, pair.value);
+        }
+
+        return getArrayBinder(clazz, null);
+    }
+
+    static ArrayBinder getArrayBinder(ObjectBinder binder, String key, Class clazz) {
+        if (binder != null)
+            return getArrayBinder(binder, key);
+
+        return getArrayBinder(clazz, null);
+    }
+
+    static ArrayBinder getArrayBinder(ObjectBinder binder, String key) {
+        Field f = binder.getField(key);
+        return getArrayBinder(f.getType(), f.getGenericType());
+    }
+
+    static ArrayBinder getArrayBinder(ArrayBinder binder, Class clazz) {
+        if (binder != null)
+            return getArrayBinder(binder);
+
+        return getArrayBinder(clazz, null);
+    }
+
+    static ArrayBinder getArrayBinder(ArrayBinder binder) {
+        Pair<Class, Type> pair = binder.getGeneric();
+        return getArrayBinder(pair.key, pair.value);
+    }
+
+    static ArrayBinder getArrayBinder(Class clazz, Type genereic) {
+        if (clazz == null)
+            return new JsonArrayBinder();
+        else
+            return new JavaArrayBinder(clazz, genereic);
+    }
+
     static <T> T createInstance(Class<T> clazz, Type generic) {
         Serializer serializer = classToSerializer(clazz);
 
@@ -111,12 +204,12 @@ public class Binder {
 //                    Object array = createArray(field.getType(), l.size());
 //                    Class type = getArrayType(field.getType());
 //                    for (int i = 0; i < l.size(); i++) {
-//                        Array.set(array, i, JsonItem.getAs(l.get(i), type));
+//                        Array.put(array, i, JsonItem.getAs(l.get(i), type));
 //                    }
-//                    field.set(object, array);
+//                    field.put(object, array);
 //                    break;
 //            case COLLECTION:
-//                field.set(object, fromJSON(field.getType(), value, field.getGenericType()));
+//                field.put(object, fromJSON(field.getType(), value, field.getGenericType()));
 //                break;
                 default:
                     field.set(object, value);

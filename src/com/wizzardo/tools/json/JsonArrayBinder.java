@@ -29,11 +29,21 @@ public class JsonArrayBinder implements ArrayBinder {
 
     @Override
     public Object getObject() {
-        return new JsonItem(json);
+        return json;
     }
 
     @Override
     public Pair<Class, Type> getGeneric() {
         return new Pair(null, null);
+    }
+
+    @Override
+    public ObjectBinder getObjectBinder() {
+        return new JsonObjectBinder();
+    }
+
+    @Override
+    public ArrayBinder getArrayBinder() {
+        return new JsonArrayBinder();
     }
 }

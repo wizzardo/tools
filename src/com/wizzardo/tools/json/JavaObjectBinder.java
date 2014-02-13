@@ -1,5 +1,7 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.Pair;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 
@@ -21,12 +23,12 @@ public class JavaObjectBinder implements ObjectBinder {
     }
 
     @Override
-    public void set(String key, Object value) {
+    public void put(String key, Object value) {
         Binder.setValue(object, key, value);
     }
 
     @Override
-    public void set(String key, JsonItem value) {
+    public void put(String key, JsonItem value) {
         Binder.setValue(object, key, value.ob);
     }
 
@@ -38,5 +40,19 @@ public class JavaObjectBinder implements ObjectBinder {
     @Override
     public Field getField(String key) {
         return Binder.getField(clazz, key).key;
+    }
+
+    @Override
+    public ObjectBinder getObjectBinder(String key) {
+        Pair<Field, Binder.Serializer> pair = Binder.getField(clazz, key);
+        if (pair == null)
+            return null;
+        return new JavaObjectBinder(pair.key.getType());
+    }
+
+    @Override
+    public ArrayBinder getArrayBinder(String key) {
+        Field f = getField(key);
+        return new JavaArrayBinder(f.getType(), f.getGenericType());
     }
 }

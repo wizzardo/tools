@@ -29,17 +29,26 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return parse(s.toCharArray());
     }
 
+    public static <T> T parse(String s, Class<T> clazz) {
+        s = s.trim();
+        return parse(s.toCharArray(), clazz);
+    }
+
     public static JsonItem parse(char[] s) {
+        return new JsonItem(parse(s, null));
+    }
+
+    public static <T> T parse(char[] s, Class<T> clazz) {
         // check first char
         if (s[0] == '{') {
-            JsonObject json = new JsonObject();
-            parse(s, 0, json);
-            return new JsonItem(json);
+            ObjectBinder binder = Binder.getObjectBinder(clazz);
+            parse(s, 0, binder);
+            return (T) binder.getObject();
         }
         if (s[0] == '[') {
-            JsonArray json = new JsonArray();
-            JsonArray.parse(s, 0, json);
-            return new JsonItem(json);
+            ArrayBinder binder = Binder.getArrayBinder(clazz, null);
+            JsonArray.parse(s, 0, binder);
+            return (T) binder.getObject();
         }
         return null;
     }
@@ -63,14 +72,14 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return key;
     }
 
-    private static void parseValue(JsonObject json, String key, char[] s, int from, int to) {
+    private static void parseValue(ObjectBinder json, String key, char[] s, int from, int to) {
         JsonItem item = JsonItem.parse(s, from, to);
         if (item != null)
             json.put(key, item);
     }
 
 
-    static int parse(char[] s, int from, JsonObject json) {
+    static int parse(char[] s, int from, ObjectBinder json) {
         int i = ++from;
         String key = null;
         boolean inString = false;
@@ -108,20 +117,20 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                     break;
                 }
                 case '{': {
-                    JsonObject obj = new JsonObject();
-                    i = JsonObject.parse(s, i, obj);
+                    ObjectBinder ob = json.getObjectBinder(key);
+                    i = JsonObject.parse(s, i, ob);
                     from = i + 1;
-                    json.put(key, new JsonItem(obj));
+                    json.put(key, ob.getObject());
                     break;
                 }
                 case '}': {
                     break outer;
                 }
                 case '[': {
-                    JsonArray obj = new JsonArray();
-                    i = JsonArray.parse(s, i, obj);
+                    ArrayBinder ob = json.getArrayBinder(key);
+                    i = JsonArray.parse(s, i, ob);
                     from = i + 1;
-                    json.put(key, new JsonItem(obj));
+                    json.put(key, ob.getObject());
                     break;
                 }
             }

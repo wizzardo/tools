@@ -7,11 +7,15 @@ import java.lang.reflect.Field;
  * Date: 2/6/14
  */
 public interface ObjectBinder {
-    public void set(String key, Object value);
+    public void put(String key, Object value);
 
-    public void set(String key, JsonItem value);
+    public void put(String key, JsonItem value);
 
     public Object getObject();
 
     public Field getField(String key);
+
+    public ObjectBinder getObjectBinder(String key);
+
+    public ArrayBinder getArrayBinder(String key);
 }

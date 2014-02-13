@@ -8,13 +8,13 @@ import java.util.ArrayList;
  */
 public class JsonArray extends ArrayList<JsonItem> {
 
-    private static void parseValue(JsonArray json, char[] s, int from, int to) {
+    private static void parseValue(ArrayBinder json, char[] s, int from, int to) {
         JsonItem item = JsonItem.parse(s, from, to);
         if (item != null)
             json.add(item);
     }
 
-    static int parse(char[] s, int from, JsonArray json) {
+    static int parse(char[] s, int from, ArrayBinder json) {
         int i = ++from;
         boolean inString = false;
         byte ch;
@@ -46,17 +46,17 @@ public class JsonArray extends ArrayList<JsonItem> {
                     break;
                 }
                 case '{': {
-                    JsonObject obj = new JsonObject();
-                    i = JsonObject.parse(s, i, obj);
+                    ObjectBinder ob = json.getObjectBinder();
+                    i = JsonObject.parse(s, i, ob);
                     from = i + 1;
-                    json.add(new JsonItem(obj));
+                    json.add(ob.getObject());
                     break;
                 }
                 case '[': {
-                    JsonArray obj = new JsonArray();
-                    i = JsonArray.parse(s, i, obj);
+                    ArrayBinder ob = json.getArrayBinder();
+                    i = JsonArray.parse(s, i, ob);
                     from = i + 1;
-                    json.add(new JsonItem(obj));
+                    json.add(ob.getObject());
                     break;
                 }
                 case ']': {

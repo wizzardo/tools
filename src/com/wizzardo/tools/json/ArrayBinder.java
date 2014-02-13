@@ -15,5 +15,9 @@ public interface ArrayBinder {
 
     public Object getObject();
 
-    public Pair<Class,Type> getGeneric();
+    public Pair<Class, Type> getGeneric();
+
+    public ObjectBinder getObjectBinder();
+
+    public ArrayBinder getArrayBinder();
 }
