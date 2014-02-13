@@ -12,51 +12,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Binder {
 
-    private static Map<Class, Map<String, Pair<Field, Serializer>>> cachedFields = new ConcurrentHashMap<Class, Map<String, Pair<Field, Serializer>>>();
+    private static final int SYNTHETIC = 0x00001000;
+    private static Map<Class, Map<String, Pair<Field, Serializer>>> cachedFieldsRW = new ConcurrentHashMap<Class, Map<String, Pair<Field, Serializer>>>();
+    private static Map<Class, Map<String, Pair<Field, Serializer>>> cachedFieldsR = new ConcurrentHashMap<Class, Map<String, Pair<Field, Serializer>>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
-//    private static Map<Class, List<Pair<Method, Serializer>>> cachedGetters = new ConcurrentHashMap<Class, List<Pair<Method, Serializer>>>();
 
     enum Serializer {
-        STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT
-    }
-
-
-    static ObjectBinder getObjectBinder(JsonParser.JsonBuilderItem builder, Class clazz) {
-        if (builder == null)
-            return getObjectBinder(clazz);
-
-        if (builder.object != null) {
-            Field f = builder.object.getField(builder.key);
-            return getObjectBinder(f.getType());
-        }
-
-        if (builder.array != null) {
-            return getObjectBinder(builder.array.getGeneric().key);
-        }
-
-        return getObjectBinder(clazz);
-    }
-
-    static ObjectBinder getObjectBinder(ObjectBinder binder, String key, Class clazz) {
-        if (binder != null)
-            return getObjectBinder(binder, key);
-
-        return getObjectBinder(clazz);
-    }
-
-    static ObjectBinder getObjectBinder(ObjectBinder binder, String key) {
-        return getObjectBinder(binder.getField(key).getType());
-    }
-
-    static ObjectBinder getObjectBinder(ArrayBinder binder, Class clazz) {
-        if (binder != null)
-            return getObjectBinder(binder);
-
-        return getObjectBinder(clazz);
-    }
-
-    static ObjectBinder getObjectBinder(ArrayBinder binder) {
-        return getObjectBinder(binder.getGeneric().key);
+        STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT, ENUM
     }
 
     static ObjectBinder getObjectBinder(Class clazz) {
@@ -64,47 +26,6 @@ public class Binder {
             return new JsonObjectBinder();
         else
             return new JavaObjectBinder(clazz);
-    }
-
-    static ArrayBinder getArrayBinder(JsonParser.JsonBuilderItem builder, Class clazz) {
-        if (builder == null)
-            return getArrayBinder(clazz, null);
-
-        if (builder.object != null) {
-            Field f = builder.object.getField(builder.key);
-            return getArrayBinder(f.getType(), f.getGenericType());
-        }
-
-        if (builder.array != null) {
-            Pair<Class, Type> pair = builder.array.getGeneric();
-            return getArrayBinder(pair.key, pair.value);
-        }
-
-        return getArrayBinder(clazz, null);
-    }
-
-    static ArrayBinder getArrayBinder(ObjectBinder binder, String key, Class clazz) {
-        if (binder != null)
-            return getArrayBinder(binder, key);
-
-        return getArrayBinder(clazz, null);
-    }
-
-    static ArrayBinder getArrayBinder(ObjectBinder binder, String key) {
-        Field f = binder.getField(key);
-        return getArrayBinder(f.getType(), f.getGenericType());
-    }
-
-    static ArrayBinder getArrayBinder(ArrayBinder binder, Class clazz) {
-        if (binder != null)
-            return getArrayBinder(binder);
-
-        return getArrayBinder(clazz, null);
-    }
-
-    static ArrayBinder getArrayBinder(ArrayBinder binder) {
-        Pair<Class, Type> pair = binder.getGeneric();
-        return getArrayBinder(pair.key, pair.value);
     }
 
     static ArrayBinder getArrayBinder(Class clazz, Type genereic) {
@@ -155,8 +76,8 @@ public class Binder {
         return null;
     }
 
-    public static Pair<Field, Serializer> getField(Class clazz, String key) {
-        Map<String, Pair<Field, Serializer>> fields = cachedFields.get(clazz);
+    public static Map<String, Pair<Field, Serializer>> getFields(Class clazz) {
+        Map<String, Pair<Field, Serializer>> fields = cachedFieldsRW.get(clazz);
         if (fields == null) {
             fields = new HashMap<String, Pair<Field, Serializer>>();
             Class cl = clazz;
@@ -178,9 +99,13 @@ public class Binder {
                 }
                 cl = cl.getSuperclass();
             }
-            cachedFields.put(clazz, fields);
+            cachedFieldsRW.put(clazz, fields);
         }
-        return fields.get(key);
+        return fields;
+    }
+
+    public static Pair<Field, Serializer> getField(Class clazz, String key) {
+        return getFields(clazz).get(key);
     }
 
     public static void setValue(Object object, String key, Object value) {
@@ -199,23 +124,19 @@ public class Binder {
                 case NUMBER_BOOLEAN:
                     field.set(object, JsonItem.getAs(value, field.getType()));
                     break;
-//                case ARRAY:
-//                    List l = (List) value;
-//                    Object array = createArray(field.getType(), l.size());
-//                    Class type = getArrayType(field.getType());
-//                    for (int i = 0; i < l.size(); i++) {
-//                        Array.put(array, i, JsonItem.getAs(l.get(i), type));
-//                    }
-//                    field.put(object, array);
-//                    break;
-//            case COLLECTION:
-//                field.put(object, fromJSON(field.getType(), value, field.getGenericType()));
-//                break;
+                case ENUM:
+                    if (value == null)
+                        field.set(object, value);
+                    else {
+                        Class c = field.getType();
+                        field.set(object, Enum.valueOf(c, String.valueOf(value)));
+                    }
+                    break;
                 default:
                     field.set(object, value);
             }
         } catch (IllegalAccessException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            throw new WrappedException(e);
         }
     }
 
@@ -241,6 +162,8 @@ public class Binder {
             return Serializer.DATE;
         else if (clazz.getName().charAt(0) == '[')
             return Serializer.ARRAY;
+        else if (clazz.isEnum())
+            return Serializer.ENUM;
         else
             return Serializer.OBJECT;
     }
@@ -271,32 +194,7 @@ public class Binder {
                 }
                 instance = (T) c.newInstance();
 
-                Map<String, Pair<Field, Serializer>> list = cachedFields.get(clazz);
-                if (list == null) {
-                    list = new HashMap<String, Pair<Field, Serializer>>();
-                    Class cl = clazz;
-                    while (cl != null) {
-                        Field[] ff = cl.getDeclaredFields();
-                        for (Field field : ff) {
-//                    System.out.println("field " + field);
-                            if (
-                                    !Modifier.isTransient(field.getModifiers())
-                                            && !Modifier.isStatic(field.getModifiers())
-                                            && !Modifier.isFinal(field.getModifiers())
-//                                    && !Modifier.isPrivate(field.getModifiers())
-//                                    && !Modifier.isProtected(field.getModifiers())
-                                    ) {
-//                        System.out.println("add field " + field);
-                                field.setAccessible(true);
-                                list.put(field.getName(), new Pair<Field, Serializer>(field, getReturnType(field)));
-                            }
-                        }
-                        cl = cl.getSuperclass();
-                    }
-                    cachedFields.put(clazz, list);
-                }
-
-                for (Pair<Field, Serializer> pair : list.values()) {
+                for (Pair<Field, Serializer> pair : getFields(clazz).values()) {
                     Field field = pair.key;
                     Serializer s = pair.value;
                     JsonObject jsonObject = json.asJsonObject();
@@ -416,11 +314,11 @@ public class Binder {
 
         Set<String> fields = new HashSet<String>();
         boolean comma = false;
-        Map<String, Pair<Field, Serializer>> list = cachedFields.get(src.getClass());
+        Map<String, Pair<Field, Serializer>> list = cachedFieldsR.get(src.getClass());
         if (list == null) {
             Class clazz = src.getClass();
             list = new HashMap<String, Pair<Field, Serializer>>();
-            cachedFields.put(clazz, list);
+            cachedFieldsR.put(clazz, list);
             while (clazz != null) {
                 Field[] ff = clazz.getDeclaredFields();
                 for (Field field : ff) {
@@ -428,6 +326,7 @@ public class Binder {
                     if (!fields.contains(field.getName())
                             && !Modifier.isTransient(field.getModifiers())
                             && !Modifier.isStatic(field.getModifiers())
+                            && (field.getModifiers() & SYNTHETIC) == 0
 //                            && !Modifier.isPrivate(field.getModifiers())
 //                            && !Modifier.isProtected(field.getModifiers())
                             ) {
@@ -449,68 +348,10 @@ public class Binder {
                 fields.add(field.getName());
                 comma = true;
             } catch (IllegalAccessException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                throw new WrappedException(e);
             }
         }
 
-//        List<Pair<Method, Serializer>> getters = cachedGetters.get(src.getClass());
-//        if (getters == null) {
-//            getters = new ArrayList<Pair<Method, Serializer>>();
-//
-//            outer:
-//            for (Method method : src.getClass().getMethods()) {
-//                if (isGetter(method, src.getClass())) {
-//                    System.out.println("getter: " + method);
-//                    String field;
-//                    if (method.getName().startsWith("get"))
-//                        field = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
-//                    else // is ?
-//                        field = method.getName().substring(2, 3).toLowerCase() + method.getName().substring(3);
-//
-//                    Field f = null;
-//                    {
-//                        Class clazz = src.getClass();
-//                        while (f == null && clazz != null)
-//                            try {
-//                                f = clazz.getDeclaredField(field);
-//                                if (Modifier.isTransient(f.getModifiers())) {
-//                                    continue outer;
-//                                }
-//                            } catch (NoSuchFieldException e) {
-//                                clazz = clazz.getSuperclass();
-//                            }
-//                    }
-//
-//                    if (f != null && !fields.contains(field)) {
-//                        getters.add(new Pair<Method, Serializer>(method, getReturnType(method)));
-//                    }
-//                }
-//            }
-//            cachedGetters.put(src.getClass(), getters);
-//        }
-//
-//        for (Pair<Method, Serializer> pair : getters) {
-//            Method method = pair.key;
-//            String field;
-//            if (method.getName().startsWith("get"))
-//                field = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
-//            else // is ?
-//                field = method.getName().substring(2, 3).toLowerCase() + method.getName().substring(3);
-//
-//            if (!fields.contains(field)) {
-//                try {
-//                    if (comma)
-//                        sb.append(",");
-//                    toJSON(field, method.invoke(src, null), sb, pair.value);
-//                    fields.add(field);
-//                    comma = true;
-//                } catch (IllegalAccessException e) {
-//                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//                } catch (InvocationTargetException e) {
-//                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//                }
-//            }
-//        }
         sb.append("}");
     }
 
@@ -523,7 +364,9 @@ public class Binder {
                 break;
             }
             case STRING: {
-                sb.append("\"").append(escapeJsonString(String.valueOf(src))).append("\"");
+                sb.append("\"");
+                JsonObject.escape(String.valueOf(src), sb);
+                sb.append("\"");
                 break;
             }
             case COLLECTION: {
@@ -545,9 +388,6 @@ public class Binder {
                     if (comma) sb.append(",");
                     Map.Entry entry = (Map.Entry) ob;
                     sb.append("\"").append(entry.getKey()).append("\":");
-//                    if (entry.getValue().getClass() == String.class)
-//                        sb.append("\"").append(entry.getValue()).append("\"");
-//                    else
                     toJSON(entry.getValue(), sb);
                     comma = true;
                 }
@@ -572,42 +412,10 @@ public class Binder {
                 toJSON(src, sb);
                 break;
             }
-        }
-    }
-
-    public static String escapeJsonString(String str) {
-        StringBuilder out = new StringBuilder();
-        for (char c : str.toCharArray()) {
-            switch (c) {
-                case '\b':
-                    out.append("\\b");
-                    break;
-                case '\t':
-                    out.append("\\t");
-                    break;
-                case '\n':
-                    out.append("\\n");
-                    break;
-                case '\f':
-                    out.append("\\f");
-                    break;
-                case '\r':
-                    out.append("\\r");
-                    break;
-                case '\\':
-                    out.append("\\\\");
-                    break;
-                case '/':
-                    out.append("\\/");
-                    break;
-                case '"':
-                    out.append("\\\"");
-                    break;
-                default:
-                    out.append(c);
-                    break;
+            case ENUM: {
+                sb.append("\"").append(src).append("\"");
+                break;
             }
         }
-        return out.toString();
     }
 }

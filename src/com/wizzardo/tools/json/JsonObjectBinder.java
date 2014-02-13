@@ -1,17 +1,11 @@
 package com.wizzardo.tools.json;
 
-import java.lang.reflect.Field;
-
 /**
  * @author: wizzardo
  * Date: 2/6/14
  */
-public class JsonObjectBinder implements ObjectBinder {
+class JsonObjectBinder implements ObjectBinder {
     private JsonObject json;
-
-    public JsonObjectBinder(JsonObject json) {
-        this.json = json;
-    }
 
     public JsonObjectBinder() {
         this.json = new JsonObject();
@@ -28,11 +22,6 @@ public class JsonObjectBinder implements ObjectBinder {
     @Override
     public Object getObject() {
         return json;
-    }
-
-    @Override
-    public Field getField(String key) {
-        return null;
     }
 
     @Override

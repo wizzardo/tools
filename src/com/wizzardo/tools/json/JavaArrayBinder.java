@@ -13,23 +13,19 @@ import java.util.List;
  * @author: wizzardo
  * Date: 2/6/14
  */
-public class JavaArrayBinder implements ArrayBinder {
+class JavaArrayBinder implements ArrayBinder {
     private Collection l;
-    private Binder.Serializer s;
+    private Binder.Serializer serializer;
     private Class clazz;
     private Type generic;
-
-    public JavaArrayBinder(Class clazz) {
-        this(clazz, null);
-    }
 
     public JavaArrayBinder(Class clazz, Type generic) {
         this.generic = generic;
         this.clazz = clazz;
-        s = Binder.classToSerializer(clazz);
-        if (s == Binder.Serializer.ARRAY) {
+        serializer = Binder.classToSerializer(clazz);
+        if (serializer == Binder.Serializer.ARRAY) {
             l = new ArrayList();
-        } else if (s == Binder.Serializer.COLLECTION) {
+        } else if (serializer == Binder.Serializer.COLLECTION) {
             l = Binder.createCollection(clazz);
         } else {
             throw new IllegalArgumentException("this binder only for collections and arrays! not for " + clazz);
@@ -49,7 +45,7 @@ public class JavaArrayBinder implements ArrayBinder {
 
     @Override
     public Object getObject() {
-        if (s == Binder.Serializer.COLLECTION)
+        if (serializer == Binder.Serializer.COLLECTION)
             return l;
         else {
             List l = (List) this.l;

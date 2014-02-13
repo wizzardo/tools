@@ -111,7 +111,7 @@ public class JsonTest {
                 "array:[1,2,3]," +
                 "list:[1,2,3]" +
                 "}";
-        SimpleClass r = JsonObject.bind(s, SimpleClass.class);
+        SimpleClass r = JsonObject.parse(s, SimpleClass.class);
         assertEquals(r.i, 1);
         assertEquals(r.integer, new Integer(2));
         assertTrue(r.f > 3.f && r.f < 3.2f);
@@ -145,7 +145,7 @@ public class JsonTest {
                 "list:[1,2,3]," +
                 "value:3" +
                 "}";
-        Child child = JsonObject.bind(s, Child.class);
+        Child child = JsonObject.parse(s, Child.class);
         assertEquals(child.value, 3);
         assertEquals(child.i, 1);
         assertEquals(child.integer, new Integer(2));
@@ -181,7 +181,7 @@ public class JsonTest {
                 "value:3" +
                 "}";
         s = "{children:[" + s + "," + s + "," + s + "]}";
-        Parent parent = JsonObject.bind(s, Parent.class);
+        Parent parent = JsonObject.parse(s, Parent.class);
         assertEquals(3, parent.children.size());
         for (int i = 0; i < 3; i++) {
             child = parent.children.get(0);

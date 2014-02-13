@@ -9,7 +9,6 @@ import com.wizzardo.tools.io.FileTools;
 import com.wizzardo.tools.json.Binder;
 import com.wizzardo.tools.json.JsonItem;
 import com.wizzardo.tools.json.JsonObject;
-import com.wizzardo.tools.json.JsonParser;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,10 +24,7 @@ import static org.junit.Assert.assertEquals;
 public class JsonParserTest {
 
     private JsonItem parse(String s) {
-        JsonParser parser;
-        parser = new JsonParser();
-        parser.parse(s.getBytes());
-        return parser.getResult();
+        return JsonObject.parse(s);
     }
 
     @Test
@@ -90,26 +86,6 @@ public class JsonParserTest {
     }
 
     @Test
-    public void bufferTest() {
-        byte[] b = "{'1':{'2':{'3':'value'}}}".getBytes();
-        {
-            JsonParser parser = new JsonParser();
-            for (int i = 0; i < b.length; i++) {
-                parser.parse(b, i, 1);
-            }
-            assertEquals("value", ((JsonItem) parser.getResult()).asJsonObject().getAsJsonObject("1").getAsJsonObject("2").getAsString("3"));
-        }
-
-        for (int j = 1; j < b.length; j++) {
-            JsonParser parser = new JsonParser();
-            for (int i = 0; i < b.length; i += j) {
-                parser.parse(b, i, i + j > b.length ? b.length - i : j);
-            }
-            assertEquals("value", ((JsonItem) parser.getResult()).asJsonObject().getAsJsonObject("1").getAsJsonObject("2").getAsString("3"));
-        }
-    }
-
-    @Test
     public void benchmark() throws InterruptedException {
         byte[] bytes = FileTools.bytes("/home/moxa/test.json");
         long time;
@@ -157,6 +133,10 @@ public class JsonParserTest {
         System.out.println(k);
     }
 
+    private static enum SomeEnum{
+        ONE, TWO, THREE
+    }
+
     private static class SimpleClass {
         int i = 1;
         public Integer integer = 2;
@@ -168,6 +148,7 @@ public class JsonParserTest {
         public boolean flag = true;
         public int[] array = new int[]{1, 2, 3};
         public ArrayList<Integer> list;
+        private SomeEnum anEnum = SomeEnum.TWO;
 
         {
             list = new ArrayList<Integer>();

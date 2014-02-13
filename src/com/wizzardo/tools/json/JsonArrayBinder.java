@@ -8,12 +8,8 @@ import java.lang.reflect.Type;
  * @author: wizzardo
  * Date: 2/6/14
  */
-public class JsonArrayBinder implements ArrayBinder {
+class JsonArrayBinder implements ArrayBinder {
     private JsonArray json;
-
-    public JsonArrayBinder(JsonArray json) {
-        this.json = json;
-    }
 
     public JsonArrayBinder() {
         this.json = new JsonArray();
