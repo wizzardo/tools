@@ -209,6 +209,11 @@ public class JsonTest {
 
     }
 
+    @Test
+    public void testEscape() {
+        String s = "СТОЯТЬ";
+        assertEquals(s, JsonObject.escape(s));
+    }
 
     @Test
     public void testJson5() {
