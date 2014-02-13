@@ -118,8 +118,7 @@ public class Cache<K, V> {
         final Long timing = ttl + System.currentTimeMillis();
         key.setValidUntil(timing);
 
-        if (timings.isEmpty())
-            CacheCleaner.updateWakeUp(timing);
+        CacheCleaner.updateWakeUp(timing);
 
         timings.add(new Entry<Holder<K, V>, Long>() {
             @Override
