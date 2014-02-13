@@ -19,7 +19,8 @@ public class Cache<K, V> {
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
         this.ttl = ttlSec * 1000;
         this.computable = computable;
-        CacheCleaner.addCache(this);
+        if (ttl > 0)
+            CacheCleaner.addCache(this);
     }
 
     public Cache(long ttlSec) {
@@ -111,6 +112,9 @@ public class Cache<K, V> {
     }
 
     private void updateTimingCache(final Holder<K, V> key) {
+        if (ttl <= 0)
+            return;
+
         final Long timing = ttl + System.currentTimeMillis();
         key.setValidUntil(timing);
 
