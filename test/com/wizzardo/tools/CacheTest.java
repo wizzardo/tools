@@ -1,4 +1,4 @@
-package com.wizzardo.tools.tools;
+package com.wizzardo.tools;
 
 import com.wizzardo.tools.cache.Cache;
 import com.wizzardo.tools.cache.Computable;

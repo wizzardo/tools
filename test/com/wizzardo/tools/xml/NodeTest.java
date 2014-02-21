@@ -1,6 +1,5 @@
-package com.wizzardo.tools.tools.xml;
+package com.wizzardo.tools.xml;
 
-import com.wizzardo.tools.xml.Node;
 import org.junit.Assert;
 import org.junit.Test;
 

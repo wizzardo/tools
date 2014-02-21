@@ -1,7 +1,5 @@
-package com.wizzardo.tools.tools.json;
+package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.json.JsonArray;
-import com.wizzardo.tools.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
 
