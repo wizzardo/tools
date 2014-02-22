@@ -1,7 +1,10 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.*;
+import com.wizzardo.tools.Pair;
+import com.wizzardo.tools.WrappedException;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,8 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Binder {
 
     private static final int SYNTHETIC = 0x00001000;
-    private static Map<Class, Map<String, Pair<Field, Serializer>>> cachedFieldsRW = new ConcurrentHashMap<Class, Map<String, Pair<Field, Serializer>>>();
-    private static Map<Class, Map<String, Pair<Field, Serializer>>> cachedFieldsR = new ConcurrentHashMap<Class, Map<String, Pair<Field, Serializer>>>();
+    private static Map<Class, Map<String, Pair<Pair<Field, GenericInfo>, Serializer>>> cachedFields = new ConcurrentHashMap<Class, Map<String, Pair<Pair<Field, GenericInfo>, Serializer>>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
 
     enum Serializer {
@@ -28,14 +30,14 @@ public class Binder {
             return new JavaObjectBinder(clazz);
     }
 
-    static ArrayBinder getArrayBinder(Class clazz, Type genereic) {
+    static ArrayBinder getArrayBinder(Class clazz, GenericInfo genereic) {
         if (clazz == null)
             return new JsonArrayBinder();
         else
             return new JavaArrayBinder(clazz, genereic);
     }
 
-    static <T> T createInstance(Class<T> clazz, Type generic) {
+    static <T> T createInstance(Class<T> clazz) {
         Serializer serializer = classToSerializer(clazz);
 
         switch (serializer) {
@@ -76,10 +78,10 @@ public class Binder {
         return null;
     }
 
-    public static Map<String, Pair<Field, Serializer>> getFields(Class clazz) {
-        Map<String, Pair<Field, Serializer>> fields = cachedFieldsRW.get(clazz);
+    public static Map<String, Pair<Pair<Field, GenericInfo>, Serializer>> getFields(Class clazz) {
+        Map<String, Pair<Pair<Field, GenericInfo>, Serializer>> fields = cachedFields.get(clazz);
         if (fields == null) {
-            fields = new HashMap<String, Pair<Field, Serializer>>();
+            fields = new HashMap<String, Pair<Pair<Field, GenericInfo>, Serializer>>();
             Class cl = clazz;
             while (cl != null) {
                 Field[] ff = cl.getDeclaredFields();
@@ -88,34 +90,36 @@ public class Binder {
                     if (
                             !Modifier.isTransient(field.getModifiers())
                                     && !Modifier.isStatic(field.getModifiers())
-                                    && !Modifier.isFinal(field.getModifiers())
+                                    && (field.getModifiers() & SYNTHETIC) == 0
+//                                    && !Modifier.isFinal(field.getModifiers())
 //                                    && !Modifier.isPrivate(field.getModifiers())
 //                                    && !Modifier.isProtected(field.getModifiers())
                             ) {
 //                        System.out.println("add field " + field);
                         field.setAccessible(true);
-                        fields.put(field.getName(), new Pair<Field, Serializer>(field, getReturnType(field)));
+                        Pair<Field, GenericInfo> genericInfoPair = new Pair<Field, GenericInfo>(field, new GenericInfo(field.getGenericType()));
+                        fields.put(field.getName(), new Pair<Pair<Field, GenericInfo>, Serializer>(genericInfoPair, getReturnType(field)));
                     }
                 }
                 cl = cl.getSuperclass();
             }
-            cachedFieldsRW.put(clazz, fields);
+            cachedFields.put(clazz, fields);
         }
         return fields;
     }
 
-    public static Pair<Field, Serializer> getField(Class clazz, String key) {
+    public static Pair<Pair<Field, GenericInfo>, Serializer> getField(Class clazz, String key) {
         return getFields(clazz).get(key);
     }
 
     public static void setValue(Object object, String key, Object value) {
         Class clazz = object.getClass();
 
-        Pair<Field, Serializer> pair = getField(clazz, key);
+        Pair<Pair<Field, GenericInfo>, Serializer> pair = getField(clazz, key);
         if (pair == null)
             return;
 
-        Field field = pair.key;
+        Field field = pair.key.key;
         Serializer s = pair.value;
 
         try {
@@ -194,8 +198,8 @@ public class Binder {
                 }
                 instance = (T) c.newInstance();
 
-                for (Pair<Field, Serializer> pair : getFields(clazz).values()) {
-                    Field field = pair.key;
+                for (Pair<Pair<Field,GenericInfo>, Serializer> pair : getFields(clazz).values()) {
+                    Field field = pair.key.key;
                     Serializer s = pair.value;
                     JsonObject jsonObject = json.asJsonObject();
                     JsonItem item = jsonObject.get(field.getName());
@@ -294,13 +298,59 @@ public class Binder {
                 ;
     }
 
+    static abstract class Appender {
+        public abstract Appender append(String s);
+
+        public Appender append(Object ob) {
+            return append(String.valueOf(ob));
+        }
+    }
+
+    static class StringBuilderAppender extends Appender {
+        private StringBuilder sb = new StringBuilder();
+
+        @Override
+        public Appender append(String s) {
+            sb.append(s);
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return sb.toString();
+        }
+    }
+
+    static class StreamAppender extends Appender {
+        private OutputStream out;
+
+        private StreamAppender(OutputStream out) {
+            this.out = out;
+        }
+
+        @Override
+        public Appender append(String s) {
+            try {
+                out.write(s.getBytes());
+            } catch (IOException e) {
+                throw new WrappedException(e);
+            }
+            return this;
+        }
+    }
+
     public static String toJSON(Object src) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilderAppender sb = new StringBuilderAppender();
         toJSON(src, sb);
         return sb.toString();
     }
 
-    private static void toJSON(Object src, StringBuilder sb) {
+    public static void toJSON(Object src, OutputStream out) {
+        StreamAppender sb = new StreamAppender(out);
+        toJSON(src, sb);
+    }
+
+    private static void toJSON(Object src, Appender sb) {
         if (src == null) {
             sb.append("null");
             return;
@@ -314,33 +364,10 @@ public class Binder {
 
         Set<String> fields = new HashSet<String>();
         boolean comma = false;
-        Map<String, Pair<Field, Serializer>> list = cachedFieldsR.get(src.getClass());
-        if (list == null) {
-            Class clazz = src.getClass();
-            list = new HashMap<String, Pair<Field, Serializer>>();
-            cachedFieldsR.put(clazz, list);
-            while (clazz != null) {
-                Field[] ff = clazz.getDeclaredFields();
-                for (Field field : ff) {
-//                    System.out.println("field " + field);
-                    if (!fields.contains(field.getName())
-                            && !Modifier.isTransient(field.getModifiers())
-                            && !Modifier.isStatic(field.getModifiers())
-                            && (field.getModifiers() & SYNTHETIC) == 0
-//                            && !Modifier.isPrivate(field.getModifiers())
-//                            && !Modifier.isProtected(field.getModifiers())
-                            ) {
-//                        System.out.println("add field " + field);
-                        field.setAccessible(true);
-                        list.put(field.getName(), new Pair<Field, Serializer>(field, getReturnType(field)));
-                    }
-                }
-                clazz = clazz.getSuperclass();
-            }
-        }
+        Map<String, Pair<Pair<Field, GenericInfo>, Serializer>> list = getFields(src.getClass());
 
-        for (Pair<Field, Serializer> pair : list.values()) {
-            Field field = pair.key;
+        for (Pair<Pair<Field, GenericInfo>, Serializer> pair : list.values()) {
+            Field field = pair.key.key;
             try {
                 if (comma)
                     sb.append(",");
@@ -355,7 +382,7 @@ public class Binder {
         sb.append("}");
     }
 
-    private static void toJSON(String name, Object src, StringBuilder sb, Serializer serializer) {
+    private static void toJSON(String name, Object src, Appender sb, Serializer serializer) {
         if (name != null)
             sb.append("\"").append(name).append("\"").append(":");
         switch (serializer) {

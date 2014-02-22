@@ -1,4 +1,4 @@
-package com.wizzardo.tools.tools.json;
+package com.wizzardo.tools.json;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -6,14 +6,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.google.gson.Gson;
 import com.wizzardo.tools.io.FileTools;
-import com.wizzardo.tools.json.Binder;
-import com.wizzardo.tools.json.JsonItem;
-import com.wizzardo.tools.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -85,7 +83,7 @@ public class JsonParserTest {
         assertEquals("value", parse(s).asJsonArray().get(0).asJsonArray().get(0).asJsonArray().get(0).asString());
     }
 
-    @Test
+//    @Test
     public void benchmark() throws InterruptedException {
         byte[] bytes = FileTools.bytes("/home/moxa/test.json");
         long time;
@@ -133,16 +131,27 @@ public class JsonParserTest {
         System.out.println(k);
     }
 
-    private static enum SomeEnum{
+    static public class Wrapper<T> {
+        public T value;
+    }
+
+    static public class ListWrapper<E> extends Wrapper<List<E>> {
+    }
+
+    static public class AnotherWrapper extends ListWrapper<Wrapper<String>> {
+    }
+
+    private static enum SomeEnum {
         ONE, TWO, THREE
     }
 
     private static class SimpleClass {
+        AnotherWrapper wrapped;
         int i = 1;
         public Integer integer = 2;
         public float f = 3;
         public double d = 4;
-        public long l = 5;
+        private final long l = 5;
         public byte b = 6;
         public String s = "foo bar";
         public boolean flag = true;
@@ -150,12 +159,21 @@ public class JsonParserTest {
         public ArrayList<Integer> list;
         private SomeEnum anEnum = SomeEnum.TWO;
 
-        {
-            list = new ArrayList<Integer>();
-            list.add(4);
-            list.add(5);
-            list.add(6);
-        }
+//        {
+//            list = new ArrayList<Integer>();
+//            list.add(4);
+//            list.add(5);
+//            list.add(6);
+//
+//            wrapped = new AnotherWrapper();
+//            wrapped.value = new ArrayList<Wrapper<String>>();
+//            wrapped.value.add(new Wrapper<String>() {{
+//                value = "wrapped!";
+//            }});
+//            wrapped.value.add(new Wrapper<String>() {{
+//                value = "ololo";
+//            }});
+//        }
     }
 
     private static class Child extends SimpleClass {
@@ -166,13 +184,16 @@ public class JsonParserTest {
         private ArrayList<Child> children;
     }
 
-    @Test
+//    @Test
     public void benchmarkBind() throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
 
-        String child = Binder.toJSON(new Child() {{
-            s = "ололо пыщпыщ qweqwe qwe qwe qwe qwe qwe qwe qwe qwe qwe qwe qw eqw eqw eqw eq we";
-        }});
-        child = child.replace("\"this$0\":{},", "");
+//        ListWrapper<Integer> w = JsonObject.parse("[{\"value\":13},{\"value\":7}]",
+//                new TypeReference<ListWrapper<Integer>>() { } );
+
+//        String child = Binder.toJSON(new Child() {{
+//            s = "ололо пыщпыщ qweqwe qwe qwe qwe qwe qwe qwe qwe qwe qwe qwe qw eqw eqw eqw eq we";
+//        }});
+        String child = "{\"f\":3.0,\"d\":4.0,\"wrapped\":{\"value\":[{\"value\":\"wrapped!\"},{\"value\":\"ololo\"}]},\"b\":6,\"integer\":2,\"l\":5,\"list\":[4,5,6],\"i\":1,\"flag\":true,\"s\":\"ололо пыщпыщ qweqwe qwe qwe qwe qwe qwe qwe qwe qwe qwe qwe qw eqw eqw eqw eq we\",\"value\":25,\"anEnum\":\"TWO\",\"array\":[1,2,3]}";
         System.out.println(child);
 
         StringBuilder sb = new StringBuilder();
@@ -185,7 +206,7 @@ public class JsonParserTest {
         sb.append("]}");
 
         long time;
-        int n = 100, k = 0;
+        int n = 1000, k = 0;
 //        String json = sb.toString();
         String json = child;
 
@@ -228,8 +249,8 @@ public class JsonParserTest {
 //                new DefaultJSONParser(json).parseObject(p);
 //                k += new DefaultJSONParser(json).parseObject(Parent.class).children.size();
 //               Parent p= JSON.parseObject(json, Parent.class);
-               Child p= JSON.parseObject(json, Child.class);
-                k+=p.array.length;
+                Child p = JSON.parseObject(json, Child.class);
+                k += p.array.length;
             }
 
             time = System.currentTimeMillis() - time;

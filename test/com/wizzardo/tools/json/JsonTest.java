@@ -74,6 +74,20 @@ public class JsonTest {
         assertEquals("value", JsonObject.parse(s).asJsonArray().get(0).asJsonArray().get(0).asJsonArray().get(0).asString());
     }
 
+    static public class Wrapper<T> {
+        public T value;
+    }
+
+    static public class ListWrapper<E> extends Wrapper<List<E>> {
+    }
+
+    static public class AnotherWrapper extends ListWrapper<Wrapper<String>> {
+    }
+
+    private static enum SomeEnum {
+        ONE, TWO, THREE
+    }
+
     private static class SimpleClass {
         int i;
         public Integer integer;
@@ -85,6 +99,8 @@ public class JsonTest {
         public boolean flag;
         public int[] array;
         public ArrayList<Integer> list;
+        private AnotherWrapper wrapped;
+        private final SomeEnum anEnum = SomeEnum.ONE;
     }
 
     private static class Child extends SimpleClass {
@@ -107,7 +123,9 @@ public class JsonTest {
                 "s:\"ololo lo lo\"," +
                 "flag:true," +
                 "array:[1,2,3]," +
-                "list:[1,2,3]" +
+                "list:[1,2,3]," +
+                "anEnum:\"THREE\"," +
+                "wrapped:{\"value\":[{\"value\":\"wrapped!\"},{\"value\":\"ololo\"}]}" +
                 "}";
         SimpleClass r = JsonObject.parse(s, SimpleClass.class);
         assertEquals(r.i, 1);
@@ -118,6 +136,10 @@ public class JsonTest {
         assertEquals(r.b, 6);
         assertEquals(r.s, "ololo lo lo");
         assertEquals(r.flag, true);
+        assertEquals(r.anEnum, SomeEnum.THREE);
+        assertEquals(r.wrapped.value.size(), 2);
+        assertEquals(r.wrapped.value.get(0).value, "wrapped!");
+        assertEquals(r.wrapped.value.get(1).value, "ololo");
 
         assertEquals(r.array.length, 3);
         assertEquals(r.array[0], 1);
@@ -141,7 +163,9 @@ public class JsonTest {
                 "flag:true," +
                 "array:[1,2,3]," +
                 "list:[1,2,3]," +
-                "value:3" +
+                "value:3," +
+                "anEnum:\"THREE\"," +
+                "wrapped:{\"value\":[{\"value\":\"wrapped!\"},{\"value\":\"ololo\"}]}" +
                 "}";
         Child child = JsonObject.parse(s, Child.class);
         assertEquals(child.value, 3);
@@ -153,6 +177,9 @@ public class JsonTest {
         assertEquals(child.b, 6);
         assertEquals(child.s, "ololo lo lo");
         assertEquals(child.flag, true);
+        assertEquals(r.wrapped.value.size(), 2);
+        assertEquals(r.wrapped.value.get(0).value, "wrapped!");
+        assertEquals(r.wrapped.value.get(1).value, "ololo");
 
         assertEquals(child.array.length, 3);
         assertEquals(child.array[0], 1);
@@ -176,7 +203,9 @@ public class JsonTest {
                 "flag:true," +
                 "array:[1,2,3]," +
                 "list:[1,2,3]," +
-                "value:3" +
+                "value:3," +
+                "anEnum:\"THREE\"," +
+                "wrapped:{\"value\":[{\"value\":\"wrapped!\"},{\"value\":\"ololo\"}]}" +
                 "}";
         s = "{children:[" + s + "," + s + "," + s + "]}";
         Parent parent = JsonObject.parse(s, Parent.class);
@@ -193,6 +222,9 @@ public class JsonTest {
             assertEquals(child.b, 6);
             assertEquals(child.s, "ololo lo lo");
             assertEquals(child.flag, true);
+            assertEquals(r.wrapped.value.size(), 2);
+            assertEquals(r.wrapped.value.get(0).value, "wrapped!");
+            assertEquals(r.wrapped.value.get(1).value, "ololo");
 
             assertEquals(child.array.length, 3);
             assertEquals(child.array[0], 1);
@@ -232,7 +264,7 @@ public class JsonTest {
                 "    hex: 0xDEADbeef,\n" +
                 "    half: .5,\n" +
                 "    delta: +10,\n" +
-                //    "    to: Infinity," +                 // also not supportes
+                //    "    to: Infinity," +                 // also not supported
                 //    "   // and beyond!\n" +
                 "\n" +
                 "    finally: 'a trailing comma',\n" +

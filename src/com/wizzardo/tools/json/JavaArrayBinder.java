@@ -17,9 +17,9 @@ class JavaArrayBinder implements ArrayBinder {
     private Collection l;
     private Binder.Serializer serializer;
     private Class clazz;
-    private Type generic;
+    private GenericInfo generic;
 
-    public JavaArrayBinder(Class clazz, Type generic) {
+    public JavaArrayBinder(Class clazz, GenericInfo generic) {
         this.generic = generic;
         this.clazz = clazz;
         serializer = Binder.classToSerializer(clazz);
@@ -78,12 +78,12 @@ class JavaArrayBinder implements ArrayBinder {
 
     @Override
     public ObjectBinder getObjectBinder() {
-        return new JavaObjectBinder(getGeneric().key);
+        return new JavaObjectBinder(generic.clazz, generic);
     }
 
     @Override
     public ArrayBinder getArrayBinder() {
         Pair<Class, Type> pair = getGeneric();
-        return new JavaArrayBinder(pair.key, pair.value);
+        return new JavaArrayBinder(pair.key, null);
     }
 }

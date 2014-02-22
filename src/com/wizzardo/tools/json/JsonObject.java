@@ -143,12 +143,12 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     public static String escape(String s) {
-        StringBuilder sb = new StringBuilder();
+        Binder.StringBuilderAppender sb = new Binder.StringBuilderAppender();
         escape(s, sb);
         return sb.toString();
     }
 
-    public static void escape(String s, StringBuilder sb) {
+    static void escape(String s, Binder.Appender sb) {
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
             if (ch < 256) {

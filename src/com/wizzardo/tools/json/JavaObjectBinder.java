@@ -3,7 +3,6 @@ package com.wizzardo.tools.json;
 import com.wizzardo.tools.Pair;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 
 /**
  * @author: wizzardo
@@ -12,14 +11,16 @@ import java.lang.reflect.Type;
 class JavaObjectBinder implements ObjectBinder {
     private Object object;
     private Class clazz;
+    private GenericInfo genericInfo;
 
     public JavaObjectBinder(Class clazz) {
         this(clazz, null);
     }
 
-    public JavaObjectBinder(Class clazz, Type generic) {
+    public JavaObjectBinder(Class clazz, GenericInfo genericInfo) {
         this.clazz = clazz;
-        object = Binder.createInstance(clazz, generic);
+        this.genericInfo = genericInfo;
+        object = Binder.createInstance(clazz);
     }
 
     @Override
@@ -37,21 +38,27 @@ class JavaObjectBinder implements ObjectBinder {
         return object;
     }
 
-    public Field getField(String key) {
+    public Pair<Field, GenericInfo> getField(String key) {
         return Binder.getField(clazz, key).key;
     }
 
     @Override
     public ObjectBinder getObjectBinder(String key) {
-        Pair<Field, Binder.Serializer> pair = Binder.getField(clazz, key);
+        Pair<Pair<Field, GenericInfo>, Binder.Serializer> pair = Binder.getField(clazz, key);
         if (pair == null)
             return null;
-        return new JavaObjectBinder(pair.key.getType());
+        return new JavaObjectBinder(pair.key.key.getType(), pair.key.value);
     }
 
     @Override
     public ArrayBinder getArrayBinder(String key) {
-        Field f = getField(key);
-        return new JavaArrayBinder(f.getType(), f.getGenericType());
+        Pair<Field, GenericInfo> f = getField(key);
+        if (genericInfo != null) {
+            GenericInfo type = genericInfo.getGenericType(f.key);
+            if (type != null)
+                return new JavaArrayBinder(type.clazz, type.typeParameters[0]);
+        }
+
+        return new JavaArrayBinder(f.value.clazz, f.value.typeParameters.length == 1 ? f.value.typeParameters[0] : null);
     }
 }
