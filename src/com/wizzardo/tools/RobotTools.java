@@ -173,18 +173,4 @@ public class RobotTools extends Robot {
     public synchronized Color getPixelColor(Point p) {
         return getPixelColor(p.x, p.y);
     }
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        try {
-            // TODO code application logic here
-            RobotTools r = new RobotTools();
-            r.mouseShift(300, 300, 600, 450);
-            r.ctrlPlus('C');
-        } catch (AWTException ex) {
-            Logger.getLogger(RobotTools.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
 }
