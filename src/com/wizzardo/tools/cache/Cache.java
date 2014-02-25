@@ -1,5 +1,6 @@
 package com.wizzardo.tools.cache;
 
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -13,7 +14,7 @@ public class Cache<K, V> {
     final ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
     private long ttl;
     private Computable<? super K, ? extends V> computable;
-    private volatile boolean removeOnFail = true;
+    private volatile boolean removeOnException = true;
     private volatile boolean destroyed;
 
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
@@ -43,19 +44,35 @@ public class Cache<K, V> {
         return getFromCache(k, computable, updateTTL);
     }
 
-    public void setRemoveOnFail(boolean removeOnFail) {
-        this.removeOnFail = removeOnFail;
+    public void setRemoveOnException(boolean removeOnException) {
+        this.removeOnException = removeOnException;
     }
 
-    public boolean isRemoveOnFail() {
-        return removeOnFail;
+    public boolean isRemoveOnException() {
+        return removeOnException;
     }
 
     public V remove(K k) {
         Holder<K, V> holder = map.remove(k);
         if (holder == null)
             return null;
+        onRemoveItem(holder.getKey(), holder.get());
         return holder.get();
+    }
+
+    long refresh(long time) {
+        Map.Entry<Holder<K, V>, Long> entry;
+        Holder<K, V> h;
+
+        while ((entry = timings.peek()) != null && entry.getValue().compareTo(time) <= 0) {
+            h = timings.poll().getKey();
+            if (h.validUntil <= time) {
+//                        System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
+                if (map.remove(h.getKey(), h))
+                    onRemoveItem(h.getKey(), h.get());
+            }
+        }
+        return entry == null ? 24 * 3600 * 1000 : entry.getValue();
     }
 
     public void destroy() {
@@ -66,6 +83,9 @@ public class Cache<K, V> {
     public void clear() {
         timings.clear();
         map.clear();
+    }
+
+    public void onRemoveItem(K k, V v) {
     }
 
     private V getFromCache(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
@@ -84,7 +104,7 @@ public class Cache<K, V> {
                     failed = false;
                 } finally {
                     ft.done();
-                    if (failed && removeOnFail)
+                    if (failed && removeOnException)
                         map.remove(key);
                     else
                         updateTimingCache(f);

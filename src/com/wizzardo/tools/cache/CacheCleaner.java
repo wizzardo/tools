@@ -71,17 +71,9 @@ class CacheCleaner extends Thread {
                     continue;
                 }
 
-                while ((entry = cache.timings.peek()) != null && entry.getValue().compareTo(time) <= 0) {
-
-
-                    h = cache.timings.poll().getKey();
-                    if (h.validUntil <= time) {
-//                        System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
-                        cache.map.remove(h.getKey());
-                    }
-                }
-                if (entry != null && entry.getValue().compareTo(wakeup) < 0)
-                    wakeup = entry.getValue();
+                long l = cache.refresh(time);
+                if (l < wakeup)
+                    wakeup = l;
             }
 
 

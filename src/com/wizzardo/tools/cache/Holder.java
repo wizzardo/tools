@@ -4,7 +4,7 @@ package com.wizzardo.tools.cache;
  * @author: wizzardo
  * Date: 2/12/14
  */
-public class Holder<K, V> {
+class Holder<K, V> {
 
     protected V v;
     protected K k;
@@ -37,7 +37,6 @@ public class Holder<K, V> {
 
     public void run(Computable<? super K, ? extends V> c, K k) {
         v = c.compute(k);
-        done();
     }
 
     void done() {
