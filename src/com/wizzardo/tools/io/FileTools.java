@@ -4,6 +4,8 @@ import com.wizzardo.tools.WrappedException;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author: moxa
@@ -118,6 +120,29 @@ public class FileTools {
         }
 
         return b;
+    }
+
+    public static List<File> listRecursive(File f) {
+        return listRecursive(f, new ArrayList<File>(), null);
+    }
+
+    public static List<File> listRecursive(File f, FileFilter filter) {
+        return listRecursive(f, new ArrayList<File>(), filter);
+    }
+
+    public static List<File> listRecursive(File f, List<File> into, FileFilter filter) {
+        if (f == null)
+            return into;
+
+        if (!f.isDirectory()) {
+            into.add(f);
+        } else {
+            File[] l = f.listFiles(filter);
+            if (l != null)
+                for (File file : l)
+                    listRecursive(file, into, filter);
+        }
+        return into;
     }
 
 }

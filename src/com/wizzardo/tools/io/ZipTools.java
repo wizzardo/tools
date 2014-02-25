@@ -4,7 +4,6 @@ import com.wizzardo.tools.WrappedException;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -158,23 +157,7 @@ public class ZipTools {
 
     public static void zip(ZipOutputStream out, File toZip) {
         File startDir = toZip.getParentFile();
-        LinkedList<File> files = new LinkedList<File>();
-        getFiles(files, toZip);
-        zipping(out, files, startDir);
-    }
-
-    public static List<File> getFiles(List<File> files, File f) {
-        if (f == null)
-            return files;
-
-        if (!f.isDirectory()) {
-            files.add(f);
-        } else {
-            for (File file : f.listFiles()) {
-                getFiles(files, file);
-            }
-        }
-        return files;
+        zipping(out, FileTools.listRecursive(toZip), startDir);
     }
 
     public static void zipping(ZipOutputStream zipout, List<File> files, File startDir) {
