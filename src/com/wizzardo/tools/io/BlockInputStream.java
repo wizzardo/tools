@@ -2,7 +2,6 @@ package com.wizzardo.tools.io;
 
 import com.wizzardo.tools.BoyerMoore;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
@@ -13,7 +12,7 @@ import java.util.logging.Logger;
 /**
  * @author Moxa
  */
-public class BlockReader implements Closeable {
+public class BlockInputStream extends InputStream {
 
     private PushbackInputStream in;
     private byte[] buffer, dynamicBuffer;
@@ -29,19 +28,19 @@ public class BlockReader implements Closeable {
     private long totalRead = 0;
     private ProgressListener progressListener;
 
-    public BlockReader(InputStream in, byte[] separator) {
+    public BlockInputStream(InputStream in, byte[] separator) {
         this.separator = Arrays.copyOf(separator, separator.length);
         this.in = new PushbackInputStream(in, 1024 * 50);
         buffer = new byte[separator.length];
         bm = new BoyerMoore(separator);
     }
 
-    public BlockReader(InputStream in, byte[] separator, long limit) {
+    public BlockInputStream(InputStream in, byte[] separator, long limit) {
         this(in, separator);
         this.limit = limit;
     }
 
-    public BlockReader(InputStream in, byte[] separator, long limit, ProgressListener progressListener) {
+    public BlockInputStream(InputStream in, byte[] separator, long limit, ProgressListener progressListener) {
         this(in, separator, limit);
         this.progressListener = progressListener;
     }
@@ -57,7 +56,7 @@ public class BlockReader implements Closeable {
     }
 
     public boolean hasNext() throws IOException {
-        if (dynamicBuffer == null && limit > 0 && totalRead >= limit) {
+        if (limitReached()) {
             return false;
         }
         return dynamicBuffer != null || ready();
@@ -68,12 +67,30 @@ public class BlockReader implements Closeable {
         blockLength = 0;
     }
 
+    @Override
+    public int read() throws IOException {
+        if (limitReached()) {
+            return -1;
+        }
+
+        byte[] bytes = new byte[1];
+        int r = read(bytes);
+        if (r == 0)
+            return -1;
+
+        return bytes[0] & 0xff;
+    }
+
     public int read(byte[] b) throws IOException {
         return read(b, 0, b.length);
     }
 
+    private boolean limitReached() {
+        return dynamicBuffer == null && limit > 0 && totalRead >= limit;
+    }
+
     public int read(byte[] b, int off, int l) throws IOException {
-        if (dynamicBuffer == null && limit > 0 && totalRead >= limit) {
+        if (limitReached()) {
             return -1;
         }
         if (l < separator.length) {
@@ -208,7 +225,7 @@ public class BlockReader implements Closeable {
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException ex) {
-                    Logger.getLogger(BlockReader.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(BlockInputStream.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 wait++;
             }

@@ -1,19 +1,18 @@
 package com.wizzardo.tools.io;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
  * @author Moxa
  */
-public class SizedBlockReader implements Closeable {
+public class SizedBlockInputStream extends InputStream {
 
     private InputStream in;
     private long blockLength = 0;
     private long readed = 0;
 
-    public SizedBlockReader(InputStream in) {
+    public SizedBlockInputStream(InputStream in) {
         this.in = in;
     }
 
@@ -55,6 +54,20 @@ public class SizedBlockReader implements Closeable {
         }
         readed += r;
         return r;
+    }
+
+    @Override
+    public int read() throws IOException {
+        if (readed == blockLength) {
+            return -1;
+        }
+
+        byte[] bytes = new byte[1];
+        int r = read(bytes);
+        if (r == 0)
+            return -1;
+
+        return bytes[0] & 0xff;
     }
 
     public int read(byte[] b) throws IOException {

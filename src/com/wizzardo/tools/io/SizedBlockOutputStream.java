@@ -1,21 +1,24 @@
 package com.wizzardo.tools.io;
 
-import java.io.Closeable;
-import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
  * @author Moxa
  */
-public class SizedBlockWriter implements Closeable, Flushable {
+public class SizedBlockOutputStream extends OutputStream {
 
     private OutputStream out;
     private long blockLength = 0;
     private long written = 0;
 
-    public SizedBlockWriter(OutputStream out) {
+    public SizedBlockOutputStream(OutputStream out) {
         this.out = out;
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+        write(new byte[]{(byte) b});
     }
 
     public void write(byte[] b) throws IOException {

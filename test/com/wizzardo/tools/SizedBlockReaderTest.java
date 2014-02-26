@@ -4,9 +4,9 @@
  */
 package com.wizzardo.tools;
 
+import com.wizzardo.tools.io.SizedBlockInputStream;
+import com.wizzardo.tools.io.SizedBlockOutputStream;
 import com.wizzardo.tools.security.MD5;
-import com.wizzardo.tools.io.SizedBlockReader;
-import com.wizzardo.tools.io.SizedBlockWriter;
 import org.junit.Test;
 
 import java.io.*;
@@ -31,12 +31,12 @@ public class SizedBlockReaderTest {
     public void test1() throws IOException {
         String data = "ололо пыщпыщ";
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        SizedBlockWriter writer = new SizedBlockWriter(out);
+        SizedBlockOutputStream writer = new SizedBlockOutputStream(out);
 
         writer.setBlockLength(data.getBytes().length);
         writer.write(data.getBytes());
 
-        SizedBlockReader reader = new SizedBlockReader(new ByteArrayInputStream(out.toByteArray()));
+        SizedBlockInputStream reader = new SizedBlockInputStream(new ByteArrayInputStream(out.toByteArray()));
         byte[] b = new byte[128];
         int r;
         while (reader.hasNext()) {
@@ -50,7 +50,7 @@ public class SizedBlockReaderTest {
     public void test2() throws IOException {
         String data = "test1";
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        SizedBlockWriter writer = new SizedBlockWriter(out);
+        SizedBlockOutputStream writer = new SizedBlockOutputStream(out);
 
         writer.setBlockLength(data.getBytes().length);
         writer.write(data.getBytes());
@@ -63,7 +63,7 @@ public class SizedBlockReaderTest {
         writer.setBlockLength(data.getBytes().length);
         writer.write(data.getBytes());
 
-        SizedBlockReader reader = new SizedBlockReader(new ByteArrayInputStream(out.toByteArray()));
+        SizedBlockInputStream reader = new SizedBlockInputStream(new ByteArrayInputStream(out.toByteArray()));
         byte[] b = new byte[128];
         int r;
         int part = 1;
@@ -88,8 +88,8 @@ public class SizedBlockReaderTest {
         final MD5 md5Out = new MD5();
         final PipedOutputStream out = new PipedOutputStream();
         final PipedInputStream in = new PipedInputStream(out, 1024 * 1024);
-        final SizedBlockReader br = new SizedBlockReader(in);
-        final SizedBlockWriter writer = new SizedBlockWriter(out);
+        final SizedBlockInputStream br = new SizedBlockInputStream(in);
+        final SizedBlockOutputStream writer = new SizedBlockOutputStream(out);
         long time = System.currentTimeMillis();
         new Thread(new Runnable() {
             public void run() {

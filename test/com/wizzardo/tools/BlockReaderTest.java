@@ -4,7 +4,7 @@
  */
 package com.wizzardo.tools;
 
-import com.wizzardo.tools.io.BlockReader;
+import com.wizzardo.tools.io.BlockInputStream;
 import com.wizzardo.tools.io.ProgressListener;
 import com.wizzardo.tools.security.MD5;
 import org.junit.Test;
@@ -27,7 +27,7 @@ public class BlockReaderTest {
 
     @Test
     public void testGetInput() {
-        BlockReader br = new BlockReader(new ByteArrayInputStream("test1\ntest2\ntest3".getBytes()), "\n".getBytes());
+        BlockInputStream br = new BlockInputStream(new ByteArrayInputStream("test1\ntest2\ntest3".getBytes()), "\n".getBytes());
         br.next();
         byte[] b = new byte[10];
         int r;
@@ -50,7 +50,7 @@ public class BlockReaderTest {
 
     @Test
     public void testAppending() {
-        BlockReader br = new BlockReader(new ByteArrayInputStream("test1\ntest2\ntest3\ntest4\ntest5\ntest6".getBytes()), "\n".getBytes());
+        BlockInputStream br = new BlockInputStream(new ByteArrayInputStream("test1\ntest2\ntest3\ntest4\ntest5\ntest6".getBytes()), "\n".getBytes());
         byte[] b = new byte[1024];
         int r, t = 0;
         try {
@@ -71,7 +71,7 @@ public class BlockReaderTest {
     public void test1() {
         int n = 0;
         try {
-            BlockReader bl = new BlockReader(new ByteArrayInputStream("test1\ntest2\ntest3".getBytes()), "\n".getBytes());
+            BlockInputStream bl = new BlockInputStream(new ByteArrayInputStream("test1\ntest2\ntest3".getBytes()), "\n".getBytes());
             byte[] b = new byte[2];
             int r = 0;
             while (bl.hasNext()) {
@@ -108,7 +108,7 @@ public class BlockReaderTest {
     public void test2() {
         int n = 0;
         try {
-            BlockReader bl = new BlockReader(new ByteArrayInputStream("test1{sep}test2{sep}test3".getBytes()), "{sep}".getBytes());
+            BlockInputStream bl = new BlockInputStream(new ByteArrayInputStream("test1{sep}test2{sep}test3".getBytes()), "{sep}".getBytes());
             byte[] b = new byte[500];
             int r = 0;
             while (bl.hasNext()) {
@@ -144,7 +144,7 @@ public class BlockReaderTest {
     public void test6() {
         int n = 0;
         try {
-            BlockReader bl = new BlockReader(new ByteArrayInputStream("test1{separator ololo}[]{separator ololo}test3".getBytes()), "{separator ololo}".getBytes());
+            BlockInputStream bl = new BlockInputStream(new ByteArrayInputStream("test1{separator ololo}[]{separator ololo}test3".getBytes()), "{separator ololo}".getBytes());
             byte[] b = new byte[500];
             int r = 0;
             while (bl.hasNext()) {
@@ -178,10 +178,10 @@ public class BlockReaderTest {
 
     @Test
     public void testEnding() {
-        assertEquals(5, BlockReader.isEnding("123;456".getBytes(), 7, "56".getBytes()));
-        assertEquals(6, BlockReader.isEnding("123;456".getBytes(), 7, "6".getBytes()));
-        assertEquals(0, BlockReader.isEnding("123;456".getBytes(), 7, "123;456".getBytes()));
-        assertEquals(-1, BlockReader.isEnding("123;456".getBytes(), 7, ";".getBytes()));
+        assertEquals(5, BlockInputStream.isEnding("123;456".getBytes(), 7, "56".getBytes()));
+        assertEquals(6, BlockInputStream.isEnding("123;456".getBytes(), 7, "6".getBytes()));
+        assertEquals(0, BlockInputStream.isEnding("123;456".getBytes(), 7, "123;456".getBytes()));
+        assertEquals(-1, BlockInputStream.isEnding("123;456".getBytes(), 7, ";".getBytes()));
     }
 
     @Test
@@ -201,7 +201,7 @@ public class BlockReaderTest {
         out.write(data3);
 
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-        BlockReader bl = new BlockReader(in, separator);
+        BlockInputStream bl = new BlockInputStream(in, separator);
 
         MD5 md5 = new MD5();
         String[] hashes = new String[3];
@@ -254,7 +254,7 @@ public class BlockReaderTest {
         };
         int length = (separator.length + partLength * parts) * (k - 1);
         final AtomicLong writed = new AtomicLong();
-        final BlockReader br = new BlockReader(in, separator, length, pl);
+        final BlockInputStream br = new BlockInputStream(in, separator, length, pl);
         new Thread(new Runnable() {
             public void run() {
                 int i = 1;
@@ -326,8 +326,8 @@ public class BlockReaderTest {
         final PipedOutputStream out2 = new PipedOutputStream(in1);
 
         final byte[] sep = "!!!!separator!!!!".getBytes();
-        final BlockReader br1 = new BlockReader(in1, sep);
-        final BlockReader br2 = new BlockReader(in2, sep);
+        final BlockInputStream br1 = new BlockInputStream(in1, sep);
+        final BlockInputStream br2 = new BlockInputStream(in2, sep);
 
         new Thread(new Runnable() {
             @Override
@@ -372,7 +372,7 @@ public class BlockReaderTest {
         }
     }
 
-    public static String getAnswer(BlockReader br) throws IOException {
+    public static String getAnswer(BlockInputStream br) throws IOException {
         br.next();
         StringBuilder sb = new StringBuilder();
         int r = 0;
