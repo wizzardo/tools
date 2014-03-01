@@ -7,7 +7,7 @@ import java.io.OutputStream;
  * @author: moxa
  * Date: 11/16/12
  */
-class BytesTools {
+public class BytesTools {
 
     public static byte[] toBytes(long l) {
         return toBytes(l, 8);
