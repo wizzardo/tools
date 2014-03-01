@@ -8,12 +8,18 @@ import java.io.OutputStream;
  */
 public class SizedBlockOutputStream extends OutputStream {
 
-    private OutputStream out;
-    private long blockLength = 0;
-    private long written = 0;
+    protected OutputStream out;
+    protected long blockLength = 0;
+    protected long written = 0;
+    protected BlockSizeType sizeType;
 
     public SizedBlockOutputStream(OutputStream out) {
+        this(out, BlockSizeType.LONG);
+    }
+
+    public SizedBlockOutputStream(OutputStream out, BlockSizeType sizeType) {
         this.out = out;
+        this.sizeType = sizeType;
     }
 
     @Override
@@ -39,7 +45,7 @@ public class SizedBlockOutputStream extends OutputStream {
         }
         blockLength = l;
         written = 0;
-        BytesTools.toBytes(blockLength, out);
+        BytesTools.toBytes(blockLength, out, sizeType.bytesCount);
     }
 
     public long left() {

@@ -2,10 +2,8 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.wizzardo.tools;
+package com.wizzardo.tools.io;
 
-import com.wizzardo.tools.io.BlockInputStream;
-import com.wizzardo.tools.io.ProgressListener;
 import com.wizzardo.tools.security.MD5;
 import org.junit.Test;
 

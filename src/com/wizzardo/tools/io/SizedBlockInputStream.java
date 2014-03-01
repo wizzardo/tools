@@ -8,12 +8,18 @@ import java.io.InputStream;
  */
 public class SizedBlockInputStream extends InputStream {
 
-    private InputStream in;
-    private long blockLength = 0;
-    private long readed = 0;
+    protected InputStream in;
+    protected long blockLength = 0;
+    protected long readed = 0;
+    protected BlockSizeType sizeType;
 
     public SizedBlockInputStream(InputStream in) {
+        this(in, BlockSizeType.LONG);
+    }
+
+    public SizedBlockInputStream(InputStream in, BlockSizeType sizeType) {
         this.in = in;
+        this.sizeType = sizeType;
     }
 
     public boolean hasNext() throws IOException {
@@ -21,20 +27,16 @@ public class SizedBlockInputStream extends InputStream {
             throw new IllegalStateException("not all data has been read. " + readed + " != " + blockLength);
         }
         int r = 0, t = 0;
-        byte[] b = new byte[8];
-        while (t != 8 && (r = in.read(b, t, 8 - t)) != -1) {
+        byte[] b = new byte[sizeType.bytesCount];
+        while (t != sizeType.bytesCount && (r = in.read(b, t, sizeType.bytesCount - t)) != -1) {
             t += r;
         }
-        if (t == 8) {
-            blockLength = BytesTools.toLong(b);
+        if (t == sizeType.bytesCount) {
+            blockLength = BytesTools.toNumber(b, 0, sizeType.bytesCount);
             readed = 0;
             return true;
         }
         return false;
-    }
-
-    public long getBlockLength() {
-        return blockLength;
     }
 
     public long lenght() {

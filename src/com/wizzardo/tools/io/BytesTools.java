@@ -10,27 +10,11 @@ import java.io.OutputStream;
 class BytesTools {
 
     public static byte[] toBytes(long l) {
-        return new byte[]{
-                (byte) (l >> 56),
-                (byte) (l >> 48),
-                (byte) (l >> 40),
-                (byte) (l >> 32),
-                (byte) (l >> 24),
-                (byte) (l >> 16),
-                (byte) (l >> 8),
-                (byte) (l >> 0),
-        };
+        return toBytes(l, 8);
     }
 
     public static void toBytes(long l, OutputStream out) throws IOException {
-        out.write((byte) (l >> 56));
-        out.write((byte) (l >> 48));
-        out.write((byte) (l >> 40));
-        out.write((byte) (l >> 32));
-        out.write((byte) (l >> 24));
-        out.write((byte) (l >> 16));
-        out.write((byte) (l >> 8));
-        out.write((byte) (l >> 0));
+        toBytes(l, out, 8);
     }
 
     public static long toLong(byte[] b) {
@@ -38,13 +22,54 @@ class BytesTools {
     }
 
     public static long toLong(byte[] b, int offset) {
-        return ((((long) b[offset] & 0xff) << 56) |
-                (((long) b[offset + 1] & 0xff) << 48) |
-                (((long) b[offset + 2] & 0xff) << 40) |
-                (((long) b[offset + 3] & 0xff) << 32) |
-                (((long) b[offset + 4] & 0xff) << 24) |
-                (((long) b[offset + 5] & 0xff) << 16) |
-                (((long) b[offset + 6] & 0xff) << 8) |
-                (((long) b[offset + 7] & 0xff) << 0));
+        return toNumber(b, offset, 8);
     }
+
+    public static byte[] toBytes(int i) {
+        return toBytes(i, 4);
+    }
+
+    public static void toBytes(int i, OutputStream out) throws IOException {
+        toBytes(i, out, 4);
+    }
+
+    public static int toInt(byte[] b) {
+        return toInt(b, 0);
+    }
+
+    public static int toInt(byte[] b, int offset) {
+        return (int) toNumber(b, offset, 4);
+    }
+
+    public static long toNumber(byte[] b, int offset, int bytesCount) {
+        if (b.length - offset < bytesCount)
+            throw new IllegalArgumentException("length of array must by " + bytesCount + " bytes, but get " + (b.length - offset));
+
+        int k = (bytesCount - 1) * 8;
+        long l = 0;
+        for (int i = 0; i < bytesCount; i++) {
+            l |= ((long) b[offset + i] & 0xff) << k;
+            k -= 8;
+        }
+        return l;
+    }
+
+    public static void toBytes(long l, OutputStream out, int bytesCount) throws IOException {
+        int k = (bytesCount - 1) * 8;
+        for (int i = 0; i < bytesCount; i++) {
+            out.write((byte) (l >> k));
+            k -= 8;
+        }
+    }
+
+    public static byte[] toBytes(long l, int bytesCount) {
+        int k = (bytesCount - 1) * 8;
+        byte[] bytes = new byte[bytesCount];
+        for (int i = 0; i < bytesCount; i++) {
+            bytes[i] = (byte) (l >> k);
+            k -= 8;
+        }
+        return bytes;
+    }
+
 }
