@@ -4,7 +4,7 @@
  */
 package com.wizzardo.tools.security;
 
-import com.wizzardo.tools.WrappedException;
+import com.wizzardo.tools.misc.WrappedException;
 
 import java.io.IOException;
 import java.io.InputStream;

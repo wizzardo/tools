@@ -1,7 +1,7 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.Pair;
-import com.wizzardo.tools.WrappedException;
+import com.wizzardo.tools.collections.Pair;
+import com.wizzardo.tools.misc.WrappedException;
 
 import java.io.IOException;
 import java.io.OutputStream;

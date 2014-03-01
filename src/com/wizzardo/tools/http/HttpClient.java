@@ -1,10 +1,11 @@
-package com.wizzardo.tools;
+package com.wizzardo.tools.http;
 
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
 
+import com.wizzardo.tools.misc.WrappedException;
 import com.wizzardo.tools.io.IOTools;
 import com.wizzardo.tools.security.Base64;
 

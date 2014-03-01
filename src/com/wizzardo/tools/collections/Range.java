@@ -1,4 +1,4 @@
-package com.wizzardo.tools;
+package com.wizzardo.tools.collections;
 
 import java.util.Collection;
 import java.util.Iterator;

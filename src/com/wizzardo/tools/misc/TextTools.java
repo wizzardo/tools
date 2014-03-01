@@ -1,4 +1,4 @@
-package com.wizzardo.tools;
+package com.wizzardo.tools.misc;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

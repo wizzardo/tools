@@ -4,7 +4,7 @@
  */
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.CollectionTools;
+import com.wizzardo.tools.collections.CollectionTools;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

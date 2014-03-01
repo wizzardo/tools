@@ -1,6 +1,6 @@
 package com.wizzardo.tools.io;
 
-import com.wizzardo.tools.WrappedException;
+import com.wizzardo.tools.misc.WrappedException;
 
 import java.io.*;
 import java.util.ArrayList;

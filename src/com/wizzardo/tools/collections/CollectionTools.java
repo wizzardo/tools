@@ -1,4 +1,6 @@
-package com.wizzardo.tools;
+package com.wizzardo.tools.collections;
+
+import com.wizzardo.tools.collections.Range;
 
 import java.util.ArrayList;
 import java.util.Collection;

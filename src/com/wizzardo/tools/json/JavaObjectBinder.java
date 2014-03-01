@@ -1,6 +1,6 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.Pair;
+import com.wizzardo.tools.collections.Pair;
 
 import java.lang.reflect.Field;
 

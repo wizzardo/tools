@@ -1,6 +1,6 @@
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.Pair;
+import com.wizzardo.tools.collections.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;

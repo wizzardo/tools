@@ -4,7 +4,7 @@
  */
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.WrappedException;
+import com.wizzardo.tools.misc.WrappedException;
 
 import java.util.*;
 import java.util.regex.Matcher;

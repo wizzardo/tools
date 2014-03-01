@@ -4,8 +4,8 @@
  */
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.Range;
-import com.wizzardo.tools.WrappedException;
+import com.wizzardo.tools.collections.Range;
+import com.wizzardo.tools.misc.WrappedException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;

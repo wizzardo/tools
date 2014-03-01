@@ -5,7 +5,7 @@ package com.wizzardo.tools.xml;
  * Date: 12/24/12
  */
 
-import com.wizzardo.tools.CollectionTools;
+import com.wizzardo.tools.collections.CollectionTools;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
