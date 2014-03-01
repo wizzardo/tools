@@ -3,7 +3,7 @@
     <groupId>com.wizzardo.tools</groupId>
     <artifactId>tools</artifactId>
     <packaging>jar</packaging>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.3</version>
     <name>tools</name>
     <description>Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other</description>
     <url>https://github.com/wizzardo/Tools</url>
