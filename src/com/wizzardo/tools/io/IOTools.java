@@ -41,12 +41,8 @@ public class IOTools {
     }
 
     public static byte[] bytes(InputStream in) throws IOException {
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            IOTools.copy(in, out);
-            return out.toByteArray();
-        } finally {
-            IOTools.close(in);
-        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        IOTools.copy(in, out);
+        return out.toByteArray();
     }
 }
