@@ -84,16 +84,21 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         boolean inString = false;
         byte ch;
         char quote = 0;
+        char current;
         outer:
-        while (i < s.length) {
-            ch = (byte) s[i];
+        for (; i < s.length; i++) {
+            current = s[i];
             if (inString) {
-                if (ch == quote && s[i - 1] != '\\') {
+                if (current == quote && s[i - 1] != '\\') {
                     inString = false;
                 }
-                i++;
                 continue;
             }
+
+            if (current > 255)
+                continue;
+
+            ch = (byte) current;
             switch (ch) {
                 case '"': {
                     inString = s[i - 1] != '\\';
@@ -133,7 +138,6 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                     break;
                 }
             }
-            i++;
         }
 
         if (key != null && from != i) {

@@ -1,7 +1,6 @@
 package com.wizzardo.tools.json;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.google.gson.Gson;
@@ -89,6 +88,8 @@ public class JsonParserTest {
         long time;
         int n = 100, k = 0;
         String json = new String(bytes);
+//        String child = "{\"f\":3.0,\"d\":4.0,\"wrapped\":{\"value\":[{\"value\":\"wrapped!\"},{\"value\":\"ololo\"}]},\"b\":6,\"integer\":2,\"l\":5,\"list\":[4,5,6],\"i\":1,\"flag\":true,\"s\":\"ололо пыщпыщ qweqwe qwe qwe qwe qwe qwe qwe qwe qwe qwe qwe qw eqw eqw eqw eq we\",\"value\":25,\"anEnum\":\"TWO\",\"array\":[1,2,3]}";
+//        json = child;
 
         for (int i = 0; i < 1000; i++) {
 
@@ -96,7 +97,8 @@ public class JsonParserTest {
             for (int j = 0; j < n; j++) {
                 com.google.gson.JsonParser gson = new com.google.gson.JsonParser();
 //                k += gson.parse(new InputStreamReader(new ByteArrayInputStream(bytes))).getAsJsonArray().size();
-                k += gson.parse(json).getAsJsonArray().size();
+//                k += gson.parse(json).getAsJsonArray().size();
+                k += gson.parse(json).getAsJsonObject().hashCode();
             }
 
             time = System.currentTimeMillis() - time;
@@ -109,7 +111,8 @@ public class JsonParserTest {
 //                wizzardo.parse(bytes);
 //                k += wizzardo.getResult().asJsonArray().size();
 //                k += JsonObject.parse(new String(bytes)).asJsonArray().size();
-                k += JsonObject.parse(json).asJsonArray().size();
+//                k += JsonObject.parse(json).asJsonArray().size();
+                k += JsonObject.parse(json).asJsonObject().size();
             }
 
             time = System.currentTimeMillis() - time;
@@ -119,7 +122,8 @@ public class JsonParserTest {
 
             time = System.currentTimeMillis();
             for (int j = 0; j < n; j++) {
-                k += ((JSONArray) new DefaultJSONParser(json).parse()).size();
+//                k += ((JSONArray) new DefaultJSONParser(json).parse()).size();
+                k += ((JSONObject) new DefaultJSONParser(json).parse()).size();
             }
 
             time = System.currentTimeMillis() - time;
