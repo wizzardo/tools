@@ -9,9 +9,13 @@ package com.wizzardo.tools.http;
  * @author Moxa
  */
 public class HttpClient {
+    private static HttpSession session;
 
     public static Request connect(String url) {
-        return new Request(url);
+        if (session == null)
+            session = new HttpSession();
+
+        return session.createRequest(url);
     }
 
 }

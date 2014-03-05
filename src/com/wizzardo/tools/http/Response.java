@@ -19,7 +19,7 @@ import java.util.zip.GZIPInputStream;
  * Date: 3/1/14
  */
 public class Response {
-   private static ThreadLocal<SimpleDateFormat> dateFormatThreadLocal = new ThreadLocal<SimpleDateFormat>() {
+    private static ThreadLocal<SimpleDateFormat> dateFormatThreadLocal = new ThreadLocal<SimpleDateFormat>() {
         @Override
         public SimpleDateFormat get() {
             SimpleDateFormat format = super.get();
@@ -32,9 +32,14 @@ public class Response {
     };
 
     private HttpURLConnection connection;
+    private List<Cookie> cookies;
+    private HttpSession session;
 
-    protected Response(HttpURLConnection connection) {
+    protected Response(HttpURLConnection connection, HttpSession session) {
         this.connection = connection;
+        this.session = session;
+        if (session != null)
+            session.appendCookies(parseCookies());
     }
 
     public String asString() throws IOException {
@@ -70,7 +75,16 @@ public class Response {
         return new String(bytes, charset);
     }
 
-    public List<Cookie> getCookies() throws IOException {
+    public List<Cookie> getCookies() {
+        if (session != null)
+            return session.getCookies(connection.getURL());
+        else
+            return parseCookies();
+    }
+
+    private List<Cookie> parseCookies() {
+        if (cookies != null)
+            return cookies;
         //Set-Cookie: RMID=732423sdfs73242; expires=Fri, 31 Dec 2010 23:59:59 GMT; path=/; domain=.example.net
         List<Cookie> cookies = new ArrayList<Cookie>();
 
@@ -80,28 +94,28 @@ public class Response {
 
             Cookie cookie = new Cookie(kv[0], kv[1]);
 
-            kv = data[1].split("=", 2);
-            try {
-                cookie.expired = dateFormatThreadLocal.get().parse(kv[1]);
-            } catch (ParseException ignore) {
+            for (int i = 1; i < data.length; i++) {
+                kv = data[i].split("=", 2);
+                if (kv[0].equalsIgnoreCase("expires"))
+                    try {
+                        cookie.expired = dateFormatThreadLocal.get().parse(kv[1]);
+                    } catch (ParseException ignore) {
+                    }
+                else if (kv[0].equalsIgnoreCase("path"))
+                    cookie.path = kv[1];
+                else if (kv[0].equalsIgnoreCase("domain"))
+                    cookie.domain = kv[1];
             }
 
-            if (data.length > 2) {
-                kv = data[2].split("=", 2);
-                cookie.path = kv[1];
-            } else {
+            if (cookie.path == null)
                 cookie.path = "/";
-            }
 
-            if (data.length > 3) {
-                kv = data[3].split("=", 2);
-                cookie.domain = kv[1];
-            } else {
+            if (cookie.domain == null)
                 cookie.domain = connection.getURL().getHost();
-            }
+
             cookies.add(cookie);
         }
-
+        this.cookies = cookies;
         return cookies;
     }
 

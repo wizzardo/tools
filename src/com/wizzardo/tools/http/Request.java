@@ -1,229 +1,34 @@
 package com.wizzardo.tools.http;
 
 import com.wizzardo.tools.misc.WrappedException;
-import com.wizzardo.tools.security.Base64;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author: wizzardo
  * Date: 3/1/14
  */
-public class Request {
+public class Request extends RequestArguments<Request> {
 
-    private int maxRetryCount = 0;
-    private long pauseBetweenRetries = 0;
-    private ConnectionMethod method = ConnectionMethod.GET;
-    private LinkedHashMap<String, List<String>> params = new LinkedHashMap<String, List<String>>();
-    private HashMap<String, String> headers = new HashMap<String, String>();
-    private HashMap<String, byte[]> dataArrays = new HashMap<String, byte[]>();
-    private HashMap<String, String> dataTypes = new HashMap<String, String>();
-    private String url;
-    private boolean multipart = false;
-    private String charsetForEncoding = "utf-8";
-    private Proxy proxy;
-    private boolean redirects = true;
-    private byte[] data;
-    private HostnameVerifier hostnameVerifier;
-    private SSLSocketFactory sslFactory;
+    protected String url;
+    protected HttpSession session;
 
     public Request(String url) {
         this.url = url;
-        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.187 Safari/535.1");
-        headers.put("Accept-Encoding", "gzip, deflate");
-//            headers.put("Accept-Charset", "windows-1251,utf-8;q=0.7,*;q=0.3");
     }
 
-    public Request setMaxRetryCount(int n) {
-        maxRetryCount = n;
-        return this;
+    @Override
+    public Request createRequest(String url) {
+        return super.createRequest(url).setSession(session);
     }
 
-    public Request setBasicAuthentication(String user, String password) {
-        header("Authorization", "Basic " + Base64.encodeToString((user + ":" + password).getBytes()));
-        return this;
-    }
-
-    public Request setProxy(Proxy proxy) {
-        this.proxy = proxy;
-        return this;
-    }
-
-    public Request maxRetryCount(int n) {
-        maxRetryCount = n;
-        return this;
-    }
-
-    public Request setPauseBetweenRetries(long pause) {
-        pauseBetweenRetries = pause;
-        return this;
-    }
-
-    public Request pauseBetweenRetries(long pause) {
-        pauseBetweenRetries = pause;
-        return this;
-    }
-
-    public Request setMethod(ConnectionMethod method) {
-        this.method = method;
-        return this;
-    }
-
-    public Request method(ConnectionMethod method) {
-        this.method = method;
-        return this;
-    }
-
-    public Request setCookies(String cookie) {
-        headers.put("Cookie", cookie);
-        return this;
-    }
-
-    public Request cookies(String cookie) {
-        headers.put("Cookie", cookie);
-        return this;
-    }
-
-    public Request cookies(List<Cookie> cookies) {
-        StringBuilder sb = new StringBuilder();
-        for (Cookie c : cookies) {
-            if (sb.length() > 0)
-                sb.append("; ");
-            sb.append(c.key).append("=").append(c.value);
-        }
-        headers.put("Cookie", sb.toString());
-        return this;
-    }
-
-    public Request setCookies(List<Cookie> cookies) {
-        return cookies(cookies);
-    }
-
-    public Request setReferer(String referer) {
-        headers.put("Referer", referer);
-        return this;
-    }
-
-    public Request referer(String referer) {
-        headers.put("Referer", referer);
-        return this;
-    }
-
-    public Request setJson(String json) {
-        return json(json);
-    }
-
-    public Request json(String json) {
-        try {
-            data = json.getBytes("utf-8");
-        } catch (UnsupportedEncodingException ignored) {
-        }
-        setContentType(ContentType.JSON);
-        return this;
-    }
-
-    public Request setXml(String xml) {
-        return xml(xml);
-    }
-
-    public Request xml(String xml) {
-        try {
-            data = xml.getBytes("utf-8");
-        } catch (UnsupportedEncodingException ignored) {
-        }
-        setContentType(ContentType.XML);
-        return this;
-    }
-
-    public Request setData(byte[] data, String contentType) {
-        return data(data, contentType);
-    }
-
-    public Request data(byte[] data, String contentType) {
-        this.data = data;
-        setContentType(contentType);
-        return this;
-    }
-
-    public Request addParameter(String key, String value) {
-        List<String> l = params.get(key);
-        if (l == null) {
-            l = new ArrayList<String>();
-            params.put(key, l);
-        }
-        l.add(value);
-        return this;
-    }
-
-    public Request addParameters(String key, List<String> values) {
-        List<String> l = params.get(key);
-        if (l == null) {
-            l = new ArrayList<String>();
-            params.put(key, l);
-        }
-        l.addAll(values);
-        return this;
-    }
-
-    public Request setUrlEncoding(String charset) {
-        charsetForEncoding = charset;
-        return this;
-    }
-
-    public Request disableRedirects() {
-        redirects = false;
-        return this;
-    }
-
-    public Request addFile(String key, File value) {
-        return addFile(key, value.getAbsolutePath());
-    }
-
-    public Request addFile(String key, String path) {
-        multipart = true;
-        method = ConnectionMethod.POST;
-        addParameter(key, "file://" + path);
-        return this;
-    }
-
-    public Request addByteArray(String key, byte[] array, String name) {
-        return addByteArray(key, array, name, null);
-    }
-
-    public Request addByteArray(String key, byte[] array, String name, String type) {
-        multipart = true;
-        method = ConnectionMethod.POST;
-        addParameter(key, "array://" + name);
-        dataArrays.put(key, array);
-        if (type != null) {
-            dataTypes.put(key, type);
-        }
-        return this;
-    }
-
-    public Request data(String key, String value) {
-        addParameter(key, value);
-        return this;
-    }
-
-    public Request data(String key, List<String> values) {
-        addParameters(key, values);
-        return this;
-    }
-
-    public Request setHeader(String key, String value) {
-        headers.put(key, value);
-        return this;
-    }
-
-    public Request header(String key, String value) {
-        headers.put(key, value);
-        return this;
+    public String getUrl() {
+        return url;
     }
 
     public Response connect() throws IOException {
@@ -240,20 +45,20 @@ public class Request {
         return connect(0);
     }
 
-    public Request setHostnameVerifier(HostnameVerifier hv) {
-        this.hostnameVerifier = hv;
+    protected Request setSession(HttpSession session) {
+        this.session = session;
         return this;
     }
 
-    public Request setSSLSocketFactory(SSLSocketFactory sslFactory) {
-        this.sslFactory = sslFactory;
+    @Override
+    protected Request self() {
         return this;
     }
 
     private Response connect(int retryNumber) throws IOException {
         try {
             if (method == ConnectionMethod.GET || (method == ConnectionMethod.POST && data != null)) {
-                url = createURL(url, params);
+                url = createURL(url.toString(), params);
             }
             URL u = new URL(url);
             HttpURLConnection c;
@@ -331,7 +136,7 @@ public class Request {
                     out.close();
                 }
             }
-            return new Response(c);
+            return new Response(c, session);
         } catch (SocketTimeoutException e) {
             if (retryNumber < maxRetryCount) {
                 try {
@@ -366,25 +171,6 @@ public class Request {
 //            System.out.println(l);
         return l;
     }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public String url() {
-        return url;
-    }
-
-    public Request setContentType(String contentType) {
-        setHeader("Content-Type", contentType);
-        return this;
-    }
-
-    public Request setContentType(ContentType contentType) {
-        setHeader("Content-Type", contentType.text);
-        return this;
-    }
-
 
     private String createPostParameters(Map<String, List<String>> params, String urlEncoding) throws UnsupportedEncodingException {
         if (params == null || params.isEmpty()) {
