@@ -11,6 +11,7 @@ public class SizedBlockInputStream extends InputStream {
     protected InputStream in;
     protected long blockLength = 0;
     protected long readed = 0;
+    protected ProgressListener listener;
     protected BlockSizeType sizeType;
 
     public SizedBlockInputStream(InputStream in) {
@@ -39,6 +40,10 @@ public class SizedBlockInputStream extends InputStream {
         return false;
     }
 
+    public void setListener(ProgressListener listener) {
+        this.listener = listener;
+    }
+
     public long lenght() {
         return blockLength;
     }
@@ -55,6 +60,9 @@ public class SizedBlockInputStream extends InputStream {
             return -1;
         }
         readed += r;
+
+        if (listener != null)
+            listener.setProgress((int) (readed * 100 / blockLength));
         return r;
     }
 
