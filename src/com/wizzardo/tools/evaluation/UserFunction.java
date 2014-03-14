@@ -38,6 +38,11 @@ public class UserFunction extends Expression {
                 e.setVariable(v);
     }
 
+    public void prepare(Map<String, Object> model) {
+        if (eh == null)
+            eh = EvalTools.prepare(exp, model, functions);
+    }
+
     @Override
     public UserFunction clone() {
         String[] args = null;
