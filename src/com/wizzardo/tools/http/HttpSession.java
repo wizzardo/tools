@@ -45,7 +45,7 @@ public class HttpSession extends RequestArguments<HttpSession> {
         List<Cookie> cookies = new ArrayList<Cookie>();
         String domain = url.getHost();
         while (domain.length() > 0) {
-            System.out.println(domain);
+//            System.out.println(domain);
             List<Cookie> l = this.cookies.get(domain);
             if (l != null)
                 for (Cookie cookie : l)
