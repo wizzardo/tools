@@ -24,28 +24,32 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     public static JsonItem parse(String s) {
-        s = s.trim();
-        return parse(s.toCharArray());
-    }
-
-    public static <T> T parse(String s, Class<T> clazz) {
-        s = s.trim();
-        return parse(s.toCharArray(), clazz);
-    }
-
-    public static JsonItem parse(char[] s) {
         return new JsonItem(parse(s, null));
     }
 
-    public static <T> T parse(char[] s, Class<T> clazz) {
+    public static <T> T parse(String s, Class<T> clazz) {
+        return parse(s, clazz, null);
+    }
+
+    public static <T, G> T parse(String s, Class<T> clazz, Class<G> generic) {
+        s = s.trim();
+        return parse(s.toCharArray(), clazz, generic);
+    }
+
+    public static JsonItem parse(char[] s) {
+        return new JsonItem(parse(s, null, null));
+    }
+
+    public static <T, G> T parse(char[] s, Class<T> clazz, Class<G> generic) {
         // check first char
+        GenericInfo g = generic != null ? new GenericInfo(generic) : null;
         if (s[0] == '{') {
-            ObjectBinder binder = Binder.getObjectBinder(clazz);
+            ObjectBinder binder = Binder.getObjectBinder(clazz, g);
             parse(s, 0, binder);
             return (T) binder.getObject();
         }
         if (s[0] == '[') {
-            ArrayBinder binder = Binder.getArrayBinder(clazz, null);
+            ArrayBinder binder = Binder.getArrayBinder(clazz, g);
             JsonArray.parse(s, 0, binder);
             return (T) binder.getObject();
         }
@@ -221,9 +225,9 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                 sb.append(',');
             comma = true;
             if (entry.getValue() == null)
-                sb.append(entry.getKey()).append(":null");
+                sb.append('"').append(entry.getKey()).append('"').append(":null");
             else {
-                sb.append(entry.getKey()).append(':');
+                sb.append('"').append(entry.getKey()).append('"').append(':');
                 entry.getValue().toJson(sb);
             }
         }

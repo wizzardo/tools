@@ -3,15 +3,16 @@ package com.wizzardo.tools.json;
 import com.wizzardo.tools.collections.Pair;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 
 /**
  * @author: wizzardo
  * Date: 2/6/14
  */
 class JavaObjectBinder implements ObjectBinder {
-    private Object object;
-    private Class clazz;
-    private GenericInfo genericInfo;
+    protected Object object;
+    protected Class clazz;
+    protected GenericInfo genericInfo;
 
     public JavaObjectBinder(Class clazz) {
         this(clazz, null);
@@ -30,7 +31,7 @@ class JavaObjectBinder implements ObjectBinder {
 
     @Override
     public void put(String key, JsonItem value) {
-        Binder.setValue(object, key, value.ob);
+        put(key, value.ob);
     }
 
     @Override
@@ -47,6 +48,10 @@ class JavaObjectBinder implements ObjectBinder {
         Pair<Pair<Field, GenericInfo>, Binder.Serializer> pair = Binder.getField(clazz, key);
         if (pair == null)
             return null;
+
+        if (Map.class.isAssignableFrom(pair.key.key.getType()))
+            return new JavaMapBinder(pair.key.key.getType(), pair.key.value);
+
         return new JavaObjectBinder(pair.key.key.getType(), pair.key.value);
     }
 

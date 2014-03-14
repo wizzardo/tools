@@ -214,6 +214,9 @@ public class JsonItem {
 
     @SuppressWarnings("unchecked")
     public static <T> T getAs(Object value, Class<T> clazz) {
+        if (clazz.isAssignableFrom(value.getClass()))
+            return (T) value;
+
         return new JsonItem(value).getAs(clazz);
     }
 

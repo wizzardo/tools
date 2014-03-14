@@ -23,11 +23,11 @@ public class Binder {
         STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT, ENUM
     }
 
-    static ObjectBinder getObjectBinder(Class clazz) {
+    static ObjectBinder getObjectBinder(Class clazz, GenericInfo genereic) {
         if (clazz == null)
             return new JsonObjectBinder();
         else
-            return new JavaObjectBinder(clazz);
+            return new JavaObjectBinder(clazz, genereic);
     }
 
     static ArrayBinder getArrayBinder(Class clazz, GenericInfo genereic) {
@@ -74,6 +74,10 @@ public class Binder {
                 Collection collection = createCollection(clazz);
                 return (T) collection;
             }
+            case MAP: {
+                Map map = createMap(clazz);
+                return (T) map;
+            }
         }
         return null;
     }
@@ -112,12 +116,12 @@ public class Binder {
         return getFields(clazz).get(key);
     }
 
-    public static void setValue(Object object, String key, Object value) {
+    public static boolean setValue(Object object, String key, Object value) {
         Class clazz = object.getClass();
 
         Pair<Pair<Field, GenericInfo>, Serializer> pair = getField(clazz, key);
         if (pair == null)
-            return;
+            return false;
 
         Field field = pair.key.key;
         Serializer s = pair.value;
@@ -142,6 +146,7 @@ public class Binder {
         } catch (IllegalAccessException e) {
             throw new WrappedException(e);
         }
+        return true;
     }
 
 
@@ -164,7 +169,7 @@ public class Binder {
             return Serializer.MAP;
         else if (Date.class.isAssignableFrom(clazz))
             return Serializer.DATE;
-        else if (clazz.getName().charAt(0) == '[')
+        else if (Array.class == clazz || clazz.getName().charAt(0) == '[')
             return Serializer.ARRAY;
         else if (clazz.isEnum())
             return Serializer.ENUM;
@@ -198,7 +203,7 @@ public class Binder {
                 }
                 instance = (T) c.newInstance();
 
-                for (Pair<Pair<Field,GenericInfo>, Serializer> pair : getFields(clazz).values()) {
+                for (Pair<Pair<Field, GenericInfo>, Serializer> pair : getFields(clazz).values()) {
                     Field field = pair.key.key;
                     Serializer s = pair.value;
                     JsonObject jsonObject = json.asJsonObject();
@@ -283,12 +288,49 @@ public class Binder {
         }
     }
 
+    static Map createMap(Class clazz) {
+        Constructor c = cachedConstructors.get(clazz);
+        try {
+            if (c == null) {
+                if (clazz == Map.class) {
+                    c = HashMap.class.getDeclaredConstructor();
+                } else {
+                    c = clazz.getDeclaredConstructor();
+                }
+                cachedConstructors.put(clazz, c);
+            }
+            return (Map) c.newInstance();
+        } catch (IllegalAccessException e) {
+            throw new WrappedException(e);
+        } catch (NoSuchMethodException e) {
+            throw new WrappedException(e);
+        } catch (InstantiationException e) {
+            throw new WrappedException(e);
+        } catch (InvocationTargetException e) {
+            throw new WrappedException(e);
+        }
+    }
+
     static Object createArray(Class clazz, int size) {
         return Array.newInstance(clazz.getComponentType(), size);
     }
 
+    static Object createArray(Class clazz,GenericInfo generic, int size) {
+        if (clazz == Array.class)
+            return Array.newInstance(generic.typeParameters[0].clazz, size);
+        else
+            return Array.newInstance(clazz.getComponentType(), size);
+    }
+
     static Class getArrayType(Class clazz) {
         return clazz.getComponentType();
+    }
+
+    static Class getArrayType(Class clazz,GenericInfo generic) {
+        if (clazz == Array.class)
+            return generic.typeParameters[0].clazz;
+        else
+            return clazz.getComponentType();
     }
 
     private static boolean isGetter(Method method, Class clazz) {
@@ -385,6 +427,12 @@ public class Binder {
     private static void toJSON(String name, Object src, Appender sb, Serializer serializer) {
         if (name != null)
             sb.append("\"").append(name).append("\"").append(":");
+
+        if (src == null) {
+            sb.append("null");
+            return;
+        }
+
         switch (serializer) {
             case NUMBER_BOOLEAN: {
                 sb.append(src);

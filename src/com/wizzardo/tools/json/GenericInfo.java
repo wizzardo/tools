@@ -1,9 +1,8 @@
 package com.wizzardo.tools.json;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import sun.reflect.generics.reflectiveObjects.GenericArrayTypeImpl;
+
+import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,8 +49,18 @@ class GenericInfo {
                 parent = null;
                 typeParameters = new GenericInfo[0];
             }
+        } else if (c instanceof GenericArrayTypeImpl) {
+            parent = null;
+            clazz = Array.class;
+            typeParameters = new GenericInfo[]{new GenericInfo(((GenericArrayTypeImpl) c).getGenericComponentType())};
         } else {
             clazz = (Class) c;
+            if (clazz.isArray()) {
+                typeParameters = new GenericInfo[]{new GenericInfo(clazz.getComponentType())};
+                parent = null;
+                return;
+            }
+
             this.typeParameters = new GenericInfo[0];
             if (!clazz.isEnum() && clazz.getGenericSuperclass() != null)
                 parent = new GenericInfo(clazz.getGenericSuperclass(), types);

@@ -1,6 +1,5 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.*;
 import com.wizzardo.tools.collections.Pair;
 
 import java.lang.reflect.Array;
@@ -9,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author: wizzardo
@@ -50,8 +50,8 @@ class JavaArrayBinder implements ArrayBinder {
             return l;
         else {
             List l = (List) this.l;
-            Object array = Binder.createArray(clazz, l.size());
-            Class type = Binder.getArrayType(clazz);
+            Object array = Binder.createArray(clazz, generic, l.size());
+            Class type = Binder.getArrayType(clazz, generic);
             for (int i = 0; i < l.size(); i++) {
                 Array.set(array, i, JsonItem.getAs(l.get(i), type));
             }
@@ -79,6 +79,9 @@ class JavaArrayBinder implements ArrayBinder {
 
     @Override
     public ObjectBinder getObjectBinder() {
+        if (Map.class.isAssignableFrom(generic.clazz))
+            return new JavaMapBinder(generic.clazz, generic);
+
         return new JavaObjectBinder(generic.clazz, generic);
     }
 

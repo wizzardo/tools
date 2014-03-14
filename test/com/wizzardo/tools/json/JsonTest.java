@@ -5,9 +5,9 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author: moxa
@@ -302,5 +302,26 @@ public class JsonTest {
     public void testUnicode() {
         String myString = "\\u0048\\u0065\\u006C\\u006C\\u006F World";
         Assert.assertEquals("Hello World", JsonObject.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
+    }
+
+    static class MapTest {
+        Map<Integer, String> integerStringMap;
+        Map<Integer, String[]> integerStringArrayMap;
+        Map map;
+        List<Map<String, Integer>> listMaps;
+    }
+
+    @Test
+    public void testMapBinding() {
+        String data = "{integerStringMap:{1:'value'},integerStringArrayMap:{2:['foo','bar']},map:{'key':'object'},listMaps:[{'foo':1,'bar':2},{'foo':3,'bar':4}]}";
+        MapTest mapTest = JsonObject.parse(data, MapTest.class);
+
+        assertEquals("value", mapTest.integerStringMap.get(1));
+        assertArrayEquals(new String[]{"foo", "bar"}, mapTest.integerStringArrayMap.get(2));
+        assertEquals("object", mapTest.map.get("key"));
+        assertEquals((Integer) 1, mapTest.listMaps.get(0).get("foo"));
+        assertEquals((Integer) 2, mapTest.listMaps.get(0).get("bar"));
+        assertEquals((Integer) 3, mapTest.listMaps.get(1).get("foo"));
+        assertEquals((Integer) 4, mapTest.listMaps.get(1).get("bar"));
     }
 }
