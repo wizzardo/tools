@@ -21,7 +21,11 @@ class JavaArrayBinder implements ArrayBinder {
     private GenericInfo generic;
 
     public JavaArrayBinder(Class clazz, GenericInfo generic) {
-        this.generic = generic;
+        if (generic != null)
+            this.generic = generic;
+        else
+            this.generic = new GenericInfo(Object.class);
+
         this.clazz = clazz;
         serializer = Binder.classToSerializer(clazz);
         if (serializer == Binder.Serializer.ARRAY) {
@@ -41,7 +45,7 @@ class JavaArrayBinder implements ArrayBinder {
 
     @Override
     public void add(JsonItem value) {
-        l.add(value.ob);
+        l.add(value.getAs(generic.clazz));
     }
 
     @Override
