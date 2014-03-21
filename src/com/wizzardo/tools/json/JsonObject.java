@@ -5,6 +5,8 @@ import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.wizzardo.tools.json.JsonUtils.*;
+
 /**
  * @author: moxa
  * Date: 12/26/12
@@ -31,18 +33,18 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return parse(s, clazz, null);
     }
 
-    public static <T, G> T parse(String s, Class<T> clazz, Class<G> generic) {
+    public static <T, G> T parse(String s, Class<T> clazz, Class<G>... generic) {
         s = s.trim();
         return parse(s.toCharArray(), clazz, generic);
     }
 
     public static JsonItem parse(char[] s) {
-        return new JsonItem(parse(s, null, null));
+        return new JsonItem(parse(s, null));
     }
 
-    public static <T, G> T parse(char[] s, Class<T> clazz, Class<G> generic) {
+    public static <T, G> T parse(char[] s, Class<T> clazz, Class<G>... generic) {
         // check first char
-        GenericInfo g = generic != null ? new GenericInfo(generic) : null;
+        GenericInfo g = new GenericInfo(clazz, generic);
         if (s[0] == '{') {
             ObjectBinder binder = Binder.getObjectBinder(clazz, g);
             parse(s, 0, binder);
@@ -61,93 +63,83 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return this;
     }
 
-    private static String parseKey(char[] s, int from, int to) {
-        while ((from < to) && (s[from] <= ' ')) {
-            from++;
-        }
-        while ((from < to) && (s[to] <= ' ')) {
-            to--;
-        }
-        String key = new String(s, from, to - from);
-        if ((key.charAt(0) == '"' && key.charAt(key.length() - 1) == '"') || key.charAt(0) == '\'' && key.charAt(key.length() - 1) == '\'') {
-            key = key.substring(1, key.length() - 1);
-        }
-        return key;
-    }
-
-    private static void parseValue(ObjectBinder json, String key, char[] s, int from, int to) {
-        JsonItem item = JsonItem.parse(s, from, to);
-        if (item != null)
-            json.put(key, item);
-    }
-
-
     static int parse(char[] s, int from, ObjectBinder json) {
         int i = ++from;
-        String key = null;
-        boolean inString = false;
-        byte ch;
-        char quote = 0;
         char current;
         outer:
         for (; i < s.length; i++) {
             current = s[i];
-            if (inString) {
-                if (current == quote && s[i - 1] != '\\') {
-                    inString = false;
-                }
-                continue;
-            }
 
-            if (current > 255)
+            if (current <= ' ')
                 continue;
 
-            ch = (byte) current;
-            switch (ch) {
-                case '"': {
-                    inString = s[i - 1] != '\\';
-                    quote = '"';
-                    break;
-                }
-                case '\'': {
-                    inString = s[i - 1] != '\\';
-                    quote = '\'';
-                    break;
-                }
-                case ':': {
-                    key = parseKey(s, from, i);
-                    from = i + 1;
-                    break;
-                }
-                case ',': {
-                    parseValue(json, key, s, from, i);
-                    from = i + 1;
+            if (current == '}')
+                break;
+
+            JsonItem key = new JsonItem();
+            i = parseKey(key, s, i, s.length);
+
+            i = skipSpaces(s, i);
+
+            current = s[i];
+
+//            if (current > 256)
+//                i = parseValue2(json, s, i, s.length);
+//            else
+            switch (current) {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case '-': {
+                    JsonItem holder = new JsonItem();
+                    i = parseNumber(holder, s, i, s.length);
+                    json.put(key.asString(), holder);
                     break;
                 }
                 case '{': {
-                    ObjectBinder ob = json.getObjectBinder(key);
+                    ObjectBinder ob = json.getObjectBinder(key.asString());
                     i = JsonObject.parse(s, i, ob);
-                    from = i + 1;
-                    json.put(key, ob.getObject());
+                    json.put(key.asString(), ob.getObject());
+                    break;
+                }
+                case '[': {
+                    ArrayBinder ob = json.getArrayBinder(key.asString());
+                    i = JsonArray.parse(s, i, ob);
+                    json.put(key.asString(), ob.getObject());
                     break;
                 }
                 case '}': {
                     break outer;
                 }
-                case '[': {
-                    ArrayBinder ob = json.getArrayBinder(key);
-                    i = JsonArray.parse(s, i, ob);
-                    from = i + 1;
-                    json.put(key, ob.getObject());
-                    break;
+
+                default: {
+                    JsonItem holder = new JsonItem();
+                    i = parseValue(holder, s, i, s.length, '}');
+                    json.put(key.asString(), holder);
                 }
             }
-        }
 
-        if (key != null && from != i) {
-            parseValue(json, key, s, from, i);
+
+            i = skipSpaces(s, i);
+            current = s[i];
+
+            if (current == ',')
+                continue;
+
+            if (current == '}')
+                break;
+
+            throw new IllegalStateException("here must be ',' or '}' , but found: " + current);
+
         }
-        return i;
+        return i + 1;
     }
 
     public static String escape(String s) {
