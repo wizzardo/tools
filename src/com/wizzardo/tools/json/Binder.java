@@ -27,14 +27,14 @@ public class Binder {
         if (clazz == null)
             return new JsonObjectBinder();
         else
-            return new JavaObjectBinder(clazz, genereic);
+            return new JavaObjectBinder(genereic);
     }
 
     static ArrayBinder getArrayBinder(Class clazz, GenericInfo genereic) {
         if (clazz == null)
             return new JsonArrayBinder();
         else
-            return new JavaArrayBinder(clazz, genereic);
+            return new JavaArrayBinder(genereic);
     }
 
     static <T> T createInstance(Class<T> clazz) {
@@ -131,6 +131,7 @@ public class Binder {
                 case STRING:
                 case NUMBER_BOOLEAN:
                     field.set(object, JsonItem.getAs(value, field.getType()));
+//                    JsonItem.setField(value, field,object);
                     break;
                 case ENUM:
                     if (value == null)
@@ -315,7 +316,7 @@ public class Binder {
         return Array.newInstance(clazz.getComponentType(), size);
     }
 
-    static Object createArray(Class clazz,GenericInfo generic, int size) {
+    static Object createArray(Class clazz, GenericInfo generic, int size) {
         if (clazz == Array.class)
             return Array.newInstance(generic.typeParameters[0].clazz, size);
         else
@@ -326,7 +327,7 @@ public class Binder {
         return clazz.getComponentType();
     }
 
-    static Class getArrayType(Class clazz,GenericInfo generic) {
+    static Class getArrayType(Class clazz, GenericInfo generic) {
         if (clazz == Array.class)
             return generic.typeParameters[0].clazz;
         else

@@ -14,12 +14,8 @@ class JavaObjectBinder implements ObjectBinder {
     protected Class clazz;
     protected GenericInfo genericInfo;
 
-    public JavaObjectBinder(Class clazz) {
-        this(clazz, null);
-    }
-
-    public JavaObjectBinder(Class clazz, GenericInfo genericInfo) {
-        this.clazz = clazz;
+    public JavaObjectBinder(GenericInfo genericInfo) {
+        this.clazz = genericInfo.clazz;
         this.genericInfo = genericInfo;
         object = Binder.createInstance(clazz);
     }
@@ -50,9 +46,9 @@ class JavaObjectBinder implements ObjectBinder {
             return null;
 
         if (Map.class.isAssignableFrom(pair.key.key.getType()))
-            return new JavaMapBinder(pair.key.key.getType(), pair.key.value);
+            return new JavaMapBinder(pair.key.value);
 
-        return new JavaObjectBinder(pair.key.key.getType(), pair.key.value);
+        return new JavaObjectBinder(pair.key.value);
     }
 
     @Override
@@ -61,9 +57,9 @@ class JavaObjectBinder implements ObjectBinder {
         if (genericInfo != null) {
             GenericInfo type = genericInfo.getGenericType(f.key);
             if (type != null)
-                return new JavaArrayBinder(type.clazz, type.typeParameters[0]);
+                return new JavaArrayBinder(type);
         }
 
-        return new JavaArrayBinder(f.value.clazz, f.value.typeParameters.length == 1 ? f.value.typeParameters[0] : null);
+        return new JavaArrayBinder(f.value);
     }
 }

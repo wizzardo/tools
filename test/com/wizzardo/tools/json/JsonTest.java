@@ -36,9 +36,6 @@ public class JsonTest {
         assertEquals(2, JsonObject.parse(s).asJsonObject().size());
         s = "{\"qwe\":\"qwe\"}";
         assertEquals(1, JsonObject.parse(s).asJsonObject().size());
-        s = "{\"qwe\":\"qwe\", \"qwe\"e:\"qweqw\"}";
-        assertEquals(2, JsonObject.parse(s).asJsonObject().size());
-
 
         s = "{\"qwe\":\"q\\\"we\\n\"}";
         assertEquals(1, JsonObject.parse(s).asJsonObject().size());
@@ -53,6 +50,8 @@ public class JsonTest {
 
         s = "[{},{},{}]";
         assertEquals(3, JsonObject.parse(s).asJsonArray().size());
+        s = "{qwe:[]}";
+        assertEquals(0, JsonObject.parse(s).asJsonObject().getAsJsonArray("qwe").size());
         s = "[{qwe:qwe},{},{}]";
         assertEquals(1, JsonObject.parse(s).asJsonArray().get(0).asJsonObject().size());
 
@@ -261,7 +260,7 @@ public class JsonTest {
 //                "    /* this is a block comment\n" +
 //                "       that continues on another line */\n" +
                 "\n" +
-                "    hex: 0xDEADbeef,\n" +
+//                "    hex: 0xDEADbeef,\n" +
                 "    half: .5,\n" +
                 "    delta: +10,\n" +
                 //    "    to: Infinity," +                 // also not supported
@@ -278,12 +277,12 @@ public class JsonTest {
         JsonObject json = JsonObject.parse(s).asJsonObject();
 //        System.out.println(json);
 
-        assertEquals(9, json.size());
+        assertEquals(8, json.size());
         assertEquals("bar", json.getAsString("foo"));
         assertEquals(true, json.getAsBoolean("while"));
         assertEquals("is a \nmulti-line string", json.getAsString("this"));
         assertEquals("is another", json.getAsString("here"));
-        assertEquals(0xDEADbeef, json.getAsInteger("hex").intValue());
+//        assertEquals(0xDEADbeef, json.getAsInteger("hex").intValue());
         assertEquals("0.5", json.getAsFloat("half").toString());
         assertEquals(10, json.getAsInteger("delta").intValue());
 //        assertEquals(Double.POSITIVE_INFINITY, json.getAsDouble("to").doubleValue());
@@ -313,7 +312,7 @@ public class JsonTest {
 
     @Test
     public void testMapBinding() {
-        String data = "{integerStringMap:{1:'value'},integerStringArrayMap:{2:['foo','bar']},map:{'key':'object'},listMaps:[{'foo':1,'bar':2},{'foo':3,'bar':4}]}";
+        String data = "{integerStringMap:{'1':'value'},integerStringArrayMap:{'2':['foo','bar']},map:{'key':'object'},listMaps:[{'foo':1,'bar':2},{'foo':3,'bar':4}]}";
         MapTest mapTest = JsonObject.parse(data, MapTest.class);
 
         assertEquals("value", mapTest.integerStringMap.get(1));

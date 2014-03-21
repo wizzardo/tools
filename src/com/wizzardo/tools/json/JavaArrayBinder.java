@@ -20,13 +20,13 @@ class JavaArrayBinder implements ArrayBinder {
     private Class clazz;
     private GenericInfo generic;
 
-    public JavaArrayBinder(Class clazz, GenericInfo generic) {
+    public JavaArrayBinder(GenericInfo generic) {
         if (generic != null)
             this.generic = generic;
         else
             this.generic = new GenericInfo(Object.class);
 
-        this.clazz = clazz;
+        this.clazz = generic.clazz;
         serializer = Binder.classToSerializer(clazz);
         if (serializer == Binder.Serializer.ARRAY) {
             l = new ArrayList();
@@ -45,7 +45,7 @@ class JavaArrayBinder implements ArrayBinder {
 
     @Override
     public void add(JsonItem value) {
-        l.add(value.getAs(generic.clazz));
+        l.add(value.getAs(generic.typeParameters[0].clazz));
     }
 
     @Override
@@ -83,15 +83,15 @@ class JavaArrayBinder implements ArrayBinder {
 
     @Override
     public ObjectBinder getObjectBinder() {
-        if (Map.class.isAssignableFrom(generic.clazz))
-            return new JavaMapBinder(generic.clazz, generic);
+        if (Map.class.isAssignableFrom(generic.typeParameters[0].clazz))
+            return new JavaMapBinder(generic.typeParameters[0]);
 
-        return new JavaObjectBinder(generic.clazz, generic);
+        return new JavaObjectBinder(generic.typeParameters[0]);
     }
 
     @Override
     public ArrayBinder getArrayBinder() {
         Pair<Class, Type> pair = getGeneric();
-        return new JavaArrayBinder(pair.key, null);
+        return new JavaArrayBinder(new GenericInfo(pair.key));
     }
 }

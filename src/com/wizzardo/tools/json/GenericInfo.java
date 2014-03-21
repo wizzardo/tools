@@ -17,7 +17,20 @@ class GenericInfo {
     private Map<String, GenericInfo> types;
 
     GenericInfo(Type c) {
-        this(c, null);
+        this(c, (Map) null);
+    }
+
+    GenericInfo(Class c, Class... generics) {
+        clazz = c;
+        parent = null;
+        if (generics == null) {
+            typeParameters = new GenericInfo[0];
+            return;
+        }
+        typeParameters = new GenericInfo[generics.length];
+        for (int i = 0; i < generics.length; i++) {
+            typeParameters[i] = new GenericInfo(generics[i]);
+        }
     }
 
     GenericInfo(Type c, Map<String, GenericInfo> types) {
@@ -54,13 +67,15 @@ class GenericInfo {
             clazz = Array.class;
             typeParameters = new GenericInfo[]{new GenericInfo(((GenericArrayTypeImpl) c).getGenericComponentType())};
         } else {
-            clazz = (Class) c;
-            if (clazz.isArray()) {
-                typeParameters = new GenericInfo[]{new GenericInfo(clazz.getComponentType())};
+            Class cl = (Class) c;
+            if (cl.isArray()) {
+                clazz = Array.class;
+                typeParameters = new GenericInfo[]{new GenericInfo(cl.getComponentType())};
                 parent = null;
                 return;
             }
 
+            clazz = cl;
             this.typeParameters = new GenericInfo[0];
             if (!clazz.isEnum() && clazz.getGenericSuperclass() != null)
                 parent = new GenericInfo(clazz.getGenericSuperclass(), types);

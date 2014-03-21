@@ -7,6 +7,9 @@ package com.wizzardo.tools.json;
 public class JsonItem {
     Object ob;
 
+    protected JsonItem() {
+    }
+
     public JsonItem(Object ob) {
         this.ob = ob;
     }
@@ -222,6 +225,9 @@ public class JsonItem {
 
     @SuppressWarnings("unchecked")
     public <T> T getAs(Class<T> clazz) {
+        if (ob == null)
+            return null;
+
         if (String.class == clazz) {
             return (T) asString();
         } else if (Integer.class == clazz || int.class == clazz) {
@@ -238,7 +244,8 @@ public class JsonItem {
             return (T) asByte();
         } else if (Short.class == clazz || short.class == clazz) {
             return (T) asShort();
-        }
+        } else if (clazz.isAssignableFrom(ob.getClass()))
+            return (T) ob;
         return null;
     }
 
@@ -325,4 +332,7 @@ public class JsonItem {
         }
     }
 
+    protected void set(Object value) {
+        ob = value;
+    }
 }

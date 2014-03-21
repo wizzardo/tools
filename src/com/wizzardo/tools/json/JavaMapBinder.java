@@ -7,17 +7,17 @@ import java.util.Map;
  * Date: 3/14/14
  */
 public class JavaMapBinder extends JavaObjectBinder {
-    private boolean wrap = false;
     private Map that;
+    private GenericInfo[] type;
 
-    public JavaMapBinder(Class clazz) {
-        super(clazz);
-    }
-
-    public JavaMapBinder(Class clazz, GenericInfo genericInfo) {
-        super(clazz, genericInfo);
+    public JavaMapBinder(GenericInfo genericInfo) {
+        super(genericInfo);
         that = (Map) object;
-        wrap = genericInfo.typeParameters.length == 2 && genericInfo.typeParameters[0].clazz != Object.class && genericInfo.typeParameters[0].clazz != String.class;
+        if (genericInfo.typeParameters.length != 2)
+            type = new GenericInfo[]{new GenericInfo(Object.class), new GenericInfo(Object.class)};
+        else
+            type = genericInfo.typeParameters;
+
     }
 
     @Override
@@ -25,23 +25,29 @@ public class JavaMapBinder extends JavaObjectBinder {
         if (Binder.setValue(object, key, value))
             return;
 
-        if (wrap)
-            that.put(JsonItem.getAs(key, genericInfo.typeParameters[0].clazz), value);
-        else
-            that.put(key, value);
+        that.put(JsonItem.getAs(key, type[0].clazz), value);
+    }
+
+    @Override
+    public void put(String key, JsonItem value) {
+        if (Binder.setValue(object, key, value))
+            return;
+
+        that.put(JsonItem.getAs(key, type[0].clazz), value.getAs(type[1].clazz));
     }
 
     @Override
     public ObjectBinder getObjectBinder(String key) {
         if (genericInfo.typeParameters.length == 2)
-            return new JavaObjectBinder(genericInfo.typeParameters[1].clazz, genericInfo.typeParameters[1]);
+            return new JavaObjectBinder(genericInfo.typeParameters[1]);
 
         return super.getObjectBinder(key);
     }
+
     @Override
     public ArrayBinder getArrayBinder(String key) {
         if (genericInfo.typeParameters.length == 2)
-            return new JavaArrayBinder(genericInfo.typeParameters[1].clazz, genericInfo.typeParameters[1]);
+            return new JavaArrayBinder(genericInfo.typeParameters[1]);
 
         return super.getArrayBinder(key);
     }

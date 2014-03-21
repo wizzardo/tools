@@ -3,6 +3,7 @@ package com.wizzardo.tools.json;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Map;
 
@@ -79,5 +80,32 @@ public class GenericInfoTest {
 
         GenericInfo type = gi.getGenericType(KeyValue.class.getDeclaredField("key"));
         Assert.assertEquals(String.class, type.clazz);
+    }
+
+    static class ArrayHolder {
+        int[] array;
+        List<int[]> list;
+    }
+
+    @Test
+    public void arrayTest() throws NoSuchFieldException {
+        GenericInfo gi = new GenericInfo(ArrayHolder.class.getDeclaredField("array").getGenericType());
+
+        Assert.assertEquals(Array.class, gi.clazz);
+        Assert.assertEquals(null, gi.parent);
+        Assert.assertEquals(1, gi.typeParameters.length);
+        Assert.assertEquals(int.class, gi.typeParameters[0].clazz);
+
+        gi = new GenericInfo(ArrayHolder.class.getDeclaredField("list").getGenericType());
+
+        Assert.assertEquals(List.class, gi.clazz);
+        Assert.assertEquals(null, gi.parent);
+        Assert.assertEquals(1, gi.typeParameters.length);
+
+        gi = gi.typeParameters[0];
+        Assert.assertEquals(Array.class, gi.clazz);
+        Assert.assertEquals(null, gi.parent);
+        Assert.assertEquals(1, gi.typeParameters.length);
+        Assert.assertEquals(int.class, gi.typeParameters[0].clazz);
     }
 }
