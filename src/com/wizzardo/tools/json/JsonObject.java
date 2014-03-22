@@ -35,7 +35,11 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
     public static <T, G> T parse(String s, Class<T> clazz, Class<G>... generic) {
         s = s.trim();
-        return parse(s.toCharArray(), clazz, generic);
+        char[] data = toCharArray(s);
+        int offset = 0;
+        if (data.length != s.length())
+            offset = getCharArrayOffset(s);
+        return parse(data, offset, s.length(), clazz, generic);
     }
 
     public static JsonItem parse(char[] s) {

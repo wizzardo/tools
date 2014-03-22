@@ -1,5 +1,7 @@
 package com.wizzardo.tools.json;
 
+import java.lang.reflect.Field;
+
 /**
  * @author: wizzardo
  * Date: 3/21/14
@@ -188,5 +190,50 @@ class JsonUtils {
         holder.set(value);
 
         return i + 1;
+    }
+
+    static char[] toCharArray(String s) {
+        return CharArrayExtractor.extract(s);
+    }
+
+    static int getCharArrayOffset(String s) {
+        return CharArrayExtractor.getOffset(s);
+    }
+
+    private static class CharArrayExtractor {
+        static Field array;
+        static Field offset;
+
+        static {
+            try {
+                array = String.class.getDeclaredField("value");
+                array.setAccessible(true);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            }
+            try {
+                offset = String.class.getDeclaredField("offset");
+                offset.setAccessible(true);
+            } catch (NoSuchFieldException ignored) {
+            }
+        }
+
+        static char[] extract(String s) {
+            try {
+                return (char[]) array.get(s);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            return s.toCharArray();
+        }
+
+        static int getOffset(String s) {
+            try {
+                return (Integer) offset.get(s);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            return -1;
+        }
     }
 }
