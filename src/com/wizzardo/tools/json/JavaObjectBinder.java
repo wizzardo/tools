@@ -13,16 +13,18 @@ class JavaObjectBinder implements ObjectBinder {
     protected Object object;
     protected Class clazz;
     protected GenericInfo genericInfo;
+    protected Map<String, Pair<Pair<Field, GenericInfo>, Binder.Serializer>> fields;
 
     public JavaObjectBinder(GenericInfo genericInfo) {
         this.clazz = genericInfo.clazz;
         this.genericInfo = genericInfo;
         object = Binder.createInstance(clazz);
+        fields = Binder.getFields(clazz);
     }
 
     @Override
     public void put(String key, Object value) {
-        Binder.setValue(object, key, value);
+        Binder.setValue(object, fields.get(key), value);
     }
 
     @Override

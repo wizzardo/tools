@@ -118,13 +118,16 @@ public class Binder {
 
     public static boolean setValue(Object object, String key, Object value) {
         Class clazz = object.getClass();
-
         Pair<Pair<Field, GenericInfo>, Serializer> pair = getField(clazz, key);
-        if (pair == null)
+        return setValue(object, pair, value);
+    }
+
+    public static boolean setValue(Object object, Pair<Pair<Field, GenericInfo>, Serializer> fieldInfo, Object value) {
+        if (fieldInfo == null)
             return false;
 
-        Field field = pair.key.key;
-        Serializer s = pair.value;
+        Field field = fieldInfo.key.key;
+        Serializer s = fieldInfo.value;
 
         try {
             switch (s) {
