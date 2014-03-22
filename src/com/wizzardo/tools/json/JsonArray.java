@@ -10,11 +10,11 @@ import static com.wizzardo.tools.json.JsonUtils.*;
  */
 public class JsonArray extends ArrayList<JsonItem> {
 
-    static int parse(char[] s, int from, ArrayBinder json) {
+    static int parse(char[] s, int from, int to, ArrayBinder json) {
         int i = ++from;
         char current;
         outer:
-        for (; i < s.length; i++) {
+        for (; i < to; i++) {
 //            i = skipSpaces(s, i);
 
             current = s[i];
@@ -35,19 +35,19 @@ public class JsonArray extends ArrayList<JsonItem> {
                 case '9':
                 case '-': {
                     JsonItem holder = new JsonItem();
-                    i = parseNumber(holder, s, i, s.length);
+                    i = parseNumber(holder, s, i, to);
                     json.add(holder);
                     break;
                 }
                 case '{': {
                     ObjectBinder ob = json.getObjectBinder();
-                    i = JsonObject.parse(s, i, ob);
+                    i = JsonObject.parse(s, i, to, ob);
                     json.add(ob.getObject());
                     break;
                 }
                 case '[': {
                     ArrayBinder ob = json.getArrayBinder();
-                    i = parse(s, i, ob);
+                    i = parse(s, i, to, ob);
                     json.add(ob.getObject());
                     break;
                 }
@@ -56,7 +56,7 @@ public class JsonArray extends ArrayList<JsonItem> {
                 }
                 default: {
                     JsonItem holder = new JsonItem();
-                    i = parseValue(holder, s, i, s.length, ']');
+                    i = parseValue(holder, s, i, to, ']');
                     json.add(holder);
                 }
             }

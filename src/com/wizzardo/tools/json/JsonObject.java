@@ -43,16 +43,20 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     public static <T, G> T parse(char[] s, Class<T> clazz, Class<G>... generic) {
+        return parse(s, 0, s.length, clazz, generic);
+    }
+
+    public static <T, G> T parse(char[] s, int from, int to, Class<T> clazz, Class<G>... generic) {
         // check first char
         GenericInfo g = new GenericInfo(clazz, generic);
         if (s[0] == '{') {
             ObjectBinder binder = Binder.getObjectBinder(clazz, g);
-            parse(s, 0, binder);
+            parse(s, from, to, binder);
             return (T) binder.getObject();
         }
         if (s[0] == '[') {
             ArrayBinder binder = Binder.getArrayBinder(clazz, g);
-            JsonArray.parse(s, 0, binder);
+            JsonArray.parse(s, from, to, binder);
             return (T) binder.getObject();
         }
         return null;
@@ -63,11 +67,11 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return this;
     }
 
-    static int parse(char[] s, int from, ObjectBinder json) {
+    static int parse(char[] s, int from, int to, ObjectBinder json) {
         int i = ++from;
         char current;
         outer:
-        for (; i < s.length; i++) {
+        for (; i < to; i++) {
             current = s[i];
 
             if (current <= ' ')
@@ -77,9 +81,9 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                 break;
 
             JsonItem key = new JsonItem();
-            i = parseKey(key, s, i, s.length);
+            i = parseKey(key, s, i, to);
 
-            i = skipSpaces(s, i);
+            i = skipSpaces(s, i, to);
 
             current = s[i];
 
@@ -99,19 +103,19 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                 case '9':
                 case '-': {
                     JsonItem holder = new JsonItem();
-                    i = parseNumber(holder, s, i, s.length);
+                    i = parseNumber(holder, s, i, to);
                     json.put(key.asString(), holder);
                     break;
                 }
                 case '{': {
                     ObjectBinder ob = json.getObjectBinder(key.asString());
-                    i = JsonObject.parse(s, i, ob);
+                    i = JsonObject.parse(s, i, to, ob);
                     json.put(key.asString(), ob.getObject());
                     break;
                 }
                 case '[': {
                     ArrayBinder ob = json.getArrayBinder(key.asString());
-                    i = JsonArray.parse(s, i, ob);
+                    i = JsonArray.parse(s, i, to, ob);
                     json.put(key.asString(), ob.getObject());
                     break;
                 }
@@ -121,13 +125,13 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
                 default: {
                     JsonItem holder = new JsonItem();
-                    i = parseValue(holder, s, i, s.length, '}');
+                    i = parseValue(holder, s, i, to, '}');
                     json.put(key.asString(), holder);
                 }
             }
 
 
-            i = skipSpaces(s, i);
+            i = skipSpaces(s, i, to);
             current = s[i];
 
             if (current == ',')

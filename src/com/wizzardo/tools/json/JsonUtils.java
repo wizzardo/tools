@@ -25,8 +25,8 @@ class JsonUtils {
         return length == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e';
     }
 
-    static int skipSpaces(char[] s, int from) {
-        while (from < s.length && s[from] <= ' ') {
+    static int skipSpaces(char[] s, int from, int to) {
+        while (from < to && s[from] <= ' ') {
             from++;
         }
         return from;
@@ -170,7 +170,7 @@ class JsonUtils {
             i++;
         }
 
-        i = skipSpaces(s, i);
+        i = skipSpaces(s, i, to);
 
         if (s[i] != ':')
             throw new IllegalStateException("here must be key-value separator ':', but found: " + s[i]);
