@@ -1,5 +1,7 @@
 package com.wizzardo.tools.json;
 
+import java.lang.reflect.Array;
+
 /**
  * @author: moxa
  * Date: 12/26/12
@@ -228,7 +230,9 @@ public class JsonItem {
         if (ob == null)
             return null;
 
-        if (String.class == clazz) {
+        if (clazz.isAssignableFrom(ob.getClass())) {
+            return (T) ob;
+        } else if (String.class == clazz) {
             return (T) asString();
         } else if (Integer.class == clazz || int.class == clazz) {
             return (T) asInteger();
@@ -244,7 +248,7 @@ public class JsonItem {
             return (T) asByte();
         } else if (Short.class == clazz || short.class == clazz) {
             return (T) asShort();
-        } else if (clazz.isAssignableFrom(ob.getClass()))
+        } else if (Array.class == clazz)
             return (T) ob;
         return null;
     }

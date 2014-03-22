@@ -22,10 +22,7 @@ public class JavaMapBinder extends JavaObjectBinder {
 
     @Override
     public void put(String key, Object value) {
-        if (Binder.setValue(object, key, value))
-            return;
-
-        that.put(JsonItem.getAs(key, type[0].clazz), value);
+        put(key, new JsonItem(value));
     }
 
     @Override

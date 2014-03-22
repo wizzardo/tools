@@ -1,6 +1,5 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.collections.Pair;
 import com.wizzardo.tools.misc.WrappedException;
 
 import java.io.IOException;
@@ -16,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Binder {
 
     private static final int SYNTHETIC = 0x00001000;
-    private static Map<Class, Map<String, Pair<Pair<Field, GenericInfo>, Serializer>>> cachedFields = new ConcurrentHashMap<Class, Map<String, Pair<Pair<Field, GenericInfo>, Serializer>>>();
+    private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
 
     enum Serializer {
@@ -82,10 +81,10 @@ public class Binder {
         return null;
     }
 
-    public static Map<String, Pair<Pair<Field, GenericInfo>, Serializer>> getFields(Class clazz) {
-        Map<String, Pair<Pair<Field, GenericInfo>, Serializer>> fields = cachedFields.get(clazz);
+    public static Map<String, FieldInfo> getFields(Class clazz) {
+        Map<String, FieldInfo> fields = cachedFields.get(clazz);
         if (fields == null) {
-            fields = new HashMap<String, Pair<Pair<Field, GenericInfo>, Serializer>>();
+            fields = new HashMap<String, FieldInfo>();
             Class cl = clazz;
             while (cl != null) {
                 Field[] ff = cl.getDeclaredFields();
@@ -101,8 +100,7 @@ public class Binder {
                             ) {
 //                        System.out.println("add field " + field);
                         field.setAccessible(true);
-                        Pair<Field, GenericInfo> genericInfoPair = new Pair<Field, GenericInfo>(field, new GenericInfo(field.getGenericType()));
-                        fields.put(field.getName(), new Pair<Pair<Field, GenericInfo>, Serializer>(genericInfoPair, getReturnType(field)));
+                        fields.put(field.getName(), new FieldInfo(field, getReturnType(field)));
                     }
                 }
                 cl = cl.getSuperclass();
@@ -112,28 +110,27 @@ public class Binder {
         return fields;
     }
 
-    public static Pair<Pair<Field, GenericInfo>, Serializer> getField(Class clazz, String key) {
+    public static FieldInfo getField(Class clazz, String key) {
         return getFields(clazz).get(key);
     }
 
-    public static boolean setValue(Object object, String key, Object value) {
+    public static boolean setValue(Object object, String key, JsonItem value) {
         Class clazz = object.getClass();
-        Pair<Pair<Field, GenericInfo>, Serializer> pair = getField(clazz, key);
-        return setValue(object, pair, value);
+        return setValue(object, getField(clazz, key), value);
     }
 
-    public static boolean setValue(Object object, Pair<Pair<Field, GenericInfo>, Serializer> fieldInfo, Object value) {
+    public static boolean setValue(Object object, FieldInfo fieldInfo, JsonItem value) {
         if (fieldInfo == null)
             return false;
 
-        Field field = fieldInfo.key.key;
-        Serializer s = fieldInfo.value;
+        Field field = fieldInfo.field;
 
         try {
-            switch (s) {
+            switch (fieldInfo.serializer) {
                 case STRING:
                 case NUMBER_BOOLEAN:
-                    field.set(object, JsonItem.getAs(value, field.getType()));
+                    fieldInfo.setter.set(field, object, value);
+//                    field.set(object, JsonItem.getAs(value, field.getType()));
 //                    JsonItem.setField(value, field,object);
                     break;
                 case ENUM:
@@ -141,11 +138,12 @@ public class Binder {
                         field.set(object, value);
                     else {
                         Class c = field.getType();
-                        field.set(object, Enum.valueOf(c, String.valueOf(value)));
+                        field.set(object, Enum.valueOf(c, value.asString()));
                     }
                     break;
                 default:
-                    field.set(object, value);
+//                    field.set(object, value);
+                    fieldInfo.setter.set(field, object, value);
             }
         } catch (IllegalAccessException e) {
             throw new WrappedException(e);
@@ -207,9 +205,9 @@ public class Binder {
                 }
                 instance = (T) c.newInstance();
 
-                for (Pair<Pair<Field, GenericInfo>, Serializer> pair : getFields(clazz).values()) {
-                    Field field = pair.key.key;
-                    Serializer s = pair.value;
+                for (FieldInfo info : getFields(clazz).values()) {
+                    Field field = info.field;
+                    Serializer s = info.serializer;
                     JsonObject jsonObject = json.asJsonObject();
                     JsonItem item = jsonObject.get(field.getName());
                     if (jsonObject.containsKey(field.getName()))
@@ -410,14 +408,14 @@ public class Binder {
 
         Set<String> fields = new HashSet<String>();
         boolean comma = false;
-        Map<String, Pair<Pair<Field, GenericInfo>, Serializer>> list = getFields(src.getClass());
+        Map<String, FieldInfo> list = getFields(src.getClass());
 
-        for (Pair<Pair<Field, GenericInfo>, Serializer> pair : list.values()) {
-            Field field = pair.key.key;
+        for (FieldInfo info: list.values()) {
+            Field field = info.field;
             try {
                 if (comma)
                     sb.append(",");
-                toJSON(field.getName(), field.get(src), sb, pair.value);
+                toJSON(field.getName(), field.get(src), sb, info.serializer);
                 fields.add(field.getName());
                 comma = true;
             } catch (IllegalAccessException e) {

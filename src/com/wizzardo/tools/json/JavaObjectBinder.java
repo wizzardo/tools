@@ -1,8 +1,5 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.collections.Pair;
-
-import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
@@ -13,7 +10,7 @@ class JavaObjectBinder implements ObjectBinder {
     protected Object object;
     protected Class clazz;
     protected GenericInfo genericInfo;
-    protected Map<String, Pair<Pair<Field, GenericInfo>, Binder.Serializer>> fields;
+    protected Map<String, FieldInfo> fields;
 
     public JavaObjectBinder(GenericInfo genericInfo) {
         this.clazz = genericInfo.clazz;
@@ -24,12 +21,12 @@ class JavaObjectBinder implements ObjectBinder {
 
     @Override
     public void put(String key, Object value) {
-        Binder.setValue(object, fields.get(key), value);
+        put(key, new JsonItem(value));
     }
 
     @Override
     public void put(String key, JsonItem value) {
-        put(key, value.ob);
+        Binder.setValue(object, fields.get(key), value);
     }
 
     @Override
@@ -37,31 +34,27 @@ class JavaObjectBinder implements ObjectBinder {
         return object;
     }
 
-    public Pair<Field, GenericInfo> getField(String key) {
-        return Binder.getField(clazz, key).key;
-    }
-
     @Override
     public ObjectBinder getObjectBinder(String key) {
-        Pair<Pair<Field, GenericInfo>, Binder.Serializer> pair = Binder.getField(clazz, key);
-        if (pair == null)
+        FieldInfo info = fields.get(key);
+        if (info == null)
             return null;
 
-        if (Map.class.isAssignableFrom(pair.key.key.getType()))
-            return new JavaMapBinder(pair.key.value);
+        if (Map.class.isAssignableFrom(info.field.getType()))
+            return new JavaMapBinder(info.genericInfo);
 
-        return new JavaObjectBinder(pair.key.value);
+        return new JavaObjectBinder(info.genericInfo);
     }
 
     @Override
     public ArrayBinder getArrayBinder(String key) {
-        Pair<Field, GenericInfo> f = getField(key);
+        FieldInfo info = fields.get(key);
         if (genericInfo != null) {
-            GenericInfo type = genericInfo.getGenericType(f.key);
+            GenericInfo type = genericInfo.getGenericType(info.field);
             if (type != null)
                 return new JavaArrayBinder(type);
         }
 
-        return new JavaArrayBinder(f.value);
+        return new JavaArrayBinder(info.genericInfo);
     }
 }
