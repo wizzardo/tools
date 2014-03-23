@@ -117,21 +117,33 @@ public class Cache<K, V> {
     }
 
     public void put(final K key, final V value) {
+        put(key, value, ttl);
+    }
+
+    public void put(final K key, final V value, long ttl) {
         Holder<K, V> h = new Holder<K, V>(key, value);
         map.put(key, h);
-        updateTimingCache(h);
+        updateTimingCache(h, ttl);
     }
 
     public boolean putIfAbsent(final K key, final V value) {
+        return putIfAbsent(key, value, ttl);
+    }
+
+    public boolean putIfAbsent(final K key, final V value, long ttl) {
         Holder<K, V> h = new Holder<K, V>(key, value);
         if (map.putIfAbsent(key, h) == null) {
-            updateTimingCache(h);
+            updateTimingCache(h, ttl);
             return true;
         }
         return false;
     }
 
     private void updateTimingCache(final Holder<K, V> key) {
+        updateTimingCache(key, ttl);
+    }
+
+    private void updateTimingCache(final Holder<K, V> key, long ttl) {
         if (ttl <= 0)
             return;
 
