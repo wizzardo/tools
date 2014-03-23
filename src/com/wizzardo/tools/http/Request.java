@@ -28,7 +28,11 @@ public class Request extends RequestArguments<Request> {
     }
 
     public String getUrl() {
-        return url;
+        try {
+            return createURL(url, params);
+        } catch (UnsupportedEncodingException e) {
+            return url;
+        }
     }
 
     public Response connect() throws IOException {
@@ -57,8 +61,9 @@ public class Request extends RequestArguments<Request> {
 
     private Response connect(int retryNumber) throws IOException {
         try {
+            String url = this.url;
             if (method == ConnectionMethod.GET || (method == ConnectionMethod.POST && data != null)) {
-                url = createURL(url.toString(), params);
+                url = createURL(url, params);
             }
             URL u = new URL(url);
             HttpURLConnection c;
