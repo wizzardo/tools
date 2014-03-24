@@ -7,7 +7,10 @@ package com.wizzardo.tools.http;
 public enum ContentType {
     BINARY("application/octet-stream"),
     JSON("application/json; charset=utf-8"),
-    XML("text/xml; charset=utf-8"),;
+    XML("text/xml; charset=utf-8"),
+    JPG("image/jpeg"),
+    PNG("image/png"),
+    GIF("image/gif"),;
 
     public final String text;
 

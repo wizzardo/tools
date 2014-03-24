@@ -213,9 +213,16 @@ public class RequestArguments<T extends RequestArguments> {
     }
 
     public T addFile(String key, String path) {
+        return addFile(key, path, null);
+    }
+
+    public T addFile(String key, String path, String type) {
         multipart = true;
         method = ConnectionMethod.POST;
         addParameter(key, "file://" + path);
+        if (type != null)
+            dataTypes.put(key, type);
+
         return self();
     }
 
