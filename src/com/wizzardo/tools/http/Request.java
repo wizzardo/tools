@@ -72,7 +72,7 @@ public class Request extends RequestArguments<Request> {
             } else {
                 c = (HttpURLConnection) u.openConnection();
             }
-            c.setInstanceFollowRedirects(redirects);
+            c.setInstanceFollowRedirects(false);
             c.setRequestMethod(method.toString());
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 c.setRequestProperty(header.getKey(), header.getValue());
@@ -140,6 +140,10 @@ public class Request extends RequestArguments<Request> {
                     out.flush();
                     out.close();
                 }
+            }
+            if (redirects && (c.getResponseCode() == 301 || c.getResponseCode() == 302)) {
+                Response r = new Response(c, session);
+                return session.createRequest(r.getHeader("Location")).get();
             }
             return new Response(c, session);
         } catch (SocketTimeoutException e) {
