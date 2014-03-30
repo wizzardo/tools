@@ -71,7 +71,7 @@ public class HttpSession extends RequestArguments<HttpSession> {
     public synchronized void appendCookies(List<Cookie> cookies) {
         for (Cookie cookie : cookies) {
             String domain = cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain;
-            List<Cookie> l = this.cookies.get(cookie.domain);
+            List<Cookie> l = this.cookies.get(domain);
             if (cookie.value.equalsIgnoreCase("deleted") && l != null) {
                 Iterator<Cookie> i = l.iterator();
                 while (i.hasNext()) {
