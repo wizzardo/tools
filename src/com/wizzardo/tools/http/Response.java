@@ -88,33 +88,35 @@ public class Response {
         //Set-Cookie: RMID=732423sdfs73242; expires=Fri, 31 Dec 2010 23:59:59 GMT; path=/; domain=.example.net
         List<Cookie> cookies = new ArrayList<Cookie>();
 
-        for (String raw : connection.getHeaderFields().get("Set-Cookie")) {
-            String[] data = raw.split("; ");
-            String[] kv = data[0].split("=", 2);
+        Map<String, List<String>> headers = connection.getHeaderFields();
+        if (headers.containsKey("Set-Cookie"))
+            for (String raw : headers.get("Set-Cookie")) {
+                String[] data = raw.split("; *");
+                String[] kv = data[0].split("=", 2);
 
-            Cookie cookie = new Cookie(kv[0], kv[1]);
+                Cookie cookie = new Cookie(kv[0], kv[1]);
 
-            for (int i = 1; i < data.length; i++) {
-                kv = data[i].split("=", 2);
-                if (kv[0].equalsIgnoreCase("expires"))
-                    try {
-                        cookie.expired = dateFormatThreadLocal.get().parse(kv[1]);
-                    } catch (ParseException ignore) {
-                    }
-                else if (kv[0].equalsIgnoreCase("path"))
-                    cookie.path = kv[1];
-                else if (kv[0].equalsIgnoreCase("domain"))
-                    cookie.domain = kv[1];
+                for (int i = 1; i < data.length; i++) {
+                    kv = data[i].split("=", 2);
+                    if (kv[0].equalsIgnoreCase("expires"))
+                        try {
+                            cookie.expired = dateFormatThreadLocal.get().parse(kv[1]);
+                        } catch (ParseException ignore) {
+                        }
+                    else if (kv[0].equalsIgnoreCase("path"))
+                        cookie.path = kv[1];
+                    else if (kv[0].equalsIgnoreCase("domain"))
+                        cookie.domain = kv[1];
+                }
+
+                if (cookie.path == null)
+                    cookie.path = "/";
+
+                if (cookie.domain == null)
+                    cookie.domain = connection.getURL().getHost();
+
+                cookies.add(cookie);
             }
-
-            if (cookie.path == null)
-                cookie.path = "/";
-
-            if (cookie.domain == null)
-                cookie.domain = connection.getURL().getHost();
-
-            cookies.add(cookie);
-        }
         this.cookies = cookies;
         return cookies;
     }

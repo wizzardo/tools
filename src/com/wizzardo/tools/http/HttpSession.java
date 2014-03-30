@@ -5,6 +5,7 @@ import com.wizzardo.tools.misc.WrappedException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +26,7 @@ public class HttpSession extends RequestArguments<HttpSession> {
 
     public Request createRequest(String url) {
         return super.createRequest(url)
+                .setSession(this)
                 .setCookies(getCookies(url));
     }
 
@@ -41,6 +43,10 @@ public class HttpSession extends RequestArguments<HttpSession> {
         }
     }
 
+    public Map<String, List<Cookie>> getCookies() {
+        return cookies;
+    }
+
     public List<Cookie> getCookies(URL url) {
         List<Cookie> cookies = new ArrayList<Cookie>();
         String domain = url.getHost();
@@ -49,7 +55,7 @@ public class HttpSession extends RequestArguments<HttpSession> {
             List<Cookie> l = this.cookies.get(domain);
             if (l != null)
                 for (Cookie cookie : l)
-                    if (url.getPath().startsWith(cookie.path))
+                    if ((url.getPath().isEmpty() ? "/" : url.getPath()).startsWith(cookie.path))
                         cookies.add(cookie);
 
             int index = domain.indexOf('.');
@@ -62,14 +68,24 @@ public class HttpSession extends RequestArguments<HttpSession> {
         return cookies;
     }
 
-    public void appendCookies(List<Cookie> cookies) {
+    public synchronized void appendCookies(List<Cookie> cookies) {
         for (Cookie cookie : cookies) {
+            String domain = cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain;
             List<Cookie> l = this.cookies.get(cookie.domain);
-            if (l == null) {
-                l = new ArrayList<Cookie>();
-                this.cookies.put(cookie.domain, l);
+            if (cookie.value.equalsIgnoreCase("deleted") && l != null) {
+                Iterator<Cookie> i = l.iterator();
+                while (i.hasNext()) {
+                    Cookie it = i.next();
+                    if (it.key.equals(cookie.key) && it.domain.equals(cookie.domain))
+                        i.remove();
+                }
+            } else {
+                if (l == null) {
+                    l = new ArrayList<Cookie>();
+                    this.cookies.put(domain, l);
+                }
+                l.add(cookie);
             }
-            l.add(cookie);
         }
     }
 }
