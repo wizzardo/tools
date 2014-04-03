@@ -46,7 +46,11 @@ public class JsonParserTest {
         s = "{\"qwe\":\"qwe\"}";
         assertEquals(1, parse(s).asJsonObject().size());
         s = "{\"qwe\":\"qwe\", \"qwe\"e:\"qweqw\"}";
-        assertEquals(2, parse(s).asJsonObject().size());
+        try {
+            parse(s);
+        } catch (IllegalStateException e) {
+            assertEquals("here must be key-value separator ':', but found: e", e.getMessage());
+        }
 
 
         s = "{\"qwe\":\"q\\\"we\\n\"}";
@@ -82,7 +86,7 @@ public class JsonParserTest {
         assertEquals("value", parse(s).asJsonArray().get(0).asJsonArray().get(0).asJsonArray().get(0).asString());
     }
 
-//    @Test
+    //    @Test
     public void benchmark() throws InterruptedException {
         byte[] bytes = FileTools.bytes("/home/moxa/test.json");
         long time;
@@ -188,7 +192,7 @@ public class JsonParserTest {
         private ArrayList<Child> children;
     }
 
-//    @Test
+    //    @Test
     public void benchmarkBind() throws InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
 
 //        ListWrapper<Integer> w = JsonObject.parse("[{\"value\":13},{\"value\":7}]",
