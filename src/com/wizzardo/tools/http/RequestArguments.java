@@ -166,6 +166,13 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
+    public T removeParameter(String key) {
+        params.remove(key);
+        dataArrays.remove(key);
+        dataTypes.remove(key);
+        return self();
+    }
+
     public T addParameter(String key, String value) {
         List<String> l = params.get(key);
         if (l == null) {
@@ -253,6 +260,11 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T setHeader(String key, String value) {
         headers.put(key, value);
+        return self();
+    }
+
+    public T removeHeader(String key) {
+        headers.remove(key);
         return self();
     }
 
