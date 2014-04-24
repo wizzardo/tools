@@ -264,13 +264,15 @@ public class JsonItem {
     }
 
     void toJson(StringBuilder sb) {
-        if (ob instanceof JsonObject) {
+        if (ob == null)
+            sb.append("null");
+        else if (ob instanceof JsonObject)
             ((JsonObject) ob).toJson(sb);
-        } else if (ob instanceof JsonArray) {
+         else if (ob instanceof JsonArray)
             ((JsonArray) ob).toJson(sb);
-        } else if (ob.getClass() == String.class) {
+         else if (ob.getClass() == String.class)
             sb.append('"').append(JsonObject.escape(ob.toString())).append('"');
-        } else
+         else
             sb.append(ob);
     }
 
