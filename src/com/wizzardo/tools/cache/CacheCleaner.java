@@ -2,7 +2,6 @@ package com.wizzardo.tools.cache;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -52,8 +51,8 @@ class CacheCleaner extends Thread {
 
     @Override
     public void run() {
-        Map.Entry<? extends Holder<?, ?>, Long> entry = null;
-        Holder<?, ?> h;
+//        Map.Entry<? extends Holder<?, ?>, Long> entry = null;
+//        Holder<?, ?> h;
         while (true) {
 //            System.out.println();
 //            System.out.println("cleaning");
@@ -72,7 +71,7 @@ class CacheCleaner extends Thread {
                 }
 
                 long l = cache.refresh(time);
-                if (l < wakeup)
+                if (l > 0 && l < wakeup)
                     wakeup = l;
             }
 

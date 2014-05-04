@@ -67,12 +67,12 @@ public class Cache<K, V> {
         while ((entry = timings.peek()) != null && entry.getValue().compareTo(time) <= 0) {
             h = timings.poll().getKey();
             if (h.validUntil <= time) {
-//                        System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
+//                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
                 if (map.remove(h.getKey(), h))
                     onRemoveItem(h.getKey(), h.get());
             }
         }
-        return entry == null ? 24 * 3600 * 1000 : entry.getValue();
+        return entry == null ? -1 : entry.getValue();
     }
 
     public void destroy() {
