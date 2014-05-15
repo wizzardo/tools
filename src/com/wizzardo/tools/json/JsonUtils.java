@@ -149,6 +149,7 @@ class JsonUtils {
 
         int rigthBorder;
         boolean escape = false;
+        boolean needDecoding = false;
         if (quote == 0) {
             for (; i < to; i++) {
                 ch = s[i];
@@ -156,17 +157,21 @@ class JsonUtils {
                     break;
 
                 if (ch == '\\')
-                    escape = true;
+                    needDecoding = true;
             }
             rigthBorder = trimRight(s, from, i);
         } else {
             for (; i < to; i++) {
-                ch = s[i];
-                if (ch == quote && s[i - 1] != '\\')
-                    break;
+                if (escape) {
+                    escape = false;
+                } else {
+                    ch = s[i];
+                    if (ch == quote)
+                        break;
 
-                if (ch == '\\')
-                    escape = true;
+                    if (ch == '\\')
+                        escape = needDecoding = true;
+                }
             }
             rigthBorder = i;
             i++;
@@ -182,7 +187,7 @@ class JsonUtils {
             throw new IllegalStateException("key not found");
 
         String value;
-        if (!escape)
+        if (!needDecoding)
             value = new String(s, from, rigthBorder - from);
         else
             value = JsonObject.unescape(s, from, rigthBorder);
