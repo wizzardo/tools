@@ -410,7 +410,7 @@ public class Binder {
         boolean comma = false;
         Map<String, FieldInfo> list = getFields(src.getClass());
 
-        for (FieldInfo info: list.values()) {
+        for (FieldInfo info : list.values()) {
             Field field = info.field;
             try {
                 if (comma)
@@ -424,6 +424,13 @@ public class Binder {
         }
 
         sb.append("}");
+    }
+
+    private static void toJSON(String name, Object src, Appender sb) {
+        Serializer serializer = null;
+        if (src != null)
+            serializer = classToSerializer(src.getClass());
+        toJSON(name, src, sb, serializer);
     }
 
     private static void toJSON(String name, Object src, Appender sb, Serializer serializer) {
@@ -464,8 +471,7 @@ public class Binder {
                 for (Object ob : ((Map) src).entrySet()) {
                     if (comma) sb.append(",");
                     Map.Entry entry = (Map.Entry) ob;
-                    sb.append("\"").append(entry.getKey()).append("\":");
-                    toJSON(entry.getValue(), sb);
+                    toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb);
                     comma = true;
                 }
                 sb.append("}");
