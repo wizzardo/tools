@@ -434,8 +434,11 @@ public class Binder {
     }
 
     private static void toJSON(String name, Object src, Appender sb, Serializer serializer) {
-        if (name != null)
-            sb.append("\"").append(name).append("\"").append(":");
+        if (name != null) {
+            sb.append("\"");
+            JsonObject.escape(String.valueOf(name), sb);
+            sb.append("\"").append(":");
+        }
 
         if (src == null) {
             sb.append("null");
