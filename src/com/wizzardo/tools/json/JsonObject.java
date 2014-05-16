@@ -277,8 +277,9 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                 }
 
                 from = i + 1;
-            }
-            prev = ch;
+                prev = 0;
+            } else
+                prev = ch;
         }
         if (from < to) {
             sb.append(s, from, to - from);

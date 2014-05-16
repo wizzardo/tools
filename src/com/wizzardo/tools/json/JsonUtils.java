@@ -86,6 +86,7 @@ class JsonUtils {
 
         int i = from;
         boolean escape = false;
+        boolean needDecoding = false;
         if (quote == 0) {
             for (; i < to; i++) {
                 ch = s[i];
@@ -93,16 +94,20 @@ class JsonUtils {
                     break;
 
                 if (ch == '\\')
-                    escape = true;
+                    needDecoding = true;
             }
         } else {
             for (; i < to; i++) {
-                ch = s[i];
-                if (ch == quote && s[i - 1] != '\\')
-                    break;
+                if (escape) {
+                    escape = false;
+                } else {
+                    ch = s[i];
+                    if (ch == quote)
+                        break;
 
-                if (ch == '\\')
-                    escape = true;
+                    if (ch == '\\')
+                        escape = needDecoding = true;
+                }
             }
         }
 
@@ -114,7 +119,7 @@ class JsonUtils {
 
         String value;
         int l = k - from;
-        if (!escape) {
+        if (!needDecoding) {
             if (JsonUtils.isNull(s, from, l)) {
                 return i;
             }

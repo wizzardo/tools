@@ -66,8 +66,8 @@ public class JsonTest {
         s = "{qwe:\"qw\\\"e\"}";
         assertEquals("qw\"e", JsonObject.parse(s).asJsonObject().getAsString("qwe"));
 
-        s = "{'qwe\\\\':\"qw\\\"e\"}";
-        assertEquals("qw\"e", JsonObject.parse(s).asJsonObject().getAsString("qwe\\"));
+        s = "{'qwe\\\\':\"qw\\\"e\\\\\"}";
+        assertEquals("qw\"e\\", JsonObject.parse(s).asJsonObject().getAsString("qwe\\"));
 
         s = "{'1':{'2':{'3':'value'}}}";
         assertEquals("value", JsonObject.parse(s).asJsonObject().getAsJsonObject("1").getAsJsonObject("2").getAsString("3"));
