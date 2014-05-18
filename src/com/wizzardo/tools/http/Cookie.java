@@ -23,4 +23,8 @@ public class Cookie {
         //Set-Cookie: RMID=732423sdfs73242; expires=Fri, 31 Dec 2010 23:59:59 GMT; path=/; domain=.example.net
         return key + "=" + value + "; expires=" + expired + "; path=" + path + "; domain=" + domain;
     }
+
+    public boolean isExpired() {
+        return expired != null && expired.before(new Date());
+    }
 }

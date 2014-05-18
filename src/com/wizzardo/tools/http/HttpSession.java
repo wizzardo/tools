@@ -53,10 +53,18 @@ public class HttpSession extends RequestArguments<HttpSession> {
         while (domain.length() > 0) {
 //            System.out.println(domain);
             List<Cookie> l = this.cookies.get(domain);
-            if (l != null)
-                for (Cookie cookie : l)
+            if (l != null) {
+                Iterator<Cookie> i = l.iterator();
+                while (i.hasNext()) {
+                    Cookie cookie = i.next();
+                    if (cookie.isExpired()) {
+                        i.remove();
+                        continue;
+                    }
                     if ((url.getPath().isEmpty() ? "/" : url.getPath()).startsWith(cookie.path))
                         cookies.add(cookie);
+                }
+            }
 
             int index = domain.indexOf('.');
             if (index >= 0)
@@ -69,6 +77,7 @@ public class HttpSession extends RequestArguments<HttpSession> {
     }
 
     public synchronized void appendCookies(List<Cookie> cookies) {
+        outer:
         for (Cookie cookie : cookies) {
             String domain = cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain;
             List<Cookie> l = this.cookies.get(domain);
@@ -83,6 +92,13 @@ public class HttpSession extends RequestArguments<HttpSession> {
                 if (l == null) {
                     l = new ArrayList<Cookie>();
                     this.cookies.put(domain, l);
+                }
+                for (Cookie it : l) {
+                    if (it.key.equals(cookie.key) && it.domain.equals(cookie.domain)) {
+                        it.expired = cookie.expired;
+                        it.value = cookie.value;
+                        continue outer;
+                    }
                 }
                 l.add(cookie);
             }
