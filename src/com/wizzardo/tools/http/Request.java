@@ -197,10 +197,11 @@ public class Request extends RequestArguments<Request> {
                 else
                     and = true;
 
-                sb.append(entry.getKey()).append("=");
                 if (urlEncoding != null) {
+                    sb.append(URLEncoder.encode(entry.getKey(), urlEncoding)).append("=");
                     sb.append(URLEncoder.encode(value, urlEncoding));
                 } else {
+                    sb.append(URLEncoder.encode(entry.getKey(), "utf-8")).append("=");
                     sb.append(URLEncoder.encode(value, "utf-8"));
                 }
             }
@@ -217,7 +218,7 @@ public class Request extends RequestArguments<Request> {
         }
         StringBuilder sb = new StringBuilder(url);
         if (!params.isEmpty())
-            sb.append("?").append(createPostParameters(params, null));
+            sb.append("?").append(createPostParameters(params, null).replace("+", "%20"));
 
         return sb.toString();
     }
