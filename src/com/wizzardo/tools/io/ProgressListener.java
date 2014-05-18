@@ -5,7 +5,7 @@ package com.wizzardo.tools.io;
  * Date: 5/26/13
  */
 public class ProgressListener {
-    private int progress;
+    private int progress = -1;
 
     protected void onComplete() {
     }
