@@ -6,8 +6,8 @@ package com.wizzardo.tools.http;
  */
 public enum ContentType {
     BINARY("application/octet-stream"),
-    JSON("application/json; charset=utf-8"),
-    XML("text/xml; charset=utf-8"),
+    JSON("application/json"),
+    XML("application/xml"),
     JPG("image/jpeg"),
     PNG("image/png"),
     GIF("image/gif"),;
