@@ -217,6 +217,14 @@ public class JsonItem {
         return null;
     }
 
+    public boolean isJsonArray() {
+        return ob instanceof JsonArray;
+    }
+
+    public boolean isJsonObject() {
+        return ob instanceof JsonObject;
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> T getAs(Object value, Class<T> clazz) {
         if (clazz.isAssignableFrom(value.getClass()))
@@ -268,11 +276,11 @@ public class JsonItem {
             sb.append("null");
         else if (ob instanceof JsonObject)
             ((JsonObject) ob).toJson(sb);
-         else if (ob instanceof JsonArray)
+        else if (ob instanceof JsonArray)
             ((JsonArray) ob).toJson(sb);
-         else if (ob.getClass() == String.class)
+        else if (ob.getClass() == String.class)
             sb.append('"').append(JsonObject.escape(ob.toString())).append('"');
-         else
+        else
             sb.append(ob);
     }
 

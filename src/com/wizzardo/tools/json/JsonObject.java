@@ -66,11 +66,6 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return null;
     }
 
-    public JsonObject add(String key, Object value) {
-        put(key, new JsonItem(value));
-        return this;
-    }
-
     static int parse(char[] s, int from, int to, ObjectBinder json) {
         int i = ++from;
         char current;
@@ -289,6 +284,14 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
     public boolean isNull(String key) {
         return get(key).isNull();
+    }
+
+    public boolean isJsonArray(String key) {
+        return get(key).isJsonArray();
+    }
+
+    public boolean isJsonObject(String key) {
+        return get(key).isJsonObject();
     }
 
     public String getAsString(String key) {
