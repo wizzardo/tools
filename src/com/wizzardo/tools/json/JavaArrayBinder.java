@@ -1,10 +1,6 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.collections.Pair;
-
 import java.lang.reflect.Array;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -64,21 +60,11 @@ class JavaArrayBinder implements ArrayBinder {
     }
 
     @Override
-    public Pair<Class, Type> getGeneric() {
-        Type type = null;
-        if (generic != null && generic instanceof ParameterizedType)
-            type = ((ParameterizedType) generic).getActualTypeArguments()[0];
+    public GenericInfo getGeneric() {
+        if (generic != null && generic.typeParameters.length != 0)
+            return generic.typeParameters[0];
 
-        Class cl = null;
-        Type inner = null;
-        if (type != null)
-            if (type instanceof ParameterizedType) {
-                cl = (Class) ((ParameterizedType) type).getRawType();
-                inner = type;
-            } else
-                cl = (Class) type;
-
-        return new Pair<Class, Type>(cl, inner);
+        return null;
     }
 
     @Override
@@ -91,7 +77,6 @@ class JavaArrayBinder implements ArrayBinder {
 
     @Override
     public ArrayBinder getArrayBinder() {
-        Pair<Class, Type> pair = getGeneric();
-        return new JavaArrayBinder(new GenericInfo(pair.key));
+        return new JavaArrayBinder(getGeneric());
     }
 }

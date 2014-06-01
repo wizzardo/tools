@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author: moxa
@@ -325,5 +326,22 @@ public class JsonTest {
         assertEquals((Integer) 2, mapTest.listMaps.get(0).get("bar"));
         assertEquals((Integer) 3, mapTest.listMaps.get(1).get("foo"));
         assertEquals((Integer) 4, mapTest.listMaps.get(1).get("bar"));
+    }
+
+    @Test
+    public void testListArrayBinding() {
+        String s = "[[\"foo1\",\"foo2\",\"foo3\"],[\"bar1\",\"bar2\"]]";
+        List<String[]> l = JsonObject.parse(s, List.class, (new String[0]).getClass());
+
+        assertEquals(2, l.size());
+        assertEquals(3, l.get(0).length);
+        assertEquals(2, l.get(1).length);
+
+        assertEquals("foo1", l.get(0)[0]);
+        assertEquals("foo2", l.get(0)[1]);
+        assertEquals("foo3", l.get(0)[2]);
+
+        assertEquals("bar1", l.get(1)[0]);
+        assertEquals("bar2", l.get(1)[1]);
     }
 }

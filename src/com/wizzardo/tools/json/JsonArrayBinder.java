@@ -1,10 +1,5 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.*;
-import com.wizzardo.tools.collections.Pair;
-
-import java.lang.reflect.Type;
-
 /**
  * @author: wizzardo
  * Date: 2/6/14
@@ -30,8 +25,8 @@ class JsonArrayBinder implements ArrayBinder {
     }
 
     @Override
-    public Pair<Class, Type> getGeneric() {
-        return new Pair(null, null);
+    public GenericInfo getGeneric() {
+        return null;
     }
 
     @Override
