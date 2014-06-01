@@ -206,12 +206,6 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return sb.toString();
     }
 
-    public String toJson() {
-        StringBuilder sb = new StringBuilder();
-        toJson(sb);
-        return sb.toString();
-    }
-
     void toJson(StringBuilder sb) {
         sb.append('{');
         boolean comma = false;

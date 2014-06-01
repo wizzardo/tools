@@ -78,17 +78,7 @@ public class JsonArray extends ArrayList<JsonItem> {
         return i + 1;
     }
 
-    public void put(Object ob) {
-        add(new JsonItem(ob));
-    }
-
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        toJson(sb);
-        return sb.toString();
-    }
-
-    public String toJson() {
         StringBuilder sb = new StringBuilder();
         toJson(sb);
         return sb.toString();
