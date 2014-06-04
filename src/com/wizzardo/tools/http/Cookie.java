@@ -27,4 +27,24 @@ public class Cookie {
     public boolean isExpired() {
         return expired != null && expired.before(new Date());
     }
+
+    public String getKey() {
+        return key;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public Date getExpired() {
+        return expired;
+    }
 }

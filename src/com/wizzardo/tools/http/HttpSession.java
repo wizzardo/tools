@@ -76,6 +76,10 @@ public class HttpSession extends RequestArguments<HttpSession> {
         return cookies;
     }
 
+    public void appendCookies(Map<String, List<Cookie>> cookies) {
+        this.cookies.putAll(cookies);
+    }
+
     public synchronized void appendCookies(List<Cookie> cookies) {
         outer:
         for (Cookie cookie : cookies) {
