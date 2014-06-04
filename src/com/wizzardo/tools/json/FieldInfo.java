@@ -8,13 +8,13 @@ import java.lang.reflect.Field;
  */
 class FieldInfo {
     final Field field;
-    final GenericInfo genericInfo;
+    final Generic generic;
     final Binder.Serializer serializer;
     final FieldSetter setter;
 
     FieldInfo(Field field, Binder.Serializer serializer) {
         this.field = field;
-        this.genericInfo = new GenericInfo(field.getGenericType());
+        this.generic = new Generic(field.getGenericType());
         this.serializer = serializer;
         setter = FieldSetter.getSetter(field.getType());
     }

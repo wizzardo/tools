@@ -8,15 +8,15 @@ import java.util.Map;
  */
 public class JavaMapBinder extends JavaObjectBinder {
     private Map that;
-    private GenericInfo[] type;
+    private Generic[] type;
 
-    public JavaMapBinder(GenericInfo genericInfo) {
-        super(genericInfo);
+    public JavaMapBinder(Generic generic) {
+        super(generic);
         that = (Map) object;
-        if (genericInfo.typeParameters.length != 2)
-            type = new GenericInfo[]{new GenericInfo(Object.class), new GenericInfo(Object.class)};
+        if (generic.typeParameters.length != 2)
+            type = new Generic[]{new Generic(Object.class), new Generic(Object.class)};
         else
-            type = genericInfo.typeParameters;
+            type = generic.typeParameters;
 
     }
 
@@ -35,16 +35,16 @@ public class JavaMapBinder extends JavaObjectBinder {
 
     @Override
     public ObjectBinder getObjectBinder(String key) {
-        if (genericInfo.typeParameters.length == 2)
-            return new JavaObjectBinder(genericInfo.typeParameters[1]);
+        if (generic.typeParameters.length == 2)
+            return new JavaObjectBinder(generic.typeParameters[1]);
 
         return super.getObjectBinder(key);
     }
 
     @Override
     public ArrayBinder getArrayBinder(String key) {
-        if (genericInfo.typeParameters.length == 2)
-            return new JavaArrayBinder(genericInfo.typeParameters[1]);
+        if (generic.typeParameters.length == 2)
+            return new JavaArrayBinder(generic.typeParameters[1]);
 
         return super.getArrayBinder(key);
     }

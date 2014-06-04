@@ -25,7 +25,7 @@ class JsonArrayBinder implements ArrayBinder {
     }
 
     @Override
-    public GenericInfo getGeneric() {
+    public Generic getGeneric() {
         return null;
     }
 

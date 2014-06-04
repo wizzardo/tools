@@ -9,12 +9,12 @@ import java.util.Map;
 class JavaObjectBinder implements ObjectBinder {
     protected Object object;
     protected Class clazz;
-    protected GenericInfo genericInfo;
+    protected Generic generic;
     protected Map<String, FieldInfo> fields;
 
-    public JavaObjectBinder(GenericInfo genericInfo) {
-        this.clazz = genericInfo.clazz;
-        this.genericInfo = genericInfo;
+    public JavaObjectBinder(Generic generic) {
+        this.clazz = generic.clazz;
+        this.generic = generic;
         object = Binder.createInstance(clazz);
         fields = Binder.getFields(clazz);
     }
@@ -41,20 +41,20 @@ class JavaObjectBinder implements ObjectBinder {
             return null;
 
         if (Map.class.isAssignableFrom(info.field.getType()))
-            return new JavaMapBinder(info.genericInfo);
+            return new JavaMapBinder(info.generic);
 
-        return new JavaObjectBinder(info.genericInfo);
+        return new JavaObjectBinder(info.generic);
     }
 
     @Override
     public ArrayBinder getArrayBinder(String key) {
         FieldInfo info = fields.get(key);
-        if (genericInfo != null) {
-            GenericInfo type = genericInfo.getGenericType(info.field);
+        if (generic != null) {
+            Generic type = generic.getGenericType(info.field);
             if (type != null)
                 return new JavaArrayBinder(type);
         }
 
-        return new JavaArrayBinder(info.genericInfo);
+        return new JavaArrayBinder(info.generic);
     }
 }

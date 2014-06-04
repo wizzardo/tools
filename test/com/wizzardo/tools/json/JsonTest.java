@@ -344,4 +344,30 @@ public class JsonTest {
         assertEquals("bar1", l.get(1)[0]);
         assertEquals("bar2", l.get(1)[1]);
     }
+
+    @Test
+    public void testListListBinding() {
+        String s = "[[\"foo1\",\"foo2\",\"foo3\"],[\"bar1\",\"bar2\"]]";
+        List<List<String>> l = JsonObject.parse(s, List.class, new Generic(List.class, String.class));
+
+        assertEquals(2, l.size());
+        assertEquals(3, l.get(0).size());
+        assertEquals(2, l.get(1).size());
+
+        assertEquals("bar1", l.get(1).get(0));
+        assertEquals("bar2", l.get(1).get(1));
+    }
+
+    @Test
+    public void testMapStringListIntegerBinding() {
+        String s = "{\"key1\":[1,2,3],\"key2\":[4,5]}";
+        Map<String, List<Integer>> map = JsonObject.parse(s, Map.class, new Generic(String.class), new Generic(List.class, Integer.class));
+
+        assertEquals(2, map.size());
+        assertEquals(3, map.get("key1").size());
+        assertEquals(2, map.get("key2").size());
+
+        assertEquals(new Integer(4), map.get("key2").get(0));
+        assertEquals(new Integer(5), map.get("key2").get(1));
+    }
 }

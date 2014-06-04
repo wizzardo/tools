@@ -26,40 +26,51 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     public static JsonItem parse(String s) {
-        return new JsonItem(parse(s, null));
+        return new JsonItem(parse(s, (Generic<Object>) null));
     }
 
     public static <T> T parse(String s, Class<T> clazz) {
-        return parse(s, clazz, null);
+        return parse(s, clazz, (Generic[]) null);
     }
 
-    public static <T, G> T parse(String s, Class<T> clazz, Class<G>... generic) {
+    public static <T> T parse(String s, Class<T> clazz, Class... generic) {
+        return parse(s, new Generic<T>(clazz, generic));
+    }
+
+    public static <T> T parse(String s, Class<T> clazz, Generic... generic) {
+        return parse(s, new Generic<T>(clazz, generic));
+    }
+
+    public static <T> T parse(String s, Generic<T> generic) {
         s = s.trim();
         char[] data = toCharArray(s);
         int offset = 0;
         if (data.length != s.length())
             offset = getCharArrayOffset(s);
-        return parse(data, offset, s.length(), clazz, generic);
+        return parse(data, offset, s.length(), generic);
     }
 
     public static JsonItem parse(char[] s) {
-        return new JsonItem(parse(s, null));
+        return new JsonItem(parse(s, null, (Generic<Object>[]) null));
     }
 
-    public static <T, G> T parse(char[] s, Class<T> clazz, Class<G>... generic) {
-        return parse(s, 0, s.length, clazz, generic);
+    public static <T> T parse(char[] s, Class<T> clazz, Class... generic) {
+        return parse(s, 0, s.length, new Generic<T>(clazz, generic));
     }
 
-    public static <T, G> T parse(char[] s, int from, int to, Class<T> clazz, Class<G>... generic) {
+    public static <T> T parse(char[] s, Class<T> clazz, Generic... generic) {
+        return parse(s, 0, s.length, new Generic<T>(clazz, generic));
+    }
+
+    public static <T> T parse(char[] s, int from, int to, Generic<T> generic) {
         // check first char
-        GenericInfo g = new GenericInfo(clazz, generic);
         if (s[0] == '{') {
-            ObjectBinder binder = Binder.getObjectBinder(clazz, g);
+            ObjectBinder binder = Binder.getObjectBinder(generic);
             parse(s, from, to, binder);
             return (T) binder.getObject();
         }
         if (s[0] == '[') {
-            ArrayBinder binder = Binder.getArrayBinder(clazz, g);
+            ArrayBinder binder = Binder.getArrayBinder(generic);
             JsonArray.parse(s, from, to, binder);
             return (T) binder.getObject();
         }

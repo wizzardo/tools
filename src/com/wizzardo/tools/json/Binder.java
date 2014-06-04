@@ -22,18 +22,20 @@ public class Binder {
         STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT, ENUM
     }
 
-    static ObjectBinder getObjectBinder(Class clazz, GenericInfo genereic) {
-        if (clazz == null)
+    static ObjectBinder getObjectBinder(Generic generic) {
+        if (generic == null || generic.clazz == null)
             return new JsonObjectBinder();
+        else if (Map.class.isAssignableFrom(generic.clazz))
+            return new JavaMapBinder(generic);
         else
-            return new JavaObjectBinder(genereic);
+            return new JavaObjectBinder(generic);
     }
 
-    static ArrayBinder getArrayBinder(Class clazz, GenericInfo genereic) {
-        if (clazz == null)
+    static ArrayBinder getArrayBinder(Generic generic) {
+        if (generic == null || generic.clazz == null)
             return new JsonArrayBinder();
         else
-            return new JavaArrayBinder(genereic);
+            return new JavaArrayBinder(generic);
     }
 
     static <T> T createInstance(Class<T> clazz) {
@@ -317,7 +319,7 @@ public class Binder {
         return Array.newInstance(clazz.getComponentType(), size);
     }
 
-    static Object createArray(Class clazz, GenericInfo generic, int size) {
+    static Object createArray(Class clazz, Generic generic, int size) {
         if (clazz == Array.class)
             return Array.newInstance(generic.typeParameters[0].clazz, size);
         else
@@ -328,7 +330,7 @@ public class Binder {
         return clazz.getComponentType();
     }
 
-    static Class getArrayType(Class clazz, GenericInfo generic) {
+    static Class getArrayType(Class clazz, Generic generic) {
         if (clazz == Array.class)
             return generic.typeParameters[0].clazz;
         else

@@ -14,13 +14,13 @@ class JavaArrayBinder implements ArrayBinder {
     private Collection l;
     private Binder.Serializer serializer;
     private Class clazz;
-    private GenericInfo generic;
+    private Generic generic;
 
-    public JavaArrayBinder(GenericInfo generic) {
+    public JavaArrayBinder(Generic generic) {
         if (generic != null)
             this.generic = generic;
         else
-            this.generic = new GenericInfo(Object.class);
+            this.generic = new Generic(Object.class);
 
         this.clazz = generic.clazz;
         serializer = Binder.classToSerializer(clazz);
@@ -60,7 +60,7 @@ class JavaArrayBinder implements ArrayBinder {
     }
 
     @Override
-    public GenericInfo getGeneric() {
+    public Generic getGeneric() {
         if (generic != null && generic.typeParameters.length != 0)
             return generic.typeParameters[0];
 
