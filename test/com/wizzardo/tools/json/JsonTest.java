@@ -370,4 +370,22 @@ public class JsonTest {
         assertEquals(new Integer(4), map.get("key2").get(0));
         assertEquals(new Integer(5), map.get("key2").get(1));
     }
+
+    @Test
+    public void testListMapStringIntegerBinding() {
+        String s = "[{key:1}]";
+        List<Map<String, Integer>> l = JsonObject.parse(s, List.class, new Generic(Map.class, String.class, Integer.class));
+
+        assertEquals(1, l.size());
+        assertEquals(new Integer(1), l.get(0).get("key"));
+    }
+
+    @Test
+    public void testListMapIntegerIntegerBinding() {
+        String s = "[{10:2}]";
+        List<Map<Integer, Integer>> l = JsonObject.parse(s, List.class, new Generic(Map.class, Integer.class, Integer.class));
+
+        assertEquals(1, l.size());
+        assertEquals(new Integer(2), l.get(0).get(10));
+    }
 }
