@@ -13,6 +13,9 @@ public class Cookie {
     String domain;
     Date expired;
 
+    private Cookie() {
+    }
+
     public Cookie(String key, String value) {
         this.key = key;
         this.value = value;
