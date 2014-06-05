@@ -1,6 +1,7 @@
 package com.wizzardo.tools.json;
 
 import java.lang.reflect.Array;
+import java.util.Date;
 
 /**
  * @author: moxa
@@ -256,8 +257,13 @@ public class JsonItem {
             return (T) asByte();
         } else if (Short.class == clazz || short.class == clazz) {
             return (T) asShort();
-        } else if (Array.class == clazz)
+        } else if (Array.class == clazz) {
             return (T) ob;
+        } else if (Date.class == clazz) {
+            Long time = asLong();
+            if (time != null)
+                return (T) new Date(time);
+        }
         return null;
     }
 

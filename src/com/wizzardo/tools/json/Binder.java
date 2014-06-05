@@ -493,7 +493,7 @@ public class Binder {
                 break;
             }
             case DATE: {
-                sb.append("\"").append(src).append("\"");
+                sb.append("\"").append(((Date) src).getTime()).append("\"");
                 break;
             }
             case OBJECT: {
