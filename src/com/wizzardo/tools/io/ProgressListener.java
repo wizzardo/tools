@@ -5,12 +5,26 @@ package com.wizzardo.tools.io;
  * Date: 5/26/13
  */
 public class ProgressListener {
-    private int progress = -1;
+    private volatile int progress = -1;
+    private OnChange onChange;
+
+    public ProgressListener() {
+    }
+
+    public ProgressListener(OnChange onChange) {
+        this.onChange = onChange;
+    }
+
+    public static interface OnChange {
+        public void onProgressChanged(int progress);
+    }
 
     protected void onComplete() {
     }
 
     protected void onProgressChanged(int progress) {
+        if (onChange != null)
+            onChange.onProgressChanged(progress);
     }
 
     public int getProgress() {
