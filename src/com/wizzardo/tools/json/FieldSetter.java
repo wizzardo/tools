@@ -6,105 +6,185 @@ import java.lang.reflect.Field;
  * @author: wizzardo
  * Date: 3/22/14
  */
-abstract class FieldSetter {
+interface FieldSetter {
 
-    void set(Field f, Object object, JsonItem value) {
-        try {
-            doSet(f, object, value);
-        } catch (IllegalAccessException ignore) {
+    public static class Factory {
+        public static FieldSetter createSetter(Field f) {
+            Class cl = f.getType();
+            if (cl == int.class)
+                return new IntSetter(f);
+
+            if (cl == long.class)
+                return new LongSetter(f);
+
+            if (cl == byte.class)
+                return new ByteSetter(f);
+
+            if (cl == short.class)
+                return new ShortSetter(f);
+
+            if (cl == float.class)
+                return new FloatSetter(f);
+
+            if (cl == double.class)
+                return new DoubleSetter(f);
+
+            if (cl == char.class)
+                return new CharSetter(f);
+
+            if (cl == boolean.class)
+                return new BooleanSetter(f);
+
+            if (cl.isEnum())
+                return new EnumSetter(f);
+
+            return new ObjectSetter(f);
         }
     }
 
-    static FieldSetter getSetter(Class cl) {
-        if (cl == int.class)
-            return intSetter;
+    void doSet(Object object, JsonItem value);
 
-        if (cl == long.class)
-            return longSetter;
+    public com.wizzardo.tools.reflection.FieldSetter.Type getType();
 
-        if (cl == byte.class)
-            return byteSetter;
+    public static class ByteSetter extends com.wizzardo.tools.reflection.FieldSetter.ByteSetter implements FieldSetter {
 
-        if (cl == short.class)
-            return shortSetter;
+        ByteSetter(Field f) {
+            super(f);
+        }
 
-        if (cl == float.class)
-            return floatSetter;
-
-        if (cl == double.class)
-            return doubleSetter;
-
-        if (cl == char.class)
-            return charSetter;
-
-        if (cl == boolean.class)
-            return booleanSetter;
-
-        return objectSetter;
+        public void doSet(Object object, JsonItem value) {
+            try {
+                set(object, value.asByte((byte) 0));
+            } catch (IllegalAccessException ignored) {
+            }
+        }
     }
 
-    protected abstract void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException;
-
-
-    private static FieldSetter byteSetter = new FieldSetter() {
-        @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.setByte(object, value.asByte((byte) 0));
+    public static class ShortSetter extends com.wizzardo.tools.reflection.FieldSetter.ShortSetter implements FieldSetter {
+        ShortSetter(Field f) {
+            super(f);
         }
-    };
 
-    private static FieldSetter shortSetter = new FieldSetter() {
-        @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.setShort(object, value.asShort((short) 0));
+        public void doSet(Object object, JsonItem value) {
+            try {
+                set(object, value.asShort((short) 0));
+            } catch (IllegalAccessException ignored) {
+            }
         }
-    };
-    private static FieldSetter intSetter = new FieldSetter() {
-        @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.setInt(object, value.asInteger(0));
-        }
-    };
+    }
 
-    private static FieldSetter longSetter = new FieldSetter() {
-        @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.setLong(object, value.asLong(0l));
+    public static class IntSetter extends com.wizzardo.tools.reflection.FieldSetter.IntSetter implements FieldSetter {
+        IntSetter(Field f) {
+            super(f);
         }
-    };
 
-    private static FieldSetter floatSetter = new FieldSetter() {
         @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.setFloat(object, value.asFloat(0f));
+        public void doSet(Object object, JsonItem value) {
+            try {
+                set(object, value.asInteger(0));
+            } catch (IllegalAccessException ignored) {
+            }
         }
-    };
+    }
 
-    private static FieldSetter doubleSetter = new FieldSetter() {
-        @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.setDouble(object, value.asDouble(0d));
+    public static class LongSetter extends com.wizzardo.tools.reflection.FieldSetter.LongSetter implements FieldSetter {
+        LongSetter(Field f) {
+            super(f);
         }
-    };
 
-    private static FieldSetter charSetter = new FieldSetter() {
         @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.setChar(object, (char) (int) value.asInteger(0));
+        public void doSet(Object object, JsonItem value) {
+            try {
+                set(object, value.asLong(0l));
+            } catch (IllegalAccessException ignored) {
+            }
         }
-    };
+    }
 
-    private static FieldSetter booleanSetter = new FieldSetter() {
-        @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.setBoolean(object, value.asBoolean(Boolean.FALSE));
+    public static class FloatSetter extends com.wizzardo.tools.reflection.FieldSetter.FloatSetter implements FieldSetter {
+        FloatSetter(Field f) {
+            super(f);
         }
-    };
 
-    private static FieldSetter objectSetter = new FieldSetter() {
         @Override
-        public void doSet(Field f, Object object, JsonItem value) throws IllegalAccessException {
-            f.set(object, value.getAs(f.getType()));
+        public void doSet(Object object, JsonItem value) {
+            try {
+                set(object, value.asFloat(0f));
+            } catch (IllegalAccessException ignored) {
+            }
         }
-    };
+    }
+
+    public static class DoubleSetter extends com.wizzardo.tools.reflection.FieldSetter.DoubleSetter implements FieldSetter {
+        DoubleSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void doSet(Object object, JsonItem value) {
+            try {
+                set(object, value.asDouble(0d));
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+    }
+
+    public static class CharSetter extends com.wizzardo.tools.reflection.FieldSetter.CharSetter implements FieldSetter {
+        CharSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void doSet(Object object, JsonItem value) {
+            try {
+                set(object, (char) (int) value.asInteger(0));
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+    }
+
+    public static class BooleanSetter extends com.wizzardo.tools.reflection.FieldSetter.BooleanSetter implements FieldSetter {
+        BooleanSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void doSet(Object object, JsonItem value) {
+            try {
+                set(object, value.asBoolean(Boolean.FALSE));
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+    }
+
+    public static class ObjectSetter extends com.wizzardo.tools.reflection.FieldSetter.ObjectSetter implements FieldSetter {
+        ObjectSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void doSet(Object object, JsonItem value) {
+            Object ob = value == null ? null : value.getAs(f.getType());
+            try {
+                set(object, ob);
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+    }
+
+    public static class EnumSetter extends com.wizzardo.tools.reflection.FieldSetter.ObjectSetter implements FieldSetter {
+        EnumSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void doSet(Object object, JsonItem value) {
+            Class cl = f.getType();
+            Object ob = value == null ? null : value.asEnum(cl);
+            try {
+                set(object, ob);
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+    }
 }

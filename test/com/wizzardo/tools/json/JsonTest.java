@@ -367,6 +367,10 @@ public class JsonTest {
         assertEquals(3, map.get("key1").size());
         assertEquals(2, map.get("key2").size());
 
+        assertEquals(new Integer(1), map.get("key1").get(0));
+        assertEquals(new Integer(2), map.get("key1").get(1));
+        assertEquals(new Integer(3), map.get("key1").get(2));
+
         assertEquals(new Integer(4), map.get("key2").get(0));
         assertEquals(new Integer(5), map.get("key2").get(1));
     }

@@ -21,31 +21,31 @@ public class JavaMapBinder extends JavaObjectBinder {
     }
 
     @Override
-    public void put(String key, Object value) {
-        put(key, new JsonItem(value));
+    public void add(Object value) {
+        add(new JsonItem(value));
     }
 
     @Override
-    public void put(String key, JsonItem value) {
-        if (Binder.setValue(object, key, value))
+    public void add(JsonItem value) {
+        if (Binder.setValue(object, tempKey, value))
             return;
 
-        that.put(JsonItem.getAs(key, type[0].clazz), value.getAs(type[1].clazz));
+        that.put(JsonItem.getAs(tempKey, type[0].clazz), value.getAs(type[1].clazz));
     }
 
     @Override
-    public ObjectBinder getObjectBinder(String key) {
+    public JsonBinder getObjectBinder() {
         if (generic.typeParameters.length == 2)
             return new JavaObjectBinder(generic.typeParameters[1]);
 
-        return super.getObjectBinder(key);
+        return super.getObjectBinder();
     }
 
     @Override
-    public ArrayBinder getArrayBinder(String key) {
+    public JsonBinder getArrayBinder() {
         if (generic.typeParameters.length == 2)
             return new JavaArrayBinder(generic.typeParameters[1]);
 
-        return super.getArrayBinder(key);
+        return super.getArrayBinder();
     }
 }

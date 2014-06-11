@@ -4,7 +4,7 @@ package com.wizzardo.tools.json;
  * @author: wizzardo
  * Date: 2/6/14
  */
-class JsonArrayBinder implements ArrayBinder {
+class JsonArrayBinder implements JsonBinder {
     private JsonArray json;
 
     public JsonArrayBinder() {
@@ -30,12 +30,16 @@ class JsonArrayBinder implements ArrayBinder {
     }
 
     @Override
-    public ObjectBinder getObjectBinder() {
+    public JsonBinder getObjectBinder() {
         return new JsonObjectBinder();
     }
 
     @Override
-    public ArrayBinder getArrayBinder() {
+    public JsonBinder getArrayBinder() {
         return new JsonArrayBinder();
+    }
+
+    @Override
+    public void setTemporaryKey(String key) {
     }
 }

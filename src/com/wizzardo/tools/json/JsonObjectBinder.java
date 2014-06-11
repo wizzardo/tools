@@ -4,19 +4,20 @@ package com.wizzardo.tools.json;
  * @author: wizzardo
  * Date: 2/6/14
  */
-class JsonObjectBinder implements ObjectBinder {
+class JsonObjectBinder implements JsonBinder {
     private JsonObject json;
+    private String tempKey;
 
     public JsonObjectBinder() {
         this.json = new JsonObject();
     }
 
-    public void put(String key, Object value) {
-        json.put(key, new JsonItem(value));
+    public void add(Object value) {
+        json.put(tempKey, new JsonItem(value));
     }
 
-    public void put(String key, JsonItem value) {
-        json.put(key, value);
+    public void add(JsonItem value) {
+        json.put(tempKey, value);
     }
 
     @Override
@@ -25,12 +26,22 @@ class JsonObjectBinder implements ObjectBinder {
     }
 
     @Override
-    public ObjectBinder getObjectBinder(String key) {
+    public JsonBinder getObjectBinder() {
         return new JsonObjectBinder();
     }
 
     @Override
-    public ArrayBinder getArrayBinder(String key) {
+    public JsonBinder getArrayBinder() {
         return new JsonArrayBinder();
+    }
+
+    @Override
+    public void setTemporaryKey(String key) {
+        tempKey = key;
+    }
+
+    @Override
+    public Generic getGeneric() {
+        return null;
     }
 }

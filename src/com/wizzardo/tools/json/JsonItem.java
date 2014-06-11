@@ -204,6 +204,10 @@ public class JsonItem {
         return def;
     }
 
+    public <T extends Enum<T>> Enum<T> asEnum(Class<T> cl) {
+        return Enum.valueOf(cl, asString());
+    }
+
     public JsonObject asJsonObject() {
         if (ob instanceof JsonObject) {
             return (JsonObject) ob;

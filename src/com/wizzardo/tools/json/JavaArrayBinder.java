@@ -10,7 +10,7 @@ import java.util.Map;
  * @author: wizzardo
  * Date: 2/6/14
  */
-class JavaArrayBinder implements ArrayBinder {
+class JavaArrayBinder implements JsonBinder {
     private Collection l;
     private Binder.Serializer serializer;
     private Class clazz;
@@ -36,7 +36,7 @@ class JavaArrayBinder implements ArrayBinder {
 
     @Override
     public void add(Object value) {
-        l.add(value);
+        add(new JsonItem(value));
     }
 
     @Override
@@ -68,7 +68,7 @@ class JavaArrayBinder implements ArrayBinder {
     }
 
     @Override
-    public ObjectBinder getObjectBinder() {
+    public JsonBinder getObjectBinder() {
         if (Map.class.isAssignableFrom(generic.typeParameters[0].clazz))
             return new JavaMapBinder(generic.typeParameters[0]);
 
@@ -76,7 +76,11 @@ class JavaArrayBinder implements ArrayBinder {
     }
 
     @Override
-    public ArrayBinder getArrayBinder() {
+    public JsonBinder getArrayBinder() {
         return new JavaArrayBinder(getGeneric());
+    }
+
+    @Override
+    public void setTemporaryKey(String key) {
     }
 }

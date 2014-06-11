@@ -34,7 +34,7 @@ class JsonUtils {
         return from;
     }
 
-    static int parseNumber(JsonItem holder, char[] s, int from, int to) {
+    static int parseNumber(JsonBinder binder, char[] s, int from, int to) {
         int i = from;
 
         boolean minus = s[from] == '-';
@@ -49,9 +49,10 @@ class JsonUtils {
         char ch;
         for (; i < to; i++) {
             ch = s[i];
-            if (ch >= '0' && ch <= '9')
-                l = l * 10 + (ch - '0');
-            else if (ch == '.' && !floatValue)
+            if (ch >= '0' && ch <= '9') {
+                if (!floatValue)
+                    l = l * 10 + (ch - '0');
+            } else if (ch == '.' && !floatValue)
                 floatValue = true;
             else
                 break;
@@ -60,22 +61,22 @@ class JsonUtils {
 
         if (!floatValue)
             if (minus)
-                holder.set(-l);
+                binder.add(-l);
             else
-                holder.set(l);
+                binder.add(l);
         else {
             if (minus)
                 from++;
             double d = Double.parseDouble(new String(s, from, i - from));
             if (minus)
                 d = -d;
-            holder.set(d);
+            binder.add(d);
         }
 
         return i;
     }
 
-    static int parseValue(JsonItem holder, char[] s, int from, int to, char end) {
+    static int parseValue(JsonBinder binder, char[] s, int from, int to, char end) {
         char ch = s[from];
 
         char quote = 0;
@@ -121,14 +122,15 @@ class JsonUtils {
         int l = k - from;
         if (!needDecoding) {
             if (JsonUtils.isNull(s, from, l)) {
+                binder.add(new JsonItem(null));
                 return i;
             }
             if (isTrue(s, from, l)) {
-                holder.set(Boolean.TRUE);
+                binder.add(Boolean.TRUE);
                 return i;
             }
             if (isFalse(s, from, l)) {
-                holder.set(Boolean.FALSE);
+                binder.add(Boolean.FALSE);
                 return i;
             }
 
@@ -136,12 +138,12 @@ class JsonUtils {
         } else
             value = JsonObject.unescape(s, from, k);
 
-        holder.set(value);
+        binder.add(value);
 
         return i;
     }
 
-    static int parseKey(JsonItem holder, char[] s, int from, int to) {
+    static int parseKey(JsonBinder binder, char[] s, int from, int to) {
         int i = from;
         char ch = s[i];
 
@@ -197,7 +199,7 @@ class JsonUtils {
         else
             value = JsonObject.unescape(s, from, rigthBorder);
 
-        holder.set(value);
+        binder.setTemporaryKey(value);
 
         return i + 1;
     }

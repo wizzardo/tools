@@ -22,7 +22,7 @@ public class Binder {
         STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT, ENUM
     }
 
-    static ObjectBinder getObjectBinder(Generic generic) {
+    static JsonBinder getObjectBinder(Generic generic) {
         if (generic == null || generic.clazz == null)
             return new JsonObjectBinder();
         else if (Map.class.isAssignableFrom(generic.clazz))
@@ -31,7 +31,7 @@ public class Binder {
             return new JavaObjectBinder(generic);
     }
 
-    static ArrayBinder getArrayBinder(Generic generic) {
+    static JsonBinder getArrayBinder(Generic generic) {
         if (generic == null || generic.clazz == null)
             return new JsonArrayBinder();
         else
@@ -125,31 +125,33 @@ public class Binder {
         if (fieldInfo == null)
             return false;
 
-        Field field = fieldInfo.field;
-
-        try {
-            switch (fieldInfo.serializer) {
-                case STRING:
-                case NUMBER_BOOLEAN:
-                    fieldInfo.setter.set(field, object, value);
-//                    field.set(object, JsonItem.getAs(value, field.getType()));
-//                    JsonItem.setField(value, field,object);
-                    break;
-                case ENUM:
-                    if (value == null)
-                        field.set(object, value);
-                    else {
-                        Class c = field.getType();
-                        field.set(object, Enum.valueOf(c, value.asString()));
-                    }
-                    break;
-                default:
-//                    field.set(object, value);
-                    fieldInfo.setter.set(field, object, value);
-            }
-        } catch (IllegalAccessException e) {
-            throw new WrappedException(e);
-        }
+        fieldInfo.setter.doSet(object, value);
+//        Field field = fieldInfo.field;
+//
+//        try {
+//            switch (fieldInfo.serializer) {
+//                case STRING:
+//                case NUMBER_BOOLEAN:
+//                    fieldInfo.setter.set(object, value);
+////                    field.set(object, JsonItem.getAs(value, field.getType()));
+////                    JsonItem.setField(value, field,object);
+//                    break;
+//                case ENUM:
+//                    if (value == null)
+//                        field.set(object, value);
+//                    else {
+////                        Class c = field.getType();
+////                        field.set(object, Enum.valueOf(c, value.asString()));
+//                        fieldInfo.setter.set(object, value);
+//                    }
+//                    break;
+//                default:
+////                    field.set(object, value);
+//                    fieldInfo.setter.set(object, value);
+//            }
+//        } catch (IllegalAccessException e) {
+//            throw new WrappedException(e);
+//        }
         return true;
     }
 
@@ -212,7 +214,7 @@ public class Binder {
                     Serializer s = info.serializer;
                     JsonObject jsonObject = json.asJsonObject();
                     JsonItem item = jsonObject.get(field.getName());
-                    if (jsonObject.containsKey(field.getName()))
+                    if (item != null)
                         switch (s) {
                             case STRING:
                             case NUMBER_BOOLEAN:

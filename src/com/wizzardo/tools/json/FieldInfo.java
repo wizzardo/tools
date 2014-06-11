@@ -16,6 +16,6 @@ class FieldInfo {
         this.field = field;
         this.generic = new Generic(field.getGenericType());
         this.serializer = serializer;
-        setter = FieldSetter.getSetter(field.getType());
+        setter = FieldSetter.Factory.createSetter(field);
     }
 }

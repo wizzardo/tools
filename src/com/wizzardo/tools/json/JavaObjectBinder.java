@@ -6,11 +6,12 @@ import java.util.Map;
  * @author: wizzardo
  * Date: 2/6/14
  */
-class JavaObjectBinder implements ObjectBinder {
+class JavaObjectBinder implements JsonBinder {
     protected Object object;
     protected Class clazz;
     protected Generic generic;
     protected Map<String, FieldInfo> fields;
+    protected String tempKey;
 
     public JavaObjectBinder(Generic generic) {
         this.clazz = generic.clazz;
@@ -20,13 +21,13 @@ class JavaObjectBinder implements ObjectBinder {
     }
 
     @Override
-    public void put(String key, Object value) {
-        put(key, new JsonItem(value));
+    public void add(Object value) {
+        add(new JsonItem(value));
     }
 
     @Override
-    public void put(String key, JsonItem value) {
-        Binder.setValue(object, fields.get(key), value);
+    public void add(JsonItem value) {
+        Binder.setValue(object, fields.get(tempKey), value);
     }
 
     @Override
@@ -35,8 +36,8 @@ class JavaObjectBinder implements ObjectBinder {
     }
 
     @Override
-    public ObjectBinder getObjectBinder(String key) {
-        FieldInfo info = fields.get(key);
+    public JsonBinder getObjectBinder() {
+        FieldInfo info = fields.get(tempKey);
         if (info == null)
             return null;
 
@@ -47,8 +48,8 @@ class JavaObjectBinder implements ObjectBinder {
     }
 
     @Override
-    public ArrayBinder getArrayBinder(String key) {
-        FieldInfo info = fields.get(key);
+    public JsonBinder getArrayBinder() {
+        FieldInfo info = fields.get(tempKey);
         if (generic != null) {
             Generic type = generic.getGenericType(info.field);
             if (type != null)
@@ -56,5 +57,15 @@ class JavaObjectBinder implements ObjectBinder {
         }
 
         return new JavaArrayBinder(info.generic);
+    }
+
+    @Override
+    public void setTemporaryKey(String key) {
+        tempKey = key;
+    }
+
+    @Override
+    public Generic getGeneric() {
+        return null;
     }
 }
