@@ -125,7 +125,7 @@ public class Binder {
         if (fieldInfo == null)
             return false;
 
-        fieldInfo.setter.doSet(object, value);
+        fieldInfo.setter.set(object, value);
 //        Field field = fieldInfo.field;
 //
 //        try {

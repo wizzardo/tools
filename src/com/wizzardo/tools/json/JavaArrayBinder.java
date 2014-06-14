@@ -68,6 +68,11 @@ class JavaArrayBinder implements JsonBinder {
     }
 
     @Override
+    public JsonFieldSetter getFieldSetter() {
+        return null;
+    }
+
+    @Override
     public JsonBinder getObjectBinder() {
         if (Map.class.isAssignableFrom(generic.typeParameters[0].clazz))
             return new JavaMapBinder(generic.typeParameters[0]);

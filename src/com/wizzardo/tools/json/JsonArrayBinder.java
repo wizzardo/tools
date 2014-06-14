@@ -30,6 +30,11 @@ class JsonArrayBinder implements JsonBinder {
     }
 
     @Override
+    public JsonFieldSetter getFieldSetter() {
+        return null;
+    }
+
+    @Override
     public JsonBinder getObjectBinder() {
         return new JsonObjectBinder();
     }

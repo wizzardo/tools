@@ -19,4 +19,5 @@ interface JsonBinder {
 
     public Generic getGeneric();
 
+    public JsonFieldSetter getFieldSetter();
 }

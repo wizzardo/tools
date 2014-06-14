@@ -9,9 +9,10 @@ import java.lang.reflect.Field;
  * Date: 3/22/14
  */
 public class FieldSetter {
-    protected Field f;
+    protected Field field;
     protected Unsafe unsafe = UnsafeTools.getUnsafe();
-    protected long offset;
+    protected final long offset;
+    protected final Type type;
 
     public static enum Type {
         INTEGER,
@@ -25,201 +26,125 @@ public class FieldSetter {
         OBJECT
     }
 
-    protected FieldSetter(Field f) {
-        this.f = f;
+    public void setInteger(Object object, int value) {
+        if (offset != 0)
+            unsafe.putInt(object, offset, value);
+        else
+            try {
+                field.setInt(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public void setLong(Object object, long value) {
+        if (offset != 0)
+            unsafe.putLong(object, offset, value);
+        else
+            try {
+                field.setLong(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public void setByte(Object object, byte value) {
+        if (offset != 0)
+            unsafe.putByte(object, offset, value);
+        else
+            try {
+                field.setByte(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public void setShort(Object object, short value) {
+        if (offset != 0)
+            unsafe.putShort(object, offset, value);
+        else
+            try {
+                field.setShort(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public void setFloat(Object object, float value) {
+        if (offset != 0)
+            unsafe.putFloat(object, offset, value);
+        else
+            try {
+                field.setFloat(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public void setDouble(Object object, double value) {
+        if (offset != 0)
+            unsafe.putDouble(object, offset, value);
+        else
+            try {
+                field.setDouble(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public void setChar(Object object, char value) {
+        if (offset != 0)
+            unsafe.putChar(object, offset, value);
+        else
+            try {
+                field.setChar(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public void setBooalen(Object object, boolean value) {
+        if (offset != 0)
+            unsafe.putBoolean(object, offset, value);
+        else
+            try {
+                field.setBoolean(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public void setObject(Object object, Object value) {
+        if (offset != 0)
+            unsafe.putObject(object, offset, value);
+        else
+            try {
+                field.set(object, value);
+            } catch (IllegalAccessException ignored) {
+            }
+    }
+
+    public FieldSetter(Field field) {
+        this.field = field;
         if (unsafe != null)
-            offset = unsafe.objectFieldOffset(f);
+            offset = unsafe.objectFieldOffset(field);
+        else
+            offset = 0;
+
+        Class cl = field.getType();
+        if (cl == int.class)
+            type = Type.INTEGER;
+        else if (cl == long.class)
+            type = Type.LONG;
+        else if (cl == byte.class)
+            type = Type.BYTE;
+        else if (cl == short.class)
+            type = Type.SHORT;
+        else if (cl == float.class)
+            type = Type.FLOAT;
+        else if (cl == double.class)
+            type = Type.DOUBLE;
+        else if (cl == char.class)
+            type = Type.CHAR;
+        else if (cl == boolean.class)
+            type = Type.BOOLEAN;
+        else
+            type = Type.OBJECT;
     }
 
     public Type getType() {
-        return Type.OBJECT;
-    }
-
-    public static FieldSetter getSetter(Field f) {
-        Class cl = f.getType();
-        if (cl == int.class)
-            return new IntSetter(f);
-
-        if (cl == long.class)
-            return new LongSetter(f);
-
-        if (cl == byte.class)
-            return new ByteSetter(f);
-
-        if (cl == short.class)
-            return new ShortSetter(f);
-
-        if (cl == float.class)
-            return new FloatSetter(f);
-
-        if (cl == double.class)
-            return new DoubleSetter(f);
-
-        if (cl == char.class)
-            return new CharSetter(f);
-
-        if (cl == boolean.class)
-            return new BooleanSetter(f);
-
-        return new ObjectSetter(f);
-    }
-
-
-    public static class ByteSetter extends FieldSetter {
-
-        public ByteSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, byte b) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putByte(object, offset, b);
-            else
-                f.setByte(object, b);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.BYTE;
-        }
-    }
-
-    public static class ShortSetter extends FieldSetter {
-        public ShortSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, short s) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putShort(object, offset, s);
-            else
-                f.setShort(object, s);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.SHORT;
-        }
-    }
-
-    public static class IntSetter extends FieldSetter {
-        public IntSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, int i) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putInt(object, offset, i);
-            else
-                f.setInt(object, i);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.INTEGER;
-        }
-    }
-
-    public static class LongSetter extends FieldSetter {
-        public LongSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, long l) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putLong(object, offset, l);
-            else
-                f.setLong(object, l);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.LONG;
-        }
-    }
-
-    public static class FloatSetter extends FieldSetter {
-        public FloatSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, float fl) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putFloat(object, offset, fl);
-            else
-                f.setFloat(object, fl);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.FLOAT;
-        }
-    }
-
-    public static class DoubleSetter extends FieldSetter {
-        public DoubleSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, double d) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putDouble(object, offset, d);
-            else
-                f.setDouble(object, d);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.DOUBLE;
-        }
-    }
-
-    public static class CharSetter extends FieldSetter {
-        public CharSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, char c) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putChar(object, offset, c);
-            else
-                f.setChar(object, c);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.CHAR;
-        }
-    }
-
-    public static class BooleanSetter extends FieldSetter {
-        public BooleanSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, boolean b) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putBoolean(object, offset, b);
-            else
-                f.setBoolean(object, b);
-        }
-
-        @Override
-        public Type getType() {
-            return Type.BOOLEAN;
-        }
-    }
-
-    public static class ObjectSetter extends FieldSetter {
-        public ObjectSetter(Field f) {
-            super(f);
-        }
-
-        public void set(Object object, Object ob) throws IllegalAccessException {
-            if (offset != 0)
-                unsafe.putObject(object, offset, ob);
-            else
-                f.set(object, ob);
-        }
+        return type;
     }
 }

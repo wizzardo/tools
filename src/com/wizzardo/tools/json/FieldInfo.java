@@ -10,12 +10,12 @@ class FieldInfo {
     final Field field;
     final Generic generic;
     final Binder.Serializer serializer;
-    final FieldSetter setter;
+    final JsonFieldSetter setter;
 
     FieldInfo(Field field, Binder.Serializer serializer) {
         this.field = field;
         this.generic = new Generic(field.getGenericType());
         this.serializer = serializer;
-        setter = FieldSetter.Factory.createSetter(field);
+        setter = JsonFieldSetter.createSetter(field);
     }
 }

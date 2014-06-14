@@ -44,4 +44,9 @@ class JsonObjectBinder implements JsonBinder {
     public Generic getGeneric() {
         return null;
     }
+
+    @Override
+    public JsonFieldSetter getFieldSetter() {
+        return null;
+    }
 }

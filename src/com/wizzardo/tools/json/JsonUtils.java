@@ -1,5 +1,7 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.reflection.FieldSetter;
+
 import java.lang.reflect.Field;
 
 /**
@@ -58,22 +60,73 @@ class JsonUtils {
                 break;
 
         }
+        if (minus)
+            l = -l;
 
-        if (!floatValue)
-            if (minus)
-                binder.add(-l);
-            else
-                binder.add(l);
-        else {
+        double d = 0;
+        if (floatValue) {
             if (minus)
                 from++;
-            double d = Double.parseDouble(new String(s, from, i - from));
+            d = Double.parseDouble(new String(s, from, i - from));
             if (minus)
                 d = -d;
-            binder.add(d);
         }
 
+        JsonFieldSetter setter = binder.getFieldSetter();
+        if (setter != null && setter.getType() != FieldSetter.Type.OBJECT) {
+            setNumber(setter, binder.getObject(), l, d, floatValue);
+            return i;
+        }
+
+        if (!floatValue)
+            set(setter, binder, l);
+        else
+            set(setter, binder, d);
+
         return i;
+    }
+
+    private static void setNumber(FieldSetter setter, Object object, long l, double d, boolean floatValue) {
+        switch (setter.getType()) {
+            case INTEGER: {
+                setter.setInteger(object, (int) l);
+                break;
+            }
+            case LONG: {
+                setter.setLong(object, l);
+                break;
+            }
+            case BYTE: {
+                setter.setByte(object, (byte) l);
+                break;
+            }
+            case SHORT: {
+                setter.setShort(object, (short) l);
+                break;
+            }
+            case CHAR: {
+                setter.setChar(object, (char) l);
+                break;
+            }
+            case FLOAT: {
+                if (floatValue)
+                    setter.setFloat(object, (float) d);
+                else
+                    setter.setFloat(object, (float) l);
+                break;
+            }
+            case DOUBLE: {
+                if (floatValue)
+                    setter.setDouble(object, d);
+                else
+                    setter.setDouble(object, (double) l);
+                break;
+            }
+            case BOOLEAN: {
+                setter.setBooalen(object, l != 0);
+                break;
+            }
+        }
     }
 
     static int parseValue(JsonBinder binder, char[] s, int from, int to, char end) {
@@ -118,19 +171,26 @@ class JsonUtils {
         else
             i++;
 
+        JsonFieldSetter setter = binder.getFieldSetter();
         String value;
         int l = k - from;
         if (!needDecoding) {
-            if (JsonUtils.isNull(s, from, l)) {
-                binder.add(new JsonItem(null));
+            boolean isTrue = isTrue(s, from, l);
+            if (setter != null && setter.getType() == FieldSetter.Type.BOOLEAN) {
+                setter.setBooalen(binder.getObject(), isTrue);
                 return i;
             }
-            if (isTrue(s, from, l)) {
-                binder.add(Boolean.TRUE);
+
+            if (JsonUtils.isNull(s, from, l)) {
+                set(setter, binder, null);
+                return i;
+            }
+            if (isTrue) {
+                set(setter, binder, Boolean.TRUE);
                 return i;
             }
             if (isFalse(s, from, l)) {
-                binder.add(Boolean.FALSE);
+                set(setter, binder, Boolean.FALSE);
                 return i;
             }
 
@@ -138,9 +198,16 @@ class JsonUtils {
         } else
             value = JsonObject.unescape(s, from, k);
 
-        binder.add(value);
+        set(setter, binder, value);
 
         return i;
+    }
+
+    private static void set(JsonFieldSetter setter, JsonBinder binder, Object value) {
+        if (setter != null)
+            setter.set(binder.getObject(), new JsonItem(value));
+        else
+            binder.add(value);
     }
 
     static int parseKey(JsonBinder binder, char[] s, int from, int to) {

@@ -20,6 +20,10 @@ class JavaObjectBinder implements JsonBinder {
         fields = Binder.getFields(clazz);
     }
 
+    private FieldInfo getField() {
+        return fields.get(tempKey);
+    }
+
     @Override
     public void add(Object value) {
         add(new JsonItem(value));
@@ -27,7 +31,7 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public void add(JsonItem value) {
-        Binder.setValue(object, fields.get(tempKey), value);
+        Binder.setValue(object, getField(), value);
     }
 
     @Override
@@ -37,7 +41,7 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public JsonBinder getObjectBinder() {
-        FieldInfo info = fields.get(tempKey);
+        FieldInfo info = getField();
         if (info == null)
             return null;
 
@@ -49,7 +53,7 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public JsonBinder getArrayBinder() {
-        FieldInfo info = fields.get(tempKey);
+        FieldInfo info = getField();
         if (generic != null) {
             Generic type = generic.getGenericType(info.field);
             if (type != null)
@@ -66,6 +70,14 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public Generic getGeneric() {
+        return null;
+    }
+
+    @Override
+    public JsonFieldSetter getFieldSetter() {
+        FieldInfo f = getField();
+        if (f != null)
+            return f.setter;
         return null;
     }
 }

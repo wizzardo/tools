@@ -48,4 +48,9 @@ public class JavaMapBinder extends JavaObjectBinder {
 
         return super.getArrayBinder();
     }
+
+    @Override
+    public JsonFieldSetter getFieldSetter() {
+        return null;
+    }
 }
