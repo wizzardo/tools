@@ -143,7 +143,11 @@ public class Request extends RequestArguments<Request> {
             }
             if (redirects && (c.getResponseCode() == 301 || c.getResponseCode() == 302)) {
                 Response r = new Response(c, session);
-                return session.createRequest(r.getHeader("Location")).get();
+                String path = r.getHeader("Location");
+                if (!path.startsWith("http://") && !path.startsWith("https://"))
+                    path = u.getProtocol() + "://" + u.getHost() + path;
+
+                return session.createRequest(path).get();
             }
             return new Response(c, session);
         } catch (SocketTimeoutException e) {
