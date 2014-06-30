@@ -84,23 +84,39 @@ public class ZipTools {
         }
     }
 
-    public static void unzip(File zipFile, File outDir) {
+    public static interface ZipEntryFilter {
+
+        boolean accept(ZipEntry entry);
+    }
+
+    public static List<File> unzip(File zipFile, File outDir) {
+        return unzip(zipFile, outDir, null);
+    }
+
+    public static List<File> unzip(File zipFile, File outDir, ZipEntryFilter filter) {
         ZipInputStream zip = null;
+        outDir.mkdirs();
+        List<File> l = new ArrayList<File>();
         try {
             zip = new ZipInputStream(new FileInputStream(zipFile));
             ZipEntry entry;
-            byte[] b = new byte[10240];
-            int r;
+            byte[] b = new byte[1024 * 50];
             while ((entry = zip.getNextEntry()) != null) {
                 File outFile = new File(outDir, entry.getName());
-                if (entry.isDirectory()) {
-                    outFile.mkdirs();
+                if (entry.isDirectory())
                     continue;
-                }
-                FileOutputStream out = null;
+
+                if (filter != null && !filter.accept(entry))
+                    continue;
+
+                outFile.getParentFile().mkdirs();
+
+                FileOutputStream out = new FileOutputStream(outFile);
                 try {
                     IOTools.copy(zip, out, b);
+                    l.add(outFile);
                 } catch (IOException ex) {
+                    outFile.delete();
                     throw new WrappedException(ex);
                 } finally {
                     IOTools.close(out);
@@ -111,6 +127,7 @@ public class ZipTools {
         } finally {
             IOTools.close(zip);
         }
+        return l;
     }
 
     public static boolean isZip(File f) {
@@ -162,7 +179,7 @@ public class ZipTools {
 
     public static void zipping(ZipOutputStream zipout, List<File> files, File startDir) {
         FileInputStream in = null;
-        byte[] b = new byte[50*1024];
+        byte[] b = new byte[50 * 1024];
         for (int i = 1; i <= files.size(); i++) {
             try {
                 File f = files.get(i - 1);
@@ -170,7 +187,7 @@ public class ZipTools {
                 ZipEntry entry = new ZipEntry(f.getAbsolutePath().substring(startDir.getAbsolutePath().length() + 1));
                 entry.setMethod(ZipEntry.DEFLATED);
                 zipout.putNextEntry(entry);
-                IOTools.copy(in,zipout,b);
+                IOTools.copy(in, zipout, b);
             } catch (IOException ex) {
                 throw new WrappedException(ex);
             } finally {
