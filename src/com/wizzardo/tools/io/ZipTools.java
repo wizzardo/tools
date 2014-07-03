@@ -13,6 +13,8 @@ public class ZipTools {
 
     public static class ZipBuilder {
         private List<ZipBuilderEntry> entries = new ArrayList<ZipBuilderEntry>();
+        private int level = -1;
+        private int method = ZipOutputStream.DEFLATED;
 
         public ZipBuilder append(String name, byte[] bytes) {
             entries.add(new BytesEntry(name, bytes));
@@ -24,8 +26,28 @@ public class ZipTools {
             return this;
         }
 
+        public void zip(File out) throws IOException {
+            zip(new FileOutputStream(out));
+        }
+
+        public ZipBuilder level(int level) {
+            if (level < 0 || level > 9)
+                throw new IllegalArgumentException("compression level must be 0-9");
+            this.level = level;
+            return this;
+        }
+
+        public ZipBuilder method(int method) {
+            if (method != ZipOutputStream.DEFLATED && method != ZipOutputStream.STORED)
+                throw new IllegalArgumentException("compression method must be on of [DEFLATED, STORED]");
+            this.method = method;
+            return this;
+        }
+
         public void zip(OutputStream out) throws IOException {
             ZipOutputStream zipout = new ZipOutputStream(out);
+            zipout.setMethod(method);
+            zipout.setLevel(level);
             try {
                 for (ZipBuilderEntry entry : entries) {
                     entry.write(zipout);
