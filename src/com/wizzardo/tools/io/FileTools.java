@@ -134,7 +134,7 @@ public class FileTools {
         if (f == null)
             return into;
 
-        if (!f.isDirectory()) {
+        if (!f.isDirectory() && f.exists()) {
             into.add(f);
         } else {
             File[] l = f.listFiles(filter);
