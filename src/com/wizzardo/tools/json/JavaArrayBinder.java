@@ -50,8 +50,8 @@ class JavaArrayBinder implements JsonBinder {
             return l;
         else {
             List l = (List) this.l;
-            Object array = Binder.createArray(clazz, generic, l.size());
-            Class type = Binder.getArrayType(clazz, generic);
+            Object array = Binder.createArray(generic, l.size());
+            Class type = generic.typeParameters[0].clazz;
             for (int i = 0; i < l.size(); i++) {
                 Array.set(array, i, JsonItem.getAs(l.get(i), type));
             }

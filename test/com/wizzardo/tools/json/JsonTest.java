@@ -3,12 +3,12 @@ package com.wizzardo.tools.json;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author: moxa
@@ -392,4 +392,45 @@ public class JsonTest {
         assertEquals(1, l.size());
         assertEquals(new Integer(2), l.get(0).get(10));
     }
+
+    @Test
+    public void testIntegerArray() {
+        String s = "[1,2,3]";
+        Integer[] l = (Integer[]) JsonObject.parse(s, new Generic(Array.class, Integer.class));
+
+        assertEquals(3, l.length);
+        assertEquals(new Integer(1), l[0]);
+        assertEquals(new Integer(2), l[1]);
+        assertEquals(new Integer(3), l[2]);
+
+        int[] arr = (int[]) JsonObject.parse(s, new Generic(Array.class, int.class));
+
+        assertEquals(3, arr.length);
+        assertEquals(1, arr[0]);
+        assertEquals(2, arr[1]);
+        assertEquals(3, arr[2]);
+
+        int[] arr2 = JsonObject.parse(s, int[].class);
+
+        assertEquals(3, arr2.length);
+        assertEquals(1, arr2[0]);
+        assertEquals(2, arr2[1]);
+        assertEquals(3, arr2[2]);
+    }
+
+    static class StringHolder {
+        String value;
+    }
+
+    @Test
+    public void testObjectArray() {
+        String s = "[{value:'value'}]";
+
+        StringHolder[] arr = JsonObject.parse(s, StringHolder[].class);
+
+        assertEquals(1, arr.length);
+        assertEquals("value", arr[0].value);
+    }
+
+
 }

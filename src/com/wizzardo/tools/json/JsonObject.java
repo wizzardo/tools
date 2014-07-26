@@ -30,7 +30,7 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     public static <T> T parse(String s, Class<T> clazz) {
-        return parse(s, clazz, (Generic[]) null);
+        return parse(s, new Generic<T>(clazz));
     }
 
     public static <T> T parse(String s, Class<T> clazz, Class... generic) {

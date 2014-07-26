@@ -318,32 +318,19 @@ public class Binder {
     }
 
     static Object createArray(Class clazz, int size) {
-        return Array.newInstance(clazz.getComponentType(), size);
+        return createArrayByComponentType(clazz.getComponentType(), size);
     }
 
-    static Object createArray(Class clazz, Generic generic, int size) {
-        if (clazz == Array.class)
-            return Array.newInstance(generic.typeParameters[0].clazz, size);
-        else
-            return Array.newInstance(clazz.getComponentType(), size);
+    static Object createArrayByComponentType(Class clazz, int size) {
+        return Array.newInstance(clazz, size);
+    }
+
+    static Object createArray(Generic generic, int size) {
+        return createArrayByComponentType(generic.typeParameters[0].clazz, size);
     }
 
     static Class getArrayType(Class clazz) {
         return clazz.getComponentType();
-    }
-
-    static Class getArrayType(Class clazz, Generic generic) {
-        if (clazz == Array.class)
-            return generic.typeParameters[0].clazz;
-        else
-            return clazz.getComponentType();
-    }
-
-    private static boolean isGetter(Method method, Class clazz) {
-        return (method.getName().startsWith("get") || method.getName().startsWith("is"))
-                && !method.getName().equals("getClass")
-                && (method.getParameterTypes() == null || method.getParameterTypes().length == 0)
-                ;
     }
 
     static abstract class Appender {
