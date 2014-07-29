@@ -62,7 +62,7 @@ public class Request extends RequestArguments<Request> {
     private Response connect(int retryNumber) throws IOException {
         try {
             String url = this.url;
-            if (method == ConnectionMethod.GET || (method == ConnectionMethod.POST && data != null)) {
+            if (data != null || (method != ConnectionMethod.PUT && method != ConnectionMethod.POST)) {
                 url = createURL(url, params);
             }
             URL u = new URL(url);
@@ -85,7 +85,7 @@ public class Request extends RequestArguments<Request> {
                 HttpsURLConnection https = (HttpsURLConnection) c;
                 https.setSSLSocketFactory(sslFactory);
             }
-            if (method.equals(ConnectionMethod.POST)) {
+            if (method == ConnectionMethod.POST || method == ConnectionMethod.PUT) {
                 c.setDoOutput(true);
                 if (!multipart) {
                     if (data == null) {

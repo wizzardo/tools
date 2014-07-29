@@ -6,15 +6,13 @@ package com.wizzardo.tools.http;
  */
 public enum ConnectionMethod {
 
-    GET("GET"), POST("POST");
-    private String method;
-
-    private ConnectionMethod(String method) {
-        this.method = method;
-    }
-
-    @Override
-    public String toString() {
-        return method;
-    }
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    HEAD,
+    TRACE,
+    OPTIONS,
+//    CONNECT,  not implemented by java http client
+//    PATCH
 }
