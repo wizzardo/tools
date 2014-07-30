@@ -1,5 +1,6 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.reflection.FieldSetter;
 
 import java.lang.reflect.Field;
@@ -221,7 +222,9 @@ class JsonUtils {
             from++;
         }
 
-        int rigthBorder;
+        CharTree.CharTreeNode node = FieldInfo.charTree.getRoot();
+
+        int rightBorder;
         boolean escape = false;
         boolean needDecoding = false;
         if (quote == 0) {
@@ -233,21 +236,42 @@ class JsonUtils {
                 if (ch == '\\')
                     needDecoding = true;
             }
-            rigthBorder = trimRight(s, from, i);
+            rightBorder = trimRight(s, from, i);
         } else {
-            for (; i < to; i++) {
-                if (escape) {
-                    escape = false;
-                } else {
-                    ch = s[i];
-                    if (ch == quote)
-                        break;
+            if (node != null)
+                for (; i < to; i++) {
+                    if (escape) {
+                        escape = false;
+                    } else {
+                        ch = s[i];
+                        if (ch == quote)
+                            break;
 
-                    if (ch == '\\')
-                        escape = needDecoding = true;
+                        if (ch == '\\')
+                            escape = needDecoding = true;
+
+                        node = node.next(ch);
+
+                        if (node == null)
+                            break; // continue in next loop
+                    }
                 }
-            }
-            rigthBorder = i;
+
+            if (s[i] != quote)
+                for (; i < to; i++) {
+                    if (escape) {
+                        escape = false;
+                    } else {
+                        ch = s[i];
+                        if (ch == quote)
+                            break;
+
+                        if (ch == '\\')
+                            escape = needDecoding = true;
+                    }
+                }
+
+            rightBorder = i;
             i++;
         }
 
@@ -257,14 +281,18 @@ class JsonUtils {
             throw new IllegalStateException("here must be key-value separator ':', but found: " + s[i]);
 
 
-        if (rigthBorder == from)
+        if (rightBorder == from)
             throw new IllegalStateException("key not found");
 
-        String value;
-        if (!needDecoding)
-            value = new String(s, from, rigthBorder - from);
-        else
-            value = JsonObject.unescape(s, from, rigthBorder);
+        String value = null;
+        if (!needDecoding) {
+            if (node != null)
+                value = node.getValue();
+
+            if (value == null)
+                value = new String(s, from, rightBorder - from);
+        } else
+            value = JsonObject.unescape(s, from, rightBorder);
 
         binder.setTemporaryKey(value);
 
