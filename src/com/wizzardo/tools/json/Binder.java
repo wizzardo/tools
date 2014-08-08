@@ -1,9 +1,11 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.SoftThreadLocal;
 import com.wizzardo.tools.misc.WrappedException;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +19,19 @@ public class Binder {
     private static final int SYNTHETIC = 0x00001000;
     private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
+    private static SoftThreadLocal<StringBuilder> stringBuilderThreadLocal = new SoftThreadLocal<StringBuilder>() {
+        @Override
+        protected StringBuilder init() {
+            return new StringBuilder();
+        }
+
+        @Override
+        public StringBuilder getValue() {
+            StringBuilder sb = super.getValue();
+            sb.setLength(0);
+            return sb;
+        }
+    };
 
     enum Serializer {
         STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT, ENUM
@@ -336,16 +351,52 @@ public class Binder {
     static abstract class Appender {
         public abstract Appender append(String s);
 
+        public abstract Appender append(String s, int from, int to);
+
+        public abstract Appender append(char[] s, int from, int to);
+
+        public abstract Appender append(char s);
+
         public Appender append(Object ob) {
             return append(String.valueOf(ob));
+        }
+
+        public Appender append(char[] chars) {
+            return append(chars, 0, chars.length);
         }
     }
 
     static class StringBuilderAppender extends Appender {
-        private StringBuilder sb = new StringBuilder();
+        private StringBuilder sb;
+
+        StringBuilderAppender() {
+            this(new StringBuilder());
+        }
+
+        StringBuilderAppender(StringBuilder sb) {
+            this.sb = sb;
+        }
 
         @Override
         public Appender append(String s) {
+            sb.append(s);
+            return this;
+        }
+
+        @Override
+        public Appender append(String s, int from, int to) {
+            sb.append(s, from, to);
+            return this;
+        }
+
+        @Override
+        public Appender append(char[] s, int from, int to) {
+            sb.append(s, from, to - from);
+            return this;
+        }
+
+        @Override
+        public Appender append(char s) {
             sb.append(s);
             return this;
         }
@@ -357,16 +408,46 @@ public class Binder {
     }
 
     static class StreamAppender extends Appender {
-        private OutputStream out;
+        private OutputStreamWriter out;
 
         private StreamAppender(OutputStream out) {
-            this.out = out;
+            this.out = new OutputStreamWriter(out);
         }
 
         @Override
         public Appender append(String s) {
             try {
-                out.write(s.getBytes());
+                out.write(s);
+            } catch (IOException e) {
+                throw new WrappedException(e);
+            }
+            return this;
+        }
+
+        @Override
+        public Appender append(String s, int from, int to) {
+            try {
+                out.append(s, from, to);
+            } catch (IOException e) {
+                throw new WrappedException(e);
+            }
+            return this;
+        }
+
+        @Override
+        public Appender append(char[] s, int from, int to) {
+            try {
+                out.write(s, from, to - from);
+            } catch (IOException e) {
+                throw new WrappedException(e);
+            }
+            return this;
+        }
+
+        @Override
+        public Appender append(char s) {
+            try {
+                out.append(s);
             } catch (IOException e) {
                 throw new WrappedException(e);
             }
@@ -375,14 +456,17 @@ public class Binder {
     }
 
     public static String toJSON(Object src) {
-        StringBuilderAppender sb = new StringBuilderAppender();
+        StringBuilderAppender sb = new StringBuilderAppender(stringBuilderThreadLocal.getValue());
         toJSON(src, sb);
         return sb.toString();
     }
 
     public static void toJSON(Object src, OutputStream out) {
-        StreamAppender sb = new StreamAppender(out);
-        toJSON(src, sb);
+        toJSON(src, new StreamAppender(out));
+    }
+
+    public static void toJSON(Object src, StringBuilder out) {
+        toJSON(src, new StringBuilderAppender(out));
     }
 
     private static void toJSON(Object src, Appender sb) {
@@ -392,12 +476,12 @@ public class Binder {
         }
         Serializer serializer;
         if ((serializer = classToSerializer(src.getClass())) != Serializer.OBJECT) {
-            toJSON(null, src, sb, serializer);
+            toJSON(null, src, sb, serializer, false);
             return;
         }
-        sb.append("{");
 
-        Set<String> fields = new HashSet<String>();
+        sb.append('{');
+
         boolean comma = false;
         Map<String, FieldInfo> list = getFields(src.getClass());
 
@@ -405,31 +489,78 @@ public class Binder {
             Field field = info.field;
             try {
                 if (comma)
-                    sb.append(",");
-                toJSON(field.getName(), field.get(src), sb, info.serializer);
-                fields.add(field.getName());
+                    sb.append(',');
+                toJSON(field.getName(), field.get(src), sb, info.serializer, false);
                 comma = true;
             } catch (IllegalAccessException e) {
                 throw new WrappedException(e);
             }
         }
 
-        sb.append("}");
+        sb.append('}');
     }
 
     private static void toJSON(String name, Object src, Appender sb) {
         Serializer serializer = null;
         if (src != null)
             serializer = classToSerializer(src.getClass());
-        toJSON(name, src, sb, serializer);
+        toJSON(name, src, sb, serializer, true);
     }
 
-    private static void toJSON(String name, Object src, Appender sb, Serializer serializer) {
-        if (name != null) {
-            sb.append("\"");
-            JsonObject.escape(String.valueOf(name), sb);
-            sb.append("\"").append(":");
+    private static void appendNumberOrBoolean(Object ob, Appender sb) {
+        sb.append(ob);
+    }
+
+    private static void appendString(Object ob, Appender sb) {
+        sb.append('"');
+        JsonObject.escape(ob.toString(), sb);
+        sb.append('"');
+    }
+
+    private static void appendCollection(Object src, Appender sb) {
+        Iterator i = ((Collection) src).iterator();
+        sb.append('[');
+        if (i.hasNext())
+            do {
+                toJSON(i.next(), sb);
+            } while (i.hasNext() && sb.append(',') != null);
+        sb.append(']');
+    }
+
+    private static void appendArray(Object src, Appender sb) {
+        int length = Array.getLength(src);
+        sb.append('[');
+        for (int i = 0; i < length; i++) {
+            if (i > 0) sb.append(',');
+            toJSON(Array.get(src, i), sb);
         }
+        sb.append(']');
+    }
+
+    private static void appendMap(Object src, Appender sb) {
+        sb.append('{');
+        Iterator i = ((Map) src).entrySet().iterator();
+        if (i.hasNext())
+            do {
+                Map.Entry entry = (Map.Entry) i.next();
+                toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb);
+            } while (i.hasNext() && sb.append(',') != null);
+        sb.append('}');
+    }
+
+    private static void appendName(String name, Appender sb, boolean escape) {
+        if (name != null) {
+            sb.append('"');
+            if (escape)
+                JsonObject.escape(name, sb);
+            else
+                sb.append(name);
+            sb.append('"').append(':');
+        }
+    }
+
+    private static void toJSON(String name, Object src, Appender sb, Serializer serializer, boolean escapeName) {
+        appendName(name, sb, escapeName);
 
         if (src == null) {
             sb.append("null");
@@ -438,51 +569,27 @@ public class Binder {
 
         switch (serializer) {
             case NUMBER_BOOLEAN: {
-                sb.append(src);
+                appendNumberOrBoolean(src, sb);
                 break;
             }
             case STRING: {
-                sb.append("\"");
-                JsonObject.escape(String.valueOf(src), sb);
-                sb.append("\"");
+                appendString(src, sb);
                 break;
             }
             case COLLECTION: {
-                Iterator i = ((Collection) src).iterator();
-                sb.append("[");
-                boolean comma = false;
-                while (i.hasNext()) {
-                    if (comma) sb.append(",");
-                    toJSON(i.next(), sb);
-                    comma = true;
-                }
-                sb.append("]");
+                appendCollection(src, sb);
                 break;
             }
             case MAP: {
-                sb.append("{");
-                boolean comma = false;
-                for (Object ob : ((Map) src).entrySet()) {
-                    if (comma) sb.append(",");
-                    Map.Entry entry = (Map.Entry) ob;
-                    toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb);
-                    comma = true;
-                }
-                sb.append("}");
+                appendMap(src, sb);
                 break;
             }
             case ARRAY: {
-                int length = Array.getLength(src);
-                sb.append("[");
-                for (int i = 0; i < length; i++) {
-                    if (i > 0) sb.append(",");
-                    toJSON(Array.get(src, i), sb);
-                }
-                sb.append("]");
+                appendArray(src, sb);
                 break;
             }
             case DATE: {
-                sb.append("\"").append(((Date) src).getTime()).append("\"");
+                sb.append('"').append(((Date) src).getTime()).append('"');
                 break;
             }
             case OBJECT: {
@@ -490,7 +597,7 @@ public class Binder {
                 break;
             }
             case ENUM: {
-                sb.append("\"").append(src).append("\"");
+                sb.append('"').append(src).append('"');
                 break;
             }
         }

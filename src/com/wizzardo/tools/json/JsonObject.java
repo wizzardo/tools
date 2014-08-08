@@ -1,6 +1,8 @@
 package com.wizzardo.tools.json;
 
 
+import com.wizzardo.tools.reflection.StringReflection;
+
 import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -158,51 +160,100 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
     }
 
     static void escape(String s, Binder.Appender sb) {
-        for (int i = 0; i < s.length(); i++) {
-            char ch = s.charAt(i);
-            if (ch < 256) {
+        int from = StringReflection.offset(s);
+        int to = from + s.length();
+        char[] chars = StringReflection.chars(s);
+        for (int i = from; i < to; i++) {
+            char ch = chars[i];
+            if (ch < 127) {
                 switch ((byte) ch) {
                     case '"':
-                        sb.append("\\\"");
+                        from = append(chars, from, i, sb);
+                        sb.append('\\').append('"');
                         break;
                     case '\\':
-                        sb.append("\\\\");
+                        from = append(chars, from, i, sb);
+                        sb.append('\\').append('\\');
                         break;
                     case '\b':
-                        sb.append("\\b");
+                        from = append(chars, from, i, sb);
+                        sb.append('\\').append('b');
                         break;
                     case '\f':
-                        sb.append("\\f");
+                        from = append(chars, from, i, sb);
+                        sb.append('\\').append('f');
                         break;
                     case '\n':
-                        sb.append("\\n");
+                        from = append(chars, from, i, sb);
+                        sb.append('\\').append('n');
                         break;
                     case '\r':
-                        sb.append("\\r");
+                        from = append(chars, from, i, sb);
+                        sb.append('\\').append('r');
                         break;
                     case '\t':
-                        sb.append("\\t");
+                        from = append(chars, from, i, sb);
+                        sb.append('\\').append('t');
                         break;
-                    case '/':
-                        sb.append("\\/");
-                        break;
-                    default:
+//                    case '/':
+//                        from = append(chars, from, i, sb);
+////                      sb.append('\\').append('/');
+//                        break;
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 11:
+                    case 14:
+                    case 15:
+                    case 16:
+                    case 17:
+                    case 18:
+                    case 19:
+                    case 20:
+                    case 21:
+                    case 22:
+                    case 23:
+                    case 24:
+                    case 25:
+                    case 26:
+                    case 27:
+                    case 28:
+                    case 29:
+                    case 30:
+                    case 31:
+//                    default:
                         //Reference: http://www.unicode.org/versions/Unicode5.1.0/
-                        if ((ch >= '\u0000' && ch <= '\u001F') || (ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
-                            String ss = Integer.toHexString(ch);
-                            sb.append("\\u");
-                            for (int k = 0; k < 4 - ss.length(); k++) {
-                                sb.append('0');
-                            }
-                            sb.append(ss.toUpperCase());
-                        } else {
-                            sb.append(ch);
-                        }
+//                        if ((ch >= '\u0000' && ch <= '\u001F')) {
+                        from = append(chars, from, i, sb);
+                        appendUnicodeChar(ch, sb);
+//                        }
                 }
-            } else {
-                sb.append(ch);
+            } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
+                from = append(chars, from, i, sb);
+                appendUnicodeChar(ch, sb);
             }
         }//for
+        if (from < to)
+            append(chars, from, to, sb);
+    }
+
+    private static void appendUnicodeChar(char ch, Binder.Appender sb) {
+        String ss = Integer.toHexString(ch);
+        sb.append("\\u");
+        for (int k = 0; k < 4 - ss.length(); k++) {
+            sb.append('0');
+        }
+        sb.append(ss.toUpperCase());
+    }
+
+    private static int append(char[] s, int from, int to, Binder.Appender sb) {
+        sb.append(s, from, to);
+        return to + 1;
     }
 
     @Override
