@@ -1,6 +1,6 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.reflection.FieldSetter;
+import com.wizzardo.tools.reflection.FieldReflection;
 
 import java.lang.reflect.Field;
 
@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
  * @author: wizzardo
  * Date: 3/22/14
  */
-abstract class JsonFieldSetter extends FieldSetter {
+abstract class JsonFieldSetter extends FieldReflection {
 
     protected JsonFieldSetter(Field f) {
         super(f);
@@ -131,7 +131,7 @@ abstract class JsonFieldSetter extends FieldSetter {
 
         @Override
         public void set(Object object, JsonItem value) {
-            setBooalen(object, value.asBoolean(Boolean.FALSE));
+            setBoolean(object, value.asBoolean(Boolean.FALSE));
         }
     }
 

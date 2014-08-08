@@ -1,7 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.CharTree;
-import com.wizzardo.tools.reflection.FieldSetter;
+import com.wizzardo.tools.reflection.FieldReflection;
 
 import java.lang.reflect.Field;
 
@@ -74,7 +74,7 @@ class JsonUtils {
         }
 
         JsonFieldSetter setter = binder.getFieldSetter();
-        if (setter != null && setter.getType() != FieldSetter.Type.OBJECT) {
+        if (setter != null && setter.getType() != FieldReflection.Type.OBJECT) {
             setNumber(setter, binder.getObject(), l, d, floatValue);
             return i;
         }
@@ -87,7 +87,7 @@ class JsonUtils {
         return i;
     }
 
-    private static void setNumber(FieldSetter setter, Object object, long l, double d, boolean floatValue) {
+    private static void setNumber(FieldReflection setter, Object object, long l, double d, boolean floatValue) {
         switch (setter.getType()) {
             case INTEGER: {
                 setter.setInteger(object, (int) l);
@@ -124,7 +124,7 @@ class JsonUtils {
                 break;
             }
             case BOOLEAN: {
-                setter.setBooalen(object, l != 0);
+                setter.setBoolean(object, l != 0);
                 break;
             }
         }
@@ -177,8 +177,8 @@ class JsonUtils {
         int l = k - from;
         if (!needDecoding) {
             boolean isTrue = isTrue(s, from, l);
-            if (setter != null && setter.getType() == FieldSetter.Type.BOOLEAN) {
-                setter.setBooalen(binder.getObject(), isTrue);
+            if (setter != null && setter.getType() == FieldReflection.Type.BOOLEAN) {
+                setter.setBoolean(binder.getObject(), isTrue);
                 return i;
             }
 
