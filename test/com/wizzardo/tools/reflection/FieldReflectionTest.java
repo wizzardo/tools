@@ -3,6 +3,9 @@ package com.wizzardo.tools.reflection;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
 /**
  * @author: wizzardo
  * Date: 8/10/14
@@ -44,7 +47,14 @@ public class FieldReflectionTest {
     }
 
     @Test
-    public void testSet() throws NoSuchFieldException {
+    public void testSet() throws NoSuchFieldException, IllegalAccessException {
+        switchUnsafe(true);
+        doTestSet();
+        switchUnsafe(false);
+        doTestSet();
+    }
+
+    private void doTestSet() throws NoSuchFieldException {
         TestClass test = new TestClass();
         new FieldReflection(TestClass.class, "i").setInteger(test, 2);
         new FieldReflection(TestClass.class, "l").setLong(test, 3l);
@@ -68,7 +78,14 @@ public class FieldReflectionTest {
     }
 
     @Test
-    public void testGet() throws NoSuchFieldException {
+    public void testGet() throws NoSuchFieldException, IllegalAccessException {
+        switchUnsafe(true);
+        doTestGet();
+        switchUnsafe(false);
+        doTestGet();
+    }
+
+    private void doTestGet() throws NoSuchFieldException {
         Object test = new TestClass();
 
         Assert.assertEquals(1, new FieldReflection(TestClass.class, "i").getInteger(test));
@@ -80,5 +97,15 @@ public class FieldReflectionTest {
         Assert.assertEquals(7d, new FieldReflection(TestClass.class, "d").getDouble(test), 0);
         Assert.assertEquals(true, new FieldReflection(TestClass.class, "aBoolean").getBoolean(test));
         Assert.assertEquals("foo", new FieldReflection(TestClass.class, "string").getObject(test));
+    }
+
+    private void switchUnsafe(boolean enabled) throws NoSuchFieldException, IllegalAccessException {
+        Field field = FieldReflection.class.getDeclaredField("unsafe");
+
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+        new FieldReflection(field).setObject(null, enabled ? UnsafeTools.getUnsafe() : null);
     }
 }

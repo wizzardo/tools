@@ -4,14 +4,15 @@ import com.wizzardo.tools.misc.WrappedException;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * @author: wizzardo
  * Date: 3/22/14
  */
 public class FieldReflection {
+    protected static final Unsafe unsafe = UnsafeTools.getUnsafe();
     protected Field field;
-    protected Unsafe unsafe = UnsafeTools.getUnsafe();
     protected final long offset;
     protected final Type type;
 
@@ -260,7 +261,7 @@ public class FieldReflection {
 
     public FieldReflection(Field field) {
         this.field = field;
-        if (unsafe != null)
+        if (unsafe != null && (field.getModifiers() & Modifier.STATIC) == 0)
             offset = unsafe.objectFieldOffset(field);
         else
             offset = 0;
