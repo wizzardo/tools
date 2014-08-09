@@ -1,7 +1,5 @@
 package com.wizzardo.tools.json;
 
-import sun.reflect.generics.reflectiveObjects.GenericArrayTypeImpl;
-
 import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -87,10 +85,10 @@ public class Generic<T> {
                 parent = null;
                 typeParameters = new Generic[0];
             }
-        } else if (c instanceof GenericArrayTypeImpl) {
+        } else if (c instanceof GenericArrayType) {
             parent = null;
             clazz = (Class<T>) Array.class;
-            typeParameters = new Generic[]{new Generic(((GenericArrayTypeImpl) c).getGenericComponentType())};
+            typeParameters = new Generic[]{new Generic(((GenericArrayType) c).getGenericComponentType())};
         } else {
             Class cl = (Class) c;
             if (cl.isArray()) {
