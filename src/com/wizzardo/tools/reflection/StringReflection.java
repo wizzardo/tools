@@ -13,32 +13,24 @@ public class StringReflection {
     private static FieldReflection offset;
 
     static {
+        value = getFieldReflection(String.class, "value", true);
+        offset = getFieldReflection(String.class, "offset", false);
+        count = getFieldReflection(String.class, "count", false);
+        hash = getFieldReflection(String.class, "hash", false);
+        if (hash == null)
+            hash = getFieldReflection(String.class, "hashCode", true);
+    }
+
+    private static FieldReflection getFieldReflection(Class clazz, String fieldName, boolean printStackTrace) {
         try {
-            Field value = String.class.getDeclaredField("value");
-            value.setAccessible(true);
-            StringReflection.value = new FieldReflection(value);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-        try {
-            Field hash = String.class.getDeclaredField("hash");
-            hash.setAccessible(true);
-            StringReflection.hash = new FieldReflection(hash);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-        try {
-            Field offset = String.class.getDeclaredField("offset");
-            offset.setAccessible(true);
-            StringReflection.offset = new FieldReflection(offset);
-        } catch (NoSuchFieldException ignored) {
-        }
-        try {
-            Field count = String.class.getDeclaredField("count");
+            Field count = clazz.getDeclaredField(fieldName);
             count.setAccessible(true);
-            StringReflection.count = new FieldReflection(count);
-        } catch (NoSuchFieldException ignored) {
+            return new FieldReflection(count);
+        } catch (NoSuchFieldException e) {
+            if (printStackTrace)
+                e.printStackTrace();
         }
+        return null;
     }
 
     public static char[] chars(String s) {
