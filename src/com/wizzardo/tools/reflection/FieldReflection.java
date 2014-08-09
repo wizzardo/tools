@@ -15,6 +15,35 @@ public class FieldReflection {
     protected final long offset;
     protected final Type type;
 
+    protected static final boolean putInt = hasMethod(Unsafe.class, "putInt", Object.class, long.class, int.class);
+    protected static final boolean putLong = hasMethod(Unsafe.class, "putLong", Object.class, long.class, long.class);
+    protected static final boolean putByte = hasMethod(Unsafe.class, "putByte", Object.class, long.class, byte.class);
+    protected static final boolean putShort = hasMethod(Unsafe.class, "putShort", Object.class, long.class, short.class);
+    protected static final boolean putFloat = hasMethod(Unsafe.class, "putFloat", Object.class, long.class, float.class);
+    protected static final boolean putDouble = hasMethod(Unsafe.class, "putDouble", Object.class, long.class, double.class);
+    protected static final boolean putChar = hasMethod(Unsafe.class, "putChar", Object.class, long.class, char.class);
+    protected static final boolean putBoolean = hasMethod(Unsafe.class, "putBoolean", Object.class, long.class, boolean.class);
+    protected static final boolean putObject = hasMethod(Unsafe.class, "putObject", Object.class, long.class, Object.class);
+
+    protected static final boolean getInt = hasMethod(Unsafe.class, "getInt", Object.class, long.class);
+    protected static final boolean getLong = hasMethod(Unsafe.class, "getLong", Object.class, long.class);
+    protected static final boolean getByte = hasMethod(Unsafe.class, "getByte", Object.class, long.class);
+    protected static final boolean getShort = hasMethod(Unsafe.class, "getShort", Object.class, long.class);
+    protected static final boolean getFloat = hasMethod(Unsafe.class, "getFloat", Object.class, long.class);
+    protected static final boolean getDouble = hasMethod(Unsafe.class, "getDouble", Object.class, long.class);
+    protected static final boolean getChar = hasMethod(Unsafe.class, "getChar", Object.class, long.class);
+    protected static final boolean getBoolean = hasMethod(Unsafe.class, "getBoolean", Object.class, long.class);
+    protected static final boolean getObject = hasMethod(Unsafe.class, "getObject", Object.class, long.class);
+
+    private static Boolean hasMethod(Class clazz, String name, Class... args) {
+        try {
+            clazz.getDeclaredMethod(name, args);
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+        return true;
+    }
+
     public static enum Type {
         INTEGER,
         LONG,
@@ -28,7 +57,7 @@ public class FieldReflection {
     }
 
     public void setInteger(Object object, int value) {
-        if (offset != 0)
+        if (putInt && offset != 0)
             unsafe.putInt(object, offset, value);
         else
             try {
@@ -39,7 +68,7 @@ public class FieldReflection {
     }
 
     public void setLong(Object object, long value) {
-        if (offset != 0)
+        if (putLong && offset != 0)
             unsafe.putLong(object, offset, value);
         else
             try {
@@ -50,7 +79,7 @@ public class FieldReflection {
     }
 
     public void setByte(Object object, byte value) {
-        if (offset != 0)
+        if (putByte && offset != 0)
             unsafe.putByte(object, offset, value);
         else
             try {
@@ -61,7 +90,7 @@ public class FieldReflection {
     }
 
     public void setShort(Object object, short value) {
-        if (offset != 0)
+        if (putShort && offset != 0)
             unsafe.putShort(object, offset, value);
         else
             try {
@@ -72,7 +101,7 @@ public class FieldReflection {
     }
 
     public void setFloat(Object object, float value) {
-        if (offset != 0)
+        if (putFloat && offset != 0)
             unsafe.putFloat(object, offset, value);
         else
             try {
@@ -83,7 +112,7 @@ public class FieldReflection {
     }
 
     public void setDouble(Object object, double value) {
-        if (offset != 0)
+        if (putDouble && offset != 0)
             unsafe.putDouble(object, offset, value);
         else
             try {
@@ -94,7 +123,7 @@ public class FieldReflection {
     }
 
     public void setChar(Object object, char value) {
-        if (offset != 0)
+        if (putChar && offset != 0)
             unsafe.putChar(object, offset, value);
         else
             try {
@@ -105,7 +134,7 @@ public class FieldReflection {
     }
 
     public void setBoolean(Object object, boolean value) {
-        if (offset != 0)
+        if (putBoolean && offset != 0)
             unsafe.putBoolean(object, offset, value);
         else
             try {
@@ -116,7 +145,7 @@ public class FieldReflection {
     }
 
     public void setObject(Object object, Object value) {
-        if (offset != 0)
+        if (putObject && offset != 0)
             unsafe.putObject(object, offset, value);
         else
             try {
@@ -127,7 +156,7 @@ public class FieldReflection {
     }
 
     public int getInteger(Object object) {
-        if (offset != 0)
+        if (getInt && offset != 0)
             return unsafe.getInt(object, offset);
         else
             try {
@@ -138,7 +167,7 @@ public class FieldReflection {
     }
 
     public long getLong(Object object) {
-        if (offset != 0)
+        if (getLong && offset != 0)
             return unsafe.getLong(object, offset);
         else
             try {
@@ -149,7 +178,7 @@ public class FieldReflection {
     }
 
     public byte getByte(Object object) {
-        if (offset != 0)
+        if (getByte && offset != 0)
             return unsafe.getByte(object, offset);
         else
             try {
@@ -160,7 +189,7 @@ public class FieldReflection {
     }
 
     public short getShort(Object object) {
-        if (offset != 0)
+        if (getShort && offset != 0)
             return unsafe.getShort(object, offset);
         else
             try {
@@ -171,7 +200,7 @@ public class FieldReflection {
     }
 
     public float getFloat(Object object) {
-        if (offset != 0)
+        if (getFloat && offset != 0)
             return unsafe.getFloat(object, offset);
         else
             try {
@@ -182,7 +211,7 @@ public class FieldReflection {
     }
 
     public double getDouble(Object object) {
-        if (offset != 0)
+        if (getDouble && offset != 0)
             return unsafe.getDouble(object, offset);
         else
             try {
@@ -192,8 +221,8 @@ public class FieldReflection {
             }
     }
 
-    public char setChar(Object object) {
-        if (offset != 0)
+    public char getChar(Object object) {
+        if (getChar && offset != 0)
             return unsafe.getChar(object, offset);
         else
             try {
@@ -204,7 +233,7 @@ public class FieldReflection {
     }
 
     public boolean getBoolean(Object object) {
-        if (offset != 0)
+        if (getBoolean && offset != 0)
             return unsafe.getBoolean(object, offset);
         else
             try {
@@ -215,7 +244,7 @@ public class FieldReflection {
     }
 
     public Object getObject(Object object) {
-        if (offset != 0)
+        if (getObject && offset != 0)
             return unsafe.getObject(object, offset);
         else
             try {
@@ -223,6 +252,10 @@ public class FieldReflection {
             } catch (IllegalAccessException e) {
                 throw new WrappedException(e);
             }
+    }
+
+    public FieldReflection(Class clazz, String name) throws NoSuchFieldException {
+        this(clazz.getDeclaredField(name));
     }
 
     public FieldReflection(Field field) {
