@@ -173,6 +173,104 @@ public class DateIso8601 {
         c.setTimeZone(Z);
     }
 
+    public static String format(Date date) {
+        Calendar calendar = GregorianCalendar.getInstance(Z);
+        calendar.setTime(date);
+
+        char[] chars = new char[24]; // YYYY-MM-DDTHH:mm:ss.SSSZ
+        int t;
+        int i = 0;
+
+        t = calendar.get(Calendar.YEAR);
+        append4(chars, t, i);
+        i += 4;
+        chars[i++] = '-';
+
+        t = calendar.get(Calendar.MONTH) + 1;
+        append2(chars, t, i);
+        i += 2;
+        chars[i++] = '-';
+
+        t = calendar.get(Calendar.DATE);
+        append2(chars, t, i);
+        i += 2;
+        chars[i++] = 'T';
+
+        t = calendar.get(Calendar.HOUR_OF_DAY);
+        append2(chars, t, i);
+        i += 2;
+        chars[i++] = ':';
+        t = calendar.get(Calendar.MINUTE);
+        append2(chars, t, i);
+        i += 2;
+        chars[i++] = ':';
+        t = calendar.get(Calendar.SECOND);
+        append2(chars, t, i);
+        i += 2;
+        chars[i++] = '.';
+        t = calendar.get(Calendar.MILLISECOND);
+        append3(chars, t, i);
+        i += 3;
+        chars[i] = 'Z';
+
+        return StringReflection.createString(chars);
+    }
+
+
+    private static void append4(char[] chars, int value, int offset) {
+        chars[offset + 3] = (char) ('0' + (value % 10));
+        value /= 10;
+        if (value > 0)
+            chars[offset + 2] = (char) ('0' + (value % 10));
+        else {
+            chars[offset + 2] = '0';
+            chars[offset + 1] = '0';
+            chars[offset] = '0';
+        }
+
+        value /= 10;
+        if (value > 0)
+            chars[offset + 1] = (char) ('0' + (value % 10));
+        else {
+            chars[offset + 1] = '0';
+            chars[offset] = '0';
+        }
+
+        value /= 10;
+        if (value > 0)
+            chars[offset] = (char) ('0' + (value % 10));
+        else
+            chars[offset] = '0';
+    }
+
+    private static void append3(char[] chars, int value, int offset) {
+        chars[offset + 2] = (char) ('0' + (value % 10));
+
+        value /= 10;
+        if (value > 0)
+            chars[offset + 1] = (char) ('0' + (value % 10));
+        else {
+            chars[offset + 1] = '0';
+            chars[offset] = '0';
+        }
+
+        value /= 10;
+        if (value > 0)
+            chars[offset] = (char) ('0' + (value % 10));
+        else
+            chars[offset] = '0';
+    }
+
+    private static void append2(char[] chars, int value, int offset) {
+        chars[offset + 1] = (char) ('0' + (value % 10));
+
+        value /= 10;
+        if (value > 0)
+            chars[offset] = (char) ('0' + (value % 10));
+        else
+            chars[offset] = '0';
+    }
+
     private static class SimpleTimeZone extends TimeZone {
         private int rawOffset;
 

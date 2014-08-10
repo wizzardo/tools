@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
-import static com.wizzardo.tools.misc.DateIso8601.parse;
+import static com.wizzardo.tools.misc.DateIso8601.*;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -43,5 +43,15 @@ public class DateIso8601Test {
         c.set(Calendar.MILLISECOND, milliseconds);
         c.setTimeZone(TimeZone.getTimeZone("GMT"));
         return c.getTime();
+    }
+
+    @Test
+    public void testFormat() {
+        String s = "2007-04-05T14:30:10.123Z";
+
+        assertEquals(s, format(parse(s)));
+
+        s = "2007-04-05T14:30:10.123-0230";
+        assertEquals("2007-04-05T17:00:10.123Z", format(parse(s)));
     }
 }
