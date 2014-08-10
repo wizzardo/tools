@@ -255,12 +255,23 @@ public class FieldReflection {
             }
     }
 
+    public FieldReflection(Class clazz, String name, boolean setAccessible) throws NoSuchFieldException {
+        this(clazz.getDeclaredField(name), setAccessible);
+    }
+
     public FieldReflection(Class clazz, String name) throws NoSuchFieldException {
-        this(clazz.getDeclaredField(name));
+        this(clazz.getDeclaredField(name), false);
     }
 
     public FieldReflection(Field field) {
+        this(field, false);
+    }
+
+    public FieldReflection(Field field, boolean setAccessible) {
         this.field = field;
+        if (setAccessible)
+            field.setAccessible(true);
+
         if (unsafe != null && (field.getModifiers() & Modifier.STATIC) == 0)
             offset = unsafe.objectFieldOffset(field);
         else

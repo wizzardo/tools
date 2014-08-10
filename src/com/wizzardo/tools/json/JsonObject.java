@@ -45,10 +45,10 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
     public static <T> T parse(String s, Generic<T> generic) {
         s = s.trim();
-        char[] data = toCharArray(s);
+        char[] data = StringReflection.chars(s);
         int offset = 0;
         if (data.length != s.length())
-            offset = getCharArrayOffset(s);
+            offset = StringReflection.offset(s);
         return parse(data, offset, s.length(), generic);
     }
 

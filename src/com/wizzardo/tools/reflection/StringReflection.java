@@ -1,7 +1,5 @@
 package com.wizzardo.tools.reflection;
 
-import java.lang.reflect.Field;
-
 /**
  * @author: wizzardo
  * Date: 8/8/14
@@ -23,9 +21,7 @@ public class StringReflection {
 
     private static FieldReflection getFieldReflection(Class clazz, String fieldName, boolean printStackTrace) {
         try {
-            Field count = clazz.getDeclaredField(fieldName);
-            count.setAccessible(true);
-            return new FieldReflection(count);
+            return new FieldReflection(clazz, fieldName, true);
         } catch (NoSuchFieldException e) {
             if (printStackTrace)
                 e.printStackTrace();
