@@ -1,5 +1,7 @@
 package com.wizzardo.tools.misc;
 
+import com.wizzardo.tools.reflection.StringReflection;
+
 import java.util.*;
 
 /**
@@ -17,26 +19,27 @@ public class DateIso8601 {
         //YYYY-MM-DDTHH:mm:ss.sssZ
         Calendar calendar = GregorianCalendar.getInstance();
         int length = s.length();
-        int i;
+        char[] chars = StringReflection.chars(s);
+        int i = length == chars.length ? 0 : StringReflection.offset(s);
 
 
-        calendar.set(Calendar.YEAR, getInt4(s, 0));
+        calendar.set(Calendar.YEAR, getInt4(chars, i));
         i = 4;
-        char c = s.charAt(i);
+        char c = chars[i];
         if (c == '-') {
             i++;
-            c = s.charAt(i);
+            c = chars[i];
         }
-        calendar.set(Calendar.MONTH, getInt2(s, i, c) - 1);
+        calendar.set(Calendar.MONTH, getInt2(chars, i, c) - 1);
         i += 2;
 
-        c = s.charAt(i);
+        c = chars[i];
         if (c == '-') {
             i++;
-            c = s.charAt(i);
+            c = chars[i];
         }
 
-        calendar.set(Calendar.DAY_OF_MONTH, getInt2(s, i, c));
+        calendar.set(Calendar.DAY_OF_MONTH, getInt2(chars, i, c));
         i += 2;
 
         if (i >= length) {
@@ -44,38 +47,38 @@ public class DateIso8601 {
             return calendar.getTime();
         }
 
-        check(s.charAt(i), 'T');
-        calendar.set(Calendar.HOUR_OF_DAY, getInt2(s, i + 1));
+        check(chars[i], 'T');
+        calendar.set(Calendar.HOUR_OF_DAY, getInt2(chars, i + 1));
 
         i += 3;
 
-        c = s.charAt(i);
+        c = chars[i];
         if (c == ':') {
             i++;
-            c = s.charAt(i);
+            c = chars[i];
         }
         if (isInt(c)) {
-            calendar.set(Calendar.MINUTE, getInt2(s, i, c));
+            calendar.set(Calendar.MINUTE, getInt2(chars, i, c));
             i += 2;
 
-            c = s.charAt(i);
+            c = chars[i];
             if (c == ':') {
                 i++;
-                c = s.charAt(i);
+                c = chars[i];
             }
 
             if (isInt(c)) {
-                calendar.set(Calendar.SECOND, getInt2(s, i, c));
+                calendar.set(Calendar.SECOND, getInt2(chars, i, c));
                 i += 2;
 
 
-                c = s.charAt(i);
+                c = chars[i];
                 if (c == '.') {
                     i++;
-                    c = s.charAt(i);
+                    c = chars[i];
                 }
                 if (isInt(c)) {
-                    calendar.set(Calendar.MILLISECOND, getInt3(s, i, c));
+                    calendar.set(Calendar.MILLISECOND, getInt3(chars, i, c));
                     i += 3;
                 } else
                     calendar.set(Calendar.MILLISECOND, 0);
@@ -90,29 +93,29 @@ public class DateIso8601 {
         }
 
 
-        if (s.charAt(i) == 'Z') {
+        if (chars[i] == 'Z') {
             calendar.setTimeZone(Z);
             return calendar.getTime();
         }
 
-        c = s.charAt(i);
+        c = chars[i];
         boolean plus = c == '+';
         if (!plus)
             check(c, '-');
 
-        int hours = getInt2(s, i + 1);
+        int hours = getInt2(chars, i + 1);
         i += 3;
         if (i >= length) {
             calendar.setTimeZone(new SimpleTimeZone((int) TimeTools.Unit.HOUR.to(hours) * (plus ? 1 : -1)));
             return calendar.getTime();
         }
-        c = s.charAt(i);
+        c = chars[i];
         if (c == ':') {
             i++;
-            c = s.charAt(i);
+            c = chars[i];
         }
 
-        int minutes = getInt2(s, i, c);
+        int minutes = getInt2(chars, i, c);
         calendar.setTimeZone(new SimpleTimeZone((int) (TimeTools.Unit.HOUR.to(hours) + TimeTools.Unit.MINUTE.to(minutes)) * (plus ? 1 : -1)));
 
         return calendar.getTime();
@@ -133,33 +136,33 @@ public class DateIso8601 {
             throw new IllegalArgumentException("char should be an '" + check + "', but was: " + c);
     }
 
-    private static int getInt2(String s, int offset) {
-        int i = getInt(s.charAt(offset));
-        return i * 10 + getInt(s.charAt(offset + 1));
+    private static int getInt2(char[] chars, int offset) {
+        int i = getInt(chars[offset]);
+        return i * 10 + getInt(chars[offset + 1]);
     }
 
-    private static int getInt2(String s, int offset, char first) {
+    private static int getInt2(char[] chars, int offset, char first) {
         int i = getInt(first);
-        return i * 10 + getInt(s.charAt(offset + 1));
+        return i * 10 + getInt(chars[offset + 1]);
     }
 
-    private static int getInt3(String s, int offset, char first) {
+    private static int getInt3(char[] chars, int offset, char first) {
         int i = getInt(first);
-        i = i * 10 + getInt(s.charAt(offset + 1));
-        return i * 10 + getInt(s.charAt(offset + 2));
+        i = i * 10 + getInt(chars[offset + 1]);
+        return i * 10 + getInt(chars[offset + 2]);
     }
 
-    private static int getInt3(String s, int offset) {
-        int i = getInt(s.charAt(offset));
-        i = i * 10 + getInt(s.charAt(offset + 1));
-        return i * 10 + getInt(s.charAt(offset + 2));
+    private static int getInt3(char[] chars, int offset) {
+        int i = getInt(chars[offset]);
+        i = i * 10 + getInt(chars[offset + 1]);
+        return i * 10 + getInt(chars[offset + 2]);
     }
 
-    private static int getInt4(String s, int offset) {
-        int i = getInt(s.charAt(offset));
-        i = i * 10 + getInt(s.charAt(offset + 1));
-        i = i * 10 + getInt(s.charAt(offset + 2));
-        return i * 10 + getInt(s.charAt(offset + 3));
+    private static int getInt4(char[] chars, int offset) {
+        int i = getInt(chars[offset]);
+        i = i * 10 + getInt(chars[offset + 1]);
+        i = i * 10 + getInt(chars[offset + 2]);
+        return i * 10 + getInt(chars[offset + 3]);
     }
 
     private static void clearTime(Calendar c) {
