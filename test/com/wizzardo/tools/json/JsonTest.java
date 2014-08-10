@@ -4,9 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -432,5 +430,28 @@ public class JsonTest {
         assertEquals("value", arr[0].value);
     }
 
+    @Test
+    public void testDate() {
+        String data = "['2012-07-31T08:26:56+0000']";
+        Date[] l = JsonObject.parse(data, Date[].class);
 
+        assertEquals(1, l.length);
+        assertEquals(1343723216000l, l[0].getTime());
+    }
+
+    @Test
+    public void serializeTest() {
+        Map data = new LinkedHashMap();
+        data.put(1, 1);
+        data.put("2", "2");
+        data.put("escaped", "esca\"ped");
+        data.put("array", new int[]{1, 2, 3});
+        data.put("list", Arrays.asList(1, 2, 3));
+
+        Assert.assertEquals("{\"1\":1,\"2\":\"2\",\"escaped\":\"esca\\\"ped\",\"array\":[1,2,3],\"list\":[1,2,3]}", Binder.toJSON(data));
+
+        data = new LinkedHashMap();
+        data.put("escaped", "\r\n\b\t\"");
+        Assert.assertEquals("{\"escaped\":\"\\r\\n\\b\\t\\\"\"}", Binder.toJSON(data));
+    }
 }

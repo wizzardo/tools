@@ -174,6 +174,10 @@ public class DateIso8601 {
     }
 
     public static String format(Date date) {
+        return StringReflection.createString(formatToChars(date));
+    }
+
+    public static char[] formatToChars(Date date) {
         Calendar calendar = GregorianCalendar.getInstance(Z);
         calendar.setTime(date);
 
@@ -213,7 +217,7 @@ public class DateIso8601 {
         i += 3;
         chars[i] = 'Z';
 
-        return StringReflection.createString(chars);
+        return chars;
     }
 
 

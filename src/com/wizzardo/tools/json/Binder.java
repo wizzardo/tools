@@ -1,5 +1,6 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.DateIso8601;
 import com.wizzardo.tools.misc.SoftThreadLocal;
 import com.wizzardo.tools.misc.WrappedException;
 
@@ -589,7 +590,7 @@ public class Binder {
                 break;
             }
             case DATE: {
-                sb.append('"').append(((Date) src).getTime()).append('"');
+                sb.append('"').append(DateIso8601.formatToChars((Date) src)).append('"');
                 break;
             }
             case OBJECT: {
