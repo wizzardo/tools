@@ -12,25 +12,26 @@ import java.util.List;
  * Date: 3/24/13
  */
 public class FileTools {
+    public static final Charset UTF_8 = Charset.forName("utf-8");
 
     public static byte[] bytes(String file) {
         return bytes(new File(file));
     }
 
     public static String text(String file) {
-        return text(new File(file), Charset.forName("utf-8"));
+        return text(new File(file), UTF_8);
     }
 
     public static String text(File file) {
-        return text(file, Charset.forName("utf-8"));
+        return text(file, UTF_8);
     }
 
     public static void text(String file, String text) {
-        text(file, text, Charset.forName("utf-8"));
+        text(file, text, UTF_8);
     }
 
     public static void text(File file, String text) {
-        text(file, text, Charset.forName("utf-8"));
+        text(file, text, UTF_8);
     }
 
     public static void text(String file, String text, Charset charset) {
