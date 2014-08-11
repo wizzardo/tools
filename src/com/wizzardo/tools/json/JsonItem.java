@@ -289,7 +289,7 @@ public class JsonItem {
         else if (ob instanceof JsonArray)
             ((JsonArray) ob).toJson(sb);
         else if (ob.getClass() == String.class)
-            sb.append('"').append(JsonObject.escape(ob.toString())).append('"');
+            sb.append('"').append(JsonTools.escape(ob.toString())).append('"');
         else
             sb.append(ob);
     }
@@ -312,7 +312,7 @@ public class JsonItem {
         if ((s[from] == '"' && s[to - 1] == '"') || (s[from] == '\'' && s[to - 1] == '\'')) {
             from++;
             to--;
-            return new JsonItem(JsonObject.unescape(s, from, to));
+            return new JsonItem(JsonTools.unescape(s, from, to));
         } else if (to - from == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l') {
             return new JsonItem(null);
         } else if (to - from == 4 && s[from] == 't' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e') {
@@ -322,7 +322,7 @@ public class JsonItem {
         } else if ((item = createInteger(s, from, to)) != null) {
             return item;
         } else {
-            return new JsonItem(JsonObject.unescape(s, from, to));
+            return new JsonItem(JsonTools.unescape(s, from, to));
         }
     }
 

@@ -195,7 +195,7 @@ class JsonUtils {
 
             value = new String(s, from, l);
         } else
-            value = JsonObject.unescape(s, from, k);
+            value = JsonTools.unescape(s, from, k);
 
         set(setter, binder, value);
 
@@ -290,7 +290,7 @@ class JsonUtils {
             if (value == null)
                 value = new String(s, from, rightBorder - from);
         } else
-            value = JsonObject.unescape(s, from, rightBorder);
+            value = JsonTools.unescape(s, from, rightBorder);
 
         binder.setTemporaryKey(value);
 

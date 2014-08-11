@@ -1,7 +1,6 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.DateIso8601;
-import com.wizzardo.tools.misc.SoftThreadLocal;
 import com.wizzardo.tools.misc.WrappedException;
 
 import java.io.IOException;
@@ -20,19 +19,6 @@ public class Binder {
     private static final int SYNTHETIC = 0x00001000;
     private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
-    private static SoftThreadLocal<StringBuilder> stringBuilderThreadLocal = new SoftThreadLocal<StringBuilder>() {
-        @Override
-        protected StringBuilder init() {
-            return new StringBuilder();
-        }
-
-        @Override
-        public StringBuilder getValue() {
-            StringBuilder sb = super.getValue();
-            sb.setLength(0);
-            return sb;
-        }
-    };
 
     enum Serializer {
         STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT, ENUM
@@ -411,7 +397,7 @@ public class Binder {
     static class StreamAppender extends Appender {
         private OutputStreamWriter out;
 
-        private StreamAppender(OutputStream out) {
+        StreamAppender(OutputStream out) {
             this.out = new OutputStreamWriter(out);
         }
 
@@ -456,21 +442,7 @@ public class Binder {
         }
     }
 
-    public static String toJSON(Object src) {
-        StringBuilderAppender sb = new StringBuilderAppender(stringBuilderThreadLocal.getValue());
-        toJSON(src, sb);
-        return sb.toString();
-    }
-
-    public static void toJSON(Object src, OutputStream out) {
-        toJSON(src, new StreamAppender(out));
-    }
-
-    public static void toJSON(Object src, StringBuilder out) {
-        toJSON(src, new StringBuilderAppender(out));
-    }
-
-    private static void toJSON(Object src, Appender sb) {
+    static void toJSON(Object src, Appender sb) {
         if (src == null) {
             sb.append("null");
             return;
@@ -514,7 +486,7 @@ public class Binder {
 
     private static void appendString(Object ob, Appender sb) {
         sb.append('"');
-        JsonObject.escape(ob.toString(), sb);
+        JsonTools.escape(ob.toString(), sb);
         sb.append('"');
     }
 
@@ -553,7 +525,7 @@ public class Binder {
         if (name != null) {
             sb.append('"');
             if (escape)
-                JsonObject.escape(name, sb);
+                JsonTools.escape(name, sb);
             else
                 sb.append(name);
             sb.append('"').append(':');

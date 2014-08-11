@@ -1,9 +1,6 @@
 package com.wizzardo.tools.json;
 
 
-import com.wizzardo.tools.reflection.StringReflection;
-
-import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -14,70 +11,6 @@ import static com.wizzardo.tools.json.JsonUtils.*;
  * Date: 12/26/12
  */
 public class JsonObject extends LinkedHashMap<String, JsonItem> {
-
-    public static JsonItem parse(File file) throws IOException {
-        Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
-        char[] buffer = new char[8192];
-        StringWriter writer = new StringWriter();
-        int count;
-        while ((count = reader.read(buffer)) != -1) {
-            writer.write(buffer, 0, count);
-        }
-        reader.close();
-        return parse(writer.toString());
-    }
-
-    public static JsonItem parse(String s) {
-        return new JsonItem(parse(s, (Generic<Object>) null));
-    }
-
-    public static <T> T parse(String s, Class<T> clazz) {
-        return parse(s, new Generic<T>(clazz));
-    }
-
-    public static <T> T parse(String s, Class<T> clazz, Class... generic) {
-        return parse(s, new Generic<T>(clazz, generic));
-    }
-
-    public static <T> T parse(String s, Class<T> clazz, Generic... generic) {
-        return parse(s, new Generic<T>(clazz, generic));
-    }
-
-    public static <T> T parse(String s, Generic<T> generic) {
-        s = s.trim();
-        char[] data = StringReflection.chars(s);
-        int offset = 0;
-        if (data.length != s.length())
-            offset = StringReflection.offset(s);
-        return parse(data, offset, s.length(), generic);
-    }
-
-    public static JsonItem parse(char[] s) {
-        return new JsonItem(parse(s, null, (Generic<Object>[]) null));
-    }
-
-    public static <T> T parse(char[] s, Class<T> clazz, Class... generic) {
-        return parse(s, 0, s.length, new Generic<T>(clazz, generic));
-    }
-
-    public static <T> T parse(char[] s, Class<T> clazz, Generic... generic) {
-        return parse(s, 0, s.length, new Generic<T>(clazz, generic));
-    }
-
-    public static <T> T parse(char[] s, int from, int to, Generic<T> generic) {
-        // check first char
-        if (s[0] == '{') {
-            JsonBinder binder = Binder.getObjectBinder(generic);
-            parse(s, from, to, binder);
-            return (T) binder.getObject();
-        }
-        if (s[0] == '[') {
-            JsonBinder binder = Binder.getArrayBinder(generic);
-            JsonArray.parse(s, from, to, binder);
-            return (T) binder.getObject();
-        }
-        return null;
-    }
 
     static int parse(char[] s, int from, int to, JsonBinder json) {
         int i = ++from;
@@ -153,109 +86,6 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return i + 1;
     }
 
-    public static String escape(String s) {
-        Binder.StringBuilderAppender sb = new Binder.StringBuilderAppender();
-        escape(s, sb);
-        return sb.toString();
-    }
-
-    static void escape(String s, Binder.Appender sb) {
-        int from = StringReflection.offset(s);
-        int to = from + s.length();
-        char[] chars = StringReflection.chars(s);
-        for (int i = from; i < to; i++) {
-            char ch = chars[i];
-            if (ch < 127) {
-                switch ((byte) ch) {
-                    case '"':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('"');
-                        break;
-                    case '\\':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('\\');
-                        break;
-                    case '\b':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('b');
-                        break;
-                    case '\f':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('f');
-                        break;
-                    case '\n':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('n');
-                        break;
-                    case '\r':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('r');
-                        break;
-                    case '\t':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('t');
-                        break;
-//                    case '/':
-//                        from = append(chars, from, i, sb);
-////                      sb.append('\\').append('/');
-//                        break;
-                    case 0:
-                    case 1:
-                    case 2:
-                    case 3:
-                    case 4:
-                    case 5:
-                    case 6:
-                    case 7:
-                    case 11:
-                    case 14:
-                    case 15:
-                    case 16:
-                    case 17:
-                    case 18:
-                    case 19:
-                    case 20:
-                    case 21:
-                    case 22:
-                    case 23:
-                    case 24:
-                    case 25:
-                    case 26:
-                    case 27:
-                    case 28:
-                    case 29:
-                    case 30:
-                    case 31:
-//                    default:
-                        //Reference: http://www.unicode.org/versions/Unicode5.1.0/
-//                        if ((ch >= '\u0000' && ch <= '\u001F')) {
-                        from = append(chars, from, i, sb);
-                        appendUnicodeChar(ch, sb);
-//                        }
-                }
-            } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
-                from = append(chars, from, i, sb);
-                appendUnicodeChar(ch, sb);
-            }
-        }//for
-        if (from < to)
-            append(chars, from, to, sb);
-    }
-
-    private static void appendUnicodeChar(char ch, Binder.Appender sb) {
-        String ss = Integer.toHexString(ch);
-        sb.append("\\u");
-        for (int k = 0; k < 4 - ss.length(); k++) {
-            sb.append('0');
-        }
-        sb.append(ss.toUpperCase());
-    }
-
-    private static int append(char[] s, int from, int to, Binder.Appender sb) {
-        sb.append(s, from, to);
-        return to + 1;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -280,58 +110,6 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         sb.append('}');
     }
 
-    public static String unescape(char[] s, int from, int to) {
-        StringBuilder sb = new StringBuilder(to - from);
-        byte ch, prev = 0;
-        for (int i = from; i < to; i++) {
-            ch = (byte) s[i];
-            if (prev == '\\') {
-                sb.append(s, from, i - from - 1);
-
-                switch (ch) {
-                    case '"':
-                        sb.append('"');
-                        break;
-                    case '\\':
-                        sb.append('\\');
-                        break;
-                    case 'b':
-                        sb.append('\b');
-                        break;
-                    case 'f':
-                        sb.append('\f');
-                        break;
-                    case 'n':
-                        sb.append('\n');
-                        break;
-                    case 'r':
-                        sb.append('\r');
-                        break;
-                    case 't':
-                        sb.append('\t');
-                        break;
-                    case '/':
-                        sb.append('/');
-                        break;
-                    case 'u':
-                        if (to <= i + 5)
-                            throw new IndexOutOfBoundsException("can't decode unicode character");
-                        int hexVal = Integer.parseInt(new String(s, i + 1, 4), 16);
-                        sb.append((char) hexVal);
-                        i += 4;
-                        break;
-                }
-
-                from = i + 1;
-                prev = 0;
-            } else
-                prev = ch;
-        }
-        if (from < to) {
-            sb.append(s, from, to - from);
-        }
-        return sb.toString();
-    }
 
     public boolean isNull(String key) {
         return get(key).isNull();

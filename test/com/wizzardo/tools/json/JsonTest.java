@@ -20,59 +20,59 @@ public class JsonTest {
 
 
         s = "{}";
-        Assert.assertEquals(0, JsonObject.parse(s).asJsonObject().size());
+        Assert.assertEquals(0, JsonTools.parse(s).asJsonObject().size());
 
         s = "{qwe:qwe}";
-        assertEquals(1, JsonObject.parse(s).asJsonObject().size());
+        assertEquals(1, JsonTools.parse(s).asJsonObject().size());
         s = "{qwe:1}";
-        assertEquals(new Integer(1), JsonObject.parse(s).asJsonObject().getAsInteger("qwe"));
+        assertEquals(new Integer(1), JsonTools.parse(s).asJsonObject().getAsInteger("qwe"));
         s = "{qwe:null}";
-        assertEquals(new Integer(1), JsonObject.parse(s).asJsonObject().getAsInteger("qwe", 1));
-        assertEquals(true, JsonObject.parse(s).asJsonObject().get("qwe").isNull());
-        assertEquals(true, JsonObject.parse(s).asJsonObject().isNull("qwe"));
+        assertEquals(new Integer(1), JsonTools.parse(s).asJsonObject().getAsInteger("qwe", 1));
+        assertEquals(true, JsonTools.parse(s).asJsonObject().get("qwe").isNull());
+        assertEquals(true, JsonTools.parse(s).asJsonObject().isNull("qwe"));
 
         s = "{qwe:qwe, qwee:qweqw}";
-        assertEquals(2, JsonObject.parse(s).asJsonObject().size());
+        assertEquals(2, JsonTools.parse(s).asJsonObject().size());
         s = "{\"qwe\":\"qwe\"}";
-        assertEquals(1, JsonObject.parse(s).asJsonObject().size());
+        assertEquals(1, JsonTools.parse(s).asJsonObject().size());
 
         s = "{\"qwe\":\"q\\\"we\\n\"}";
-        assertEquals(1, JsonObject.parse(s).asJsonObject().size());
-        assertEquals("q\"we\n", JsonObject.parse(s).asJsonObject().get("qwe").asString());
+        assertEquals(1, JsonTools.parse(s).asJsonObject().size());
+        assertEquals("q\"we\n", JsonTools.parse(s).asJsonObject().get("qwe").asString());
 
         s = "{qwe:[1,2,3], qwee:qweqw}";
-        assertEquals(3, JsonObject.parse(s).asJsonObject().getAsJsonArray("qwe").size());
+        assertEquals(3, JsonTools.parse(s).asJsonObject().getAsJsonArray("qwe").size());
         s = "{qwe:qwe, qwee:[1,2,3]}";
-        assertEquals(3, JsonObject.parse(s).asJsonObject().getAsJsonArray("qwee").size());
+        assertEquals(3, JsonTools.parse(s).asJsonObject().getAsJsonArray("qwee").size());
         s = "{qwe:qwe, qwee:[1,2,3],ewq:qwe}";
-        assertEquals(3, JsonObject.parse(s).asJsonObject().size());
+        assertEquals(3, JsonTools.parse(s).asJsonObject().size());
 
         s = "[{},{},{}]";
-        assertEquals(3, JsonObject.parse(s).asJsonArray().size());
+        assertEquals(3, JsonTools.parse(s).asJsonArray().size());
         s = "{qwe:[]}";
-        assertEquals(0, JsonObject.parse(s).asJsonObject().getAsJsonArray("qwe").size());
+        assertEquals(0, JsonTools.parse(s).asJsonObject().getAsJsonArray("qwe").size());
         s = "[{qwe:qwe},{},{}]";
-        assertEquals(1, JsonObject.parse(s).asJsonArray().get(0).asJsonObject().size());
+        assertEquals(1, JsonTools.parse(s).asJsonArray().get(0).asJsonObject().size());
 
         s = "[{qwe:qwe},{},{qwe: true \n},werwr]";
-        assertEquals(4, JsonObject.parse(s).asJsonArray().size());
-        assertEquals(true, JsonObject.parse(s).asJsonArray().get(2).asJsonObject().getAsBoolean("qwe"));
+        assertEquals(4, JsonTools.parse(s).asJsonArray().size());
+        assertEquals(true, JsonTools.parse(s).asJsonArray().get(2).asJsonObject().getAsBoolean("qwe"));
         s = "{qwe:{qwe:qwe},rew:{},qw:{qwe: true \n},werwr:rew}";
-        assertEquals(4, JsonObject.parse(s).asJsonObject().size());
-        assertEquals(true, JsonObject.parse(s).asJsonObject().getAsJsonObject("qw").getAsBoolean("qwe"));
+        assertEquals(4, JsonTools.parse(s).asJsonObject().size());
+        assertEquals(true, JsonTools.parse(s).asJsonObject().getAsJsonObject("qw").getAsBoolean("qwe"));
 
 
         s = "{qwe:\"qw\\\"e\"}";
-        assertEquals("qw\"e", JsonObject.parse(s).asJsonObject().getAsString("qwe"));
+        assertEquals("qw\"e", JsonTools.parse(s).asJsonObject().getAsString("qwe"));
 
         s = "{'qwe\\\\':\"qw\\\"e\\\\\"}";
-        assertEquals("qw\"e\\", JsonObject.parse(s).asJsonObject().getAsString("qwe\\"));
+        assertEquals("qw\"e\\", JsonTools.parse(s).asJsonObject().getAsString("qwe\\"));
 
         s = "{'1':{'2':{'3':'value'}}}";
-        assertEquals("value", JsonObject.parse(s).asJsonObject().getAsJsonObject("1").getAsJsonObject("2").getAsString("3"));
+        assertEquals("value", JsonTools.parse(s).asJsonObject().getAsJsonObject("1").getAsJsonObject("2").getAsString("3"));
 
         s = "[[[value]]]";
-        assertEquals("value", JsonObject.parse(s).asJsonArray().get(0).asJsonArray().get(0).asJsonArray().get(0).asString());
+        assertEquals("value", JsonTools.parse(s).asJsonArray().get(0).asJsonArray().get(0).asJsonArray().get(0).asString());
     }
 
     static public class Wrapper<T> {
@@ -128,7 +128,7 @@ public class JsonTest {
                 "anEnum:\"THREE\"," +
                 "wrapped:{\"value\":[{\"value\":\"wrapped!\"},{\"value\":\"ololo\"}]}" +
                 "}";
-        SimpleClass r = JsonObject.parse(s, SimpleClass.class);
+        SimpleClass r = JsonTools.parse(s, SimpleClass.class);
         assertEquals(r.i, 1);
         assertEquals(r.integer, new Integer(2));
         assertTrue(r.f > 3.f && r.f < 3.2f);
@@ -168,7 +168,7 @@ public class JsonTest {
                 "anEnum:\"THREE\"," +
                 "wrapped:{\"value\":[{\"value\":\"wrapped!\"},{\"value\":\"ololo\"}]}" +
                 "}";
-        Child child = JsonObject.parse(s, Child.class);
+        Child child = JsonTools.parse(s, Child.class);
         assertEquals(child.value, 3);
         assertEquals(child.i, 1);
         assertEquals(child.integer, new Integer(2));
@@ -209,7 +209,7 @@ public class JsonTest {
                 "wrapped:{\"value\":[{\"value\":\"wrapped!\"},{\"value\":\"ololo\"}]}" +
                 "}";
         s = "{children:[" + s + "," + s + "," + s + "]}";
-        Parent parent = JsonObject.parse(s, Parent.class);
+        Parent parent = JsonTools.parse(s, Parent.class);
         assertEquals(3, parent.children.size());
         for (int i = 0; i < 3; i++) {
             child = parent.children.get(0);
@@ -243,7 +243,7 @@ public class JsonTest {
     @Test
     public void testEscape() {
         String s = "СТОЯТЬ";
-        assertEquals(s, JsonObject.escape(s));
+        assertEquals(s, JsonTools.escape(s));
     }
 
     @Test
@@ -276,7 +276,7 @@ public class JsonTest {
                 "    ],\n" +
                 "}";
 
-        JsonObject json = JsonObject.parse(s).asJsonObject();
+        JsonObject json = JsonTools.parse(s).asJsonObject();
 //        System.out.println(json);
 
         assertEquals(8, json.size());
@@ -302,7 +302,7 @@ public class JsonTest {
     @Test
     public void testUnicode() {
         String myString = "\\u0048\\u0065\\u006C\\u006C\\u006F World";
-        Assert.assertEquals("Hello World", JsonObject.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
+        Assert.assertEquals("Hello World", JsonTools.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
     }
 
     static class MapTest {
@@ -315,7 +315,7 @@ public class JsonTest {
     @Test
     public void testMapBinding() {
         String data = "{integerStringMap:{'1':'value'},integerStringArrayMap:{'2':['foo','bar']},map:{'key':'object'},listMaps:[{'foo':1,'bar':2},{'foo':3,'bar':4}]}";
-        MapTest mapTest = JsonObject.parse(data, MapTest.class);
+        MapTest mapTest = JsonTools.parse(data, MapTest.class);
 
         assertEquals("value", mapTest.integerStringMap.get(1));
         assertArrayEquals(new String[]{"foo", "bar"}, mapTest.integerStringArrayMap.get(2));
@@ -329,7 +329,7 @@ public class JsonTest {
     @Test
     public void testListArrayBinding() {
         String s = "[[\"foo1\",\"foo2\",\"foo3\"],[\"bar1\",\"bar2\"]]";
-        List<String[]> l = JsonObject.parse(s, List.class, (new String[0]).getClass());
+        List<String[]> l = JsonTools.parse(s, List.class, (new String[0]).getClass());
 
         assertEquals(2, l.size());
         assertEquals(3, l.get(0).length);
@@ -346,7 +346,7 @@ public class JsonTest {
     @Test
     public void testListListBinding() {
         String s = "[[\"foo1\",\"foo2\",\"foo3\"],[\"bar1\",\"bar2\"]]";
-        List<List<String>> l = JsonObject.parse(s, List.class, new Generic(List.class, String.class));
+        List<List<String>> l = JsonTools.parse(s, List.class, new Generic(List.class, String.class));
 
         assertEquals(2, l.size());
         assertEquals(3, l.get(0).size());
@@ -359,7 +359,7 @@ public class JsonTest {
     @Test
     public void testMapStringListIntegerBinding() {
         String s = "{\"key1\":[1,2,3],\"key2\":[4,5]}";
-        Map<String, List<Integer>> map = JsonObject.parse(s, Map.class, new Generic(String.class), new Generic(List.class, Integer.class));
+        Map<String, List<Integer>> map = JsonTools.parse(s, Map.class, new Generic(String.class), new Generic(List.class, Integer.class));
 
         assertEquals(2, map.size());
         assertEquals(3, map.get("key1").size());
@@ -376,7 +376,7 @@ public class JsonTest {
     @Test
     public void testListMapStringIntegerBinding() {
         String s = "[{key:1}]";
-        List<Map<String, Integer>> l = JsonObject.parse(s, List.class, new Generic(Map.class, String.class, Integer.class));
+        List<Map<String, Integer>> l = JsonTools.parse(s, List.class, new Generic(Map.class, String.class, Integer.class));
 
         assertEquals(1, l.size());
         assertEquals(new Integer(1), l.get(0).get("key"));
@@ -385,7 +385,7 @@ public class JsonTest {
     @Test
     public void testListMapIntegerIntegerBinding() {
         String s = "[{10:2}]";
-        List<Map<Integer, Integer>> l = JsonObject.parse(s, List.class, new Generic(Map.class, Integer.class, Integer.class));
+        List<Map<Integer, Integer>> l = JsonTools.parse(s, List.class, new Generic(Map.class, Integer.class, Integer.class));
 
         assertEquals(1, l.size());
         assertEquals(new Integer(2), l.get(0).get(10));
@@ -394,21 +394,21 @@ public class JsonTest {
     @Test
     public void testIntegerArray() {
         String s = "[1,2,3]";
-        Integer[] l = (Integer[]) JsonObject.parse(s, new Generic(Array.class, Integer.class));
+        Integer[] l = (Integer[]) JsonTools.parse(s, new Generic(Array.class, Integer.class));
 
         assertEquals(3, l.length);
         assertEquals(new Integer(1), l[0]);
         assertEquals(new Integer(2), l[1]);
         assertEquals(new Integer(3), l[2]);
 
-        int[] arr = (int[]) JsonObject.parse(s, new Generic(Array.class, int.class));
+        int[] arr = (int[]) JsonTools.parse(s, new Generic(Array.class, int.class));
 
         assertEquals(3, arr.length);
         assertEquals(1, arr[0]);
         assertEquals(2, arr[1]);
         assertEquals(3, arr[2]);
 
-        int[] arr2 = JsonObject.parse(s, int[].class);
+        int[] arr2 = JsonTools.parse(s, int[].class);
 
         assertEquals(3, arr2.length);
         assertEquals(1, arr2[0]);
@@ -424,7 +424,7 @@ public class JsonTest {
     public void testObjectArray() {
         String s = "[{value:'value'}]";
 
-        StringHolder[] arr = JsonObject.parse(s, StringHolder[].class);
+        StringHolder[] arr = JsonTools.parse(s, StringHolder[].class);
 
         assertEquals(1, arr.length);
         assertEquals("value", arr[0].value);
@@ -433,7 +433,7 @@ public class JsonTest {
     @Test
     public void testDate() {
         String data = "['2012-07-31T08:26:56+0000']";
-        Date[] l = JsonObject.parse(data, Date[].class);
+        Date[] l = JsonTools.parse(data, Date[].class);
 
         assertEquals(1, l.length);
         assertEquals(1343723216000l, l[0].getTime());
@@ -448,10 +448,10 @@ public class JsonTest {
         data.put("array", new int[]{1, 2, 3});
         data.put("list", Arrays.asList(1, 2, 3));
 
-        Assert.assertEquals("{\"1\":1,\"2\":\"2\",\"escaped\":\"esca\\\"ped\",\"array\":[1,2,3],\"list\":[1,2,3]}", Binder.toJSON(data));
+        Assert.assertEquals("{\"1\":1,\"2\":\"2\",\"escaped\":\"esca\\\"ped\",\"array\":[1,2,3],\"list\":[1,2,3]}", JsonTools.serialize(data));
 
         data = new LinkedHashMap();
         data.put("escaped", "\r\n\b\t\"");
-        Assert.assertEquals("{\"escaped\":\"\\r\\n\\b\\t\\\"\"}", Binder.toJSON(data));
+        Assert.assertEquals("{\"escaped\":\"\\r\\n\\b\\t\\\"\"}", JsonTools.serialize(data));
     }
 }
