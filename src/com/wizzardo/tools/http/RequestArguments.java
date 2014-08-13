@@ -32,8 +32,8 @@ public class RequestArguments<T extends RequestArguments> {
 
     public Request createRequest(String url) {
         Request request = new Request(url)
-                .setHeaders(headers)
-                .addParameters(params)
+                .addHeaders(headers)
+                .addParameterLists(params)
                 .setPauseBetweenRetries(pauseBetweenRetries)
                 .setMaxRetryCount(maxRetryCount)
                 .setProxy(proxy)
@@ -136,10 +136,9 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T json(String json) {
         try {
-            data = json.getBytes("utf-8");
+            return data(json.getBytes("utf-8"), ContentType.JSON);
         } catch (UnsupportedEncodingException ignored) {
         }
-        setContentType(ContentType.JSON);
         return self();
     }
 
@@ -149,10 +148,9 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T xml(String xml) {
         try {
-            data = xml.getBytes("utf-8");
+            return data(xml.getBytes("utf-8"), ContentType.XML);
         } catch (UnsupportedEncodingException ignored) {
         }
-        setContentType(ContentType.XML);
         return self();
     }
 
@@ -162,8 +160,13 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T data(byte[] data, String contentType) {
         this.data = data;
+        method = ConnectionMethod.POST;
         setContentType(contentType);
         return self();
+    }
+
+    public T data(byte[] data, ContentType contentType) {
+        return data(data, contentType.value);
     }
 
     public T removeParameter(String key) {
@@ -183,7 +186,22 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
-    public T addParameters(String key, List<String> values) {
+    public T addParameters(Map<String, String> params) {
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            addParameter(entry.getKey(), entry.getValue());
+        }
+        return self();
+    }
+
+    public T param(String key, String value) {
+        return addParameter(key, value);
+    }
+
+    public T params(Map<String, String> params) {
+        return addParameters(params);
+    }
+
+    public T addParameterList(String key, List<String> values) {
         List<String> l = params.get(key);
         if (l == null) {
             l = new ArrayList<String>();
@@ -193,14 +211,9 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
-    public T addParameters(Map<String, List<String>> params) {
+    public T addParameterLists(Map<String, List<String>> params) {
         for (Map.Entry<String, List<String>> entry : params.entrySet()) {
-            List<String> l = this.params.get(entry.getKey());
-            if (l == null) {
-                l = new ArrayList<String>();
-                this.params.put(entry.getKey(), l);
-            }
-            l.addAll(entry.getValue());
+            addParameterList(entry.getKey(), entry.getValue());
         }
         return self();
     }
@@ -248,17 +261,7 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
-    public T data(String key, String value) {
-        addParameter(key, value);
-        return self();
-    }
-
-    public T data(String key, List<String> values) {
-        addParameters(key, values);
-        return self();
-    }
-
-    public T setHeader(String key, String value) {
+    public T addHeader(String key, String value) {
         headers.put(key, value);
         return self();
     }
@@ -268,7 +271,7 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
-    public T setHeaders(Map<String, String> headers) {
+    public T addHeaders(Map<String, String> headers) {
         this.headers.putAll(headers);
         return self();
     }
@@ -290,12 +293,10 @@ public class RequestArguments<T extends RequestArguments> {
 
 
     public T setContentType(String contentType) {
-        setHeader("Content-Type", contentType);
-        return self();
+        return addHeader("Content-Type", contentType);
     }
 
     public T setContentType(ContentType contentType) {
-        setHeader("Content-Type", contentType.text);
-        return self();
+        return addHeader("Content-Type", contentType.value);
     }
 }

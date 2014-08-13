@@ -107,7 +107,7 @@ public class Request extends RequestArguments<Request> {
                     for (Map.Entry<String, List<String>> param : params.entrySet()) {
                         for (String value : param.getValue()) {
                             out.write("------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".getBytes());
-                            String type = dataTypes.get(param.getKey()) != null ? dataTypes.get(param.getKey()) : ContentType.BINARY.text;
+                            String type = dataTypes.get(param.getKey()) != null ? dataTypes.get(param.getKey()) : ContentType.BINARY.value;
                             if (value.startsWith("file://")) {
                                 File f = new File(value.substring(7));
                                 out.write(("Content-Disposition: form-data; name=\"" + param.getKey() + "\"; filename=\"" + f.getName() + "\"\r\n").getBytes());
@@ -169,7 +169,7 @@ public class Request extends RequestArguments<Request> {
         for (Map.Entry<String, List<String>> en : params.entrySet()) {
             for (String value : en.getValue()) {
                 if (value.startsWith("file://") || value.startsWith("array://")) {
-                    String type = dataTypes.get(en.getKey()) != null ? dataTypes.get(en.getKey()) : ContentType.BINARY.text;
+                    String type = dataTypes.get(en.getKey()) != null ? dataTypes.get(en.getKey()) : ContentType.BINARY.value;
                     l += ("Content-Type: " + type + "\r\n").length();
                     if (value.startsWith("file://")) {
                         l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + new File(value.substring(7)).getName().getBytes().length + value.length();

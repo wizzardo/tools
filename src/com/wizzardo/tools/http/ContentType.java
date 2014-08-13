@@ -12,9 +12,9 @@ public enum ContentType {
     PNG("image/png"),
     GIF("image/gif"),;
 
-    public final String text;
+    public final String value;
 
-    ContentType(String text) {
-        this.text = text;
+    ContentType(String value) {
+        this.value = value;
     }
 }
