@@ -82,6 +82,10 @@ public class Response {
             return parseCookies();
     }
 
+    public List<Cookie> cookies() {
+        return getCookies();
+    }
+
     private List<Cookie> parseCookies() {
         if (cookies != null)
             return cookies;
@@ -127,6 +131,14 @@ public class Response {
 
     public Map<String, List<String>> getHeaders() {
         return connection.getHeaderFields();
+    }
+
+    public String header(String key) {
+        return getHeader(key);
+    }
+
+    public Map<String, List<String>> headers() {
+        return getHeaders();
     }
 
     public int getResponseCode() throws IOException {
