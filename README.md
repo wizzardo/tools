@@ -3,7 +3,7 @@ Tools
 
 It is a pack of useful and simple tools for java developers, such as
 
-  - http client
+  - [http client]
   - json parser
   - xml parser
   - date parser (iso 8601)
@@ -18,3 +18,6 @@ License
 ----
 
 MIT
+
+
+[http client]:https://github.com/wizzardo/Tools/wiki/HttpClient
