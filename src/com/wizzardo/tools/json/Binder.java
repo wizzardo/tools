@@ -177,7 +177,7 @@ public class Binder {
             return Serializer.MAP;
         else if (Date.class.isAssignableFrom(clazz))
             return Serializer.DATE;
-        else if (Array.class == clazz || clazz.getName().charAt(0) == '[')
+        else if (Array.class == clazz || clazz.isArray())
             return Serializer.ARRAY;
         else if (clazz.isEnum())
             return Serializer.ENUM;
@@ -449,7 +449,7 @@ public class Binder {
         }
         Serializer serializer;
         if ((serializer = classToSerializer(src.getClass())) != Serializer.OBJECT) {
-            toJSON(null, src, sb, serializer, false);
+            toJSON(null, src, sb, serializer, false, null);
             return;
         }
 
@@ -463,7 +463,7 @@ public class Binder {
             try {
                 if (comma)
                     sb.append(',');
-                toJSON(field.getName(), field.get(src), sb, info.serializer, false);
+                toJSON(field.getName(), field.get(src), sb, info.serializer, false, info.generic);
                 comma = true;
             } catch (IllegalAccessException e) {
                 throw new WrappedException(e);
@@ -477,7 +477,7 @@ public class Binder {
         Serializer serializer = null;
         if (src != null)
             serializer = classToSerializer(src.getClass());
-        toJSON(name, src, sb, serializer, true);
+        toJSON(name, src, sb, serializer, true, null);
     }
 
     private static void appendNumberOrBoolean(Object ob, Appender sb) {
@@ -490,34 +490,74 @@ public class Binder {
         sb.append('"');
     }
 
-    private static void appendCollection(Object src, Appender sb) {
+    private static void appendCollection(Object src, Appender sb, Generic generic) {
         Iterator i = ((Collection) src).iterator();
+
+        Serializer serializer = null;
+        Generic inner = null;
+        if (generic != null && generic.typeParameters.length == 1) {
+            serializer = classToSerializer(generic.typeParameters[0].clazz);
+            inner = generic.typeParameters[0];
+        }
+
         sb.append('[');
         if (i.hasNext())
-            do {
-                toJSON(i.next(), sb);
-            } while (i.hasNext() && sb.append(',') != null);
+            if (serializer != null)
+                do {
+                    toJSON(null, i.next(), sb, serializer, false, inner);
+                } while (i.hasNext() && sb.append(',') != null);
+            else
+                do {
+                    toJSON(i.next(), sb);
+                } while (i.hasNext() && sb.append(',') != null);
         sb.append(']');
     }
 
-    private static void appendArray(Object src, Appender sb) {
+    private static void appendArray(Object src, Appender sb, Generic generic) {
         int length = Array.getLength(src);
-        sb.append('[');
-        for (int i = 0; i < length; i++) {
-            if (i > 0) sb.append(',');
-            toJSON(Array.get(src, i), sb);
+
+        Serializer serializer = null;
+        Generic inner = null;
+        if (generic != null && generic.typeParameters.length == 1) {
+            serializer = classToSerializer(generic.typeParameters[0].clazz);
+            inner = generic.typeParameters[0];
         }
+
+        sb.append('[');
+        if (serializer != null)
+            for (int i = 0; i < length; i++) {
+                if (i > 0) sb.append(',');
+                toJSON(null, Array.get(src, i), sb, serializer, false, inner);
+            }
+        else
+            for (int i = 0; i < length; i++) {
+                if (i > 0) sb.append(',');
+                toJSON(Array.get(src, i), sb);
+            }
         sb.append(']');
     }
 
-    private static void appendMap(Object src, Appender sb) {
+    private static void appendMap(Object src, Appender sb, Generic generic) {
         sb.append('{');
         Iterator i = ((Map) src).entrySet().iterator();
+
+        Serializer serializer = null;
+        Generic inner = null;
+        if (generic != null && generic.typeParameters.length == 2) {
+            serializer = classToSerializer(generic.typeParameters[1].clazz);
+            inner = generic.typeParameters[1];
+        }
         if (i.hasNext())
-            do {
-                Map.Entry entry = (Map.Entry) i.next();
-                toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb);
-            } while (i.hasNext() && sb.append(',') != null);
+            if (serializer != null)
+                do {
+                    Map.Entry entry = (Map.Entry) i.next();
+                    toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb, serializer, true, inner);
+                } while (i.hasNext() && sb.append(',') != null);
+            else
+                do {
+                    Map.Entry entry = (Map.Entry) i.next();
+                    toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb);
+                } while (i.hasNext() && sb.append(',') != null);
         sb.append('}');
     }
 
@@ -532,7 +572,7 @@ public class Binder {
         }
     }
 
-    private static void toJSON(String name, Object src, Appender sb, Serializer serializer, boolean escapeName) {
+    private static void toJSON(String name, Object src, Appender sb, Serializer serializer, boolean escapeName, Generic generic) {
         appendName(name, sb, escapeName);
 
         if (src == null) {
@@ -550,15 +590,15 @@ public class Binder {
                 break;
             }
             case COLLECTION: {
-                appendCollection(src, sb);
+                appendCollection(src, sb, generic);
                 break;
             }
             case MAP: {
-                appendMap(src, sb);
+                appendMap(src, sb, generic);
                 break;
             }
             case ARRAY: {
-                appendArray(src, sb);
+                appendArray(src, sb, generic);
                 break;
             }
             case DATE: {
