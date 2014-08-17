@@ -159,9 +159,11 @@ public class JsonTools {
     }
 
     static void escape(String s, Binder.Appender sb) {
-        int from = StringReflection.offset(s);
-        int to = from + s.length();
         char[] chars = StringReflection.chars(s);
+        int to = s.length();
+        int from = chars.length == to ? 0 : StringReflection.offset(s);
+        to += from;
+
         for (int i = from; i < to; i++) {
             char ch = chars[i];
             if (ch < 127) {

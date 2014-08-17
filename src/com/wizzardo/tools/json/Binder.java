@@ -463,8 +463,10 @@ public class Binder {
             try {
                 if (comma)
                     sb.append(',');
+                else
+                    comma = true;
+
                 toJSON(field.getName(), field.get(src), sb, info.serializer, false, info.generic);
-                comma = true;
             } catch (IllegalAccessException e) {
                 throw new WrappedException(e);
             }
