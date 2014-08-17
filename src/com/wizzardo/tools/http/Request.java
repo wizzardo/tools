@@ -35,18 +35,18 @@ public class Request extends RequestArguments<Request> {
         }
     }
 
-    public Response connect() throws IOException {
-        return connect(0);
+    public Response execute() throws IOException {
+        return execute(0);
     }
 
     public Response get() throws IOException {
         setMethod(ConnectionMethod.GET);
-        return connect(0);
+        return execute(0);
     }
 
     public Response post() throws IOException {
         setMethod(ConnectionMethod.POST);
-        return connect(0);
+        return execute(0);
     }
 
     protected Request setSession(HttpSession session) {
@@ -59,7 +59,7 @@ public class Request extends RequestArguments<Request> {
         return this;
     }
 
-    private Response connect(int retryNumber) throws IOException {
+    private Response execute(int retryNumber) throws IOException {
         try {
             String url = this.url;
             if (data != null || (method != ConnectionMethod.PUT && method != ConnectionMethod.POST)) {
@@ -157,7 +157,7 @@ public class Request extends RequestArguments<Request> {
                 } catch (InterruptedException ex1) {
                     throw new WrappedException(ex1);
                 }
-                return connect(++retryNumber);
+                return execute(++retryNumber);
             }
         }
         throw new SocketTimeoutException();

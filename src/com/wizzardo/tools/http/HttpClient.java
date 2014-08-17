@@ -11,7 +11,7 @@ package com.wizzardo.tools.http;
 public class HttpClient {
     private static HttpSession session;
 
-    public static Request connect(String url) {
+    public static Request createRequest(String url) {
         if (session == null)
             session = new HttpSession();
 
