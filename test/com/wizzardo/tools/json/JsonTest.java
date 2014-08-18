@@ -244,6 +244,8 @@ public class JsonTest {
     public void testEscape() {
         String s = "СТОЯТЬ";
         assertEquals(s, JsonTools.escape(s));
+
+        Assert.assertEquals("\\r\\n\\b\\t\\f\\\"\\\\", JsonTools.escape("\r\n\b\t\f\"\\"));
     }
 
     @Test

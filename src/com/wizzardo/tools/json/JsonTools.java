@@ -14,6 +14,23 @@ import java.io.OutputStream;
  */
 public class JsonTools {
 
+    private static final char[] ESCAPES = new char[128];
+
+    static {
+        for (int i = 0; i < 32; i++) {
+            ESCAPES[i] = 128;
+        }
+
+        ESCAPES['"'] = '"';
+        ESCAPES['\\'] = '\\';
+        ESCAPES['\n'] = 'n';
+        ESCAPES['\r'] = 'r';
+        ESCAPES['\b'] = 'b';
+        ESCAPES['\t'] = 't';
+        ESCAPES['\f'] = 'f';
+    }
+
+
     private static SoftThreadLocal<StringBuilder> stringBuilderThreadLocal = new SoftThreadLocal<StringBuilder>() {
         @Override
         protected StringBuilder init() {
@@ -163,76 +180,19 @@ public class JsonTools {
         int to = s.length();
         int from = chars.length == to ? 0 : StringReflection.offset(s);
         to += from;
+        char[] escapes = ESCAPES;
 
         for (int i = from; i < to; i++) {
             char ch = chars[i];
             if (ch < 127) {
-                switch ((byte) ch) {
-                    case '"':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('"');
-                        break;
-                    case '\\':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('\\');
-                        break;
-                    case '\b':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('b');
-                        break;
-                    case '\f':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('f');
-                        break;
-                    case '\n':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('n');
-                        break;
-                    case '\r':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('r');
-                        break;
-                    case '\t':
-                        from = append(chars, from, i, sb);
-                        sb.append('\\').append('t');
-                        break;
-//                    case '/':
-//                        from = append(chars, from, i, sb);
-////                      sb.append('\\').append('/');
-//                        break;
-                    case 0:
-                    case 1:
-                    case 2:
-                    case 3:
-                    case 4:
-                    case 5:
-                    case 6:
-                    case 7:
-                    case 11:
-                    case 14:
-                    case 15:
-                    case 16:
-                    case 17:
-                    case 18:
-                    case 19:
-                    case 20:
-                    case 21:
-                    case 22:
-                    case 23:
-                    case 24:
-                    case 25:
-                    case 26:
-                    case 27:
-                    case 28:
-                    case 29:
-                    case 30:
-                    case 31:
-//                    default:
-                        //Reference: http://www.unicode.org/versions/Unicode5.1.0/
-//                        if ((ch >= '\u0000' && ch <= '\u001F')) {
-                        from = append(chars, from, i, sb);
-                        appendUnicodeChar(ch, sb);
-//                        }
+                char c = escapes[ch];
+                if (c != 0) {
+                    from = append(chars, from, i, sb);
+                    sb.append('\\');
+                    sb.append(c);
+                } else if (c == 128) {
+                    from = append(chars, from, i, sb);
+                    appendUnicodeChar(ch, sb);
                 }
             } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
                 from = append(chars, from, i, sb);
