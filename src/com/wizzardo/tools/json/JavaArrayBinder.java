@@ -12,7 +12,7 @@ import java.util.Map;
  */
 class JavaArrayBinder implements JsonBinder {
     private Collection l;
-    private Binder.Serializer serializer;
+    private Binder.SerializerType serializer;
     private Class clazz;
     private Generic generic;
 
@@ -24,9 +24,9 @@ class JavaArrayBinder implements JsonBinder {
 
         this.clazz = generic.clazz;
         serializer = Binder.classToSerializer(clazz);
-        if (serializer == Binder.Serializer.ARRAY) {
+        if (serializer == Binder.SerializerType.ARRAY) {
             l = new ArrayList();
-        } else if (serializer == Binder.Serializer.COLLECTION) {
+        } else if (serializer == Binder.SerializerType.COLLECTION) {
             l = Binder.createCollection(clazz);
         } else {
             throw new IllegalArgumentException("this binder only for collections and arrays! not for " + clazz);
@@ -46,7 +46,7 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public Object getObject() {
-        if (serializer == Binder.Serializer.COLLECTION)
+        if (serializer == Binder.SerializerType.COLLECTION)
             return l;
         else {
             List l = (List) this.l;

@@ -11,12 +11,12 @@ import java.lang.reflect.Field;
 class FieldInfo {
     final Field field;
     final Generic generic;
-    final Binder.Serializer serializer;
+    final Binder.SerializerType serializer;
     final JsonFieldSetter setter;
 
     static CharTree charTree = new CharTree();
 
-    FieldInfo(Field field, Binder.Serializer serializer) {
+    FieldInfo(Field field, Binder.SerializerType serializer) {
         this.field = field;
         this.generic = new Generic(field.getGenericType());
         this.serializer = serializer;

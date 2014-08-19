@@ -20,8 +20,75 @@ public class Binder {
     private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
 
-    enum Serializer {
-        STRING, NUMBER_BOOLEAN, COLLECTION, ARRAY, MAP, DATE, OBJECT, ENUM
+    static interface Serializer {
+        public void serialize(Object object, Appender appender, Generic generic);
+    }
+
+    static char[] nullArray = new char[]{'n', 'u', 'l', 'l'};
+
+    enum SerializerType {
+        STRING(new Serializer() {
+            public void serialize(Object it, Appender appender, Generic generic) {
+                appendString(it, appender);
+            }
+        }),
+        NUMBER_BOOLEAN(new Serializer() {
+            public void serialize(Object object, Appender appender, Generic generic) {
+                appendNumberOrBoolean(object, appender);
+            }
+        }),
+        COLLECTION(new Serializer() {
+            public void serialize(Object object, Appender appender, Generic generic) {
+                appendCollection(object, appender, generic);
+            }
+        }),
+        ARRAY(new Serializer() {
+            public void serialize(Object object, Appender appender, Generic generic) {
+                appendArray(object, appender, generic);
+            }
+        }),
+        MAP(new Serializer() {
+            public void serialize(Object it, Appender appender, Generic generic) {
+                appendMap(it, appender, generic);
+            }
+        }),
+        DATE(new Serializer() {
+            public void serialize(Object object, Appender appender, Generic generic) {
+                appender.append('"');
+                appender.append(DateIso8601.formatToChars((Date) object));
+                appender.append('"');
+            }
+        }),
+        OBJECT(new Serializer() {
+            public void serialize(Object it, Appender it2, Generic generic) {
+                toJSON(it, it2);
+            }
+        }),
+        ENUM(new Serializer() {
+            public void serialize(Object object, Appender appender, Generic generic) {
+                appender.append('"');
+                appender.append(object);
+                appender.append('"');
+            }
+        }),
+        NULL(new Serializer() {
+            public void serialize(Object object, Appender appender, Generic generic) {
+                appender.append(nullArray);
+            }
+        });
+
+        private final Serializer serializer;
+
+        SerializerType(Serializer serializer) {
+            this.serializer = serializer;
+        }
+
+        public void serialize(Object value, Appender appender, Generic generic) {
+            if (value == null)
+                NULL.serializer.serialize(value, appender, generic);
+            else
+                serializer.serialize(value, appender, generic);
+        }
     }
 
     static JsonBinder getObjectBinder(Generic generic) {
@@ -41,7 +108,7 @@ public class Binder {
     }
 
     static <T> T createInstance(Class<T> clazz) {
-        Serializer serializer = classToSerializer(clazz);
+        SerializerType serializer = classToSerializer(clazz);
 
         switch (serializer) {
             case STRING:
@@ -158,31 +225,43 @@ public class Binder {
     }
 
 
-    static Serializer getReturnType(Method method) {
+    static SerializerType getReturnType(Method method) {
         return classToSerializer(method.getReturnType());
     }
 
-    static Serializer getReturnType(Field field) {
+    static SerializerType getReturnType(Field field) {
         return classToSerializer(field.getType());
     }
 
-    static Serializer classToSerializer(Class clazz) {
+    static ConcurrentHashMap<Class, SerializerType> serializers = new ConcurrentHashMap<Class, SerializerType>();
+
+    static SerializerType classToSerializer(Class clazz) {
+        SerializerType serializer = serializers.get(clazz);
+        if (serializer != null)
+            return serializer;
+
+        serializer = classToSerializerWithoutCache(clazz);
+        serializers.put(clazz, serializer);
+        return serializer;
+    }
+
+    static SerializerType classToSerializerWithoutCache(Class clazz) {
         if (String.class == clazz)
-            return Serializer.STRING;
+            return SerializerType.STRING;
         else if (clazz.isPrimitive() || Boolean.class == clazz || Number.class.isAssignableFrom(clazz))
-            return Serializer.NUMBER_BOOLEAN;
+            return SerializerType.NUMBER_BOOLEAN;
         else if (Collection.class.isAssignableFrom(clazz))
-            return Serializer.COLLECTION;
+            return SerializerType.COLLECTION;
         else if (Map.class.isAssignableFrom(clazz))
-            return Serializer.MAP;
+            return SerializerType.MAP;
         else if (Date.class.isAssignableFrom(clazz))
-            return Serializer.DATE;
+            return SerializerType.DATE;
         else if (Array.class == clazz || clazz.isArray())
-            return Serializer.ARRAY;
+            return SerializerType.ARRAY;
         else if (clazz.isEnum())
-            return Serializer.ENUM;
+            return SerializerType.ENUM;
         else
-            return Serializer.OBJECT;
+            return SerializerType.OBJECT;
     }
 
     public static <T> T fromJSON(Class<T> clazz, JsonItem json) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
@@ -194,7 +273,7 @@ public class Binder {
             return null;
         }
 
-        Serializer serializer = classToSerializer(clazz);
+        SerializerType serializer = classToSerializer(clazz);
 
         switch (serializer) {
             case STRING:
@@ -213,7 +292,7 @@ public class Binder {
 
                 for (FieldInfo info : getFields(clazz).values()) {
                     Field field = info.field;
-                    Serializer s = info.serializer;
+                    SerializerType s = info.serializer;
                     JsonObject jsonObject = json.asJsonObject();
                     JsonItem item = jsonObject.get(field.getName());
                     if (item != null)
@@ -336,20 +415,20 @@ public class Binder {
     }
 
     static abstract class Appender {
-        public abstract Appender append(String s);
+        public abstract void append(String s);
 
-        public abstract Appender append(String s, int from, int to);
+        public abstract void append(String s, int from, int to);
 
-        public abstract Appender append(char[] s, int from, int to);
+        public abstract void append(char[] s, int from, int to);
 
-        public abstract Appender append(char s);
+        public abstract void append(char s);
 
-        public Appender append(Object ob) {
-            return append(String.valueOf(ob));
+        public void append(Object ob) {
+            append(String.valueOf(ob));
         }
 
-        public Appender append(char[] chars) {
-            return append(chars, 0, chars.length);
+        public void append(char[] chars) {
+            append(chars, 0, chars.length);
         }
     }
 
@@ -365,27 +444,23 @@ public class Binder {
         }
 
         @Override
-        public Appender append(String s) {
+        public void append(String s) {
             sb.append(s);
-            return this;
         }
 
         @Override
-        public Appender append(String s, int from, int to) {
+        public void append(String s, int from, int to) {
             sb.append(s, from, to);
-            return this;
         }
 
         @Override
-        public Appender append(char[] s, int from, int to) {
+        public void append(char[] s, int from, int to) {
             sb.append(s, from, to - from);
-            return this;
         }
 
         @Override
-        public Appender append(char s) {
+        public void append(char s) {
             sb.append(s);
-            return this;
         }
 
         @Override
@@ -402,43 +477,39 @@ public class Binder {
         }
 
         @Override
-        public Appender append(String s) {
+        public void append(String s) {
             try {
                 out.write(s);
             } catch (IOException e) {
                 throw new WrappedException(e);
             }
-            return this;
         }
 
         @Override
-        public Appender append(String s, int from, int to) {
+        public void append(String s, int from, int to) {
             try {
                 out.append(s, from, to);
             } catch (IOException e) {
                 throw new WrappedException(e);
             }
-            return this;
         }
 
         @Override
-        public Appender append(char[] s, int from, int to) {
+        public void append(char[] s, int from, int to) {
             try {
                 out.write(s, from, to - from);
             } catch (IOException e) {
                 throw new WrappedException(e);
             }
-            return this;
         }
 
         @Override
-        public Appender append(char s) {
+        public void append(char s) {
             try {
                 out.append(s);
             } catch (IOException e) {
                 throw new WrappedException(e);
             }
-            return this;
         }
     }
 
@@ -447,9 +518,9 @@ public class Binder {
             sb.append("null");
             return;
         }
-        Serializer serializer;
-        if ((serializer = classToSerializer(src.getClass())) != Serializer.OBJECT) {
-            toJSON(null, src, sb, serializer, false, null);
+        SerializerType serializer;
+        if ((serializer = classToSerializer(src.getClass())) != SerializerType.OBJECT) {
+            serializer.serialize(src, sb, null);
             return;
         }
 
@@ -466,7 +537,8 @@ public class Binder {
                 else
                     comma = true;
 
-                toJSON(field.getName(), field.get(src), sb, info.serializer, false, info.generic);
+                appendName(field.getName(), sb, false);
+                info.serializer.serialize(field.get(src), sb, info.generic);
             } catch (IllegalAccessException e) {
                 throw new WrappedException(e);
             }
@@ -476,10 +548,13 @@ public class Binder {
     }
 
     private static void toJSON(String name, Object src, Appender sb) {
-        Serializer serializer = null;
+        SerializerType serializer;
         if (src != null)
             serializer = classToSerializer(src.getClass());
-        toJSON(name, src, sb, serializer, true, null);
+        else
+            serializer = SerializerType.NULL;
+        appendName(name, sb, true);
+        serializer.serialize(src, sb, null);
     }
 
     private static void appendNumberOrBoolean(Object ob, Appender sb) {
@@ -495,7 +570,7 @@ public class Binder {
     private static void appendCollection(Object src, Appender sb, Generic generic) {
         Iterator i = ((Collection) src).iterator();
 
-        Serializer serializer = null;
+        SerializerType serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 1) {
             serializer = classToSerializer(generic.typeParameters[0].clazz);
@@ -503,22 +578,27 @@ public class Binder {
         }
 
         sb.append('[');
+        boolean next;
         if (i.hasNext())
             if (serializer != null)
                 do {
-                    toJSON(null, i.next(), sb, serializer, false, inner);
-                } while (i.hasNext() && sb.append(',') != null);
+                    serializer.serialize(i.next(), sb, inner);
+                    if (next = i.hasNext())
+                        sb.append(',');
+                } while (next);
             else
                 do {
                     toJSON(i.next(), sb);
-                } while (i.hasNext() && sb.append(',') != null);
+                    if (next = i.hasNext())
+                        sb.append(',');
+                } while (next);
         sb.append(']');
     }
 
     private static void appendArray(Object src, Appender sb, Generic generic) {
         int length = Array.getLength(src);
 
-        Serializer serializer = null;
+        SerializerType serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 1) {
             serializer = classToSerializer(generic.typeParameters[0].clazz);
@@ -529,7 +609,7 @@ public class Binder {
         if (serializer != null)
             for (int i = 0; i < length; i++) {
                 if (i > 0) sb.append(',');
-                toJSON(null, Array.get(src, i), sb, serializer, false, inner);
+                serializer.serialize(Array.get(src, i), sb, inner);
             }
         else
             for (int i = 0; i < length; i++) {
@@ -541,25 +621,31 @@ public class Binder {
 
     private static void appendMap(Object src, Appender sb, Generic generic) {
         sb.append('{');
-        Iterator i = ((Map) src).entrySet().iterator();
+        Iterator<Map.Entry> i = ((Map) src).entrySet().iterator();
 
-        Serializer serializer = null;
+        SerializerType serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 2) {
             serializer = classToSerializer(generic.typeParameters[1].clazz);
             inner = generic.typeParameters[1];
         }
+        boolean next;
         if (i.hasNext())
             if (serializer != null)
                 do {
-                    Map.Entry entry = (Map.Entry) i.next();
-                    toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb, serializer, true, inner);
-                } while (i.hasNext() && sb.append(',') != null);
+                    Map.Entry entry = i.next();
+                    appendName(String.valueOf(entry.getKey()), sb, true);
+                    serializer.serialize(entry.getValue(), sb, inner);
+                    if (next = i.hasNext())
+                        sb.append(',');
+                } while (next);
             else
                 do {
-                    Map.Entry entry = (Map.Entry) i.next();
+                    Map.Entry entry = i.next();
                     toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb);
-                } while (i.hasNext() && sb.append(',') != null);
+                    if (next = i.hasNext())
+                        sb.append(',');
+                } while (next);
         sb.append('}');
     }
 
@@ -570,51 +656,8 @@ public class Binder {
                 JsonTools.escape(name, sb);
             else
                 sb.append(name);
-            sb.append('"').append(':');
-        }
-    }
-
-    private static void toJSON(String name, Object src, Appender sb, Serializer serializer, boolean escapeName, Generic generic) {
-        appendName(name, sb, escapeName);
-
-        if (src == null) {
-            sb.append("null");
-            return;
-        }
-
-        switch (serializer) {
-            case NUMBER_BOOLEAN: {
-                appendNumberOrBoolean(src, sb);
-                break;
-            }
-            case STRING: {
-                appendString(src, sb);
-                break;
-            }
-            case COLLECTION: {
-                appendCollection(src, sb, generic);
-                break;
-            }
-            case MAP: {
-                appendMap(src, sb, generic);
-                break;
-            }
-            case ARRAY: {
-                appendArray(src, sb, generic);
-                break;
-            }
-            case DATE: {
-                sb.append('"').append(DateIso8601.formatToChars((Date) src)).append('"');
-                break;
-            }
-            case OBJECT: {
-                toJSON(src, sb);
-                break;
-            }
-            case ENUM: {
-                sb.append('"').append(src).append('"');
-                break;
-            }
+            sb.append('"');
+            sb.append(':');
         }
     }
 }
