@@ -327,7 +327,7 @@ public class JsonItem {
     }
 
     static JsonItem createInteger(char[] s, int from, int to) {
-        if (to - from > 20) //9223372036854775807 - max long - 19 characters
+        if (to - from > 19) //9223372036854775807 - max long - 19 characters
             return null;
 
         boolean minus = s[from] == '-';
@@ -337,7 +337,7 @@ public class JsonItem {
         if (from == to)
             return null;
 
-        if (to - from > 10) {
+        if (to - from > 9) {
             long l = 0;
             for (int i = from; i < to; i++) {
                 if (s[i] < '0' || s[i] > '9')
