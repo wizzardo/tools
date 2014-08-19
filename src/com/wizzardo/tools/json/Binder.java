@@ -19,76 +19,191 @@ public class Binder {
     private static final int SYNTHETIC = 0x00001000;
     private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
+    private static Map<Class, Serializer> serializers = new ConcurrentHashMap<Class, Serializer>();
 
-    static interface Serializer {
-        public void serialize(Object object, Appender appender, Generic generic);
+    static abstract class Serializer {
+        static char[] nullArray = new char[]{'n', 'u', 'l', 'l'};
+        final SerializerType type;
+
+        protected Serializer(SerializerType type) {
+            this.type = type;
+        }
+
+        public void checkNullAndSerialize(Object object, Appender appender, Generic generic) {
+            if (object == null)
+                appender.append(nullArray);
+            else
+                serialize(object, appender, generic);
+
+        }
+
+        abstract public void serialize(Object object, Appender appender, Generic generic);
     }
 
-    static char[] nullArray = new char[]{'n', 'u', 'l', 'l'};
-
-    enum SerializerType {
-        STRING(new Serializer() {
-            public void serialize(Object it, Appender appender, Generic generic) {
-                appendString(it, appender);
-            }
-        }),
-        NUMBER_BOOLEAN(new Serializer() {
-            public void serialize(Object object, Appender appender, Generic generic) {
-                appendNumberOrBoolean(object, appender);
-            }
-        }),
-        COLLECTION(new Serializer() {
-            public void serialize(Object object, Appender appender, Generic generic) {
-                appendCollection(object, appender, generic);
-            }
-        }),
-        ARRAY(new Serializer() {
-            public void serialize(Object object, Appender appender, Generic generic) {
-                appendArray(object, appender, generic);
-            }
-        }),
-        MAP(new Serializer() {
-            public void serialize(Object it, Appender appender, Generic generic) {
-                appendMap(it, appender, generic);
-            }
-        }),
-        DATE(new Serializer() {
-            public void serialize(Object object, Appender appender, Generic generic) {
-                appender.append('"');
-                appender.append(DateIso8601.formatToChars((Date) object));
-                appender.append('"');
-            }
-        }),
-        OBJECT(new Serializer() {
-            public void serialize(Object it, Appender it2, Generic generic) {
-                toJSON(it, it2);
-            }
-        }),
-        ENUM(new Serializer() {
-            public void serialize(Object object, Appender appender, Generic generic) {
-                appender.append('"');
-                appender.append(object);
-                appender.append('"');
-            }
-        }),
-        NULL(new Serializer() {
-            public void serialize(Object object, Appender appender, Generic generic) {
-                appender.append(nullArray);
-            }
-        });
-
-        private final Serializer serializer;
-
-        SerializerType(Serializer serializer) {
-            this.serializer = serializer;
+    private static Serializer stringSerializer = new Serializer(SerializerType.STRING) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appendString(object, appender);
         }
-
-        public void serialize(Object value, Appender appender, Generic generic) {
-            if (value == null)
-                NULL.serializer.serialize(value, appender, generic);
-            else
-                serializer.serialize(value, appender, generic);
+    };
+    private static Serializer numberBooleanSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appendNumberOrBoolean(object, appender);
         }
+    };
+    private static Serializer collectionSerializer = new Serializer(SerializerType.COLLECTION) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appendCollection(object, appender, generic);
+        }
+    };
+    private static Serializer arraySerializer = new Serializer(SerializerType.ARRAY) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appendArray(object, appender, generic);
+        }
+    };
+    private static Serializer arrayIntSerializer = new Serializer(SerializerType.ARRAY) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            int[] arr = (int[]) object;
+            int length = arr.length;
+
+            appender.append('[');
+            for (int i = 0; i < length; i++) {
+                if (i > 0) appender.append(',');
+                appender.append(String.valueOf(arr[i]));
+            }
+            appender.append(']');
+        }
+    };
+    private static Serializer arrayLongSerializer = new Serializer(SerializerType.ARRAY) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            long[] arr = (long[]) object;
+            int length = arr.length;
+
+            appender.append('[');
+            for (int i = 0; i < length; i++) {
+                if (i > 0) appender.append(',');
+                appender.append(String.valueOf(arr[i]));
+            }
+            appender.append(']');
+        }
+    };
+    private static Serializer arrayByteSerializer = new Serializer(SerializerType.ARRAY) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            byte[] arr = (byte[]) object;
+            int length = arr.length;
+
+            appender.append('[');
+            for (int i = 0; i < length; i++) {
+                if (i > 0) appender.append(',');
+                appender.append(String.valueOf(arr[i]));
+            }
+            appender.append(']');
+        }
+    };
+    private static Serializer arrayShortSerializer = new Serializer(SerializerType.ARRAY) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            short[] arr = (short[]) object;
+            int length = arr.length;
+
+            appender.append('[');
+            for (int i = 0; i < length; i++) {
+                if (i > 0) appender.append(',');
+                appender.append(String.valueOf(arr[i]));
+            }
+            appender.append(']');
+        }
+    };
+    private static Serializer arrayFloatSerializer = new Serializer(SerializerType.ARRAY) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            float[] arr = (float[]) object;
+            int length = arr.length;
+
+            appender.append('[');
+            for (int i = 0; i < length; i++) {
+                if (i > 0) appender.append(',');
+                appender.append(String.valueOf(arr[i]));
+            }
+            appender.append(']');
+        }
+    };
+    private static Serializer arrayDoubleSerializer = new Serializer(SerializerType.ARRAY) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            double[] arr = (double[]) object;
+            int length = arr.length;
+
+            appender.append('[');
+            for (int i = 0; i < length; i++) {
+                if (i > 0) appender.append(',');
+                appender.append(String.valueOf(arr[i]));
+            }
+            appender.append(']');
+        }
+    };
+    private static Serializer arrayCharSerializer = new Serializer(SerializerType.ARRAY) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            char[] arr = (char[]) object;
+            appender.append('[');
+            JsonTools.escapeSeparately(arr, appender);
+            appender.append(']');
+        }
+    };
+    private static Serializer mapSerializer = new Serializer(SerializerType.MAP) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appendMap(object, appender, generic);
+        }
+    };
+    private static Serializer dateSerializer = new Serializer(SerializerType.DATE) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appender.append('"');
+            appender.append(DateIso8601.formatToChars((Date) object));
+            appender.append('"');
+        }
+    };
+    private static Serializer enumSerializer = new Serializer(SerializerType.ENUM) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appender.append('"');
+            appender.append(object);
+            appender.append('"');
+        }
+    };
+    private static Serializer nullSerializer = new Serializer(SerializerType.NULL) {
+
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appender.append(nullArray);
+        }
+    };
+    private static Serializer objectSerializer = new Serializer(SerializerType.OBJECT) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            toJSON(object, appender);
+        }
+    };
+
+
+    static enum SerializerType {
+        STRING,
+        NUMBER_BOOLEAN,
+        COLLECTION,
+        ARRAY,
+        MAP,
+        DATE,
+        OBJECT,
+        ENUM,
+        NULL
     }
 
     static JsonBinder getObjectBinder(Generic generic) {
@@ -108,7 +223,7 @@ public class Binder {
     }
 
     static <T> T createInstance(Class<T> clazz) {
-        SerializerType serializer = classToSerializer(clazz);
+        SerializerType serializer = classToSerializer(clazz).type;
 
         switch (serializer) {
             case STRING:
@@ -224,19 +339,12 @@ public class Binder {
         return true;
     }
 
-
-    static SerializerType getReturnType(Method method) {
-        return classToSerializer(method.getReturnType());
-    }
-
-    static SerializerType getReturnType(Field field) {
+    static Serializer getReturnType(Field field) {
         return classToSerializer(field.getType());
     }
 
-    static ConcurrentHashMap<Class, SerializerType> serializers = new ConcurrentHashMap<Class, SerializerType>();
-
-    static SerializerType classToSerializer(Class clazz) {
-        SerializerType serializer = serializers.get(clazz);
+    static Serializer classToSerializer(Class clazz) {
+        Serializer serializer = serializers.get(clazz);
         if (serializer != null)
             return serializer;
 
@@ -245,23 +353,40 @@ public class Binder {
         return serializer;
     }
 
-    static SerializerType classToSerializerWithoutCache(Class clazz) {
+    static Serializer classToSerializerWithoutCache(Class clazz) {
         if (String.class == clazz)
-            return SerializerType.STRING;
+            return stringSerializer;
         else if (clazz.isPrimitive() || Boolean.class == clazz || Number.class.isAssignableFrom(clazz))
-            return SerializerType.NUMBER_BOOLEAN;
+            return numberBooleanSerializer;
         else if (Collection.class.isAssignableFrom(clazz))
-            return SerializerType.COLLECTION;
+            return collectionSerializer;
         else if (Map.class.isAssignableFrom(clazz))
-            return SerializerType.MAP;
+            return mapSerializer;
         else if (Date.class.isAssignableFrom(clazz))
-            return SerializerType.DATE;
-        else if (Array.class == clazz || clazz.isArray())
-            return SerializerType.ARRAY;
-        else if (clazz.isEnum())
-            return SerializerType.ENUM;
+            return dateSerializer;
+        else if (Array.class == clazz || clazz.isArray()) {
+            clazz = clazz.getComponentType();
+            if (clazz != null && clazz.isPrimitive()) {
+                if (clazz == int.class)
+                    return arrayIntSerializer;
+                if (clazz == long.class)
+                    return arrayLongSerializer;
+                if (clazz == byte.class)
+                    return arrayByteSerializer;
+                if (clazz == short.class)
+                    return arrayShortSerializer;
+                if (clazz == char.class)
+                    return arrayCharSerializer;
+                if (clazz == float.class)
+                    return arrayFloatSerializer;
+                if (clazz == double.class)
+                    return arrayDoubleSerializer;
+            }
+            return arraySerializer;
+        } else if (clazz.isEnum())
+            return enumSerializer;
         else
-            return SerializerType.OBJECT;
+            return objectSerializer;
     }
 
     public static <T> T fromJSON(Class<T> clazz, JsonItem json) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
@@ -273,9 +398,9 @@ public class Binder {
             return null;
         }
 
-        SerializerType serializer = classToSerializer(clazz);
+        Serializer serializer = classToSerializer(clazz);
 
-        switch (serializer) {
+        switch (serializer.type) {
             case STRING:
             case NUMBER_BOOLEAN: {
                 return json.getAs(clazz);
@@ -292,7 +417,7 @@ public class Binder {
 
                 for (FieldInfo info : getFields(clazz).values()) {
                     Field field = info.field;
-                    SerializerType s = info.serializer;
+                    SerializerType s = info.serializer.type;
                     JsonObject jsonObject = json.asJsonObject();
                     JsonItem item = jsonObject.get(field.getName());
                     if (item != null)
@@ -518,8 +643,8 @@ public class Binder {
             sb.append("null");
             return;
         }
-        SerializerType serializer;
-        if ((serializer = classToSerializer(src.getClass())) != SerializerType.OBJECT) {
+        Serializer serializer;
+        if ((serializer = classToSerializer(src.getClass())).type != SerializerType.OBJECT) {
             serializer.serialize(src, sb, null);
             return;
         }
@@ -538,7 +663,7 @@ public class Binder {
                     comma = true;
 
                 appendName(field.getName(), sb, false);
-                info.serializer.serialize(field.get(src), sb, info.generic);
+                info.serializer.checkNullAndSerialize(field.get(src), sb, info.generic);
             } catch (IllegalAccessException e) {
                 throw new WrappedException(e);
             }
@@ -548,11 +673,11 @@ public class Binder {
     }
 
     private static void toJSON(String name, Object src, Appender sb) {
-        SerializerType serializer;
+        Serializer serializer;
         if (src != null)
             serializer = classToSerializer(src.getClass());
         else
-            serializer = SerializerType.NULL;
+            serializer = nullSerializer;
         appendName(name, sb, true);
         serializer.serialize(src, sb, null);
     }
@@ -570,7 +695,7 @@ public class Binder {
     private static void appendCollection(Object src, Appender sb, Generic generic) {
         Iterator i = ((Collection) src).iterator();
 
-        SerializerType serializer = null;
+        Serializer serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 1) {
             serializer = classToSerializer(generic.typeParameters[0].clazz);
@@ -582,7 +707,7 @@ public class Binder {
         if (i.hasNext())
             if (serializer != null)
                 do {
-                    serializer.serialize(i.next(), sb, inner);
+                    serializer.checkNullAndSerialize(i.next(), sb, inner);
                     if (next = i.hasNext())
                         sb.append(',');
                 } while (next);
@@ -596,9 +721,10 @@ public class Binder {
     }
 
     private static void appendArray(Object src, Appender sb, Generic generic) {
-        int length = Array.getLength(src);
+        Object[] arr = (Object[]) src;
+        int length = arr.length;
 
-        SerializerType serializer = null;
+        Serializer serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 1) {
             serializer = classToSerializer(generic.typeParameters[0].clazz);
@@ -609,12 +735,12 @@ public class Binder {
         if (serializer != null)
             for (int i = 0; i < length; i++) {
                 if (i > 0) sb.append(',');
-                serializer.serialize(Array.get(src, i), sb, inner);
+                serializer.checkNullAndSerialize(arr[i], sb, inner);
             }
         else
             for (int i = 0; i < length; i++) {
                 if (i > 0) sb.append(',');
-                toJSON(Array.get(src, i), sb);
+                toJSON(arr[i], sb);
             }
         sb.append(']');
     }
@@ -623,7 +749,7 @@ public class Binder {
         sb.append('{');
         Iterator<Map.Entry> i = ((Map) src).entrySet().iterator();
 
-        SerializerType serializer = null;
+        Serializer serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 2) {
             serializer = classToSerializer(generic.typeParameters[1].clazz);
@@ -635,7 +761,7 @@ public class Binder {
                 do {
                     Map.Entry entry = i.next();
                     appendName(String.valueOf(entry.getKey()), sb, true);
-                    serializer.serialize(entry.getValue(), sb, inner);
+                    serializer.checkNullAndSerialize(entry.getValue(), sb, inner);
                     if (next = i.hasNext())
                         sb.append(',');
                 } while (next);

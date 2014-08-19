@@ -22,8 +22,8 @@ class JavaArrayBinder implements JsonBinder {
         else
             this.generic = new Generic(Object.class);
 
-        this.clazz = generic.clazz;
-        serializer = Binder.classToSerializer(clazz);
+        this.clazz = this.generic.clazz;
+        serializer = Binder.classToSerializer(clazz).type;
         if (serializer == Binder.SerializerType.ARRAY) {
             l = new ArrayList();
         } else if (serializer == Binder.SerializerType.COLLECTION) {

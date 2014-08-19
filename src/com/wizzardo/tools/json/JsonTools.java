@@ -188,11 +188,7 @@ public class JsonTools {
                 char c = escapes[ch];
                 if (c != 0) {
                     from = append(chars, from, i, sb);
-                    sb.append('\\');
-                    sb.append(c);
-                } else if (c == 128) {
-                    from = append(chars, from, i, sb);
-                    appendUnicodeChar(ch, sb);
+                    escapeChar(c, ch, sb);
                 }
             } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
                 from = append(chars, from, i, sb);
@@ -201,6 +197,32 @@ public class JsonTools {
         }//for
         if (from < to)
             append(chars, from, to, sb);
+    }
+
+    static void escapeSeparately(char[] chars, Binder.Appender sb) {
+        int to = chars.length;
+        int from = 0;
+        char[] escapes = ESCAPES;
+
+        for (int i = from; i < to; i++) {
+            if (i > 0)
+                sb.append(',');
+            sb.append('"');
+
+            char ch = chars[i];
+            if (ch < 127) {
+                char c = escapes[ch];
+                if (c != 0)
+                    escapeChar(c, ch, sb);
+                else
+                    sb.append(ch);
+            } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF'))
+                appendUnicodeChar(ch, sb);
+            else
+                sb.append(ch);
+
+            sb.append('"');
+        }
     }
 
     private static void appendUnicodeChar(char ch, Binder.Appender sb) {
@@ -215,6 +237,15 @@ public class JsonTools {
     private static int append(char[] s, int from, int to, Binder.Appender sb) {
         sb.append(s, from, to);
         return to + 1;
+    }
+
+    private static void escapeChar(char escaped, char src, Binder.Appender sb) {
+        if (escaped == 128) {
+            appendUnicodeChar(src, sb);
+        } else {
+            sb.append('\\');
+            sb.append(escaped);
+        }
     }
 
 }

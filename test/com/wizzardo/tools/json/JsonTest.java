@@ -246,6 +246,7 @@ public class JsonTest {
         assertEquals(s, JsonTools.escape(s));
 
         Assert.assertEquals("\\r\\n\\b\\t\\f\\\"\\\\", JsonTools.escape("\r\n\b\t\f\"\\"));
+        Assert.assertEquals("\\u0001\\u0002\\u0003", JsonTools.escape("\u0001\u0002\u0003"));
     }
 
     @Test
@@ -457,5 +458,11 @@ public class JsonTest {
         Assert.assertEquals("{\"escaped\":\"\\r\\n\\b\\t\\\"\"}", JsonTools.serialize(data));
 
         Assert.assertEquals("[1,2,3]", JsonTools.serialize(new int[]{1, 2, 3}));
+        Assert.assertEquals("[1,2,3]", JsonTools.serialize(new long[]{1l, 2l, 3l}));
+        Assert.assertEquals("[1,2,3]", JsonTools.serialize(new short[]{1, 2, 3}));
+        Assert.assertEquals("[1,2,3]", JsonTools.serialize(new byte[]{1, 2, 3}));
+        Assert.assertEquals("[\"\\u0001\",\"\\u0002\",\"\\u0003\"]", JsonTools.serialize(new char[]{1, 2, 3}));
+        Assert.assertEquals("[1.0,2.0,3.0]", JsonTools.serialize(new float[]{1f, 2f, 3f}));
+        Assert.assertEquals("[1.0,2.0,3.0]", JsonTools.serialize(new double[]{1d, 2d, 3d}));
     }
 }
