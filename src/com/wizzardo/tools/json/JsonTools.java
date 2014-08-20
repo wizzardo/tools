@@ -180,23 +180,31 @@ public class JsonTools {
         int to = s.length();
         int from = chars.length == to ? 0 : StringReflection.offset(s);
         to += from;
-        char[] escapes = ESCAPES;
+        int l = to - 1;
+        for (int i = from; i < l; i += 2) {
+            from = check(from, i, chars, sb);
+            from = check(from, i + 1, chars, sb);  //about 10% faster
+        }
+        if (l % 2 == 0)
+            from = check(from, l, chars, sb);
 
-        for (int i = from; i < to; i++) {
-            char ch = chars[i];
-            if (ch < 127) {
-                char c = escapes[ch];
-                if (c != 0) {
-                    from = append(chars, from, i, sb);
-                    escapeChar(c, ch, sb);
-                }
-            } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
-                from = append(chars, from, i, sb);
-                appendUnicodeChar(ch, sb);
-            }
-        }//for
         if (from < to)
             append(chars, from, to, sb);
+    }
+
+    private static int check(int from, int i, char[] chars, Binder.Appender sb) {
+        char ch = chars[i];
+        if (ch < 127) {
+            char c = ESCAPES[ch];
+            if (c != 0) {
+                from = append(chars, from, i, sb);
+                escapeChar(c, ch, sb);
+            }
+        } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
+            from = append(chars, from, i, sb);
+            appendUnicodeChar(ch, sb);
+        }
+        return from;
     }
 
     static void escapeSeparately(char[] chars, Binder.Appender sb) {
