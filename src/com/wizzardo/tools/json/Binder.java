@@ -270,7 +270,7 @@ public class Binder {
     public static Map<String, FieldInfo> getFields(Class clazz) {
         Map<String, FieldInfo> fields = cachedFields.get(clazz);
         if (fields == null) {
-            fields = new HashMap<String, FieldInfo>();
+            fields = new LinkedHashMap<String, FieldInfo>();
             Class cl = clazz;
             while (cl != null) {
                 Field[] ff = cl.getDeclaredFields();
