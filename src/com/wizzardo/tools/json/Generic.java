@@ -12,6 +12,7 @@ public class Generic<T> {
     final Class<T> clazz;
     final Generic[] typeParameters;
     final Generic parent;
+    final Binder.Serializer serializer;
     private Map<String, Generic> types;
 
     public Generic(Type c) {
@@ -21,6 +22,7 @@ public class Generic<T> {
     public Generic(Class<T> c, Class... generics) {
         clazz = c;
         parent = null;
+        serializer=Binder.classToSerializer(clazz);
         if (generics == null) {
             typeParameters = new Generic[0];
             return;
@@ -36,6 +38,7 @@ public class Generic<T> {
     public Generic(Class<T> c, Generic... generics) {
         clazz = c;
         parent = null;
+        serializer=Binder.classToSerializer(clazz);
         if (generics == null)
             typeParameters = new Generic[0];
         else
@@ -93,6 +96,7 @@ public class Generic<T> {
             Class cl = (Class) c;
             if (cl.isArray()) {
                 clazz = (Class<T>) Array.class;
+                serializer=Binder.classToSerializer(clazz);
                 typeParameters = new Generic[]{new Generic(cl.getComponentType())};
                 parent = null;
                 return;
@@ -105,6 +109,7 @@ public class Generic<T> {
             else
                 parent = null;
         }
+        serializer=Binder.classToSerializer(clazz);
     }
 
     @Override

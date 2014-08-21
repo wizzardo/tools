@@ -247,6 +247,7 @@ public class JsonTest {
 
         Assert.assertEquals("\\r\\n\\b\\t\\f\\\"\\\\", JsonTools.escape("\r\n\b\t\f\"\\"));
         Assert.assertEquals("\\u0001\\u0002\\u0003", JsonTools.escape("\u0001\u0002\u0003"));
+        Assert.assertEquals("", JsonTools.escape(""));
         Assert.assertEquals("1", JsonTools.escape("1"));
         Assert.assertEquals("12", JsonTools.escape("12"));
         Assert.assertEquals("123", JsonTools.escape("123"));

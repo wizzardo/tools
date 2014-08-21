@@ -207,30 +207,17 @@ public class JsonTools {
         return from;
     }
 
-    static void escapeSeparately(char[] chars, Binder.Appender sb) {
-        int to = chars.length;
-        int from = 0;
-        char[] escapes = ESCAPES;
-
-        for (int i = from; i < to; i++) {
-            if (i > 0)
-                sb.append(',');
-            sb.append('"');
-
-            char ch = chars[i];
-            if (ch < 127) {
-                char c = escapes[ch];
-                if (c != 0)
-                    escapeChar(c, ch, sb);
-                else
-                    sb.append(ch);
-            } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF'))
-                appendUnicodeChar(ch, sb);
+    static void escape(char ch, Binder.Appender sb) {
+        if (ch < 127) {
+            char c = ESCAPES[ch];
+            if (c != 0)
+                escapeChar(c, ch, sb);
             else
                 sb.append(ch);
-
-            sb.append('"');
-        }
+        } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF'))
+            appendUnicodeChar(ch, sb);
+        else
+            sb.append(ch);
     }
 
     private static void appendUnicodeChar(char ch, Binder.Appender sb) {
