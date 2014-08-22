@@ -38,15 +38,25 @@ public class JsonArray extends ArrayList<JsonItem> {
                     break;
                 }
                 case '{': {
+                    if (json == null) {
+                        i = JsonObject.parse(s, i, to, null);
+                        break;
+                    }
                     JsonBinder ob = json.getObjectBinder();
                     i = JsonObject.parse(s, i, to, ob);
-                    json.add(ob.getObject());
+                    if (ob != null)
+                        json.add(ob.getObject());
                     break;
                 }
                 case '[': {
+                    if (json == null) {
+                        i = JsonArray.parse(s, i, to, null);
+                        break;
+                    }
                     JsonBinder ob = json.getArrayBinder();
-                    i = parse(s, i, to, ob);
-                    json.add(ob.getObject());
+                    i = JsonArray.parse(s, i, to, ob);
+                    if (ob != null)
+                        json.add(ob.getObject());
                     break;
                 }
                 case ']': {

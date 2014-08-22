@@ -50,15 +50,25 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                     break;
                 }
                 case '{': {
+                    if (json == null) {
+                        i = JsonObject.parse(s, i, to, null);
+                        break;
+                    }
                     JsonBinder ob = json.getObjectBinder();
                     i = JsonObject.parse(s, i, to, ob);
-                    json.add(ob.getObject());
+                    if (ob != null)
+                        json.add(ob.getObject());
                     break;
                 }
                 case '[': {
+                    if (json == null) {
+                        i = JsonArray.parse(s, i, to, null);
+                        break;
+                    }
                     JsonBinder ob = json.getArrayBinder();
                     i = JsonArray.parse(s, i, to, ob);
-                    json.add(ob.getObject());
+                    if (ob != null)
+                        json.add(ob.getObject());
                     break;
                 }
                 case '}': {

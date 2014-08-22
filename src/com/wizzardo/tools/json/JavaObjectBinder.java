@@ -54,6 +54,9 @@ class JavaObjectBinder implements JsonBinder {
     @Override
     public JsonBinder getArrayBinder() {
         FieldInfo info = getField();
+        if (info == null)
+            return null;
+
         if (generic != null) {
             Generic type = generic.getGenericType(info.field);
             if (type != null)

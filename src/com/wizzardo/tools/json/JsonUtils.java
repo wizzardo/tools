@@ -59,6 +59,9 @@ class JsonUtils {
                 break;
 
         }
+        if (binder == null)
+            return i;
+
         if (minus)
             l = -l;
 
@@ -169,6 +172,9 @@ class JsonUtils {
             k = trimRight(s, from, k);
         else
             i++;
+
+        if (binder == null)
+            return i;
 
         JsonFieldSetter setter = binder.getFieldSetter();
         String value;
@@ -281,6 +287,10 @@ class JsonUtils {
 
         if (rightBorder == from)
             throw new IllegalStateException("key not found");
+
+
+        if (binder == null)
+            return i + 1;
 
         String value = null;
         if (!needDecoding) {
