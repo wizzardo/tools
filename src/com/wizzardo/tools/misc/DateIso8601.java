@@ -43,6 +43,7 @@ public class DateIso8601 {
         i += 2;
 
         if (i >= length) {
+            calendar.setTimeZone(Z);
             clearTime(calendar);
             return calendar.getTime();
         }
@@ -52,6 +53,14 @@ public class DateIso8601 {
 
         i += 3;
 
+        if (i >= length) {
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+            calendar.setTimeZone(Z);
+            return calendar.getTime();
+        }
+
         c = chars[i];
         if (c == ':') {
             i++;
@@ -60,6 +69,13 @@ public class DateIso8601 {
         if (isInt(c)) {
             calendar.set(Calendar.MINUTE, getInt2(chars, i, c));
             i += 2;
+
+            if (i >= length) {
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                calendar.setTimeZone(Z);
+                return calendar.getTime();
+            }
 
             c = chars[i];
             if (c == ':') {
@@ -71,6 +87,11 @@ public class DateIso8601 {
                 calendar.set(Calendar.SECOND, getInt2(chars, i, c));
                 i += 2;
 
+                if (i >= length) {
+                    calendar.set(Calendar.MILLISECOND, 0);
+                    calendar.setTimeZone(Z);
+                    return calendar.getTime();
+                }
 
                 c = chars[i];
                 if (c == '.') {
@@ -93,7 +114,7 @@ public class DateIso8601 {
         }
 
 
-        if (chars[i] == 'Z') {
+        if (i == length || chars[i] == 'Z') {
             calendar.setTimeZone(Z);
             return calendar.getTime();
         }
