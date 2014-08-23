@@ -765,7 +765,7 @@ public class Binder {
 
     private static void appendString(Object ob, Appender sb) {
         sb.append('"');
-        JsonTools.escape(ob.toString(), sb);
+        JsonTools.escape((String) ob, sb);
         sb.append('"');
     }
 

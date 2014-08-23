@@ -195,10 +195,9 @@ public class JsonTools {
     private static int check(int from, int i, char[] chars, Binder.Appender sb) {
         char ch = chars[i];
         if (ch < 127) {
-            char c = ESCAPES[ch];
-            if (c != 0) {
+            if (ESCAPES[ch] != 0) {
                 from = append(chars, from, i, sb);
-                escapeChar(c, ch, sb);
+                escapeChar(ESCAPES[ch], ch, sb);
             }
         } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
             from = append(chars, from, i, sb);
@@ -209,9 +208,8 @@ public class JsonTools {
 
     static void escape(char ch, Binder.Appender sb) {
         if (ch < 127) {
-            char c = ESCAPES[ch];
-            if (c != 0)
-                escapeChar(c, ch, sb);
+            if (ESCAPES[ch] != 0)
+                escapeChar(ESCAPES[ch], ch, sb);
             else
                 sb.append(ch);
         } else if ((ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF'))
