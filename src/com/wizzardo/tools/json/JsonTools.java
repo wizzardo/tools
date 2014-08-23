@@ -149,7 +149,7 @@ public class JsonTools {
                         sb.append('/');
                         break;
                     case 'u':
-                        if (to <= i + 5)
+                        if (to < i + 5)
                             throw new IndexOutOfBoundsException("can't decode unicode character");
                         int hexVal = Integer.parseInt(new String(s, i + 1, 4), 16);
                         sb.append((char) hexVal);
