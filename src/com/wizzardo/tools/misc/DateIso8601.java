@@ -47,7 +47,7 @@ public class DateIso8601 {
             return calendar.getTime();
         }
 
-        check(chars[i], 'T');
+        checkOr(chars[i], 'T', ' ');
         calendar.set(Calendar.HOUR_OF_DAY, getInt2(chars, i + 1));
 
         i += 3;
@@ -134,6 +134,11 @@ public class DateIso8601 {
     private static void check(char c, char check) {
         if (c != check)
             throw new IllegalArgumentException("char should be an '" + check + "', but was: " + c);
+    }
+
+    private static void checkOr(char c, char check, char check2) {
+        if (c != check && c != check2)
+            throw new IllegalArgumentException("char should be an '" + check + "' or '" + check2 + "', but was: " + c);
     }
 
     private static int getInt2(char[] chars, int offset) {
