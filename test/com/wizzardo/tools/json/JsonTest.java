@@ -313,6 +313,8 @@ public class JsonTest {
     public void testUnicode() {
         String myString = "\\u0048\\u0065\\u006C\\u006C\\u006F World";
         Assert.assertEquals("Hello World", JsonTools.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
+        myString = "\\u0048\\u0065\\u006C\\u006C\\u006F";
+        Assert.assertEquals("Hello", JsonTools.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
     }
 
     static class MapTest {
