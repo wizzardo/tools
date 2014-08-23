@@ -243,7 +243,11 @@ public class Binder {
         public void serialize(Object src, Appender sb, Generic generic) {
             sb.append('{');
             boolean comma = false;
-            Map<String, FieldInfo> list = getFields(src.getClass());
+            Map<String, FieldInfo> list;
+            if (generic != null && src.getClass() == generic.clazz)
+                list = generic.getFields();
+            else
+                list = getFields(src.getClass());
 
             for (FieldInfo info : list.values()) {
                 Field field = info.field;

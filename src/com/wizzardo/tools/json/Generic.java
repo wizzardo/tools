@@ -14,6 +14,7 @@ public class Generic<T> {
     final Generic parent;
     final Binder.Serializer serializer;
     private Map<String, Generic> types;
+    private Map<String, FieldInfo> fields;
 
     public Generic(Type c) {
         this(c, (Map) null);
@@ -22,7 +23,7 @@ public class Generic<T> {
     public Generic(Class<T> c, Class... generics) {
         clazz = c;
         parent = null;
-        serializer=Binder.classToSerializer(clazz);
+        serializer = Binder.classToSerializer(clazz);
         if (generics == null) {
             typeParameters = new Generic[0];
             return;
@@ -38,7 +39,7 @@ public class Generic<T> {
     public Generic(Class<T> c, Generic... generics) {
         clazz = c;
         parent = null;
-        serializer=Binder.classToSerializer(clazz);
+        serializer = Binder.classToSerializer(clazz);
         if (generics == null)
             typeParameters = new Generic[0];
         else
@@ -96,7 +97,7 @@ public class Generic<T> {
             Class cl = (Class) c;
             if (cl.isArray()) {
                 clazz = (Class<T>) Array.class;
-                serializer=Binder.classToSerializer(clazz);
+                serializer = Binder.classToSerializer(clazz);
                 typeParameters = new Generic[]{new Generic(cl.getComponentType())};
                 parent = null;
                 return;
@@ -109,7 +110,7 @@ public class Generic<T> {
             else
                 parent = null;
         }
-        serializer=Binder.classToSerializer(clazz);
+        serializer = Binder.classToSerializer(clazz);
     }
 
     @Override
@@ -126,5 +127,13 @@ public class Generic<T> {
             return (Generic) g.types.get(((TypeVariable) f.getGenericType()).getName());
         }
         return null;
+    }
+
+    public Map<String, FieldInfo> getFields() {
+        if (fields != null)
+            return fields;
+
+        fields = Binder.getFields(clazz);
+        return fields;
     }
 }
