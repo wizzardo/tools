@@ -14,6 +14,8 @@ import java.io.OutputStream;
  */
 public class JsonTools {
 
+    private static final char[] INT_VALUES = new char[128];
+    private static final char[] UNESCAPES = new char[128];
     private static final char[] ESCAPES = new char[128];
 
     static {
@@ -28,6 +30,45 @@ public class JsonTools {
         ESCAPES['\b'] = 'b';
         ESCAPES['\t'] = 't';
         ESCAPES['\f'] = 'f';
+
+        for (int i = 0; i < INT_VALUES.length; i++) {
+            INT_VALUES[i] = 128;
+        }
+        INT_VALUES['0'] = 0;
+        INT_VALUES['1'] = 1;
+        INT_VALUES['2'] = 2;
+        INT_VALUES['3'] = 3;
+        INT_VALUES['4'] = 4;
+        INT_VALUES['5'] = 5;
+        INT_VALUES['6'] = 6;
+        INT_VALUES['7'] = 7;
+        INT_VALUES['8'] = 8;
+        INT_VALUES['9'] = 9;
+
+        INT_VALUES['a'] = 10;
+        INT_VALUES['b'] = 11;
+        INT_VALUES['c'] = 12;
+        INT_VALUES['d'] = 13;
+        INT_VALUES['e'] = 14;
+        INT_VALUES['f'] = 15;
+
+        INT_VALUES['A'] = 10;
+        INT_VALUES['B'] = 11;
+        INT_VALUES['C'] = 12;
+        INT_VALUES['D'] = 13;
+        INT_VALUES['E'] = 14;
+        INT_VALUES['F'] = 15;
+
+
+        UNESCAPES['"'] = '"';
+        UNESCAPES['\\'] = '\\';
+        UNESCAPES['b'] = '\b';
+        UNESCAPES['f'] = '\f';
+        UNESCAPES['n'] = '\n';
+        UNESCAPES['r'] = '\r';
+        UNESCAPES['t'] = '\t';
+        UNESCAPES['/'] = '/';
+        UNESCAPES['u'] = 128;
     }
 
 
@@ -115,55 +156,36 @@ public class JsonTools {
         Binder.toJSON(src, new Binder.StringBuilderAppender(out));
     }
 
-    public static String unescape(char[] s, int from, int to) {
+    public static String unescape(char[] chars, int from, int to) {
         StringBuilder sb = new StringBuilder(to - from);
-        byte ch, prev = 0;
-        for (int i = from; i < to; i++) {
-            ch = (byte) s[i];
-            if (prev == '\\') {
-                sb.append(s, from, i - from - 1);
+        char ch;
+        int i = from;
+        while (i < to) {
+            ch = chars[i];
+            if (ch == '\\') {
+                sb.append(chars, from, i - from);
+                i++;
+                if (to <= i)
+                    throw new IndexOutOfBoundsException("unexpected end");
 
-                switch (ch) {
-                    case '"':
-                        sb.append('"');
-                        break;
-                    case '\\':
-                        sb.append('\\');
-                        break;
-                    case 'b':
-                        sb.append('\b');
-                        break;
-                    case 'f':
-                        sb.append('\f');
-                        break;
-                    case 'n':
-                        sb.append('\n');
-                        break;
-                    case 'r':
-                        sb.append('\r');
-                        break;
-                    case 't':
-                        sb.append('\t');
-                        break;
-                    case '/':
-                        sb.append('/');
-                        break;
-                    case 'u':
-                        if (to < i + 5)
-                            throw new IndexOutOfBoundsException("can't decode unicode character");
-                        int hexVal = Integer.parseInt(new String(s, i + 1, 4), 16);
-                        sb.append((char) hexVal);
-                        i += 4;
-                        break;
+                ch = UNESCAPES[chars[i]];
+                if (ch == 0) {
+                    throw new IllegalStateException("unexpected escaped char: " + ch);
+                } else if (ch == 128) {
+                    if (to < i + 5)
+                        throw new IndexOutOfBoundsException("can't decode unicode character");
+                    i += 4;
+                    sb.append(decodeUtf(chars, i));
+                } else {
+                    sb.append(ch);
                 }
-
                 from = i + 1;
-                prev = 0;
-            } else
-                prev = ch;
+            }
+            i++;
         }
+
         if (from < to) {
-            sb.append(s, from, to - from);
+            sb.append(chars, from, to - from);
         }
         return sb.toString();
     }
@@ -241,4 +263,23 @@ public class JsonTools {
         }
     }
 
+    static char decodeUtf(char[] chars, int last) {
+        char value = 0;
+        value += getHexValue(chars[last]);
+        value += getHexValue(chars[last - 1]) * 16;
+        value += getHexValue(chars[last - 2]) * 256;
+        value += getHexValue(chars[last - 3]) * 4096;
+        return value;
+    }
+
+    static char getHexValue(char c) {
+        if (c >= 128)
+            throw new IllegalStateException("unexpected char for hex value: " + c);
+
+        c = INT_VALUES[c];
+        if (c == 128)
+            throw new IllegalStateException("unexpected char for hex value: " + c);
+
+        return c;
+    }
 }

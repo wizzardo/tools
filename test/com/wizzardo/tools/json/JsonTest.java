@@ -315,6 +315,8 @@ public class JsonTest {
         Assert.assertEquals("Hello World", JsonTools.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
         myString = "\\u0048\\u0065\\u006C\\u006C\\u006F";
         Assert.assertEquals("Hello", JsonTools.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
+        myString = "\\\"\\r\\n\\t\\b\\f\\\\";
+        Assert.assertEquals("\"\r\n\t\b\f\\", JsonTools.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
     }
 
     static class MapTest {
