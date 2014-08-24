@@ -1,6 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.DateIso8601;
+import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.WrappedException;
 
 import java.io.IOException;
@@ -671,6 +672,39 @@ public class Binder {
         }
 
         StringBuilderAppender(StringBuilder sb) {
+            this.sb = sb;
+        }
+
+        @Override
+        public void append(String s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(String s, int from, int to) {
+            sb.append(s, from, to);
+        }
+
+        @Override
+        public void append(char[] s, int from, int to) {
+            sb.append(s, from, to - from);
+        }
+
+        @Override
+        public void append(char s) {
+            sb.append(s);
+        }
+
+        @Override
+        public String toString() {
+            return sb.toString();
+        }
+    }
+
+    static class ExceptionDrivenStringBuilderAppender extends Appender {
+        private ExceptionDrivenStringBuilder sb;
+
+        ExceptionDrivenStringBuilderAppender(ExceptionDrivenStringBuilder sb) {
             this.sb = sb;
         }
 

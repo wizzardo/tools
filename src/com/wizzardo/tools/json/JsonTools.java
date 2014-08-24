@@ -1,6 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.io.FileTools;
+import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.SoftThreadLocal;
 import com.wizzardo.tools.reflection.StringReflection;
 
@@ -72,15 +73,15 @@ public class JsonTools {
     }
 
 
-    private static SoftThreadLocal<StringBuilder> stringBuilderThreadLocal = new SoftThreadLocal<StringBuilder>() {
+    private static SoftThreadLocal<ExceptionDrivenStringBuilder> stringBuilderThreadLocal = new SoftThreadLocal<ExceptionDrivenStringBuilder>() {
         @Override
-        protected StringBuilder init() {
-            return new StringBuilder();
+        protected ExceptionDrivenStringBuilder init() {
+            return new ExceptionDrivenStringBuilder();
         }
 
         @Override
-        public StringBuilder getValue() {
-            StringBuilder sb = super.getValue();
+        public ExceptionDrivenStringBuilder getValue() {
+            ExceptionDrivenStringBuilder sb = super.getValue();
             sb.setLength(0);
             return sb;
         }
@@ -143,7 +144,7 @@ public class JsonTools {
     }
 
     public static String serialize(Object src) {
-        Binder.StringBuilderAppender sb = new Binder.StringBuilderAppender(stringBuilderThreadLocal.getValue());
+        Binder.ExceptionDrivenStringBuilderAppender sb = new Binder.ExceptionDrivenStringBuilderAppender(stringBuilderThreadLocal.getValue());
         Binder.toJSON(src, sb);
         return sb.toString();
     }
