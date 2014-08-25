@@ -808,8 +808,6 @@ public class Binder {
     }
 
     private static void appendCollection(Object src, Appender sb, Generic generic) {
-        Iterator i = ((Collection) src).iterator();
-
         Serializer serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 1) {
@@ -818,20 +816,23 @@ public class Binder {
         }
 
         sb.append('[');
-        boolean next;
-        if (i.hasNext())
-            if (serializer != null)
-                do {
-                    serializer.checkNullAndSerialize(i.next(), sb, inner);
-                    if (next = i.hasNext())
-                        sb.append(',');
-                } while (next);
-            else
-                do {
-                    toJSON(i.next(), sb);
-                    if (next = i.hasNext())
-                        sb.append(',');
-                } while (next);
+        boolean comma = false;
+        if (serializer != null)
+            for (Object ob : (Collection) src) {
+                if (comma)
+                    sb.append(',');
+                else
+                    comma = true;
+                serializer.checkNullAndSerialize(ob, sb, inner);
+            }
+        else
+            for (Object ob : (Collection) src) {
+                if (comma)
+                    sb.append(',');
+                else
+                    comma = true;
+                toJSON(ob, sb);
+            }
         sb.append(']');
     }
 
@@ -856,32 +857,31 @@ public class Binder {
     }
 
     private static void appendMap(Object src, Appender sb, Generic generic) {
-        sb.append('{');
-        Iterator<Map.Entry> i = ((Map) src).entrySet().iterator();
-
         Serializer serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 2) {
             serializer = generic.typeParameters[1].serializer;
             inner = generic.typeParameters[1];
         }
-        boolean next;
-        if (i.hasNext())
-            if (serializer != null)
-                do {
-                    Map.Entry entry = i.next();
-                    appendName(String.valueOf(entry.getKey()), sb, true);
-                    serializer.checkNullAndSerialize(entry.getValue(), sb, inner);
-                    if (next = i.hasNext())
-                        sb.append(',');
-                } while (next);
-            else
-                do {
-                    Map.Entry entry = i.next();
-                    toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb);
-                    if (next = i.hasNext())
-                        sb.append(',');
-                } while (next);
+        sb.append('{');
+        boolean comma = false;
+        if (serializer != null)
+            for (Map.Entry entry : ((Map<?, ?>) src).entrySet()) {
+                if (comma)
+                    sb.append(',');
+                else
+                    comma = true;
+                appendName(String.valueOf(entry.getKey()), sb, true);
+                serializer.checkNullAndSerialize(entry.getValue(), sb, inner);
+            }
+        else
+            for (Map.Entry entry : ((Map<?, ?>) src).entrySet()) {
+                if (comma)
+                    sb.append(',');
+                else
+                    comma = true;
+                toJSON(String.valueOf(entry.getKey()), entry.getValue(), sb);
+            }
         sb.append('}');
     }
 
