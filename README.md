@@ -13,6 +13,21 @@ It is a pack of useful and simple tools for java developers, such as
   - and others..
 
 
+Installation
+--------------
+maven:
+```xml
+<dependency>
+    <groupId>com.wizzardo.tools</groupId>
+    <artifactId>tools</artifactId>
+    <version>0.8</version>
+</dependency>
+```
+
+gradle:
+```
+compile 'com.wizzardo.tools:tools:0.8'
+```
 
 License
 ----
