@@ -11,6 +11,7 @@ import java.util.*;
 public class DateIso8601 {
 
     private static final TimeZone Z = TimeZone.getTimeZone("GMT");
+    private static final TimeZone LOCAL = TimeZone.getDefault();
 
     /**
      * @param s should be in format YYYY-MM-DDTHH:mm:ss.sssZ
@@ -57,7 +58,7 @@ public class DateIso8601 {
             calendar.set(Calendar.MINUTE, 0);
             calendar.set(Calendar.SECOND, 0);
             calendar.set(Calendar.MILLISECOND, 0);
-            calendar.setTimeZone(Z);
+            calendar.setTimeZone(LOCAL);
             return calendar.getTime();
         }
 
@@ -73,7 +74,7 @@ public class DateIso8601 {
             if (i >= length) {
                 calendar.set(Calendar.SECOND, 0);
                 calendar.set(Calendar.MILLISECOND, 0);
-                calendar.setTimeZone(Z);
+                calendar.setTimeZone(LOCAL);
                 return calendar.getTime();
             }
 
@@ -89,7 +90,7 @@ public class DateIso8601 {
 
                 if (i >= length) {
                     calendar.set(Calendar.MILLISECOND, 0);
-                    calendar.setTimeZone(Z);
+                    calendar.setTimeZone(LOCAL);
                     return calendar.getTime();
                 }
 
@@ -114,7 +115,11 @@ public class DateIso8601 {
         }
 
 
-        if (i == length || chars[i] == 'Z') {
+        if (i == length) {
+            calendar.setTimeZone(LOCAL);
+            return calendar.getTime();
+        }
+        if (chars[i] == 'Z') {
             calendar.setTimeZone(Z);
             return calendar.getTime();
         }
@@ -332,5 +337,9 @@ public class DateIso8601 {
         public boolean inDaylightTime(Date date) {
             return false;
         }
+    }
+
+    public static void main(String[] args) {
+        Date date = new Date();
     }
 }
