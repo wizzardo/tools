@@ -338,8 +338,4 @@ public class DateIso8601 {
             return false;
         }
     }
-
-    public static void main(String[] args) {
-        Date date = new Date();
-    }
 }
