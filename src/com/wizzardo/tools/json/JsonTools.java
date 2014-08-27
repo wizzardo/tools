@@ -201,14 +201,15 @@ public class JsonTools {
     static void escape(String s, Binder.Appender sb) {
         char[] chars = StringReflection.chars(s);
         int to = s.length();
-        int from = chars.length == to ? 0 : StringReflection.offset(s);
+        int offset = chars.length == to ? 0 : StringReflection.offset(s);
+        int from = offset;
         to += from;
         int l = to - 1;
         for (int i = from; i < l; i += 2) {
             from = check(from, i, chars, sb);
             from = check(from, i + 1, chars, sb);  //about 10% faster
         }
-        if (l % 2 == 0)
+        if ((l + offset) % 2 == 0)
             from = check(from, l, chars, sb);
 
         if (from < to)

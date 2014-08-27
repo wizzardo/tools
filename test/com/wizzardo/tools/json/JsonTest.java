@@ -467,6 +467,7 @@ public class JsonTest {
         data = new LinkedHashMap();
         data.put("escaped", "\r\n\b\t\"");
         Assert.assertEquals("{\"escaped\":\"\\r\\n\\b\\t\\\"\"}", JsonTools.serialize(data));
+        Assert.assertEquals("\\r\\n\\b\\t\\\"", JsonTools.escape("0\r\n\b\t\"".substring(1)));
 
         Assert.assertEquals("[1,2,3]", JsonTools.serialize(new int[]{1, 2, 3}));
         Assert.assertEquals("[1,2,3]", JsonTools.serialize(new long[]{1l, 2l, 3l}));
