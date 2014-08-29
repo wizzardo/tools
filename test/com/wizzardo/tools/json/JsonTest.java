@@ -3,6 +3,7 @@ package com.wizzardo.tools.json;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -461,8 +462,30 @@ public class JsonTest {
         data.put("escaped", "esca\"ped");
         data.put("array", new int[]{1, 2, 3});
         data.put("list", Arrays.asList(1, 2, 3));
+        data.put("map", new HashMap() {{
+            put("foo", "bar");
+        }});
+        data.put("null", null);
+        data.put("integers", new Integer[]{1, 2, 3});
+        data.put("enum", SomeEnum.ONE);
+        data.put("date", new Date(1343723216000l));
 
-        Assert.assertEquals("{\"1\":1,\"2\":\"2\",\"escaped\":\"esca\\\"ped\",\"array\":[1,2,3],\"list\":[1,2,3]}", JsonTools.serialize(data));
+        String result = "{\"1\":1" +
+                ",\"2\":\"2\"" +
+                ",\"escaped\":\"esca\\\"ped\"" +
+                ",\"array\":[1,2,3]" +
+                ",\"list\":[1,2,3]" +
+                ",\"map\":{\"foo\":\"bar\"}" +
+                ",\"null\":null" +
+                ",\"integers\":[1,2,3]" +
+                ",\"enum\":\"ONE\"" +
+                ",\"date\":\"2012-07-31T08:26:56.000Z\"" +
+                "}";
+        Assert.assertEquals(result, JsonTools.serialize(data));
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        JsonTools.serialize(data, out);
+        Assert.assertEquals(result, new String(out.toByteArray()));
 
         data = new LinkedHashMap();
         data.put("escaped", "\r\n\b\t\"");

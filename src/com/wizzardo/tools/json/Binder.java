@@ -449,45 +449,48 @@ public class Binder {
             return dateSerializer;
         else if (Array.class == clazz || clazz.isArray()) {
             clazz = clazz.getComponentType();
-            if (clazz != null && clazz.isPrimitive()) {
-                if (clazz == int.class)
-                    return arrayIntSerializer;
-                if (clazz == long.class)
-                    return arrayLongSerializer;
-                if (clazz == byte.class)
-                    return arrayByteSerializer;
-                if (clazz == short.class)
-                    return arrayShortSerializer;
-                if (clazz == char.class)
-                    return arrayCharSerializer;
-                if (clazz == float.class)
-                    return arrayFloatSerializer;
-                if (clazz == double.class)
-                    return arrayDoubleSerializer;
-                if (clazz == boolean.class)
-                    return arrayBooleanSerializer;
-                if (clazz == Float.class ||
-                        clazz == Double.class ||
-                        clazz == Byte.class ||
-                        clazz == Short.class ||
-                        clazz == Integer.class ||
-                        clazz == Long.class ||
-                        clazz == Boolean.class)
-                    return numberBooleanBoxedSerializer;
-                if (clazz == Character.class)
-                    return charArraySerializer;
-                if (clazz == String.class)
-                    return stringArraySerializer;
-                if (Date.class.isAssignableFrom(clazz))
-                    return dateArraySerializer;
-                if (Collection.class.isAssignableFrom(clazz))
-                    return collectionArraySerializer;
-                if (Map.class.isAssignableFrom(clazz))
-                    return mapArraySerializer;
-                if (Array.class == clazz || clazz.isArray())
-                    return arrayArraySerializer;
-                if (clazz.isEnum())
-                    return enumArraySerializer;
+            if (clazz != null) {
+                if (clazz.isPrimitive()) {
+                    if (clazz == int.class)
+                        return arrayIntSerializer;
+                    if (clazz == long.class)
+                        return arrayLongSerializer;
+                    if (clazz == byte.class)
+                        return arrayByteSerializer;
+                    if (clazz == short.class)
+                        return arrayShortSerializer;
+                    if (clazz == char.class)
+                        return arrayCharSerializer;
+                    if (clazz == float.class)
+                        return arrayFloatSerializer;
+                    if (clazz == double.class)
+                        return arrayDoubleSerializer;
+                    if (clazz == boolean.class)
+                        return arrayBooleanSerializer;
+                } else {
+                    if (clazz == Float.class ||
+                            clazz == Double.class ||
+                            clazz == Byte.class ||
+                            clazz == Short.class ||
+                            clazz == Integer.class ||
+                            clazz == Long.class ||
+                            clazz == Boolean.class)
+                        return numberBooleanBoxedSerializer;
+                    if (clazz == Character.class)
+                        return charArraySerializer;
+                    if (clazz == String.class)
+                        return stringArraySerializer;
+                    if (Date.class.isAssignableFrom(clazz))
+                        return dateArraySerializer;
+                    if (Collection.class.isAssignableFrom(clazz))
+                        return collectionArraySerializer;
+                    if (Map.class.isAssignableFrom(clazz))
+                        return mapArraySerializer;
+                    if (Array.class == clazz || clazz.isArray())
+                        return arrayArraySerializer;
+                    if (clazz.isEnum())
+                        return enumArraySerializer;
+                }
             }
             return arraySerializer;
         } else if (clazz.isEnum())
@@ -655,6 +658,8 @@ public class Binder {
 
         public abstract void append(char s);
 
+        public abstract void flush();
+
         public void append(Object ob) {
             append(String.valueOf(ob));
         }
@@ -696,6 +701,10 @@ public class Binder {
         }
 
         @Override
+        public void flush() {
+        }
+
+        @Override
         public String toString() {
             return sb.toString();
         }
@@ -726,6 +735,10 @@ public class Binder {
         @Override
         public void append(char s) {
             sb.append(s);
+        }
+
+        @Override
+        public void flush() {
         }
 
         @Override
@@ -772,6 +785,15 @@ public class Binder {
         public void append(char s) {
             try {
                 out.append(s);
+            } catch (IOException e) {
+                throw new WrappedException(e);
+            }
+        }
+
+        @Override
+        public void flush() {
+            try {
+                out.flush();
             } catch (IOException e) {
                 throw new WrappedException(e);
             }

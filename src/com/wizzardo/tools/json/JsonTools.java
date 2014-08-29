@@ -150,7 +150,9 @@ public class JsonTools {
     }
 
     public static void serialize(Object src, OutputStream out) {
-        Binder.toJSON(src, new Binder.StreamAppender(out));
+        Binder.Appender appender = new Binder.StreamAppender(out);
+        Binder.toJSON(src, appender);
+        appender.flush();
     }
 
     public static void serialize(Object src, StringBuilder out) {
