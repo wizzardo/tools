@@ -59,7 +59,6 @@ class JavaArrayBinder implements JsonBinder {
         }
     }
 
-    @Override
     public Generic getGeneric() {
         if (generic != null && generic.typeParameters.length != 0)
             return generic.typeParameters[0];

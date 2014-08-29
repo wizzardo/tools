@@ -17,7 +17,5 @@ interface JsonBinder {
 
     public void setTemporaryKey(String key);
 
-    public Generic getGeneric();
-
     public JsonFieldSetter getFieldSetter();
 }

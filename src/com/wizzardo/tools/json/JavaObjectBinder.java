@@ -72,11 +72,6 @@ class JavaObjectBinder implements JsonBinder {
     }
 
     @Override
-    public Generic getGeneric() {
-        return null;
-    }
-
-    @Override
     public JsonFieldSetter getFieldSetter() {
         FieldInfo f = getField();
         if (f != null)

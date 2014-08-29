@@ -25,11 +25,6 @@ class JsonArrayBinder implements JsonBinder {
     }
 
     @Override
-    public Generic getGeneric() {
-        return null;
-    }
-
-    @Override
     public JsonFieldSetter getFieldSetter() {
         return null;
     }
