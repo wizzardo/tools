@@ -4,7 +4,7 @@ Tools
 It is a pack of useful and simple tools for java developers, such as
 
   - [http client]
-  - json parser
+  - [json parser]
   - xml parser
   - date parser (iso 8601)
   - groovy interpreter
@@ -36,3 +36,4 @@ MIT
 
 
 [http client]:https://github.com/wizzardo/Tools/wiki/HttpClient
+[json parser]:https://github.com/wizzardo/Tools/wiki/JsonTools
