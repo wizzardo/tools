@@ -13,7 +13,7 @@ class JsonObjectBinder implements JsonBinder {
     }
 
     public void add(Object value) {
-        json.put(tempKey, new JsonItem(value));
+        add(new JsonItem(value));
     }
 
     public void add(JsonItem value) {
