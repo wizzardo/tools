@@ -96,6 +96,8 @@ public class JsonTest {
         public float f;
         public double d;
         public long l;
+        public short ss;
+        public char c;
         public byte b;
         public String s;
         public boolean flag;
@@ -122,6 +124,8 @@ public class JsonTest {
                 "d:4.1," +
                 "l:5," +
                 "b:6," +
+                "ss:7," +
+                "c:8," +
                 "s:\"ololo lo lo\"," +
                 "flag:true," +
                 "array:[1,2,3]," +
@@ -136,6 +140,8 @@ public class JsonTest {
         assertTrue(r.d > 4.d && r.d < 4.2);
         assertEquals(r.l, 5l);
         assertEquals(r.b, 6);
+        assertEquals(r.ss, 7);
+        assertEquals(r.c, 8);
         assertEquals(r.s, "ololo lo lo");
         assertEquals(r.flag, true);
         assertEquals(r.anEnum, SomeEnum.THREE);
@@ -161,6 +167,8 @@ public class JsonTest {
                 "d:4.1," +
                 "l:5," +
                 "b:6," +
+                "ss:7," +
+                "c:8," +
                 "s:\"ololo lo lo\"," +
                 "flag:true," +
                 "array:[1,2,3]," +
@@ -177,6 +185,8 @@ public class JsonTest {
         assertTrue(child.d > 4.d && child.d < 4.2);
         assertEquals(child.l, 5l);
         assertEquals(child.b, 6);
+        assertEquals(r.ss, 7);
+        assertEquals(r.c, 8);
         assertEquals(child.s, "ololo lo lo");
         assertEquals(child.flag, true);
         assertEquals(r.wrapped.value.size(), 2);
@@ -201,6 +211,8 @@ public class JsonTest {
                 "d:4.1," +
                 "l:5," +
                 "b:6," +
+                "ss:7," +
+                "c:8," +
                 "s:\"ololo lo lo\"," +
                 "flag:true," +
                 "array:[1,2,3]," +
@@ -222,6 +234,8 @@ public class JsonTest {
             assertTrue(child.d > 4.d && child.d < 4.2);
             assertEquals(child.l, 5l);
             assertEquals(child.b, 6);
+            assertEquals(r.ss, 7);
+            assertEquals(r.c, 8);
             assertEquals(child.s, "ololo lo lo");
             assertEquals(child.flag, true);
             assertEquals(r.wrapped.value.size(), 2);
