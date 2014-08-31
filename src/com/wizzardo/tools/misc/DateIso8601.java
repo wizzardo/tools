@@ -205,14 +205,28 @@ public class DateIso8601 {
     }
 
     public static String format(Date date) {
-        return StringReflection.createString(formatToChars(date));
+        return format(date, Z);
+    }
+
+    public static String format(Date date, TimeZone timeZone) {
+        return StringReflection.createString(formatToChars(date, timeZone));
     }
 
     public static char[] formatToChars(Date date) {
-        Calendar calendar = GregorianCalendar.getInstance(Z);
+        return formatToChars(date, Z);
+    }
+
+    public static char[] formatToChars(Date date, TimeZone timeZone) {
+        Calendar calendar = GregorianCalendar.getInstance(timeZone);
         calendar.setTime(date);
 
-        char[] chars = new char[24]; // YYYY-MM-DDTHH:mm:ss.SSSZ
+        char[] chars;
+        int offset = calendar.get(Calendar.DST_OFFSET) + calendar.get(Calendar.ZONE_OFFSET);
+        if (offset == 0)
+            chars = new char[24]; // YYYY-MM-DDTHH:mm:ss.SSSZ
+        else
+            chars = new char[28]; // YYYY-MM-DDTHH:mm:ss.SSS+HHmm
+
         int t;
         int i = 0;
 
@@ -246,7 +260,15 @@ public class DateIso8601 {
         t = calendar.get(Calendar.MILLISECOND);
         append3(chars, t, i);
         i += 3;
-        chars[i] = 'Z';
+        if (offset == 0)
+            chars[i] = 'Z';
+        else {
+            chars[i] = offset < 0 ? '-' : '+';
+            int h = (int) TimeTools.Unit.HOUR.from(offset);
+            int m = (int) TimeTools.Unit.MINUTE.from(offset - TimeTools.Unit.HOUR.to(offset));
+            append2(chars, h, i + 1);
+            append2(chars, m, i + 3);
+        }
 
         return chars;
     }

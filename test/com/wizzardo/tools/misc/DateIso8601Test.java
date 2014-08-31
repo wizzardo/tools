@@ -61,5 +61,6 @@ public class DateIso8601Test {
 
         s = "2007-04-05T14:30:10.123-0230";
         assertEquals("2007-04-05T17:00:10.123Z", format(parse(s)));
+        assertEquals("2007-04-05T21:00:10.123+0400", format(parse(s), TimeZone.getTimeZone("Europe/Moscow")));
     }
 }
