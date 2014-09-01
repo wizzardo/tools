@@ -103,8 +103,8 @@ public class JsonTest {
         public boolean flag;
         public int[] array;
         public ArrayList<Integer> list;
-        private AnotherWrapper wrapped;
-        private final SomeEnum anEnum = SomeEnum.ONE;
+        public AnotherWrapper wrapped;
+        public final SomeEnum anEnum = SomeEnum.ONE;
     }
 
     private static class Child extends SimpleClass {
@@ -125,7 +125,7 @@ public class JsonTest {
                 "l:5," +
                 "b:6," +
                 "ss:7," +
-                "c:8," +
+                "c:\"8\"," +
                 "s:\"ololo lo lo\"," +
                 "flag:true," +
                 "array:[1,2,3]," +
@@ -141,7 +141,7 @@ public class JsonTest {
         assertEquals(r.l, 5l);
         assertEquals(r.b, 6);
         assertEquals(r.ss, 7);
-        assertEquals(r.c, 8);
+        assertEquals(r.c, '8');
         assertEquals(r.s, "ololo lo lo");
         assertEquals(r.flag, true);
         assertEquals(r.anEnum, SomeEnum.THREE);
@@ -168,7 +168,7 @@ public class JsonTest {
                 "l:5," +
                 "b:6," +
                 "ss:7," +
-                "c:8," +
+                "c:\"8\"," +
                 "s:\"ololo lo lo\"," +
                 "flag:true," +
                 "array:[1,2,3]," +
@@ -185,13 +185,13 @@ public class JsonTest {
         assertTrue(child.d > 4.d && child.d < 4.2);
         assertEquals(child.l, 5l);
         assertEquals(child.b, 6);
-        assertEquals(r.ss, 7);
-        assertEquals(r.c, 8);
+        assertEquals(child.ss, 7);
+        assertEquals(child.c, '8');
         assertEquals(child.s, "ololo lo lo");
         assertEquals(child.flag, true);
-        assertEquals(r.wrapped.value.size(), 2);
-        assertEquals(r.wrapped.value.get(0).value, "wrapped!");
-        assertEquals(r.wrapped.value.get(1).value, "ololo");
+        assertEquals(child.wrapped.value.size(), 2);
+        assertEquals(child.wrapped.value.get(0).value, "wrapped!");
+        assertEquals(child.wrapped.value.get(1).value, "ololo");
 
         assertEquals(child.array.length, 3);
         assertEquals(child.array[0], 1);
@@ -234,13 +234,13 @@ public class JsonTest {
             assertTrue(child.d > 4.d && child.d < 4.2);
             assertEquals(child.l, 5l);
             assertEquals(child.b, 6);
-            assertEquals(r.ss, 7);
-            assertEquals(r.c, 8);
+            assertEquals(child.ss, 7);
+            assertEquals(child.c, 8);
             assertEquals(child.s, "ololo lo lo");
             assertEquals(child.flag, true);
-            assertEquals(r.wrapped.value.size(), 2);
-            assertEquals(r.wrapped.value.get(0).value, "wrapped!");
-            assertEquals(r.wrapped.value.get(1).value, "ololo");
+            assertEquals(child.wrapped.value.size(), 2);
+            assertEquals(child.wrapped.value.get(0).value, "wrapped!");
+            assertEquals(child.wrapped.value.get(1).value, "ololo");
 
             assertEquals(child.array.length, 3);
             assertEquals(child.array[0], 1);

@@ -120,7 +120,7 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         @Override
         public void set(Object object, JsonItem value) {
-            setChar(object, (char) (int) value.asInteger(0));
+            setChar(object, value.asChar('0'));
         }
     }
 

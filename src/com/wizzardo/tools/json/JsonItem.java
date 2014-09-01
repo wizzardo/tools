@@ -85,6 +85,37 @@ public class JsonItem {
         return def;
     }
 
+    public Character asChar() {
+        return asChar(null);
+    }
+
+    public Character asChar(Character def) {
+        if (ob == null)
+            return def;
+
+        if (ob.getClass() == Character.class)
+            return (Character) ob;
+
+        if (ob instanceof Number)
+            return (char) ((Number) ob).intValue();
+
+        try {
+            String s = ob.toString();
+            Character ch;
+            if (s.length() > 1) {
+                int i = asInteger(-1);
+                if (i == -1)
+                    return def;
+                ch = (char) i;
+            } else
+                ch = s.charAt(0);
+            ob = ch;
+            return ch;
+        } catch (NumberFormatException ex) {
+        }
+        return def;
+    }
+
     public Byte asByte() {
         return asByte(null);
     }
