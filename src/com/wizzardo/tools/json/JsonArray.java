@@ -85,18 +85,19 @@ public class JsonArray extends ArrayList<JsonItem> {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        Binder.Appender sb = new Binder.ExceptionDrivenStringBuilderAppender(JsonTools.stringBuilderThreadLocal.getValue());
         toJson(sb);
         return sb.toString();
     }
 
-    void toJson(StringBuilder sb) {
+    void toJson(Binder.Appender sb) {
         sb.append('[');
         boolean comma = false;
         for (JsonItem item : this) {
             if (comma)
                 sb.append(',');
-            comma = true;
+            else
+                comma = true;
             item.toJson(sb);
         }
         sb.append(']');

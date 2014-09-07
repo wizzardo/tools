@@ -303,26 +303,24 @@ public class JsonItem {
     }
 
     public String toString() {
-        return toJson();
-    }
-
-    public String toJson() {
-        StringBuilder sb = new StringBuilder();
+        Binder.Appender sb = new Binder.ExceptionDrivenStringBuilderAppender(JsonTools.stringBuilderThreadLocal.getValue());
         toJson(sb);
         return sb.toString();
     }
 
-    void toJson(StringBuilder sb) {
+    void toJson(Binder.Appender sb) {
         if (ob == null)
             sb.append("null");
         else if (ob instanceof JsonObject)
             ((JsonObject) ob).toJson(sb);
         else if (ob instanceof JsonArray)
             ((JsonArray) ob).toJson(sb);
-        else if (ob.getClass() == String.class)
-            sb.append('"').append(JsonTools.escape(ob.toString())).append('"');
-        else
-            sb.append(ob);
+        else if (ob.getClass() == String.class) {
+            sb.append('"');
+            sb.append(JsonTools.escape(ob.toString()));
+            sb.append('"');
+        } else
+            Binder.toJSON(ob, sb);
     }
 
     static JsonItem parse(char[] s, int from, int to) {

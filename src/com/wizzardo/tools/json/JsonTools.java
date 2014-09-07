@@ -73,7 +73,7 @@ public class JsonTools {
     }
 
 
-    private static SoftThreadLocal<ExceptionDrivenStringBuilder> stringBuilderThreadLocal = new SoftThreadLocal<ExceptionDrivenStringBuilder>() {
+    static SoftThreadLocal<ExceptionDrivenStringBuilder> stringBuilderThreadLocal = new SoftThreadLocal<ExceptionDrivenStringBuilder>() {
         @Override
         protected ExceptionDrivenStringBuilder init() {
             return new ExceptionDrivenStringBuilder();
