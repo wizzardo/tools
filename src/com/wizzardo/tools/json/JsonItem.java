@@ -12,9 +12,6 @@ import java.util.Date;
 public class JsonItem {
     Object ob;
 
-    protected JsonItem() {
-    }
-
     public JsonItem(Object ob) {
         this.ob = ob;
     }
@@ -99,21 +96,17 @@ public class JsonItem {
         if (ob instanceof Number)
             return (char) ((Number) ob).intValue();
 
-        try {
-            String s = ob.toString();
-            Character ch;
-            if (s.length() > 1) {
-                int i = asInteger(-1);
-                if (i == -1)
-                    return def;
-                ch = (char) i;
-            } else
-                ch = s.charAt(0);
-            ob = ch;
-            return ch;
-        } catch (NumberFormatException ex) {
-        }
-        return def;
+        String s = ob.toString();
+        Character ch;
+        if (s.length() > 1) {
+            int i = asInteger(-1);
+            if (i == -1)
+                return def;
+            ch = (char) i;
+        } else
+            ch = s.charAt(0);
+        ob = ch;
+        return ch;
     }
 
     public Byte asByte() {
@@ -294,6 +287,8 @@ public class JsonItem {
             return (T) asByte();
         } else if (Short.class == clazz || short.class == clazz) {
             return (T) asShort();
+        } else if (Character.class == clazz || char.class == clazz) {
+            return (T) asChar();
         } else if (Array.class == clazz) {
             return (T) ob;
         } else if (Date.class == clazz) {
@@ -321,68 +316,6 @@ public class JsonItem {
             sb.append('"');
         } else
             Binder.toJSON(ob, sb);
-    }
-
-    static JsonItem parse(char[] s, int from, int to) {
-        if (from == to) {
-            return null;
-        }
-        while ((from < to) && (s[from] <= ' ')) {
-            from++;
-        }
-        while ((from < to) && (s[to - 1] <= ' ')) {
-            to--;
-        }
-        if (from == to) {
-            return null;
-        }
-
-        JsonItem item;
-        if ((s[from] == '"' && s[to - 1] == '"') || (s[from] == '\'' && s[to - 1] == '\'')) {
-            from++;
-            to--;
-            return new JsonItem(JsonTools.unescape(s, from, to));
-        } else if (to - from == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l') {
-            return new JsonItem(null);
-        } else if (to - from == 4 && s[from] == 't' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e') {
-            return new JsonItem(true);
-        } else if (to - from == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e') {
-            return new JsonItem(false);
-        } else if ((item = createInteger(s, from, to)) != null) {
-            return item;
-        } else {
-            return new JsonItem(JsonTools.unescape(s, from, to));
-        }
-    }
-
-    static JsonItem createInteger(char[] s, int from, int to) {
-        if (to - from > 19) //9223372036854775807 - max long - 19 characters
-            return null;
-
-        boolean minus = s[from] == '-';
-        if (minus)
-            from++;
-
-        if (from == to)
-            return null;
-
-        if (to - from > 9) {
-            long l = 0;
-            for (int i = from; i < to; i++) {
-                if (s[i] < '0' || s[i] > '9')
-                    return null;
-                l = l * 10 + s[i] - 48;
-            }
-            return minus ? new JsonItem(-l) : new JsonItem(l);
-        } else {
-            int l = 0;
-            for (int i = from; i < to; i++) {
-                if (s[i] < '0' || s[i] > '9')
-                    return null;
-                l = l * 10 + s[i] - 48;
-            }
-            return minus ? new JsonItem(-l) : new JsonItem(l);
-        }
     }
 
     protected void set(Object value) {

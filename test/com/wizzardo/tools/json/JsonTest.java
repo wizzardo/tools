@@ -514,4 +514,118 @@ public class JsonTest {
         Assert.assertEquals("[1.0,2.0,3.0]", JsonTools.serialize(new float[]{1f, 2f, 3f}));
         Assert.assertEquals("[1.0,2.0,3.0]", JsonTools.serialize(new double[]{1d, 2d, 3d}));
     }
+
+    @Test
+    public void testJsonItem() {
+        Assert.assertEquals(1, (int) JsonTools.parse("{key:1}").asJsonObject().get("key").asInteger(0));
+        Assert.assertEquals(1l, (long) JsonTools.parse("{key:1}").asJsonObject().get("key").asLong(0l));
+        Assert.assertEquals(1, (short) JsonTools.parse("{key:1}").asJsonObject().get("key").asShort((short) 0));
+        Assert.assertEquals(1, (byte) JsonTools.parse("{key:1}").asJsonObject().get("key").asByte((byte) 0));
+        Assert.assertEquals(1, (char) JsonTools.parse("{key:1}").asJsonObject().get("key").asChar((char) 0));
+        Assert.assertEquals(1f, (float) JsonTools.parse("{key:1.0}").asJsonObject().get("key").asFloat(0f), 0);
+        Assert.assertEquals(1d, (double) JsonTools.parse("{key:1.0}").asJsonObject().get("key").asDouble(0d), 0);
+        Assert.assertEquals(true, JsonTools.parse("{key:true}").asJsonObject().get("key").asBoolean(false));
+
+        Assert.assertEquals(1, (int) JsonTools.parse("{key:'1'}").asJsonObject().get("key").asInteger(0));
+        Assert.assertEquals(1l, (long) JsonTools.parse("{key:'1'}").asJsonObject().get("key").asLong(0l));
+        Assert.assertEquals(1, (short) JsonTools.parse("{key:'1'}").asJsonObject().get("key").asShort((short) 0));
+        Assert.assertEquals(1, (byte) JsonTools.parse("{key:'1'}").asJsonObject().get("key").asByte((byte) 0));
+        Assert.assertEquals('1', (char) JsonTools.parse("{key:'1'}").asJsonObject().get("key").asChar((char) 0));
+        Assert.assertEquals(1f, (float) JsonTools.parse("{key:'1.0'}").asJsonObject().get("key").asFloat(0f), 0);
+        Assert.assertEquals(1d, (double) JsonTools.parse("{key:'1.0'}").asJsonObject().get("key").asDouble(0d), 0);
+        Assert.assertEquals(true, JsonTools.parse("{key:'true'}").asJsonObject().get("key").asBoolean(false));
+
+        Assert.assertEquals(1, (int) JsonTools.parse("{key:null}").asJsonObject().get("key").asInteger(1));
+        Assert.assertEquals(1l, (long) JsonTools.parse("{key:null}").asJsonObject().get("key").asLong(1l));
+        Assert.assertEquals(1, (short) JsonTools.parse("{key:null}").asJsonObject().get("key").asShort((short) 1));
+        Assert.assertEquals(1, (byte) JsonTools.parse("{key:null}").asJsonObject().get("key").asByte((byte) 1));
+        Assert.assertEquals(1, (char) JsonTools.parse("{key:null}").asJsonObject().get("key").asChar((char) 1));
+        Assert.assertEquals(1f, (float) JsonTools.parse("{key:null}").asJsonObject().get("key").asFloat(1f), 0);
+        Assert.assertEquals(1d, (double) JsonTools.parse("{key:null}").asJsonObject().get("key").asDouble(1d), 0);
+        Assert.assertEquals(true, JsonTools.parse("{key:null}").asJsonObject().get("key").asBoolean(true));
+
+        Assert.assertEquals(1, (int) JsonTools.parse("{key:nan}").asJsonObject().get("key").asInteger(1));
+        Assert.assertEquals(1l, (long) JsonTools.parse("{key:nan}").asJsonObject().get("key").asLong(1l));
+        Assert.assertEquals(1, (short) JsonTools.parse("{key:nan}").asJsonObject().get("key").asShort((short) 1));
+        Assert.assertEquals(1, (byte) JsonTools.parse("{key:nan}").asJsonObject().get("key").asByte((byte) 1));
+        Assert.assertEquals(1, (char) JsonTools.parse("{key:nan}").asJsonObject().get("key").asChar((char) 1));
+        Assert.assertEquals(1f, (float) JsonTools.parse("{key:nan}").asJsonObject().get("key").asFloat(1f), 0);
+        Assert.assertEquals(1d, (double) JsonTools.parse("{key:nan}").asJsonObject().get("key").asDouble(1d), 0);
+        Assert.assertEquals(true, JsonTools.parse("{key:[]}").asJsonObject().get("key").asBoolean(true));
+
+
+        Assert.assertEquals(1, (int) JsonTools.parse("{key:'+1'}").asJsonObject().get("key").asInteger(0));
+        Assert.assertEquals(-1, (int) JsonTools.parse("{key:'-1'}").asJsonObject().get("key").asInteger(0));
+        Assert.assertEquals(255, (int) JsonTools.parse("{key:'0xff'}").asJsonObject().get("key").asInteger(0));
+
+        Assert.assertEquals(1l, (long) JsonTools.parse("{key:'+1'}").asJsonObject().get("key").asLong(0l));
+        Assert.assertEquals(-1l, (long) JsonTools.parse("{key:'-1'}").asJsonObject().get("key").asLong(0l));
+        Assert.assertEquals(255l, (long) JsonTools.parse("{key:'0xff'}").asJsonObject().get("key").asLong(0l));
+
+        Assert.assertEquals(1, (short) JsonTools.parse("{key:'+1'}").asJsonObject().get("key").asShort((short) 0));
+        Assert.assertEquals(-1, (short) JsonTools.parse("{key:'-1'}").asJsonObject().get("key").asShort((short) 0));
+        Assert.assertEquals(255, (short) JsonTools.parse("{key:'0xff'}").asJsonObject().get("key").asShort((short) 0));
+
+        Assert.assertEquals(1, (byte) JsonTools.parse("{key:'+1'}").asJsonObject().get("key").asByte((byte) 0));
+        Assert.assertEquals(-1, (byte) JsonTools.parse("{key:'-1'}").asJsonObject().get("key").asByte((byte) 0));
+        Assert.assertEquals((byte) 255, (byte) JsonTools.parse("{key:'0xff'}").asJsonObject().get("key").asByte((byte) 0));
+
+        Assert.assertEquals(1, (char) JsonTools.parse("{key:'+1'}").asJsonObject().get("key").asChar((char) 0));
+        Assert.assertEquals('a', (char) JsonTools.parse("{key:'a'}").asJsonObject().get("key").asChar((char) 0));
+        JsonItem item = JsonTools.parse("{key:'0xff'}").asJsonObject().get("key");
+        Assert.assertEquals(255, (char) item.asChar((char) 0));
+        Assert.assertEquals(255, (char) item.asChar((char) 0));
+
+        Assert.assertEquals(1f, (float) JsonTools.parse("{key:'+1.0'}").asJsonObject().get("key").asFloat(0f), 0);
+        Assert.assertEquals(-1f, (float) JsonTools.parse("{key:'-1.0'}").asJsonObject().get("key").asFloat(0f), 0);
+
+        Assert.assertEquals(1d, (double) JsonTools.parse("{key:'+1.0'}").asJsonObject().get("key").asDouble(0d), 0);
+        Assert.assertEquals(-1d, (double) JsonTools.parse("{key:'-1.0'}").asJsonObject().get("key").asDouble(0d), 0);
+
+        Assert.assertEquals(true, JsonTools.parse("{key:'True'}").asJsonObject().get("key").asBoolean(false));
+
+
+        Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonArray());
+        Assert.assertEquals(true, JsonTools.parse("{key:[]}").asJsonObject().get("key").isJsonArray());
+        Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonArray());
+
+        Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonObject());
+        Assert.assertEquals(true, JsonTools.parse("{key:{}}").asJsonObject().get("key").isJsonObject());
+        Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonObject());
+
+
+        Assert.assertEquals("1", JsonTools.parse("{key:1}").asJsonObject().get("key").getAs(String.class));
+        Assert.assertEquals(1d, JsonTools.parse("{key:'1.0'}").asJsonObject().get("key").getAs(Double.class), 0);
+        Assert.assertEquals(1f, JsonTools.parse("{key:'1.0'}").asJsonObject().get("key").getAs(Float.class), 0);
+        Assert.assertEquals(1, (int) JsonTools.parse("{key:'1'}").asJsonObject().get("key").getAs(Integer.class));
+        Assert.assertEquals(1l, (long) JsonTools.parse("{key:'1'}").asJsonObject().get("key").getAs(Long.class));
+        Assert.assertEquals(1, (short) JsonTools.parse("{key:'1'}").asJsonObject().get("key").getAs(Short.class));
+        Assert.assertEquals(1, (byte) JsonTools.parse("{key:'1'}").asJsonObject().get("key").getAs(Byte.class));
+        Assert.assertEquals('1', (char) JsonTools.parse("{key:'1'}").asJsonObject().get("key").getAs(Character.class));
+        Assert.assertEquals(true, JsonTools.parse("{key:True}").asJsonObject().get("key").getAs(Boolean.class));
+        Assert.assertEquals(null, JsonTools.parse("{key:null}").asJsonObject().get("key").getAs(Object.class));
+        Assert.assertEquals(null, JsonTools.parse("{key:object}").asJsonObject().get("key").getAs(StringBuilder.class));
+
+        String value = "value";
+        item = new JsonItem(value);
+        Assert.assertTrue(value == item.get());
+        value = "value_2";
+        item.set(value);
+        Assert.assertTrue(value == item.get());
+
+
+        String json = new JsonObject()
+                .append("foo", "bar")
+                .append("object", new JsonObject()
+                                .append("key", "value")
+                )
+                .append("array", new JsonArray()
+                                .append(1)
+                                .append(2)
+                                .append(3)
+                                .append(null)
+                ).toString();
+        Assert.assertEquals("{\"foo\":\"bar\",\"object\":{\"key\":\"value\"},\"array\":[1,2,3,null]}", json);
+        Assert.assertEquals("1", new JsonItem(1).toString());
+    }
 }
