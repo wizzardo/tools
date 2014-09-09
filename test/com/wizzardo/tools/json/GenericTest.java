@@ -27,6 +27,8 @@ public class GenericTest {
     public void firstTest() throws NoSuchFieldException {
         Generic generic = new Generic(AnotherWrapper.class);
 
+        Assert.assertEquals(AnotherWrapper.class.getSimpleName(), generic.toString());
+
         Assert.assertEquals(AnotherWrapper.class, generic.clazz);
         Assert.assertEquals(ListWrapper.class, generic.parent.clazz);
         Assert.assertEquals(Wrapper.class, generic.parent.parent.clazz);
@@ -107,5 +109,22 @@ public class GenericTest {
         Assert.assertEquals(null, generic.parent);
         Assert.assertEquals(1, generic.typeParameters.length);
         Assert.assertEquals(int.class, generic.typeParameters[0].clazz);
+    }
+
+    @Test
+    public void nullTest() throws NoSuchFieldException {
+        Assert.assertEquals(0, new Generic(Object.class, (Generic[]) null).typeParameters.length);
+        Assert.assertEquals(0, new Generic(Object.class, (Class[]) null).typeParameters.length);
+    }
+
+    @Test
+    public void fieldsTest() throws NoSuchFieldException {
+        Generic generic = new Generic(ArrayHolder.class);
+        Map<String, FieldInfo> map = generic.getFields();
+
+        Assert.assertEquals(2, map.size());
+        Assert.assertTrue(map.containsKey("array"));
+        Assert.assertTrue(map.containsKey("list"));
+        Assert.assertTrue(map == generic.getFields());
     }
 }

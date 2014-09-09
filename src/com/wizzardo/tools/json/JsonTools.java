@@ -130,12 +130,12 @@ public class JsonTools {
 
     public static <T> T parse(char[] s, int from, int to, Generic<T> generic) {
         // check first char
-        if (s[0] == '{') {
+        if (s[from] == '{') {
             JsonBinder binder = Binder.getObjectBinder(generic);
             JsonObject.parse(s, from, to, binder);
             return (T) binder.getObject();
         }
-        if (s[0] == '[') {
+        if (s[from] == '[') {
             JsonBinder binder = Binder.getArrayBinder(generic);
             JsonArray.parse(s, from, to, binder);
             return (T) binder.getObject();

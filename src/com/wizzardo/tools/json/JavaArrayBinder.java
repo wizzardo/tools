@@ -86,5 +86,7 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public void setTemporaryKey(String key) {
+        throw new UnsupportedOperationException("arrays has no keys");
     }
+
 }

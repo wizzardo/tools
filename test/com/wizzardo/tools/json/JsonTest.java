@@ -1,9 +1,12 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.io.FileTools;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -457,6 +460,14 @@ public class JsonTest {
 
         assertEquals(1, arr.length);
         assertEquals("value", arr[0].value);
+
+        arr = (StringHolder[]) (Object) JsonTools.parse(s.toCharArray(), Array.class, new Generic(StringHolder.class));
+        assertEquals(1, arr.length);
+        assertEquals("value", arr[0].value);
+
+        arr = (StringHolder[]) (Object) JsonTools.parse(s.toCharArray(), Array.class, StringHolder.class);
+        assertEquals(1, arr.length);
+        assertEquals("value", arr[0].value);
     }
 
     @Test
@@ -627,5 +638,50 @@ public class JsonTest {
                 ).toString();
         Assert.assertEquals("{\"foo\":\"bar\",\"object\":{\"key\":\"value\"},\"array\":[1,2,3,null]}", json);
         Assert.assertEquals("1", new JsonItem(1).toString());
+    }
+
+    public static class WithoutFields {
+    }
+
+    @Test
+    public void testNonExistsFields() {
+        Assert.assertNotNull(JsonTools.parse("{key:value}", WithoutFields.class));
+        Assert.assertNotNull(JsonTools.parse("{key:[]}", WithoutFields.class));
+        Assert.assertNotNull(JsonTools.parse("{key:{}}", WithoutFields.class));
+    }
+
+    @Test
+    public void exceptionsTests() {
+        boolean exception = false;
+        try {
+            Assert.assertNull(JsonTools.parse("[[]]", List.class));
+        } catch (IllegalArgumentException e) {
+            Assert.assertEquals("this binder only for collections and arrays! not for class java.lang.Object", e.getMessage());
+            exception = true;
+        }
+        assert exception;
+
+
+        exception = false;
+        try {
+            new JavaArrayBinder(new Generic(List.class)).setTemporaryKey("key");
+        } catch (UnsupportedOperationException e) {
+            Assert.assertEquals("arrays has no keys", e.getMessage());
+            exception = true;
+        }
+        assert exception;
+    }
+
+    @Test
+    public void jsonToolsTests() throws IOException {
+        Assert.assertNotNull(new JsonTools()); // just for coverage
+
+        File temp = File.createTempFile("prefix", "suffix");
+        temp.deleteOnExit();
+        FileTools.text(temp, "{key:value}");
+        Assert.assertEquals("value", JsonTools.parse(temp).asJsonObject().get("key").asString());
+
+        //only for java 6
+        Assert.assertEquals("value", JsonTools.parse(" {key:value}".substring(1)).asJsonObject().get("key").asString());
     }
 }
