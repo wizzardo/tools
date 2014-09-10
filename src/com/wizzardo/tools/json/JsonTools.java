@@ -117,7 +117,7 @@ public class JsonTools {
     }
 
     public static JsonItem parse(char[] s) {
-        return new JsonItem(parse(s, null, (Generic<Object>[]) null));
+        return new JsonItem(parse(s, 0, s.length, null));
     }
 
     public static <T> T parse(char[] s, Class<T> clazz, Class... generic) {
@@ -173,7 +173,7 @@ public class JsonTools {
 
                 ch = UNESCAPES[chars[i]];
                 if (ch == 0) {
-                    throw new IllegalStateException("unexpected escaped char: " + ch);
+                    throw new IllegalStateException("unexpected escaped char: " + chars[i]);
                 } else if (ch == 128) {
                     if (to < i + 5)
                         throw new IndexOutOfBoundsException("can't decode unicode character");
@@ -282,7 +282,7 @@ public class JsonTools {
 
         c = INT_VALUES[c];
         if (c == 128)
-            throw new IllegalStateException("unexpected char for hex value: " + c);
+            throw new IllegalStateException("unexpected char for hex value");
 
         return c;
     }
