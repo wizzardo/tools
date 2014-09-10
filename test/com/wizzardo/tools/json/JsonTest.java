@@ -335,6 +335,51 @@ public class JsonTest {
         Assert.assertEquals("Hello", JsonTools.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
         myString = "\\\"\\r\\n\\t\\b\\f\\\\";
         Assert.assertEquals("\"\r\n\t\b\f\\", JsonTools.unescape(myString.toCharArray(), 0, myString.toCharArray().length));
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.unescape("\\".toCharArray(), 0, 1);
+            }
+        }, IndexOutOfBoundsException.class, "unexpected end");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.unescape("\\u004".toCharArray(), 0, 5);
+            }
+        }, IndexOutOfBoundsException.class, "can't decode unicode character");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.unescape("\\a".toCharArray(), 0, 2);
+            }
+        }, IllegalStateException.class, "unexpected escaped char: a");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.unescape("\\u004G".toCharArray(), 0, 6);
+            }
+        }, IllegalStateException.class, "unexpected char for hex value");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.unescape("\\u004Я".toCharArray(), 0, 6);
+            }
+        }, IllegalStateException.class, "unexpected char for hex value: Я");
+
+
+        Assert.assertEquals("\\u007F", JsonTools.escape("\u007F"));
+
+        StringBuilder sb = new StringBuilder();
+        Binder.Appender appender = new Binder.StringBuilderAppender(sb);
+        JsonTools.escape('\u007F', appender);
+        JsonTools.escape('a', appender);
+        JsonTools.escape('я', appender);
+        Assert.assertEquals("\\u007Faя", sb.toString());
     }
 
     static class MapTest {
@@ -508,6 +553,10 @@ public class JsonTest {
                 "}";
         Assert.assertEquals(result, JsonTools.serialize(data));
 
+        StringBuilder sb = new StringBuilder();
+        JsonTools.serialize(data, sb);
+        Assert.assertEquals(result, sb.toString());
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         JsonTools.serialize(data, out);
         Assert.assertEquals(result, new String(out.toByteArray()));
@@ -652,24 +701,19 @@ public class JsonTest {
 
     @Test
     public void exceptionsTests() {
-        boolean exception = false;
-        try {
-            Assert.assertNull(JsonTools.parse("[[]]", List.class));
-        } catch (IllegalArgumentException e) {
-            Assert.assertEquals("this binder only for collections and arrays! not for class java.lang.Object", e.getMessage());
-            exception = true;
-        }
-        assert exception;
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Assert.assertNull(JsonTools.parse("[[]]", List.class));
+            }
+        }, IllegalArgumentException.class, "this binder only for collections and arrays! not for class java.lang.Object");
 
-
-        exception = false;
-        try {
-            new JavaArrayBinder(new Generic(List.class)).setTemporaryKey("key");
-        } catch (UnsupportedOperationException e) {
-            Assert.assertEquals("arrays has no keys", e.getMessage());
-            exception = true;
-        }
-        assert exception;
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                new JavaArrayBinder(new Generic(List.class)).setTemporaryKey("key");
+            }
+        }, UnsupportedOperationException.class, "arrays has no keys");
     }
 
     @Test
@@ -683,5 +727,20 @@ public class JsonTest {
 
         //only for java 6
         Assert.assertEquals("value", JsonTools.parse(" {key:value}".substring(1)).asJsonObject().get("key").asString());
+
+        Assert.assertEquals("value", JsonTools.parse("{key:value}".toCharArray()).asJsonObject().get("key").asString());
+        Assert.assertEquals(null, JsonTools.parse("key").get());
+    }
+
+    private void testException(Runnable closure, Class exceptionClass, String message) {
+        boolean exception = false;
+        try {
+            closure.run();
+        } catch (Exception e) {
+            Assert.assertEquals(exceptionClass, e.getClass());
+            Assert.assertEquals(message, e.getMessage());
+            exception = true;
+        }
+        assert exception;
     }
 }
