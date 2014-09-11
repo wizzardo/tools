@@ -234,8 +234,7 @@ class JsonUtils {
         if (quote == 0) {
             for (; i < to; i++) {
                 ch = s[i];
-                if (ch <= ' ' || ch == ':' || ch == '}')
-                    break;
+                if (ch <= ' ' || ch == ':' || ch == '}') break;
 
                 if (ch == '\\')
                     needDecoding = true;
@@ -281,12 +280,11 @@ class JsonUtils {
 
         i = skipSpaces(s, i, to);
 
-        if (s[i] != ':')
-            throw new IllegalStateException("here must be key-value separator ':', but found: " + s[i]);
-
-
         if (rightBorder == from)
             throw new IllegalStateException("key not found");
+
+        if (s[i] != ':')
+            throw new IllegalStateException("here must be key-value separator ':', but found: " + s[i]);
 
 
         if (binder == null)

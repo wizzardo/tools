@@ -732,6 +732,59 @@ public class JsonTest {
         Assert.assertEquals(null, JsonTools.parse("key").get());
     }
 
+    public static class ForJsonUtilsTest {
+        float f;
+        double d;
+        boolean b;
+    }
+
+    @Test
+    public void jsonUtilsTests() throws IOException {
+        Assert.assertNotNull(new JsonUtils()); // just for coverage
+
+        Assert.assertEquals(3, JsonUtils.trimRight("123 ".toCharArray(), 0, 4));
+
+        Assert.assertEquals(-1, (int) JsonTools.parse("{key:-1}").asJsonObject().get("key").asInteger());
+        Assert.assertEquals(-1.2f, (float) JsonTools.parse("{key:-1.2}").asJsonObject().get("key").asFloat(), 0);
+
+        ForJsonUtilsTest test = JsonTools.parse("{f:1,d:1,b:1}", ForJsonUtilsTest.class);
+        Assert.assertEquals(1f, test.f, 0);
+        Assert.assertEquals(1d, test.d, 0);
+        Assert.assertEquals(true, test.b);
+
+        Assert.assertEquals(false, JsonTools.parse("{key:false}").asJsonObject().get("key").asBoolean());
+        Assert.assertEquals(false, JsonTools.parse("{ke\\\"y :false}").asJsonObject().get("ke\"y").asBoolean());
+        Assert.assertEquals("val\\ue", JsonTools.parse("{key:val\\\\ue}").asJsonObject().get("key").asString());
+
+        Assert.assertEquals(1, JsonUtils.parseNumber(null, "1".toCharArray(), 0, 1));
+        Assert.assertEquals(1, JsonUtils.parseValue(null, "1   ".toCharArray(), 0, 4, ' '));
+        Assert.assertEquals(4, JsonUtils.parseKey(null, "k  : ".toCharArray(), 0, 5));
+
+        FieldInfo.charTree.append("k\\\"ey");
+        Assert.assertEquals(8, JsonUtils.parseKey(null, "'k\\\"ey':value".toCharArray(), 0, 15));
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonUtils.parseNumber(null, "-".toCharArray(), 0, 1);
+            }
+        }, IllegalStateException.class, "no number found, only '-'");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonUtils.parseKey(null, "key value".toCharArray(), 0, 15);
+            }
+        }, IllegalStateException.class, "here must be key-value separator ':', but found: v");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonUtils.parseKey(null, "key".toCharArray(), 0, 0);
+            }
+        }, IllegalStateException.class, "key not found");
+    }
+
     private void testException(Runnable closure, Class exceptionClass, String message) {
         boolean exception = false;
         try {
