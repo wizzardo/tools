@@ -98,7 +98,11 @@ public class JsonArray extends ArrayList<JsonItem> {
                 sb.append(',');
             else
                 comma = true;
-            item.toJson(sb);
+
+            if (item == null)
+                sb.append("null");
+            else
+                item.toJson(sb);
         }
         sb.append(']');
     }

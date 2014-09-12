@@ -54,6 +54,7 @@ public class JsonTest {
         s = "[{},{},{}]";
         assertEquals(3, JsonTools.parse(s).asJsonArray().size());
         s = "{qwe:[]}";
+        assertEquals(true, JsonTools.parse(s).asJsonObject().isJsonArray("qwe"));
         assertEquals(0, JsonTools.parse(s).asJsonObject().getAsJsonArray("qwe").size());
         s = "[{qwe:qwe},{},{}]";
         assertEquals(1, JsonTools.parse(s).asJsonArray().get(0).asJsonObject().size());
@@ -63,6 +64,8 @@ public class JsonTest {
         assertEquals(true, JsonTools.parse(s).asJsonArray().get(2).asJsonObject().getAsBoolean("qwe"));
         s = "{qwe:{qwe:qwe},rew:{},qw:{qwe: true \n},werwr:rew}";
         assertEquals(4, JsonTools.parse(s).asJsonObject().size());
+        assertEquals(true, JsonTools.parse(s).asJsonObject().isJsonObject("qwe"));
+        assertEquals(false, JsonTools.parse(s).asJsonObject().isJsonObject("werwr"));
         assertEquals(true, JsonTools.parse(s).asJsonObject().getAsJsonObject("qw").getAsBoolean("qwe"));
 
 
@@ -573,6 +576,18 @@ public class JsonTest {
         Assert.assertEquals("[\"\\u0001\",\"\\u0002\",\"\\u0003\"]", JsonTools.serialize(new char[]{1, 2, 3}));
         Assert.assertEquals("[1.0,2.0,3.0]", JsonTools.serialize(new float[]{1f, 2f, 3f}));
         Assert.assertEquals("[1.0,2.0,3.0]", JsonTools.serialize(new double[]{1d, 2d, 3d}));
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.put("null", null);
+        Assert.assertEquals("{\"null\":null}", jsonObject.toString());
+        jsonObject.append("null", new JsonItem(null));
+        Assert.assertEquals("{\"null\":null}", jsonObject.toString());
+
+        JsonArray jsonArray = new JsonArray();
+        jsonArray.add(null);
+        Assert.assertEquals("[null]", jsonArray.toString());
+        jsonArray.append(new JsonItem(null));
+        Assert.assertEquals("[null,null]", jsonArray.toString());
     }
 
     @Test
@@ -697,6 +712,10 @@ public class JsonTest {
         Assert.assertNotNull(JsonTools.parse("{key:value}", WithoutFields.class));
         Assert.assertNotNull(JsonTools.parse("{key:[]}", WithoutFields.class));
         Assert.assertNotNull(JsonTools.parse("{key:{}}", WithoutFields.class));
+        Assert.assertNotNull(JsonTools.parse("{key:{inner:{}}}", WithoutFields.class));
+        Assert.assertNotNull(JsonTools.parse("{key:{inner:[]}}", WithoutFields.class));
+        Assert.assertNotNull(JsonTools.parse("{key:[{}]}", WithoutFields.class));
+        Assert.assertNotNull(JsonTools.parse("{key:[[]]}", WithoutFields.class));
     }
 
     @Test
@@ -730,6 +749,28 @@ public class JsonTest {
 
         Assert.assertEquals("value", JsonTools.parse("{key:value}".toCharArray()).asJsonObject().get("key").asString());
         Assert.assertEquals(null, JsonTools.parse("key").get());
+
+        Assert.assertEquals(null, JsonTools.parse("{key:}").asJsonObject().get("key"));
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.parse("{key:value ]");
+            }
+        }, IllegalStateException.class, "here must be ',' or '}' , but found: ]");
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.parse("[value }");
+            }
+        }, IllegalStateException.class, "here must be ',' or ']' , but found: }");
+
+
+        Assert.assertEquals(1, (int) JsonTools.parse("{key:1}").asJsonObject().getAsInteger("key"));
+        Assert.assertEquals(1l, (long) JsonTools.parse("{key:1}").asJsonObject().getAsLong("key"));
+        Assert.assertEquals(1f, (float) JsonTools.parse("{key:1.0}").asJsonObject().getAsFloat("key"), 0);
+        Assert.assertEquals(1d, (double) JsonTools.parse("{key:1.0}").asJsonObject().getAsDouble("key"), 0);
+        Assert.assertEquals(true, JsonTools.parse("{key:true}").asJsonObject().getAsBoolean("key"));
     }
 
     public static class ForJsonUtilsTest {
