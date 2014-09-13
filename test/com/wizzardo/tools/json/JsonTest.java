@@ -733,6 +733,13 @@ public class JsonTest {
                 new JavaArrayBinder(new Generic(List.class)).setTemporaryKey("key");
             }
         }, UnsupportedOperationException.class, "arrays has no keys");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                new JsonArrayBinder().setTemporaryKey("key");
+            }
+        }, UnsupportedOperationException.class, "arrays has no keys");
     }
 
     @Test
@@ -824,6 +831,35 @@ public class JsonTest {
                 JsonUtils.parseKey(null, "key".toCharArray(), 0, 0);
             }
         }, IllegalStateException.class, "key not found");
+    }
+
+    public static class CustomMap extends HashMap<String, String> {
+        String field;
+    }
+
+    public static class CustomMap2 extends HashMap<String, WithoutFields> {
+        CustomMap foo;
+        int[] arr;
+    }
+
+    public static class CustomMapParent extends HashMap<String, CustomMap> {
+    }
+
+    @Test
+    public void javaMapBinderTests() throws IOException {
+        CustomMap map = JsonTools.parse("{field:value, foo:bar}", CustomMap.class);
+        Assert.assertEquals("value", map.field);
+        Assert.assertEquals("bar", map.get("foo"));
+
+        CustomMapParent mapParent = JsonTools.parse("{key:{field:value, foo:bar}}", CustomMapParent.class);
+        map = mapParent.get("key");
+        Assert.assertEquals("value", map.field);
+        Assert.assertEquals("bar", map.get("foo"));
+
+        CustomMap2 map2 = JsonTools.parse("{foo:{field:value},withoutFields:{},arr:[1,2,3]}", CustomMap2.class);
+        Assert.assertEquals("value", map2.foo.field);
+        Assert.assertNotNull(map2.get("withoutFields"));
+        Assert.assertArrayEquals(new int[]{1, 2, 3}, map2.arr);
     }
 
     private void testException(Runnable closure, Class exceptionClass, String message) {

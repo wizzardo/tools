@@ -12,7 +12,7 @@ class JsonArrayBinder implements JsonBinder {
     }
 
     public void add(Object value) {
-        json.add(new JsonItem(value));
+        add(new JsonItem(value));
     }
 
     public void add(JsonItem value) {
@@ -41,5 +41,6 @@ class JsonArrayBinder implements JsonBinder {
 
     @Override
     public void setTemporaryKey(String key) {
+        throw new UnsupportedOperationException("arrays has no keys");
     }
 }

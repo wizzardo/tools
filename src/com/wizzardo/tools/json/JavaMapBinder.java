@@ -9,15 +9,22 @@ import java.util.Map;
 public class JavaMapBinder extends JavaObjectBinder {
     private Map that;
     private Generic[] type;
+    private boolean valueIsMap;
 
     public JavaMapBinder(Generic generic) {
         super(generic);
         that = (Map) object;
-        if (generic.typeParameters.length != 2)
-            type = new Generic[]{new Generic(Object.class), new Generic(Object.class)};
-        else
-            type = generic.typeParameters;
+        type = getTypes(generic);
+        valueIsMap = Map.class.isAssignableFrom(type[1].clazz);
+    }
 
+    private Generic[] getTypes(Generic generic) {
+        if (generic == null)
+            return new Generic[]{new Generic(Object.class), new Generic(Object.class)};
+
+        if (generic.typeParameters.length != 2)
+            return getTypes(generic.parent);
+        return generic.typeParameters;
     }
 
     @Override
@@ -35,18 +42,23 @@ public class JavaMapBinder extends JavaObjectBinder {
 
     @Override
     public JsonBinder getObjectBinder() {
-        if (generic.typeParameters.length == 2)
-            return new JavaObjectBinder(generic.typeParameters[1]);
+        JsonBinder binder = super.getObjectBinder();
+        if (binder != null)
+            return binder;
 
-        return super.getObjectBinder();
+        if (valueIsMap)
+            return new JavaMapBinder(type[1]);
+        else
+            return new JavaObjectBinder(type[1]);
     }
 
     @Override
     public JsonBinder getArrayBinder() {
-        if (generic.typeParameters.length == 2)
-            return new JavaArrayBinder(generic.typeParameters[1]);
+        JsonBinder binder = super.getArrayBinder();
+        if (binder != null)
+            return binder;
 
-        return super.getArrayBinder();
+        return new JavaArrayBinder(type[1]);
     }
 
     @Override
