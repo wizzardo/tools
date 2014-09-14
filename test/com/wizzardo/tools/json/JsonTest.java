@@ -862,6 +862,42 @@ public class JsonTest {
         Assert.assertArrayEquals(new int[]{1, 2, 3}, map2.arr);
     }
 
+    public static class FieldSetterTestClass {
+        int i;
+        long l;
+        double d;
+        float f;
+        boolean b;
+        byte bb;
+        short s;
+    }
+
+    @Test
+    public void jsonFieldSetterTests() throws IOException, NoSuchFieldException {
+        String json = "{" +
+                "i:'1'" +
+                ",l:'2'" +
+                ",d:'3.0'" +
+                ",f:'4.0'" +
+                ",b:'false'" +
+                ",bb:'6'" +
+                ",s:'7'" +
+                "}";
+        FieldSetterTestClass aClass = JsonTools.parse(json, FieldSetterTestClass.class);
+
+        Assert.assertEquals(1, aClass.i);
+        Assert.assertEquals(2l, aClass.l);
+        Assert.assertEquals(3.0d, aClass.d, 0);
+        Assert.assertEquals(4.0f, aClass.f, 0);
+        Assert.assertEquals(false, aClass.b);
+        Assert.assertEquals((byte) 6, aClass.bb);
+        Assert.assertEquals((short) 7, aClass.s);
+
+        JsonFieldSetter.BooleanSetter booleanSetter = new JsonFieldSetter.BooleanSetter(FieldSetterTestClass.class.getDeclaredField("b"));
+        booleanSetter.set(aClass, new JsonItem("True"));
+        Assert.assertEquals(true, aClass.b);
+    }
+
     private void testException(Runnable closure, Class exceptionClass, String message) {
         boolean exception = false;
         try {
