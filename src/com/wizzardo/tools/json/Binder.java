@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -751,7 +752,7 @@ public class Binder {
         private OutputStreamWriter out;
 
         StreamAppender(OutputStream out) {
-            this.out = new OutputStreamWriter(out);
+            this.out = new OutputStreamWriter(out, Charset.forName("utf-8"));
         }
 
         @Override
@@ -802,7 +803,7 @@ public class Binder {
 
     static void toJSON(Object src, Appender sb) {
         if (src == null) {
-            nullSerializer.serialize(src, sb, null);
+            nullSerializer.serialize(null, sb, null);
             return;
         }
 

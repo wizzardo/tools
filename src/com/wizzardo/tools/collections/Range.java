@@ -1,9 +1,6 @@
 package com.wizzardo.tools.collections;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 /**
  * @author: moxa
@@ -55,6 +52,9 @@ public class Range implements Iterable<Integer>, List<Integer> {
 
             @Override
             public Integer next() {
+                if (!hasNext())
+                    throw new NoSuchElementException("iteration has no more elements");
+
                 return cur++;
             }
 

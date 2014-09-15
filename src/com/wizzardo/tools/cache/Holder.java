@@ -8,7 +8,7 @@ class Holder<K, V> {
 
     protected V v;
     protected K k;
-    protected boolean done = false;
+    protected volatile boolean done = false;
     protected long validUntil;
 
     public Holder(K k) {
