@@ -1,12 +1,15 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.io.FileTools;
+import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
+import com.wizzardo.tools.misc.WrappedException;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PipedOutputStream;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -896,6 +899,81 @@ public class JsonTest {
         JsonFieldSetter.BooleanSetter booleanSetter = new JsonFieldSetter.BooleanSetter(FieldSetterTestClass.class.getDeclaredField("b"));
         booleanSetter.set(aClass, new JsonItem("True"));
         Assert.assertEquals(true, aClass.b);
+    }
+
+    @Test
+    public void appendersTests() {
+        Binder.Appender appender;
+
+        appender = new Binder.StringBuilderAppender(new StringBuilder());
+        Assert.assertEquals(appendData(appender), appender.toString());
+
+        appender = new Binder.ExceptionDrivenStringBuilderAppender(new ExceptionDrivenStringBuilder());
+        Assert.assertEquals(appendData(appender), appender.toString());
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        appender = new Binder.StreamAppender(outputStream);
+        Assert.assertEquals(appendData(appender), new String(outputStream.toByteArray()));
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                while (true)
+                    appender.append(' ');
+            }
+        }, WrappedException.class, "Pipe not connected");
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                while (true)
+                    appender.append("string");
+            }
+        }, WrappedException.class, "Pipe not connected");
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                while (true)
+                    appender.append("string", 0, 6);
+            }
+        }, WrappedException.class, "Pipe not connected");
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                while (true)
+                    appender.append("string_".toCharArray());
+            }
+        }, WrappedException.class, "Pipe not connected");
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                while (true)
+                    appender.append("string_".toCharArray(), 0, 6);
+            }
+        }, WrappedException.class, "Pipe not connected");
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                appender.append(' ');
+                appender.flush();
+            }
+        }, WrappedException.class, "Pipe not connected");
+    }
+
+    public String appendData(Binder.Appender appender) {
+        appender.append("string_");
+        appender.append("string_", 3, 6);
+        appender.append('_');
+        appender.append("string_".toCharArray());
+        appender.append("string_".toCharArray(), 3, 6);
+        appender.flush();
+
+        return "string_ing_string_ing";
     }
 
     private void testException(Runnable closure, Class exceptionClass, String message) {
