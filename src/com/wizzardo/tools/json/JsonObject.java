@@ -98,12 +98,12 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
     @Override
     public String toString() {
-        Binder.Appender sb = new Binder.ExceptionDrivenStringBuilderAppender(JsonTools.stringBuilderThreadLocal.getValue());
+        Appender sb = Appender.create(JsonTools.stringBuilderThreadLocal.getValue());
         toJson(sb);
         return sb.toString();
     }
 
-    void toJson(Binder.Appender sb) {
+    void toJson(Appender sb) {
         sb.append('{');
         boolean comma = false;
         for (Map.Entry<String, JsonItem> entry : entrySet()) {

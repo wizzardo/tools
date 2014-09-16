@@ -381,7 +381,7 @@ public class JsonTest {
         Assert.assertEquals("\\u007F", JsonTools.escape("\u007F"));
 
         StringBuilder sb = new StringBuilder();
-        Binder.Appender appender = new Binder.StringBuilderAppender(sb);
+        Appender appender = Appender.create(sb);
         JsonTools.escape('\u007F', appender);
         JsonTools.escape('a', appender);
         JsonTools.escape('я', appender);
@@ -903,22 +903,22 @@ public class JsonTest {
 
     @Test
     public void appendersTests() {
-        Binder.Appender appender;
+        Appender appender;
 
-        appender = new Binder.StringBuilderAppender(new StringBuilder());
+        appender = Appender.create(new StringBuilder());
         Assert.assertEquals(appendData(appender), appender.toString());
 
-        appender = new Binder.ExceptionDrivenStringBuilderAppender(new ExceptionDrivenStringBuilder());
+        appender = Appender.create(new ExceptionDrivenStringBuilder());
         Assert.assertEquals(appendData(appender), appender.toString());
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        appender = new Binder.StreamAppender(outputStream);
+        appender = Appender.create(outputStream);
         Assert.assertEquals(appendData(appender), new String(outputStream.toByteArray()));
 
         testException(new Runnable() {
             @Override
             public void run() {
-                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                Appender appender = Appender.create(new PipedOutputStream());
                 while (true)
                     appender.append(' ');
             }
@@ -926,7 +926,7 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
-                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                Appender appender = Appender.create(new PipedOutputStream());
                 while (true)
                     appender.append("string");
             }
@@ -934,7 +934,7 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
-                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                Appender appender = Appender.create(new PipedOutputStream());
                 while (true)
                     appender.append("string", 0, 6);
             }
@@ -942,7 +942,7 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
-                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                Appender appender = Appender.create(new PipedOutputStream());
                 while (true)
                     appender.append("string_".toCharArray());
             }
@@ -950,7 +950,7 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
-                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                Appender appender = Appender.create(new PipedOutputStream());
                 while (true)
                     appender.append("string_".toCharArray(), 0, 6);
             }
@@ -958,14 +958,14 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
-                Binder.StreamAppender appender = new Binder.StreamAppender(new PipedOutputStream());
+                Appender appender = Appender.create(new PipedOutputStream());
                 appender.append(' ');
                 appender.flush();
             }
         }, WrappedException.class, "Pipe not connected");
     }
 
-    public String appendData(Binder.Appender appender) {
+    public String appendData(Appender appender) {
         appender.append("string_");
         appender.append("string_", 3, 6);
         appender.append('_');

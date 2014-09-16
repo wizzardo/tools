@@ -298,12 +298,12 @@ public class JsonItem {
     }
 
     public String toString() {
-        Binder.Appender sb = new Binder.ExceptionDrivenStringBuilderAppender(JsonTools.stringBuilderThreadLocal.getValue());
+        Appender sb = Appender.create(JsonTools.stringBuilderThreadLocal.getValue());
         toJson(sb);
         return sb.toString();
     }
 
-    void toJson(Binder.Appender sb) {
+    void toJson(Appender sb) {
         if (ob == null)
             sb.append("null");
         else if (ob instanceof JsonObject)

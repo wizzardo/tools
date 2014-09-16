@@ -144,19 +144,19 @@ public class JsonTools {
     }
 
     public static String serialize(Object src) {
-        Binder.ExceptionDrivenStringBuilderAppender sb = new Binder.ExceptionDrivenStringBuilderAppender(stringBuilderThreadLocal.getValue());
+        Appender sb = Appender.create(stringBuilderThreadLocal.getValue());
         Binder.toJSON(src, sb);
         return sb.toString();
     }
 
     public static void serialize(Object src, OutputStream out) {
-        Binder.Appender appender = new Binder.StreamAppender(out);
+        Appender appender = Appender.create(out);
         Binder.toJSON(src, appender);
         appender.flush();
     }
 
     public static void serialize(Object src, StringBuilder out) {
-        Binder.toJSON(src, new Binder.StringBuilderAppender(out));
+        Binder.toJSON(src, Appender.create(out));
     }
 
     public static String unescape(char[] chars, int from, int to) {
@@ -195,12 +195,12 @@ public class JsonTools {
 
 
     public static String escape(String s) {
-        Binder.StringBuilderAppender sb = new Binder.StringBuilderAppender();
+        Appender sb = Appender.create();
         escape(s, sb);
         return sb.toString();
     }
 
-    static void escape(String s, Binder.Appender sb) {
+    static void escape(String s, Appender sb) {
         char[] chars = StringReflection.chars(s);
         int to = s.length();
         int offset = chars.length == to ? 0 : StringReflection.offset(s);
@@ -218,7 +218,7 @@ public class JsonTools {
             append(chars, from, to, sb);
     }
 
-    private static int check(int from, int i, char[] chars, Binder.Appender sb) {
+    private static int check(int from, int i, char[] chars, Appender sb) {
         char ch = chars[i];
         if (ch < 127) {
             if (ESCAPES[ch] != 0) {
@@ -232,7 +232,7 @@ public class JsonTools {
         return from;
     }
 
-    static void escape(char ch, Binder.Appender sb) {
+    static void escape(char ch, Appender sb) {
         if (ch < 127) {
             if (ESCAPES[ch] != 0)
                 escapeChar(ESCAPES[ch], ch, sb);
@@ -244,7 +244,7 @@ public class JsonTools {
             sb.append(ch);
     }
 
-    private static void appendUnicodeChar(char ch, Binder.Appender sb) {
+    private static void appendUnicodeChar(char ch, Appender sb) {
         String ss = Integer.toHexString(ch);
         sb.append("\\u");
         for (int k = 0; k < 4 - ss.length(); k++) {
@@ -253,12 +253,12 @@ public class JsonTools {
         sb.append(ss.toUpperCase());
     }
 
-    private static int append(char[] s, int from, int to, Binder.Appender sb) {
+    private static int append(char[] s, int from, int to, Appender sb) {
         sb.append(s, from, to);
         return to + 1;
     }
 
-    private static void escapeChar(char escaped, char src, Binder.Appender sb) {
+    private static void escapeChar(char escaped, char src, Appender sb) {
         if (escaped == 128) {
             appendUnicodeChar(src, sb);
         } else {
