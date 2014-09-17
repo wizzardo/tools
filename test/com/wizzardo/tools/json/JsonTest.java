@@ -576,9 +576,24 @@ public class JsonTest {
         Assert.assertEquals("[1,2,3]", JsonTools.serialize(new long[]{1l, 2l, 3l}));
         Assert.assertEquals("[1,2,3]", JsonTools.serialize(new short[]{1, 2, 3}));
         Assert.assertEquals("[1,2,3]", JsonTools.serialize(new byte[]{1, 2, 3}));
-        Assert.assertEquals("[\"\\u0001\",\"\\u0002\",\"\\u0003\"]", JsonTools.serialize(new char[]{1, 2, 3}));
         Assert.assertEquals("[1.0,2.0,3.0]", JsonTools.serialize(new float[]{1f, 2f, 3f}));
         Assert.assertEquals("[1.0,2.0,3.0]", JsonTools.serialize(new double[]{1d, 2d, 3d}));
+        Assert.assertEquals("[true,false,true]", JsonTools.serialize(new boolean[]{true, false, true}));
+        Assert.assertEquals("[\"\\u0001\",\"\\u0002\",\"\\u0003\"]", JsonTools.serialize(new char[]{1, 2, 3}));
+        Assert.assertEquals("[\"\\u0001\",\"\\u0002\",\"\\u0003\"]",
+                JsonTools.serialize(new Character[]{(char) 1, (char) 2, (char) 3}));
+        Assert.assertEquals("[\"foo\",\"bar\"]", JsonTools.serialize(new String[]{"foo", "bar"}));
+        Assert.assertEquals("[\"2012-07-31T08:26:56.000Z\",\"2012-07-31T08:26:57.000Z\"]",
+                JsonTools.serialize(new Date[]{new Date(1343723216000l), new Date(1343723217000l)}));
+        Assert.assertEquals("[[\"foo\",\"bar\"]]", JsonTools.serialize(new List[]{new ArrayList<String>() {{
+            add("foo");
+            add("bar");
+        }}}));
+        Assert.assertEquals("[{\"foo\":\"bar\"}]", JsonTools.serialize(new Map[]{new HashMap<String, String>() {{
+            put("foo", "bar");
+        }}}));
+//        Assert.assertEquals("[[\"foo\",\"bar\"]]", JsonTools.serialize(new String[][]{{"foo", "bar"}}));
+        Assert.assertEquals("[\"ONE\",\"TWO\",\"THREE\"]", JsonTools.serialize(new SomeEnum[]{SomeEnum.ONE, SomeEnum.TWO, SomeEnum.THREE}));
 
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("null", null);
