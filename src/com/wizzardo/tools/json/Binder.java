@@ -707,19 +707,25 @@ public class Binder {
         Object[] arr = (Object[]) src;
         int length = arr.length;
 
-        Serializer serializer;
+        Serializer serializer = null;
         Generic inner = null;
         if (generic != null && generic.typeParameters.length == 1) {
             serializer = generic.typeParameters[0].serializer;
             inner = generic.typeParameters[0];
-        } else
-            serializer = objectSerializer;
+        } else if (arr.getClass().getComponentType() != Object.class)
+            serializer = classToSerializer(arr.getClass().getComponentType());
 
         sb.append('[');
-        for (int i = 0; i < length; i++) {
-            if (i > 0) sb.append(',');
-            serializer.checkNullAndSerialize(arr[i], sb, inner);
-        }
+        if (serializer != null)
+            for (int i = 0; i < length; i++) {
+                if (i > 0) sb.append(',');
+                serializer.checkNullAndSerialize(arr[i], sb, inner);
+            }
+        else
+            for (int i = 0; i < length; i++) {
+                if (i > 0) sb.append(',');
+                toJSON(arr[i], sb);
+            }
         sb.append(']');
     }
 

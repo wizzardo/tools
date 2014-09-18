@@ -592,7 +592,8 @@ public class JsonTest {
         Assert.assertEquals("[{\"foo\":\"bar\"}]", JsonTools.serialize(new Map[]{new HashMap<String, String>() {{
             put("foo", "bar");
         }}}));
-//        Assert.assertEquals("[[\"foo\",\"bar\"]]", JsonTools.serialize(new String[][]{{"foo", "bar"}}));
+        Assert.assertEquals("[[\"foo\",\"bar\"]]", JsonTools.serialize(new String[][]{{"foo", "bar"}}));
+        Assert.assertEquals("[[\"foo\",\"bar\"]]", JsonTools.serialize(new Object[][]{{"foo", "bar"}}));
         Assert.assertEquals("[\"ONE\",\"TWO\",\"THREE\"]", JsonTools.serialize(new SomeEnum[]{SomeEnum.ONE, SomeEnum.TWO, SomeEnum.THREE}));
 
         JsonObject jsonObject = new JsonObject();
