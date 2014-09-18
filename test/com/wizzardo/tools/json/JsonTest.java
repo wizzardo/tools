@@ -530,6 +530,18 @@ public class JsonTest {
         assertEquals(1343723216000l, l[0].getTime());
     }
 
+    static class ArraySerializeTest {
+        String[][] strings;
+    }
+
+    static class ArraySerializeTest2 {
+        List<String>[] strings;
+    }
+
+    static class ArraySerializeTest3 {
+        Map<String, Long>[] strings;
+    }
+
     @Test
     public void serializeTest() {
         Map data = new LinkedHashMap();
@@ -595,6 +607,24 @@ public class JsonTest {
         Assert.assertEquals("[[\"foo\",\"bar\"]]", JsonTools.serialize(new String[][]{{"foo", "bar"}}));
         Assert.assertEquals("[[\"foo\",\"bar\"]]", JsonTools.serialize(new Object[][]{{"foo", "bar"}}));
         Assert.assertEquals("[\"ONE\",\"TWO\",\"THREE\"]", JsonTools.serialize(new SomeEnum[]{SomeEnum.ONE, SomeEnum.TWO, SomeEnum.THREE}));
+
+        ArraySerializeTest arraySerializeTest = new ArraySerializeTest();
+        arraySerializeTest.strings = new String[][]{{"foo", "bar"}};
+        Assert.assertEquals("{\"strings\":[[\"foo\",\"bar\"]]}", JsonTools.serialize(arraySerializeTest));
+
+        ArraySerializeTest2 arraySerializeTest2 = new ArraySerializeTest2();
+        arraySerializeTest2.strings = new List[1];
+        arraySerializeTest2.strings[0] = new ArrayList<String>();
+        arraySerializeTest2.strings[0].add("foo");
+        arraySerializeTest2.strings[0].add("bar");
+        Assert.assertEquals("{\"strings\":[[\"foo\",\"bar\"]]}", JsonTools.serialize(arraySerializeTest2));
+
+        ArraySerializeTest3 arraySerializeTest3 = new ArraySerializeTest3();
+        arraySerializeTest3.strings = new Map[1];
+        arraySerializeTest3.strings[0] = new HashMap<String, Long>();
+        arraySerializeTest3.strings[0].put("foo", 1l);
+        arraySerializeTest3.strings[0].put("bar", 2l);
+        Assert.assertEquals("{\"strings\":[{\"foo\":1,\"bar\":2}]}", JsonTools.serialize(arraySerializeTest3));
 
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("null", null);

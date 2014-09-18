@@ -49,11 +49,15 @@ public class Binder {
         public void serialize(Object src, Appender sb, Generic generic) {
             Object[] arr = (Object[]) src;
             int length = arr.length;
+            Generic inner = null;
+
+            if (generic != null && generic.typeParameters.length == 1)
+                inner = generic.typeParameters[0];
 
             sb.append('[');
             for (int i = 0; i < length; i++) {
                 if (i > 0) sb.append(',');
-                serializer.checkNullAndSerialize(arr[i], sb, null);
+                serializer.checkNullAndSerialize(arr[i], sb, inner);
             }
             sb.append(']');
         }
