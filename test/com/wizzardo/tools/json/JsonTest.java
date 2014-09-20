@@ -637,6 +637,8 @@ public class JsonTest {
         Assert.assertEquals("[null]", jsonArray.toString());
         jsonArray.append(new JsonItem(null));
         Assert.assertEquals("[null,null]", jsonArray.toString());
+
+        Assert.assertEquals("null", JsonTools.serialize(null));
     }
 
     @Test
@@ -1011,7 +1013,7 @@ public class JsonTest {
         }, WrappedException.class, "Pipe not connected");
     }
 
-    public String appendData(Appender appender) {
+    private String appendData(Appender appender) {
         appender.append("string_");
         appender.append("string_", 3, 6);
         appender.append('_');
@@ -1020,6 +1022,63 @@ public class JsonTest {
         appender.flush();
 
         return "string_ing_string_ing";
+    }
+
+    static class CustomList extends ArrayList {
+        private CustomList() {
+        }
+    }
+
+    static interface NoSuchMethodExceptionTest {
+    }
+
+    static abstract class InstantiationExceptionTest {
+    }
+
+    static class ExceptionInConstructor {
+        public ExceptionInConstructor() {
+            throw new IllegalStateException("because of reasons");
+        }
+    }
+
+    @Test
+    public void testCreatingCollections() {
+        Assert.assertEquals(ArrayList.class, Binder.createCollection(List.class).getClass());
+        Assert.assertEquals(LinkedList.class, Binder.createCollection(LinkedList.class).getClass());
+
+        Assert.assertEquals(HashSet.class, Binder.createCollection(Set.class).getClass());
+        Assert.assertEquals(TreeSet.class, Binder.createCollection(TreeSet.class).getClass());
+
+
+        Assert.assertEquals(HashMap.class, Binder.createMap(Map.class).getClass());
+        Assert.assertEquals(TreeMap.class, Binder.createMap(TreeMap.class).getClass());
+
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.createCollection(CustomList.class);
+            }
+        }, WrappedException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class " +
+                "com.wizzardo.tools.json.JsonTest$CustomList with modifiers \"private\"");
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.createCollection(NoSuchMethodExceptionTest.class);
+            }
+        }, WrappedException.class, "com.wizzardo.tools.json.JsonTest$NoSuchMethodExceptionTest.<init>()");
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.createCollection(ExceptionInConstructor.class);
+            }
+        }, WrappedException.class, null);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.createCollection(InstantiationExceptionTest.class);
+            }
+        }, WrappedException.class, null);
     }
 
     private void testException(Runnable closure, Class exceptionClass, String message) {

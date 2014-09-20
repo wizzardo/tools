@@ -324,15 +324,7 @@ public class Binder {
                     c.setAccessible(true);
                     cachedConstructors.put(clazz, c);
                 }
-                try {
-                    return (T) c.newInstance();
-                } catch (InstantiationException e) {
-                    throw new WrappedException(e);
-                } catch (IllegalAccessException e) {
-                    throw new WrappedException(e);
-                } catch (InvocationTargetException e) {
-                    throw new WrappedException(e);
-                }
+                return (T) createInstance(c);
             }
             case ARRAY: {
                 Object array = createArray(clazz, 0);
@@ -448,7 +440,7 @@ public class Binder {
         else if (Date.class.isAssignableFrom(clazz))
             return dateSerializer;
         else if (Array.class == clazz || clazz.isArray()) {
-            clazz = clazz.getComponentType();
+            clazz = getArrayType(clazz);
             if (clazz != null) {
                 if (clazz.isPrimitive()) {
                     if (clazz == int.class)
@@ -587,44 +579,43 @@ public class Binder {
 
     static Collection createCollection(Class clazz) {
         Constructor c = cachedConstructors.get(clazz);
-        try {
-            if (c == null) {
-                if (clazz == List.class) {
-                    c = ArrayList.class.getDeclaredConstructor();
-                } else if (clazz == Set.class) {
-                    c = HashSet.class.getDeclaredConstructor();
-                } else {
-                    c = clazz.getDeclaredConstructor();
-                }
-                cachedConstructors.put(clazz, c);
-            }
-            return (Collection) c.newInstance();
-        } catch (IllegalAccessException e) {
-            throw new WrappedException(e);
-        } catch (NoSuchMethodException e) {
-            throw new WrappedException(e);
-        } catch (InstantiationException e) {
-            throw new WrappedException(e);
-        } catch (InvocationTargetException e) {
-            throw new WrappedException(e);
+        if (c == null) {
+            if (clazz == List.class)
+                c = initDefaultConstructor(ArrayList.class);
+            else if (clazz == Set.class)
+                c = initDefaultConstructor(HashSet.class);
+            else
+                c = initDefaultConstructor(clazz);
         }
+        return (Collection) createInstance(c);
     }
 
     static Map createMap(Class clazz) {
         Constructor c = cachedConstructors.get(clazz);
+        if (c == null) {
+            if (clazz == Map.class)
+                c = initDefaultConstructor(HashMap.class);
+            else
+                c = initDefaultConstructor(clazz);
+        }
+        return (Map) createInstance(c);
+    }
+
+    private static Constructor initDefaultConstructor(Class clazz) {
+        Constructor c;
         try {
-            if (c == null) {
-                if (clazz == Map.class) {
-                    c = HashMap.class.getDeclaredConstructor();
-                } else {
-                    c = clazz.getDeclaredConstructor();
-                }
-                cachedConstructors.put(clazz, c);
-            }
-            return (Map) c.newInstance();
-        } catch (IllegalAccessException e) {
-            throw new WrappedException(e);
+            c = clazz.getDeclaredConstructor();
+            cachedConstructors.put(clazz, c);
         } catch (NoSuchMethodException e) {
+            throw new WrappedException(e);
+        }
+        return c;
+    }
+
+    private static Object createInstance(Constructor c) {
+        try {
+            return c.newInstance();
+        } catch (IllegalAccessException e) {
             throw new WrappedException(e);
         } catch (InstantiationException e) {
             throw new WrappedException(e);
@@ -634,7 +625,7 @@ public class Binder {
     }
 
     static Object createArray(Class clazz, int size) {
-        return createArrayByComponentType(clazz.getComponentType(), size);
+        return createArrayByComponentType(getArrayType(clazz), size);
     }
 
     static Object createArrayByComponentType(Class clazz, int size) {
@@ -716,8 +707,8 @@ public class Binder {
         if (generic != null && generic.typeParameters.length == 1) {
             serializer = generic.typeParameters[0].serializer;
             inner = generic.typeParameters[0];
-        } else if (arr.getClass().getComponentType() != Object.class)
-            serializer = classToSerializer(arr.getClass().getComponentType());
+        } else if (getArrayType(arr.getClass()) != Object.class)
+            serializer = classToSerializer(getArrayType(arr.getClass()));
 
         sb.append('[');
         if (serializer != null)
