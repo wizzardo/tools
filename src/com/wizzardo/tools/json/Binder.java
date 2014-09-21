@@ -385,32 +385,6 @@ public class Binder {
             return false;
 
         fieldInfo.setter.set(object, value);
-//        Field field = fieldInfo.field;
-//
-//        try {
-//            switch (fieldInfo.serializer) {
-//                case STRING:
-//                case NUMBER_BOOLEAN:
-//                    fieldInfo.setter.set(object, value);
-////                    field.set(object, JsonItem.getAs(value, field.getType()));
-////                    JsonItem.setField(value, field,object);
-//                    break;
-//                case ENUM:
-//                    if (value == null)
-//                        field.set(object, value);
-//                    else {
-////                        Class c = field.getType();
-////                        field.set(object, Enum.valueOf(c, value.asString()));
-//                        fieldInfo.setter.set(object, value);
-//                    }
-//                    break;
-//                default:
-////                    field.set(object, value);
-//                    fieldInfo.setter.set(object, value);
-//            }
-//        } catch (IllegalAccessException e) {
-//            throw new WrappedException(e);
-//        }
         return true;
     }
 
@@ -489,92 +463,6 @@ public class Binder {
             return enumSerializer;
         else
             return objectSerializer;
-    }
-
-    public static <T> T fromJSON(Class<T> clazz, JsonItem json) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
-        return fromJSON(clazz, json, null);
-    }
-
-    public static <T> T fromJSON(Class<T> clazz, JsonItem json, Type generic) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
-        if (clazz == null || json == null) {
-            return null;
-        }
-
-        Serializer serializer = classToSerializer(clazz);
-
-        switch (serializer.type) {
-            case STRING:
-            case NUMBER_BOOLEAN: {
-                return json.getAs(clazz);
-            }
-            case OBJECT: {
-                T instance = null;
-                Constructor c = cachedConstructors.get(clazz);
-                if (c == null) {
-                    c = clazz.getDeclaredConstructor();
-                    c.setAccessible(true);
-                    cachedConstructors.put(clazz, c);
-                }
-                instance = (T) c.newInstance();
-
-                for (FieldInfo info : getFields(clazz).values()) {
-                    Field field = info.field;
-                    SerializerType s = info.serializer.type;
-                    JsonObject jsonObject = json.asJsonObject();
-                    JsonItem item = jsonObject.get(field.getName());
-                    if (item != null)
-                        switch (s) {
-                            case STRING:
-                            case NUMBER_BOOLEAN:
-                            case ARRAY:
-                                field.set(instance, fromJSON(field.getType(), item));
-                                break;
-                            case COLLECTION:
-                                field.set(instance, fromJSON(field.getType(), item, field.getGenericType()));
-                                break;
-                            default:
-                                field.set(instance, fromJSON(field.getType(), item));
-                        }
-
-                }
-
-                return instance;
-            }
-            case ARRAY: {
-                Object array = createArray(clazz, json.asJsonArray().size());
-                Class type = getArrayType(clazz);
-                JsonArray jsonArray = json.asJsonArray();
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    Array.set(array, i, fromJSON(type, jsonArray.get(i)));
-                }
-                return (T) array;
-            }
-            case COLLECTION: {
-                Collection collection = createCollection(clazz);
-                Type type = null;
-                if (generic != null && generic instanceof ParameterizedType)
-                    type = ((ParameterizedType) generic).getActualTypeArguments()[0];
-
-                Class cl = null;
-                Type inner = null;
-                if (type != null)
-                    if (type instanceof ParameterizedType) {
-                        cl = (Class) ((ParameterizedType) type).getRawType();
-                        inner = type;
-                    } else
-                        cl = (Class) type;
-
-                if (cl == null)
-                    cl = String.class;
-
-                for (JsonItem item : json.asJsonArray()) {
-                    collection.add(fromJSON(cl, item, inner));
-                }
-                return (T) collection;
-            }
-        }
-
-        return null;
     }
 
     static Collection createCollection(Class clazz) {
