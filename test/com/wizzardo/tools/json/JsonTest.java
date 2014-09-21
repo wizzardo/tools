@@ -619,6 +619,13 @@ public class JsonTest {
         arraySerializeTest2.strings[0].add("bar");
         Assert.assertEquals("{\"strings\":[[\"foo\",\"bar\"]]}", JsonTools.serialize(arraySerializeTest2));
 
+        arraySerializeTest2 = new ArraySerializeTest2();
+        arraySerializeTest2.strings = new List[1];
+        arraySerializeTest2.strings[0] = new ArrayList<String>();
+        arraySerializeTest2.strings[0].add(null);
+        arraySerializeTest2.strings[0].add(null);
+        Assert.assertEquals("{\"strings\":[[null,null]]}", JsonTools.serialize(arraySerializeTest2));
+
         ArraySerializeTest3 arraySerializeTest3 = new ArraySerializeTest3();
         arraySerializeTest3.strings = new Map[1];
         arraySerializeTest3.strings[0] = new HashMap<String, Long>();
