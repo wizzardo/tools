@@ -675,7 +675,7 @@ public class JsonTest {
                 } catch (NoSuchFieldException ignored) {
                 }
             }
-        }, WrappedException.class, "");
+        }, WrappedException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class com.wizzardo.tools.json.JsonTest$IllegalAccessTest with modifiers \"private\"");
     }
 
     @Test
