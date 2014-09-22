@@ -542,6 +542,19 @@ public class JsonTest {
         Map<String, Long>[] strings;
     }
 
+    static class SerializeTest {
+        SerializeTestInner inner;
+    }
+
+    static class SerializeTestInner {
+        String name;
+        int counter;
+    }
+
+    static class IllegalAccessTest {
+        private String value;
+    }
+
     @Test
     public void serializeTest() {
         Map data = new LinkedHashMap();
@@ -646,6 +659,23 @@ public class JsonTest {
         Assert.assertEquals("[null,null]", jsonArray.toString());
 
         Assert.assertEquals("null", JsonTools.serialize(null));
+
+        SerializeTest serializeTest = new SerializeTest();
+        serializeTest.inner = new SerializeTestInner();
+        serializeTest.inner.counter = 1;
+        serializeTest.inner.name = "foo";
+        Assert.assertEquals("{\"inner\":{\"name\":\"foo\",\"counter\":1}}", JsonTools.serialize(serializeTest));
+
+        final IllegalAccessTest illegalAccessTest = new IllegalAccessTest();
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Binder.get(IllegalAccessTest.class.getDeclaredField("value"), illegalAccessTest);
+                } catch (NoSuchFieldException ignored) {
+                }
+            }
+        }, WrappedException.class, "");
     }
 
     @Test

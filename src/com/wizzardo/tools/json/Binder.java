@@ -252,17 +252,13 @@ public class Binder {
 
             for (FieldInfo info : list.values()) {
                 Field field = info.field;
-                try {
-                    if (comma)
-                        sb.append(',');
-                    else
-                        comma = true;
+                if (comma)
+                    sb.append(',');
+                else
+                    comma = true;
 
-                    appendName(field.getName(), sb, false);
-                    info.serializer.checkNullAndSerialize(field.get(src), sb, info.generic);
-                } catch (IllegalAccessException e) {
-                    throw new WrappedException(e);
-                }
+                appendName(field.getName(), sb, false);
+                info.serializer.checkNullAndSerialize(get(field, src), sb, info.generic);
             }
             sb.append('}');
         }
@@ -276,6 +272,13 @@ public class Binder {
     private static Serializer mapArraySerializer = new ArrayBoxedSerializer(mapSerializer);
     private static Serializer arrayArraySerializer = new ArrayBoxedSerializer(arraySerializer);
 
+    static Object get(Field field, Object obj) {
+        try {
+            return field.get(obj);
+        } catch (IllegalAccessException e) {
+            throw new WrappedException(e);
+        }
+    }
 
     static enum SerializerType {
         STRING,
@@ -303,43 +306,6 @@ public class Binder {
             return new JsonArrayBinder();
         else
             return new JavaArrayBinder(generic);
-    }
-
-    static <T> T createInstance(Class<T> clazz) {
-        SerializerType serializer = classToSerializer(clazz).type;
-
-        switch (serializer) {
-            case STRING:
-            case NUMBER_BOOLEAN: {
-                throw new IllegalArgumentException("can't create an instance of " + clazz);
-            }
-            case OBJECT: {
-                Constructor c = cachedConstructors.get(clazz);
-                if (c == null) {
-                    try {
-                        c = clazz.getDeclaredConstructor();
-                    } catch (NoSuchMethodException e) {
-                        throw new WrappedException(e);
-                    }
-                    c.setAccessible(true);
-                    cachedConstructors.put(clazz, c);
-                }
-                return (T) createInstance(c);
-            }
-            case ARRAY: {
-                Object array = createArray(clazz, 0);
-                return (T) array;
-            }
-            case COLLECTION: {
-                Collection collection = createCollection(clazz);
-                return (T) collection;
-            }
-            case MAP: {
-                Map map = createMap(clazz);
-                return (T) map;
-            }
-        }
-        return null;
     }
 
     public static Map<String, FieldInfo> getFields(Class clazz) {
@@ -465,6 +431,17 @@ public class Binder {
             return objectSerializer;
     }
 
+    static Object createObject(Class clazz) {
+        Constructor c = cachedConstructors.get(clazz);
+        if (c == null) {
+            c = initDefaultConstructor(clazz);
+            c.setAccessible(true);
+        }
+
+        return createInstance(c);
+    }
+
+
     static Collection createCollection(Class clazz) {
         Constructor c = cachedConstructors.get(clazz);
         if (c == null) {
@@ -510,10 +487,6 @@ public class Binder {
         } catch (InvocationTargetException e) {
             throw new WrappedException(e);
         }
-    }
-
-    static Object createArray(Class clazz, int size) {
-        return createArrayByComponentType(getArrayType(clazz), size);
     }
 
     static Object createArrayByComponentType(Class clazz, int size) {

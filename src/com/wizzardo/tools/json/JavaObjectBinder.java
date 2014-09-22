@@ -16,8 +16,12 @@ class JavaObjectBinder implements JsonBinder {
     public JavaObjectBinder(Generic generic) {
         this.clazz = generic.clazz;
         this.generic = generic;
-        object = Binder.createInstance(clazz);
+        object = createInstance(clazz);
         fields = Binder.getFields(clazz);
+    }
+
+    protected Object createInstance(Class clazz) {
+        return Binder.createObject(clazz);
     }
 
     private FieldInfo getField() {

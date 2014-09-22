@@ -18,6 +18,11 @@ public class JavaMapBinder extends JavaObjectBinder {
         valueIsMap = Map.class.isAssignableFrom(type[1].clazz);
     }
 
+    @Override
+    protected Map createInstance(Class clazz) {
+        return Binder.createMap(clazz);
+    }
+
     private Generic[] getTypes(Generic generic) {
         if (generic == null)
             return new Generic[]{new Generic(Object.class), new Generic(Object.class)};
