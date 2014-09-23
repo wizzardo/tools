@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PipedOutputStream;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -981,7 +982,9 @@ public class JsonTest {
         Assert.assertEquals((byte) 6, aClass.bb);
         Assert.assertEquals((short) 7, aClass.s);
 
-        JsonFieldSetter.BooleanSetter booleanSetter = new JsonFieldSetter.BooleanSetter(FieldSetterTestClass.class.getDeclaredField("b"));
+        Field f = FieldSetterTestClass.class.getDeclaredField("b");
+        f.setAccessible(true);
+        JsonFieldSetter.BooleanSetter booleanSetter = new JsonFieldSetter.BooleanSetter(f);
         booleanSetter.set(aClass, new JsonItem("True"));
         Assert.assertEquals(true, aClass.b);
     }
