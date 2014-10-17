@@ -46,11 +46,13 @@ public class CacheTest {
 
         try {
             cache.get(1);
+            assert false;
         } catch (Exception e) {
         }
 
         try {
             cache.get(1);
+            assert false;
         } catch (Exception e) {
         }
 
@@ -77,5 +79,26 @@ public class CacheTest {
 
         Thread.sleep(20);
         Assert.assertEquals(0, cache.size());
+    }
+
+    @Test
+    public void testCustomTTL() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        });
+
+        cache.get("foo");
+
+        String bar = "BAR";
+        cache.put("bar", bar, 500);
+
+        Assert.assertTrue(bar == cache.get("bar"));
+
+        Thread.sleep(550);
+
+        Assert.assertTrue(bar != cache.get("bar"));
     }
 }
