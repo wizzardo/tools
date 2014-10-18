@@ -103,7 +103,7 @@ public class Cache<K, V> {
             if (c == null || destroyed) {
                 return null;
             }
-            Holder<K, V> ft = new Holder<K, V>(key);
+            Holder<K, V> ft = new Holder<K, V>(key, timings.peek());
             f = map.putIfAbsent(key, ft);
             boolean failed = true;
             if (f == null) {
@@ -130,9 +130,9 @@ public class Cache<K, V> {
     }
 
     public void put(final K key, final V value, long ttl) {
-        Holder<K, V> h = new Holder<K, V>(key, value);
+        Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
         map.put(key, h);
-        updateTimingCache(h, findTimingsHolder(ttl));
+        updateTimingCache(h);
     }
 
     public boolean putIfAbsent(final K key, final V value) {
@@ -140,9 +140,9 @@ public class Cache<K, V> {
     }
 
     public boolean putIfAbsent(final K key, final V value, long ttl) {
-        Holder<K, V> h = new Holder<K, V>(key, value);
+        Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
         if (map.putIfAbsent(key, h) == null) {
-            updateTimingCache(h, findTimingsHolder(ttl));
+            updateTimingCache(h);
             return true;
         }
         return false;
@@ -159,10 +159,7 @@ public class Cache<K, V> {
     }
 
     private void updateTimingCache(final Holder<K, V> key) {
-        updateTimingCache(key, timings.peek());
-    }
-
-    private void updateTimingCache(final Holder<K, V> key, TimingsHolder timingsHolder) {
+        TimingsHolder timingsHolder = key.getTimingsHolder();
         if (timingsHolder.ttl <= 0)
             return;
 
@@ -201,7 +198,7 @@ public class Cache<K, V> {
         return destroyed;
     }
 
-    private class TimingsHolder {
+    class TimingsHolder {
         Queue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
         long ttl;
 

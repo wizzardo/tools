@@ -10,14 +10,17 @@ class Holder<K, V> {
     protected K k;
     protected volatile boolean done = false;
     protected long validUntil;
+    private Cache.TimingsHolder timingsHolder;
 
-    public Holder(K k) {
+    public Holder(K k, Cache.TimingsHolder timingsHolder) {
         this.k = k;
+        this.timingsHolder = timingsHolder;
     }
 
-    public Holder(K k, V v) {
+    public Holder(K k, V v, Cache.TimingsHolder timingsHolder) {
         this.v = v;
         this.k = k;
+        this.timingsHolder = timingsHolder;
         done = true;
     }
 
@@ -56,5 +59,9 @@ class Holder<K, V> {
 
     public K getKey() {
         return k;
+    }
+
+    Cache.TimingsHolder getTimingsHolder() {
+        return timingsHolder;
     }
 }
