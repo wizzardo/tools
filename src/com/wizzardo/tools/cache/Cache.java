@@ -2,6 +2,7 @@ package com.wizzardo.tools.cache;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -11,7 +12,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Cache<K, V> {
 
     final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
-    final ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
+    final Queue<TimingsHolder> timings = new ConcurrentLinkedQueue<TimingsHolder>();
     private long ttl;
     private Computable<? super K, ? extends V> computable;
     private volatile boolean removeOnException = true;
@@ -20,8 +21,8 @@ public class Cache<K, V> {
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
         this.ttl = ttlSec * 1000;
         this.computable = computable;
-        if (ttl > 0)
-            CacheCleaner.addCache(this);
+        timings.add(new TimingsHolder(ttl));
+        CacheCleaner.addCache(this);
     }
 
     public Cache(long ttlSec) {
@@ -63,16 +64,24 @@ public class Cache<K, V> {
     long refresh(long time) {
         Map.Entry<Holder<K, V>, Long> entry;
         Holder<K, V> h;
+        long nextWakeUp = Long.MAX_VALUE;
 
-        while ((entry = timings.peek()) != null && entry.getValue().compareTo(time) <= 0) {
-            h = timings.poll().getKey();
-            if (h.validUntil <= time) {
+        for (TimingsHolder timingsHolder : timings) {
+            Queue<Entry<Holder<K, V>, Long>> timings = timingsHolder.timings;
+
+            while ((entry = timings.peek()) != null && entry.getValue().compareTo(time) <= 0) {
+                h = timings.poll().getKey();
+                if (h.validUntil <= time) {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
-                if (map.remove(h.getKey(), h))
-                    onRemoveItem(h.getKey(), h.get());
+                    if (map.remove(h.getKey(), h))
+                        onRemoveItem(h.getKey(), h.get());
+                }
             }
+            if (entry != null)
+                nextWakeUp = Math.min(nextWakeUp, entry.getValue());
         }
-        return entry == null ? -1 : entry.getValue();
+
+        return nextWakeUp;
     }
 
     public void destroy() {
@@ -123,7 +132,7 @@ public class Cache<K, V> {
     public void put(final K key, final V value, long ttl) {
         Holder<K, V> h = new Holder<K, V>(key, value);
         map.put(key, h);
-        updateTimingCache(h, ttl);
+        updateTimingCache(h, findTimingsHolder(ttl));
     }
 
     public boolean putIfAbsent(final K key, final V value) {
@@ -133,26 +142,36 @@ public class Cache<K, V> {
     public boolean putIfAbsent(final K key, final V value, long ttl) {
         Holder<K, V> h = new Holder<K, V>(key, value);
         if (map.putIfAbsent(key, h) == null) {
-            updateTimingCache(h, ttl);
+            updateTimingCache(h, findTimingsHolder(ttl));
             return true;
         }
         return false;
     }
 
-    private void updateTimingCache(final Holder<K, V> key) {
-        updateTimingCache(key, ttl);
+    private TimingsHolder findTimingsHolder(long ttl) {
+        for (TimingsHolder holder : timings)
+            if (holder.ttl == ttl)
+                return holder;
+
+        TimingsHolder holder = new TimingsHolder(ttl);
+        timings.add(holder);
+        return holder;
     }
 
-    private void updateTimingCache(final Holder<K, V> key, long ttl) {
-        if (ttl <= 0)
+    private void updateTimingCache(final Holder<K, V> key) {
+        updateTimingCache(key, timings.peek());
+    }
+
+    private void updateTimingCache(final Holder<K, V> key, TimingsHolder timingsHolder) {
+        if (timingsHolder.ttl <= 0)
             return;
 
-        final Long timing = ttl + System.currentTimeMillis();
+        final Long timing = timingsHolder.ttl + System.currentTimeMillis();
         key.setValidUntil(timing);
 
         CacheCleaner.updateWakeUp(timing);
 
-        timings.add(new Entry<Holder<K, V>, Long>() {
+        timingsHolder.timings.add(new Entry<Holder<K, V>, Long>() {
             @Override
             public Holder<K, V> getKey() {
                 return key;
@@ -180,5 +199,14 @@ public class Cache<K, V> {
 
     public boolean isDestroyed() {
         return destroyed;
+    }
+
+    private class TimingsHolder {
+        Queue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
+        long ttl;
+
+        private TimingsHolder(long ttl) {
+            this.ttl = ttl;
+        }
     }
 }
