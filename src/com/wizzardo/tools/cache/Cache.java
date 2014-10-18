@@ -11,8 +11,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class Cache<K, V> {
 
-    final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
-    final Queue<TimingsHolder> timings = new ConcurrentLinkedQueue<TimingsHolder>();
+    private final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
+    private final Queue<TimingsHolder> timings = new ConcurrentLinkedQueue<TimingsHolder>();
     private long ttl;
     private Computable<? super K, ? extends V> computable;
     private volatile boolean removeOnException = true;
