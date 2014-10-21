@@ -198,6 +198,18 @@ public class Cache<K, V> {
         return destroyed;
     }
 
+    public long getTTL() {
+        return ttl;
+    }
+
+    public long getTTL(K k) {
+        Holder<K, V> holder = map.get(k);
+        if (holder != null)
+            return holder.getTimingsHolder().ttl;
+
+        return ttl;
+    }
+
     class TimingsHolder {
         Queue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
         long ttl;
