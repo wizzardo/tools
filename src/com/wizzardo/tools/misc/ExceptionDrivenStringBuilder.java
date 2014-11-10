@@ -4,7 +4,7 @@ package com.wizzardo.tools.misc;
  * @author: wizzardo
  * Date: 8/24/14
  */
-public class ExceptionDrivenStringBuilder {
+public class ExceptionDrivenStringBuilder implements Appendable {
     private int limit = 16;
     private char[] buffer = new char[limit];
     private int length = 0;
@@ -16,6 +16,22 @@ public class ExceptionDrivenStringBuilder {
             buffer = temp;
             limit = length;
         }
+    }
+
+    @Override
+    public ExceptionDrivenStringBuilder append(CharSequence csq) {
+        return append(csq, 0, csq == null ? 4 : csq.length());
+    }
+
+    @Override
+    public ExceptionDrivenStringBuilder append(CharSequence csq, int start, int end) {
+        if (csq == null)
+            return append("null", start, end);
+
+        for (int i = start; i < end; i++) {
+            append(csq.charAt(i));
+        }
+        return this;
     }
 
     public ExceptionDrivenStringBuilder append(char ch) {
