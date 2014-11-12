@@ -7,7 +7,7 @@ package com.wizzardo.tools.misc;
 public class NumberToChars {
     final static int DELIMITER = 1000000000;
     final static long DELIMITER_LONG = 1000000000000000000l;
-    final static long DELIMITER_LONG_2X = 2147483647000000000l;
+    final static long DELIMITER_LONG_2X = 2147483648000000000l;
     final static char[] THOUSAND;
 
     static {
@@ -90,7 +90,7 @@ public class NumberToChars {
         }
 
         if (l > DELIMITER) {
-            if (l > DELIMITER_LONG_2X) {
+            if (l >= DELIMITER_LONG_2X) {
                 int half = (int) (l / DELIMITER_LONG);
                 getChars(half, offset + 1, buf);
 
