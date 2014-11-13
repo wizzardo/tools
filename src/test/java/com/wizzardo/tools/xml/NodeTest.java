@@ -71,7 +71,7 @@ public class NodeTest {
     @Test
     public void html() throws IOException {
         String s = "";
-        for (File f : new File("test/resources/xml").listFiles()) {
+        for (File f : new File("src/test/resources/xml").listFiles()) {
             System.out.println("parsing: "+f);
             Node.parse(f, true);
         }
