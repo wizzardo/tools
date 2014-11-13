@@ -18,9 +18,6 @@ dependencies {
     testCompile 'com.google.code.gson:gson:2.2.4'
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
-}
 task createPom {
     pom {
         project {
