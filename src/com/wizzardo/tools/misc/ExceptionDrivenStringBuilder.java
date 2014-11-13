@@ -85,11 +85,23 @@ public class ExceptionDrivenStringBuilder implements Appendable {
     }
 
     public ExceptionDrivenStringBuilder append(int i) {
-        return append(String.valueOf(i));
+        try {
+            length = NumberToChars.toChars(i, buffer, length);
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            ensureCapacity(length + 11);
+            length = NumberToChars.toChars(i, buffer, length);
+        }
+        return this;
     }
 
     public ExceptionDrivenStringBuilder append(long i) {
-        return append(String.valueOf(i));
+        try {
+            length = NumberToChars.toChars(i, buffer, length);
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            ensureCapacity(length + 20);
+            length = NumberToChars.toChars(i, buffer, length);
+        }
+        return this;
     }
 
     public ExceptionDrivenStringBuilder append(float i) {
