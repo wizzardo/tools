@@ -5,6 +5,9 @@ package com.wizzardo.tools.misc;
  * Date: 8/24/14
  */
 public class ExceptionDrivenStringBuilder implements Appendable {
+    private static final char[] CHARS_TRUE = new char[]{'t', 'r', 'u', 'e'};
+    private static final char[] CHARS_FALSE = new char[]{'f', 'a', 'l', 's', 'e'};
+
     private int limit = 16;
     private char[] buffer = new char[limit];
     private int length = 0;
@@ -101,6 +104,14 @@ public class ExceptionDrivenStringBuilder implements Appendable {
             ensureCapacity(length + 20);
             length = NumberToChars.toChars(i, buffer, length);
         }
+        return this;
+    }
+
+    public ExceptionDrivenStringBuilder append(boolean b) {
+        if (b)
+            append(CHARS_TRUE);
+        else
+            append(CHARS_FALSE);
         return this;
     }
 

@@ -21,6 +21,26 @@ abstract class Appender {
 
     public abstract void append(char s);
 
+    public void append(int s) {
+        append(String.valueOf(s));
+    }
+
+    public void append(long s) {
+        append(String.valueOf(s));
+    }
+
+    public void append(boolean s) {
+        append(String.valueOf(s));
+    }
+
+    public void append(float s) {
+        append(String.valueOf(s));
+    }
+
+    public void append(double s) {
+        append(String.valueOf(s));
+    }
+
     public abstract void flush();
 
     public void append(Object ob) {
@@ -79,6 +99,31 @@ abstract class Appender {
         }
 
         @Override
+        public void append(int s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(long s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(boolean s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(float s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(double s) {
+            sb.append(s);
+        }
+
+        @Override
         public void flush() {
         }
 
@@ -112,6 +157,31 @@ abstract class Appender {
 
         @Override
         public void append(char s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(int s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(long s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(boolean s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(float s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(double s) {
             sb.append(s);
         }
 

@@ -104,7 +104,7 @@ public class Binder {
             appender.append('[');
             for (int i = 0; i < length; i++) {
                 if (i > 0) appender.append(',');
-                appender.append(String.valueOf(arr[i]));
+                appender.append(arr[i]);
             }
             appender.append(']');
         }
@@ -118,7 +118,7 @@ public class Binder {
             appender.append('[');
             for (int i = 0; i < length; i++) {
                 if (i > 0) appender.append(',');
-                appender.append(String.valueOf(arr[i]));
+                appender.append(arr[i]);
             }
             appender.append(']');
         }
@@ -132,7 +132,7 @@ public class Binder {
             appender.append('[');
             for (int i = 0; i < length; i++) {
                 if (i > 0) appender.append(',');
-                appender.append(String.valueOf(arr[i]));
+                appender.append(arr[i]);
             }
             appender.append(']');
         }
@@ -146,7 +146,7 @@ public class Binder {
             appender.append('[');
             for (int i = 0; i < length; i++) {
                 if (i > 0) appender.append(',');
-                appender.append(String.valueOf(arr[i]));
+                appender.append(arr[i]);
             }
             appender.append(']');
         }
@@ -160,7 +160,7 @@ public class Binder {
             appender.append('[');
             for (int i = 0; i < length; i++) {
                 if (i > 0) appender.append(',');
-                appender.append(String.valueOf(arr[i]));
+                appender.append(arr[i]);
             }
             appender.append(']');
         }
@@ -174,7 +174,7 @@ public class Binder {
             appender.append('[');
             for (int i = 0; i < length; i++) {
                 if (i > 0) appender.append(',');
-                appender.append(String.valueOf(arr[i]));
+                appender.append(arr[i]);
             }
             appender.append(']');
         }
@@ -188,7 +188,7 @@ public class Binder {
             appender.append('[');
             for (int i = 0; i < length; i++) {
                 if (i > 0) appender.append(',');
-                appender.append(String.valueOf(arr[i]));
+                appender.append(arr[i]);
             }
             appender.append(']');
         }
