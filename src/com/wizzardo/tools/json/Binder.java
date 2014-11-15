@@ -2,6 +2,7 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.DateIso8601;
 import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.reflection.FieldReflection;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -34,7 +35,24 @@ public class Binder {
 
         }
 
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            checkNullAndSerialize(field.getObject(parent), appender, generic);
+        }
+
         abstract public void serialize(Object object, Appender appender, Generic generic);
+    }
+
+    private static abstract class PrimitiveSerializer extends Serializer {
+        protected PrimitiveSerializer() {
+            super(SerializerType.NUMBER_BOOLEAN);
+        }
+
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            throw new IllegalStateException("PrimitiveSerializer can serialize only primitives");
+        }
+
+        public abstract void serialize(Object parent, FieldReflection field, Appender appender, Generic generic);
     }
 
     private static class ArrayBoxedSerializer extends Serializer {
@@ -63,6 +81,57 @@ public class Binder {
         }
     }
 
+    private static PrimitiveSerializer intSerializer = new PrimitiveSerializer() {
+        @Override
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            appender.append(field.getInteger(parent));
+        }
+    };
+    private static PrimitiveSerializer longSerializer = new PrimitiveSerializer() {
+        @Override
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            appender.append(field.getLong(parent));
+        }
+    };
+    private static PrimitiveSerializer shortSerializer = new PrimitiveSerializer() {
+        @Override
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            appender.append(field.getShort(parent));
+        }
+    };
+    private static PrimitiveSerializer byteSerializer = new PrimitiveSerializer() {
+        @Override
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            appender.append(field.getByte(parent));
+        }
+    };
+    private static PrimitiveSerializer charSerializer = new PrimitiveSerializer() {
+        @Override
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            appender.append('"');
+            appender.append(field.getChar(parent));
+            appender.append('"');
+        }
+    };
+    private static PrimitiveSerializer booleanSerializer = new PrimitiveSerializer() {
+        @Override
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            appender.append(field.getBoolean(parent));
+        }
+    };
+    private static PrimitiveSerializer floatSerializer = new PrimitiveSerializer() {
+        @Override
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            appender.append(field.getFloat(parent));
+        }
+    };
+    private static PrimitiveSerializer doubleSerializer = new PrimitiveSerializer() {
+        @Override
+        public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
+            appender.append(field.getDouble(parent));
+        }
+    };
+
     private static Serializer stringSerializer = new Serializer(SerializerType.STRING) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
@@ -77,10 +146,34 @@ public class Binder {
             appender.append('"');
         }
     };
-    private static Serializer numberBooleanSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+    private static Serializer simpleSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appendNumberOrBoolean(object, appender);
+        }
+    };
+    private static Serializer intNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appender.append(((Number) object).intValue());
+        }
+    };
+    private static Serializer longNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appender.append(((Number) object).longValue());
+        }
+    };
+    private static Serializer floatNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appender.append(((Number) object).floatValue());
+        }
+    };
+    private static Serializer doubleNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+        @Override
+        public void serialize(Object object, Appender appender, Generic generic) {
+            appender.append(((Number) object).doubleValue());
         }
     };
     private static Serializer collectionSerializer = new Serializer(SerializerType.COLLECTION) {
@@ -258,12 +351,12 @@ public class Binder {
                     comma = true;
 
                 appendName(field.getName(), sb, false);
-                info.serializer.checkNullAndSerialize(get(field, src), sb, info.generic);
+                info.serializer.serialize(src, info.setter, sb, info.generic);
             }
             sb.append('}');
         }
     };
-    private static Serializer numberBooleanBoxedSerializer = new ArrayBoxedSerializer(numberBooleanSerializer);
+    private static Serializer simpleBoxedSerializer = new ArrayBoxedSerializer(simpleSerializer);
     private static Serializer stringArraySerializer = new ArrayBoxedSerializer(stringSerializer);
     private static Serializer charArraySerializer = new ArrayBoxedSerializer(characterSerializer);
     private static Serializer dateArraySerializer = new ArrayBoxedSerializer(dateSerializer);
@@ -271,14 +364,6 @@ public class Binder {
     private static Serializer collectionArraySerializer = new ArrayBoxedSerializer(collectionSerializer);
     private static Serializer mapArraySerializer = new ArrayBoxedSerializer(mapSerializer);
     private static Serializer arrayArraySerializer = new ArrayBoxedSerializer(arraySerializer);
-
-    static Object get(Field field, Object obj) {
-        try {
-            return field.get(obj);
-        } catch (IllegalAccessException e) {
-            throw new WrappedException(e);
-        }
-    }
 
     static enum SerializerType {
         STRING,
@@ -371,9 +456,38 @@ public class Binder {
     static Serializer classToSerializerWithoutCache(Class clazz) {
         if (String.class == clazz)
             return stringSerializer;
-        else if (clazz.isPrimitive() || Boolean.class == clazz || Number.class.isAssignableFrom(clazz))
-            return numberBooleanSerializer;
-        else if (Collection.class.isAssignableFrom(clazz))
+        else if (clazz.isPrimitive() || Boolean.class == clazz || Number.class.isAssignableFrom(clazz) || Character.class == clazz) {
+            if (clazz.isPrimitive()) {
+                if (clazz == int.class)
+                    return intSerializer;
+                if (clazz == long.class)
+                    return longSerializer;
+                if (clazz == byte.class)
+                    return byteSerializer;
+                if (clazz == short.class)
+                    return shortSerializer;
+                if (clazz == char.class)
+                    return charSerializer;
+                if (clazz == float.class)
+                    return floatSerializer;
+                if (clazz == double.class)
+                    return doubleSerializer;
+                if (clazz == boolean.class)
+                    return booleanSerializer;
+            }
+            if (clazz == Integer.class || clazz == Byte.class || clazz == Short.class)
+                return intNumberSerializer;
+            if (clazz == Long.class)
+                return longNumberSerializer;
+            if (clazz == Float.class)
+                return floatNumberSerializer;
+            if (clazz == Double.class)
+                return doubleNumberSerializer;
+            if (clazz == Character.class)
+                return characterSerializer;
+
+            return simpleSerializer;
+        } else if (Collection.class.isAssignableFrom(clazz))
             return collectionSerializer;
         else if (Map.class.isAssignableFrom(clazz))
             return mapSerializer;
@@ -407,7 +521,7 @@ public class Binder {
                             clazz == Integer.class ||
                             clazz == Long.class ||
                             clazz == Boolean.class)
-                        return numberBooleanBoxedSerializer;
+                        return simpleBoxedSerializer;
                     if (clazz == Character.class)
                         return charArraySerializer;
                     if (clazz == String.class)
