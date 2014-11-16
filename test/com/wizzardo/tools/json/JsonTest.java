@@ -666,17 +666,6 @@ public class JsonTest {
         serializeTest.inner.counter = 1;
         serializeTest.inner.name = "foo";
         Assert.assertEquals("{\"inner\":{\"name\":\"foo\",\"counter\":1}}", JsonTools.serialize(serializeTest));
-
-        final IllegalAccessTest illegalAccessTest = new IllegalAccessTest();
-        testException(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Binder.get(IllegalAccessTest.class.getDeclaredField("value"), illegalAccessTest);
-                } catch (NoSuchFieldException ignored) {
-                }
-            }
-        }, WrappedException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class com.wizzardo.tools.json.JsonTest$IllegalAccessTest with modifiers \"private\"");
     }
 
     @Test
