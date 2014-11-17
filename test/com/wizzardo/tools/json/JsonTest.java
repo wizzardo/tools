@@ -978,6 +978,141 @@ public class JsonTest {
         Assert.assertEquals(true, aClass.b);
     }
 
+    static class IntPrimitiveClass {
+        int i;
+    }
+
+    static class LongPrimitiveClass {
+        long l;
+    }
+
+    static class BooleanPrimitiveClass {
+        boolean b;
+    }
+
+    static class FloatPrimitiveClass {
+        float f;
+    }
+
+    static class DoublePrimitiveClass {
+        double d;
+    }
+
+    static class ShortPrimitiveClass {
+        short s;
+    }
+
+    static class BytePrimitiveClass {
+        byte b;
+    }
+
+    static class CharPrimitiveClass {
+        char c;
+    }
+
+    @Test
+    public void primitivesTests() {
+        IntPrimitiveClass i = new IntPrimitiveClass();
+        i.i = 1;
+        Assert.assertEquals("{\"i\":1}", JsonTools.serialize(i));
+
+        LongPrimitiveClass l = new LongPrimitiveClass();
+        l.l = 1;
+        Assert.assertEquals("{\"l\":1}", JsonTools.serialize(l));
+
+        BooleanPrimitiveClass b = new BooleanPrimitiveClass();
+        b.b = true;
+        Assert.assertEquals("{\"b\":true}", JsonTools.serialize(b));
+
+        FloatPrimitiveClass f = new FloatPrimitiveClass();
+        f.f = 1.0f;
+        Assert.assertEquals("{\"f\":1.0}", JsonTools.serialize(f));
+
+        DoublePrimitiveClass d = new DoublePrimitiveClass();
+        d.d = 1.0;
+        Assert.assertEquals("{\"d\":1.0}", JsonTools.serialize(d));
+
+        ShortPrimitiveClass s = new ShortPrimitiveClass();
+        s.s = 1;
+        Assert.assertEquals("{\"s\":1}", JsonTools.serialize(s));
+
+        CharPrimitiveClass c = new CharPrimitiveClass();
+        c.c = '1';
+        Assert.assertEquals("{\"c\":\"1\"}", JsonTools.serialize(c));
+
+        BytePrimitiveClass bytePrimitiveClass = new BytePrimitiveClass();
+        bytePrimitiveClass.b = 1;
+        Assert.assertEquals("{\"b\":1}", JsonTools.serialize(bytePrimitiveClass));
+    }
+
+    @Test
+    public void primitivesTestsStringBuilder() {
+        StringBuilder sb = new StringBuilder();
+        IntPrimitiveClass i = new IntPrimitiveClass();
+        i.i = 1;
+        JsonTools.serialize(i, sb);
+        Assert.assertEquals("{\"i\":1}", sb.toString());
+        sb.setLength(0);
+
+        LongPrimitiveClass l = new LongPrimitiveClass();
+        l.l = 1;
+        JsonTools.serialize(l, sb);
+        Assert.assertEquals("{\"l\":1}", sb.toString());
+        sb.setLength(0);
+
+        BooleanPrimitiveClass b = new BooleanPrimitiveClass();
+        b.b = true;
+        JsonTools.serialize(b, sb);
+        Assert.assertEquals("{\"b\":true}", sb.toString());
+        sb.setLength(0);
+
+        FloatPrimitiveClass f = new FloatPrimitiveClass();
+        f.f = 1.0f;
+        JsonTools.serialize(f, sb);
+        Assert.assertEquals("{\"f\":1.0}", sb.toString());
+        sb.setLength(0);
+
+        DoublePrimitiveClass d = new DoublePrimitiveClass();
+        d.d = 1.0;
+        JsonTools.serialize(d, sb);
+        Assert.assertEquals("{\"d\":1.0}", sb.toString());
+        sb.setLength(0);
+    }
+
+    @Test
+    public void primitivesTestsOutputStream() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        IntPrimitiveClass i = new IntPrimitiveClass();
+        i.i = 1;
+        JsonTools.serialize(i, out);
+        Assert.assertEquals("{\"i\":1}", new String(out.toByteArray()));
+        out.reset();
+
+        LongPrimitiveClass l = new LongPrimitiveClass();
+        l.l = 1;
+        JsonTools.serialize(l, out);
+        Assert.assertEquals("{\"l\":1}", out.toString());
+        out.reset();
+
+        BooleanPrimitiveClass b = new BooleanPrimitiveClass();
+        b.b = true;
+        JsonTools.serialize(b, out);
+        Assert.assertEquals("{\"b\":true}", out.toString());
+        out.reset();
+
+        FloatPrimitiveClass f = new FloatPrimitiveClass();
+        f.f = 1.0f;
+        JsonTools.serialize(f, out);
+        Assert.assertEquals("{\"f\":1.0}", out.toString());
+        out.reset();
+
+        DoublePrimitiveClass d = new DoublePrimitiveClass();
+        d.d = 1.0;
+        JsonTools.serialize(d, out);
+        Assert.assertEquals("{\"d\":1.0}", out.toString());
+        out.reset();
+    }
+
     @Test
     public void appendersTests() {
         Appender appender;
