@@ -818,6 +818,13 @@ public class JsonTest {
                 new JsonArrayBinder().setTemporaryKey("key");
             }
         }, UnsupportedOperationException.class, "arrays has no keys");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.getField(IntPrimitiveClass.class, "i").serializer.serialize(null, null, null);
+            }
+        }, IllegalStateException.class, "PrimitiveSerializer can serialize only primitives");
     }
 
     @Test
@@ -1111,6 +1118,34 @@ public class JsonTest {
         JsonTools.serialize(d, out);
         Assert.assertEquals("{\"d\":1.0}", out.toString());
         out.reset();
+    }
+
+
+    static class FloatBoxedClass {
+        Float f;
+    }
+
+    static class DoubleBoxedClass {
+        Double d;
+    }
+
+    static class CharBoxedClass {
+        Character c;
+    }
+
+    @Test
+    public void boxedTests() {
+        FloatBoxedClass f = new FloatBoxedClass();
+        f.f = 1.0f;
+        Assert.assertEquals("{\"f\":1.0}", JsonTools.serialize(f));
+
+        DoubleBoxedClass d = new DoubleBoxedClass();
+        d.d = 1.0;
+        Assert.assertEquals("{\"d\":1.0}", JsonTools.serialize(d));
+
+        CharBoxedClass c = new CharBoxedClass();
+        c.c = '1';
+        Assert.assertEquals("{\"c\":\"1\"}", JsonTools.serialize(c));
     }
 
     @Test
