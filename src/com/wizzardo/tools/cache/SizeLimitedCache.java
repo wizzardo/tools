@@ -31,4 +31,8 @@ public class SizeLimitedCache<K, V> extends Cache<K, V> {
         if (size() > limit)
             removeOldest();
     }
+
+    public int limit() {
+        return limit;
+    }
 }

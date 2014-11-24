@@ -2,6 +2,7 @@ package com.wizzardo.tools;
 
 import com.wizzardo.tools.cache.Cache;
 import com.wizzardo.tools.cache.Computable;
+import com.wizzardo.tools.cache.MemoryLimitedCache;
 import com.wizzardo.tools.cache.SizeLimitedCache;
 import org.junit.Assert;
 import org.junit.Test;
@@ -140,6 +141,31 @@ public class CacheTest {
             @Override
             public String compute(String s) {
                 return s.toUpperCase();
+            }
+        });
+
+        Assert.assertEquals(0, cache.size());
+        cache.get("foo1");
+        Assert.assertEquals(1, cache.size());
+        cache.get("foo2");
+        Assert.assertEquals(1, cache.size());
+        cache.get("foo3");
+        Assert.assertEquals(1, cache.size());
+        cache.get("foo4");
+        Assert.assertEquals(1, cache.size());
+    }
+
+    @Test
+    public void memoryLimitedCacheTest() throws InterruptedException {
+        Cache<String, MemoryLimitedCache.SizeProvider> cache = new MemoryLimitedCache<String, MemoryLimitedCache.SizeProvider>(5, 1, new Computable<String, MemoryLimitedCache.SizeProvider>() {
+            @Override
+            public MemoryLimitedCache.SizeProvider compute(final String s) {
+                return new MemoryLimitedCache.SizeProvider() {
+                    @Override
+                    public long size() {
+                        return s.length();
+                    }
+                };
             }
         });
 
