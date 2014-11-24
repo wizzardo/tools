@@ -114,13 +114,14 @@ public class Cache<K, V> {
                 try {
                     ft.run(c, key);
                     failed = false;
-                    onAddItem(f.getKey(), f.get());
                 } finally {
                     ft.done();
                     if (failed && removeOnException)
                         map.remove(key);
-                    else
+                    else {
                         updateTimingCache(f);
+                        onAddItem(f.getKey(), f.get());
+                    }
                 }
             }
         } else if (updateTTL) {
