@@ -2,6 +2,7 @@ package com.wizzardo.tools;
 
 import com.wizzardo.tools.cache.Cache;
 import com.wizzardo.tools.cache.Computable;
+import com.wizzardo.tools.cache.SizeLimitedCache;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -103,27 +104,53 @@ public class CacheTest {
     }
 
     @Test
-    public void removeOldest() throws InterruptedException {
+    public void removeOldestTest() throws InterruptedException {
         Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
                 return s.toUpperCase();
             }
         }) {
+            int i = 1;
+
             @Override
             public void onRemoveItem(String s, String s2) {
-                Assert.assertEquals("foo1", s);
+                Assert.assertEquals("foo" + (i++), s);
             }
         };
 
         cache.get("foo1");
         cache.get("foo2");
         cache.get("foo3");
-
         Assert.assertEquals(3, cache.size());
 
         cache.removeOldest();
-
         Assert.assertEquals(2, cache.size());
+
+        cache.removeOldest();
+        Assert.assertEquals(1, cache.size());
+
+        cache.removeOldest();
+        Assert.assertEquals(0, cache.size());
+    }
+
+    @Test
+    public void sizeLimitedCacheTest() throws InterruptedException {
+        Cache<String, String> cache = new SizeLimitedCache<String, String>(1, 1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        });
+
+        Assert.assertEquals(0, cache.size());
+        cache.get("foo1");
+        Assert.assertEquals(1, cache.size());
+        cache.get("foo2");
+        Assert.assertEquals(1, cache.size());
+        cache.get("foo3");
+        Assert.assertEquals(1, cache.size());
+        cache.get("foo4");
+        Assert.assertEquals(1, cache.size());
     }
 }

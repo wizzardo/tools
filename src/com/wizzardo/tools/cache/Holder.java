@@ -64,4 +64,13 @@ class Holder<K, V> {
     Cache.TimingsHolder getTimingsHolder() {
         return timingsHolder;
     }
+
+    boolean isRemoved() {
+        return timingsHolder == null;
+    }
+
+    void setRemoved() {
+        timingsHolder = null;
+        done = true; // just for hb
+    }
 }

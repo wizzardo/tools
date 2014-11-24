@@ -57,6 +57,7 @@ public class Cache<K, V> {
         Holder<K, V> holder = map.remove(k);
         if (holder == null)
             return null;
+        holder.setRemoved();
         onRemoveItem(holder.getKey(), holder.get());
         return holder.get();
     }
@@ -116,9 +117,10 @@ public class Cache<K, V> {
                     failed = false;
                 } finally {
                     ft.done();
-                    if (failed && removeOnException)
+                    if (failed && removeOnException) {
                         map.remove(key);
-                    else {
+                        f.setRemoved();
+                    } else {
                         updateTimingCache(f);
                         onAddItem(f.getKey(), f.get());
                     }
@@ -224,10 +226,12 @@ public class Cache<K, V> {
                 if (e.getValue() != e.getKey().validUntil)
                     continue;
 
-                if (holder == null || e.getKey().getValidUntil() < holder.validUntil)
-                    holder = e.getKey();
+                if (!e.getKey().isRemoved()) {
+                    if (holder == null || e.getKey().getValidUntil() < holder.validUntil)
+                        holder = e.getKey();
 
-                break;
+                    break;
+                }
             }
         }
         if (holder != null)
