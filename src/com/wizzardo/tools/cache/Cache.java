@@ -97,6 +97,9 @@ public class Cache<K, V> {
     public void onRemoveItem(K k, V v) {
     }
 
+    public void onAddItem(K k, V v) {
+    }
+
     private V getFromCache(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
         Holder<K, V> f = map.get(key);
         if (f == null) {
@@ -111,6 +114,7 @@ public class Cache<K, V> {
                 try {
                     ft.run(c, key);
                     failed = false;
+                    onAddItem(f.getKey(), f.get());
                 } finally {
                     ft.done();
                     if (failed && removeOnException)
@@ -132,6 +136,7 @@ public class Cache<K, V> {
     public void put(final K key, final V value, long ttl) {
         Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
         map.put(key, h);
+        onAddItem(key, value);
         updateTimingCache(h);
     }
 
@@ -143,6 +148,7 @@ public class Cache<K, V> {
         Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
         if (map.putIfAbsent(key, h) == null) {
             updateTimingCache(h);
+            onAddItem(key, value);
             return true;
         }
         return false;
