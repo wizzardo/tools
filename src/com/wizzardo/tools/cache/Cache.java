@@ -217,6 +217,23 @@ public class Cache<K, V> {
         return ttl;
     }
 
+    public void removeOldest() {
+        Holder<K, V> holder = null;
+        for (TimingsHolder th : timings) {
+            for (Entry<Holder<K, V>, Long> e : th.timings) {
+                if (e.getValue() != e.getKey().validUntil)
+                    continue;
+
+                if (holder == null || e.getKey().getValidUntil() < holder.validUntil)
+                    holder = e.getKey();
+
+                break;
+            }
+        }
+        if (holder != null)
+            remove(holder.getKey());
+    }
+
     class TimingsHolder {
         Queue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
         long ttl;

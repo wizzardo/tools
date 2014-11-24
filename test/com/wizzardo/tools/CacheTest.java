@@ -101,4 +101,29 @@ public class CacheTest {
 
         Assert.assertTrue(bar != cache.get("bar"));
     }
+
+    @Test
+    public void removeOldest() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        }) {
+            @Override
+            public void onRemoveItem(String s, String s2) {
+                Assert.assertEquals("foo1", s);
+            }
+        };
+
+        cache.get("foo1");
+        cache.get("foo2");
+        cache.get("foo3");
+
+        Assert.assertEquals(3, cache.size());
+
+        cache.removeOldest();
+
+        Assert.assertEquals(2, cache.size());
+    }
 }
