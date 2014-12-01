@@ -14,7 +14,7 @@ class FieldInfo {
     final Binder.Serializer serializer;
     final JsonFieldSetter setter;
 
-    static CharTree charTree = new CharTree();
+    static CharTree<String> charTree = new CharTree<String>();
 
     FieldInfo(Field field, Binder.Serializer serializer) {
         this.field = field;
@@ -23,6 +23,6 @@ class FieldInfo {
         setter = JsonFieldSetter.createSetter(field);
 
         if (!charTree.contains(field.getName()))
-            charTree.append(field.getName());
+            charTree.append(field.getName(), field.getName());
     }
 }

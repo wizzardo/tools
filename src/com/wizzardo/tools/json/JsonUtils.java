@@ -226,7 +226,7 @@ class JsonUtils {
             from++;
         }
 
-        CharTree.CharTreeNode node = FieldInfo.charTree.getRoot();
+        CharTree.CharTreeNode<String> node = FieldInfo.charTree.getRoot();
 
         int rightBorder;
         boolean escape = false;

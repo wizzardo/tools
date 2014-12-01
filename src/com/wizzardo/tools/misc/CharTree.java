@@ -4,105 +4,94 @@ package com.wizzardo.tools.misc;
  * @author: wizzardo
  * Date: 7/30/14
  */
-public class CharTree {
+public class CharTree<V> {
 
-    private CharTreeNode root;
+    private CharTreeNode<V> root;
 
     public CharTree() {
     }
 
-    public CharTreeNode getRoot() {
+    public CharTreeNode<V> getRoot() {
         return root;
     }
 
-    public CharTree(String s) {
-        char[] chars = s.toCharArray();
-
-        root = new SingleCharTreeNode();
-        CharTreeNode temp = root;
-
-        for (int i = 0; i < chars.length; i++) {
-            char b = chars[i];
-            temp = temp.append(b).next(b);
-        }
-        temp.setValue(s);
+    public CharTree<V> append(String s, V value) {
+        return append(s.toCharArray(), value);
     }
 
-    public CharTree append(String s) {
-        return append(s.toCharArray(), s);
-    }
-
-    public CharTree append(char[] chars, String s) {
+    public CharTree<V> append(char[] chars, V value) {
         if (root == null)
-            root = new SingleCharTreeNode();
+            root = new SingleCharTreeNode<V>();
 
         char b = chars[0];
         root = root.append(b);
-        CharTreeNode temp = root.next(b);
-        CharTreeNode prev = root;
+        CharTreeNode<V> temp = root.next(b);
+        CharTreeNode<V> prev = root;
         char p = b;
         for (int i = 1; i < chars.length; i++) {
             b = chars[i];
-            CharTreeNode next = temp.append(b);
+            CharTreeNode<V> next = temp.append(b);
             prev.set(p, next);
             prev = next;
             temp = next.next(b);
             p = b;
         }
-        temp.setValue(s);
+        temp.value = value;
 
         return this;
     }
 
     public boolean contains(String name) {
-        if (root == null)
-            return false;
-
-        return get(name.toCharArray()) != null;
+        return contains(name.toCharArray());
     }
 
-    public String get(char[] chars) {
+    public boolean contains(char[] chars) {
+        return contains(chars, 0, chars.length);
+    }
+
+    public boolean contains(char[] chars, int offset, int length) {
+        return get(chars, offset, length) != null;
+    }
+
+    public V get(char[] chars) {
         return get(chars, 0, chars.length);
     }
 
-    public String get(char[] chars, int offset, int length) {
-        if (root == null)
-            return null;
-
-        CharTreeNode node = root.next(chars[offset]);
-        for (int i = offset + 1; i < offset + length && node != null; i++) {
+    public V get(char[] chars, int offset, int length) {
+        CharTreeNode<V> node = root;
+        for (int i = offset; i < offset + length && node != null; i++) {
             node = node.next(chars[i]);
         }
         return node == null ? null : node.value;
     }
 
-    public static abstract class CharTreeNode {
-        protected String value;
+    public static abstract class CharTreeNode<V> {
+        protected V value;
 
-        public abstract CharTreeNode next(char b);
+        public abstract CharTreeNode<V> next(char b);
 
-        public abstract CharTreeNode append(char b);
+        public abstract CharTreeNode<V> append(char b);
 
-        public abstract CharTreeNode set(char b, CharTreeNode node);
+        public abstract CharTreeNode<V> set(char b, CharTreeNode<V> node);
 
-        public String getValue() {
+        public V getValue() {
             return value;
         }
 
-        public void setValue(String value) {
+        public void setValue(V value) {
             this.value = value;
         }
     }
 
-    public static class ArrayCharTreeNode extends CharTreeNode {
-        private CharTreeNode[] nodes;
+    public static class ArrayCharTreeNode<V> extends CharTreeNode<V> {
+        private CharTreeNode<V>[] nodes;
 
         public ArrayCharTreeNode(int size) {
             increase(size);
         }
 
         @Override
-        public CharTreeNode next(char b) {
+        public CharTreeNode<V> next(char b) {
             if (b >= nodes.length)
                 return null;
 
@@ -110,17 +99,17 @@ public class CharTree {
         }
 
         @Override
-        public CharTreeNode append(char b) {
+        public CharTreeNode<V> append(char b) {
             increase(b + 1);
 
             if (nodes[b] == null)
-                nodes[b] = new SingleCharTreeNode();
+                nodes[b] = new SingleCharTreeNode<V>();
 
             return this;
         }
 
         @Override
-        public CharTreeNode set(char b, CharTreeNode node) {
+        public CharTreeNode<V> set(char b, CharTreeNode<V> node) {
             increase(b + 1);
 
             nodes[b] = node;
@@ -132,28 +121,28 @@ public class CharTree {
             if (nodes == null)
                 nodes = new CharTreeNode[size];
             else if (nodes.length < size) {
-                CharTreeNode[] temp = new CharTreeNode[size];
+                CharTreeNode<V>[] temp = new CharTreeNode[size];
                 System.arraycopy(nodes, 0, temp, 0, nodes.length);
                 nodes = temp;
             }
         }
     }
 
-    public static class SingleCharTreeNode extends CharTreeNode {
+    static class SingleCharTreeNode<V> extends CharTreeNode<V> {
         private char b;
-        private CharTreeNode next;
+        private CharTreeNode<V> next;
 
         @Override
-        public CharTreeNode next(char b) {
+        public CharTreeNode<V> next(char b) {
             if (b == this.b)
                 return next;
             return null;
         }
 
         @Override
-        public CharTreeNode append(char b) {
+        public CharTreeNode<V> append(char b) {
             if (next != null && this.b != b) {
-                ArrayCharTreeNode node = new ArrayCharTreeNode(Math.max(this.b, b));
+                ArrayCharTreeNode<V> node = new ArrayCharTreeNode<V>(Math.max(this.b, b));
                 node.set(this.b, next);
                 node.append(b);
                 return node;
@@ -161,15 +150,15 @@ public class CharTree {
                 return this;
             else {
                 this.b = b;
-                next = new SingleCharTreeNode();
+                next = new SingleCharTreeNode<V>();
                 return this;
             }
         }
 
         @Override
-        public CharTreeNode set(char b, CharTreeNode n) {
+        public CharTreeNode<V> set(char b, CharTreeNode<V> n) {
             if (next != null && this.b != b) {
-                ArrayCharTreeNode node = new ArrayCharTreeNode(Math.max(this.b, b));
+                ArrayCharTreeNode<V> node = new ArrayCharTreeNode<V>(Math.max(this.b, b));
                 node.set(this.b, next);
                 node.set(b, n);
                 return node;
