@@ -1,6 +1,6 @@
 package com.wizzardo.tools.io;
 
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.misc.UncheckedThrow;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -139,13 +139,13 @@ public class ZipTools {
                     l.add(outFile);
                 } catch (IOException ex) {
                     outFile.delete();
-                    throw new WrappedException(ex);
+                    throw UncheckedThrow.rethrow(ex);
                 } finally {
                     IOTools.close(out);
                 }
             }
         } catch (IOException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } finally {
             IOTools.close(zip);
         }
@@ -158,14 +158,14 @@ public class ZipTools {
         try {
             in = new FileInputStream(f);
         } catch (FileNotFoundException e) {
-            throw new WrappedException(e);
+            throw UncheckedThrow.rethrow(e);
         }
 
         byte[] b = new byte[2];
         try {
             in.read(b);
         } catch (IOException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } finally {
             IOTools.close(in);
         }
@@ -187,7 +187,7 @@ public class ZipTools {
             zipout = new ZipOutputStream(new FileOutputStream(zip));
             zip(zipout, toZip);
         } catch (IOException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } finally {
             IOTools.close(zipout);
         }
@@ -211,7 +211,7 @@ public class ZipTools {
                 zipout.putNextEntry(entry);
                 IOTools.copy(in, zipout, b);
             } catch (IOException ex) {
-                throw new WrappedException(ex);
+                throw UncheckedThrow.rethrow(ex);
             } finally {
                 IOTools.close(in);
             }

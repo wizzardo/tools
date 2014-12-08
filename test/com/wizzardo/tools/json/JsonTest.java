@@ -2,7 +2,6 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.io.FileTools;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.misc.WrappedException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,6 +11,7 @@ import java.io.IOException;
 import java.io.PipedOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -1169,7 +1169,7 @@ public class JsonTest {
                 while (true)
                     appender.append(' ');
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1177,7 +1177,7 @@ public class JsonTest {
                 while (true)
                     appender.append("string");
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1185,7 +1185,7 @@ public class JsonTest {
                 while (true)
                     appender.append("string", 0, 6);
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1193,7 +1193,7 @@ public class JsonTest {
                 while (true)
                     appender.append("string_".toCharArray());
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1201,7 +1201,7 @@ public class JsonTest {
                 while (true)
                     appender.append("string_".toCharArray(), 0, 6);
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1209,7 +1209,7 @@ public class JsonTest {
                 appender.append(' ');
                 appender.flush();
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
     }
 
     private String appendData(Appender appender) {
@@ -1258,26 +1258,26 @@ public class JsonTest {
             public void run() {
                 Binder.createCollection(CustomList.class);
             }
-        }, WrappedException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class " +
+        }, IllegalAccessException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class " +
                 "com.wizzardo.tools.json.JsonTest$CustomList with modifiers \"private\"");
         testException(new Runnable() {
             @Override
             public void run() {
                 Binder.createCollection(NoSuchMethodExceptionTest.class);
             }
-        }, WrappedException.class, "com.wizzardo.tools.json.JsonTest$NoSuchMethodExceptionTest.<init>()");
+        }, NoSuchMethodException.class, "com.wizzardo.tools.json.JsonTest$NoSuchMethodExceptionTest.<init>()");
         testException(new Runnable() {
             @Override
             public void run() {
                 Binder.createCollection(ExceptionInConstructor.class);
             }
-        }, WrappedException.class, null);
+        }, InvocationTargetException.class, null);
         testException(new Runnable() {
             @Override
             public void run() {
                 Binder.createCollection(InstantiationExceptionTest.class);
             }
-        }, WrappedException.class, null);
+        }, InstantiationException.class, null);
     }
 
     private void testException(Runnable closure, Class exceptionClass, String message) {

@@ -4,7 +4,7 @@
  */
 package com.wizzardo.tools.security;
 
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.misc.UncheckedThrow;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +24,7 @@ public class MD5 {
         try {
             md5 = MessageDigest.getInstance("md5");
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -50,7 +50,7 @@ public class MD5 {
             md5.update(b, 0, b.length);
             return md5BytesToString(md5.digest());
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -70,7 +70,7 @@ public class MD5 {
             md5.update(b, 0, b.length);
             return md5.digest();
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -87,7 +87,7 @@ public class MD5 {
             }
             return md5BytesToString(md5.digest());
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -115,7 +115,7 @@ public class MD5 {
             }
             return md5.digest();
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 

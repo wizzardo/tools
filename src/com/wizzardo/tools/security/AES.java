@@ -1,7 +1,7 @@
 package com.wizzardo.tools.security;
 
-import com.wizzardo.tools.misc.WrappedException;
 import com.wizzardo.tools.io.IOTools;
+import com.wizzardo.tools.misc.UncheckedThrow;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -27,7 +27,7 @@ public class AES {
             kg.init(128);
             return kg.generateKey();
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -83,13 +83,13 @@ public class AES {
             key = kg.generateKey();
             init();
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } catch (NoSuchPaddingException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } catch (InvalidKeyException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } catch (InvalidAlgorithmParameterException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -101,13 +101,13 @@ public class AES {
             this.key = key;
             init();
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } catch (NoSuchPaddingException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } catch (InvalidKeyException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         } catch (InvalidAlgorithmParameterException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -162,7 +162,7 @@ public class AES {
             CipherInputStream inc = new CipherInputStream(in, dcipher);
             IOTools.copy(inc, out);
         } catch (IOException e) {
-            throw new WrappedException(e);
+            throw UncheckedThrow.rethrow(e);
         } finally {
             IOTools.close(in);
             IOTools.close(out);
@@ -175,11 +175,11 @@ public class AES {
             IOTools.copy(in, out);
             out.write(ecipher.doFinal());
         } catch (IOException e) {
-            throw new WrappedException(e);
+            throw UncheckedThrow.rethrow(e);
         } catch (BadPaddingException e) {
-            throw new WrappedException(e);
+            throw UncheckedThrow.rethrow(e);
         } catch (IllegalBlockSizeException e) {
-            throw new WrappedException(e);
+            throw UncheckedThrow.rethrow(e);
         } finally {
             IOTools.close(in);
             IOTools.close(out);

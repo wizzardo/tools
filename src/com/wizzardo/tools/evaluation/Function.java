@@ -5,7 +5,7 @@
 package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.collections.CollectionTools;
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.misc.UncheckedThrow;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -196,7 +196,7 @@ class Function extends Expression {
                 this.result = result;
             return result;
         } catch (Exception e) {
-            throw new WrappedException(e);
+            throw UncheckedThrow.rethrow(e);
         }
     }
 
@@ -244,7 +244,7 @@ class Function extends Expression {
                     clazz = clazz.getSuperclass();
                 }
             if (field == null)
-                throw new WrappedException(new NoSuchFieldException(fieldName));
+                throw UncheckedThrow.rethrow(new NoSuchFieldException(fieldName));
         }
         return field;
     }

@@ -5,7 +5,7 @@
 package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.collections.Range;
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.misc.UncheckedThrow;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -509,14 +509,14 @@ class Operation extends Expression {
                     try {
                         return fieldSetAndReturn(ob1, key, key.get(ob1), ob2, operator);
                     } catch (IllegalAccessException e) {
-                        throw new WrappedException(e);
+                        throw UncheckedThrow.rethrow(e);
                     }
                 }
 
                 try {
                     function.getField().set(ob1, ob2);
                 } catch (IllegalAccessException e) {
-                    throw new WrappedException(e);
+                    throw UncheckedThrow.rethrow(e);
                 }
                 return ob2;
             }
@@ -573,7 +573,7 @@ class Operation extends Expression {
                     try {
                         return fieldSetAndReturn(thatObject, key, null, key.get(thatObject), operator);
                     } catch (IllegalAccessException e) {
-                        throw new WrappedException(e);
+                        throw UncheckedThrow.rethrow(e);
                     }
                 }
             } else if (leftPart != null) {
@@ -826,9 +826,9 @@ class Operation extends Expression {
             l.addAll(c);
             return l;
         } catch (InstantiationException e) {
-            throw new WrappedException(e);
+            throw UncheckedThrow.rethrow(e);
         } catch (IllegalAccessException e) {
-            throw new WrappedException(e);
+            throw UncheckedThrow.rethrow(e);
         }
     }
 

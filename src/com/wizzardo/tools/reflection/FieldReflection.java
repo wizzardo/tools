@@ -1,6 +1,6 @@
 package com.wizzardo.tools.reflection;
 
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.misc.UncheckedThrow;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
@@ -64,7 +64,7 @@ public class FieldReflection {
             try {
                 field.setInt(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -75,7 +75,7 @@ public class FieldReflection {
             try {
                 field.setLong(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -86,7 +86,7 @@ public class FieldReflection {
             try {
                 field.setByte(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -97,7 +97,7 @@ public class FieldReflection {
             try {
                 field.setShort(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -108,7 +108,7 @@ public class FieldReflection {
             try {
                 field.setFloat(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -119,7 +119,7 @@ public class FieldReflection {
             try {
                 field.setDouble(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -130,7 +130,7 @@ public class FieldReflection {
             try {
                 field.setChar(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -141,7 +141,7 @@ public class FieldReflection {
             try {
                 field.setBoolean(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -152,7 +152,7 @@ public class FieldReflection {
             try {
                 field.set(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -163,7 +163,7 @@ public class FieldReflection {
             try {
                 return field.getInt(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -174,7 +174,7 @@ public class FieldReflection {
             try {
                 return field.getLong(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -185,7 +185,7 @@ public class FieldReflection {
             try {
                 return field.getByte(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -196,7 +196,7 @@ public class FieldReflection {
             try {
                 return field.getShort(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -207,7 +207,7 @@ public class FieldReflection {
             try {
                 return field.getFloat(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -218,7 +218,7 @@ public class FieldReflection {
             try {
                 return field.getDouble(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -229,7 +229,7 @@ public class FieldReflection {
             try {
                 return field.getChar(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -240,7 +240,7 @@ public class FieldReflection {
             try {
                 return field.getBoolean(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
@@ -251,7 +251,7 @@ public class FieldReflection {
             try {
                 return field.get(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
