@@ -235,17 +235,11 @@ public class JsonItem {
     }
 
     public JsonObject asJsonObject() {
-        if (ob instanceof JsonObject) {
-            return (JsonObject) ob;
-        }
-        return null;
+        return (JsonObject) ob;
     }
 
     public JsonArray asJsonArray() {
-        if (ob instanceof JsonArray) {
-            return (JsonArray) ob;
-        }
-        return null;
+        return (JsonArray) ob;
     }
 
     public boolean isJsonArray() {

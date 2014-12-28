@@ -740,11 +740,22 @@ public class JsonTest {
 
         Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonArray());
         Assert.assertEquals(true, JsonTools.parse("{key:[]}").asJsonObject().get("key").isJsonArray());
-        Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonArray());
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonArray());
+            }
+        }, ClassCastException.class, "java.lang.String cannot be cast to com.wizzardo.tools.json.JsonArray");
 
         Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonObject());
         Assert.assertEquals(true, JsonTools.parse("{key:{}}").asJsonObject().get("key").isJsonObject());
-        Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonObject());
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonObject());
+            }
+        }, ClassCastException.class, "java.lang.String cannot be cast to com.wizzardo.tools.json.JsonObject");
 
 
         Assert.assertEquals("1", JsonTools.parse("{key:1}").asJsonObject().get("key").getAs(String.class));
