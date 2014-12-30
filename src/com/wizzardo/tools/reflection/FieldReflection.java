@@ -61,7 +61,19 @@ public class FieldReflection {
         OBJECT
     }
 
+    private void assertTypeGet(Type t) {
+        if (type != t)
+            throw new IllegalStateException("Can not get " + t + " value from field " + field);
+    }
+
+    private void assertTypeSet(Type t) {
+        if (type != t)
+            throw new IllegalStateException("Can not set " + t + " value to field " + field);
+    }
+
     public void setInteger(Object object, int value) {
+        assertTypeSet(Type.INTEGER);
+
         if (putInt && offset != 0)
             unsafe.putInt(object, offset, value);
         else
@@ -73,6 +85,8 @@ public class FieldReflection {
     }
 
     public void setLong(Object object, long value) {
+        assertTypeSet(Type.LONG);
+
         if (putLong && offset != 0)
             unsafe.putLong(object, offset, value);
         else
@@ -84,6 +98,8 @@ public class FieldReflection {
     }
 
     public void setByte(Object object, byte value) {
+        assertTypeSet(Type.BYTE);
+
         if (putByte && offset != 0)
             unsafe.putByte(object, offset, value);
         else
@@ -95,6 +111,8 @@ public class FieldReflection {
     }
 
     public void setShort(Object object, short value) {
+        assertTypeSet(Type.SHORT);
+
         if (putShort && offset != 0)
             unsafe.putShort(object, offset, value);
         else
@@ -106,6 +124,8 @@ public class FieldReflection {
     }
 
     public void setFloat(Object object, float value) {
+        assertTypeSet(Type.FLOAT);
+
         if (putFloat && offset != 0)
             unsafe.putFloat(object, offset, value);
         else
@@ -117,6 +137,8 @@ public class FieldReflection {
     }
 
     public void setDouble(Object object, double value) {
+        assertTypeSet(Type.DOUBLE);
+
         if (putDouble && offset != 0)
             unsafe.putDouble(object, offset, value);
         else
@@ -128,6 +150,8 @@ public class FieldReflection {
     }
 
     public void setChar(Object object, char value) {
+        assertTypeSet(Type.CHAR);
+
         if (putChar && offset != 0)
             unsafe.putChar(object, offset, value);
         else
@@ -139,6 +163,8 @@ public class FieldReflection {
     }
 
     public void setBoolean(Object object, boolean value) {
+        assertTypeSet(Type.BOOLEAN);
+
         if (putBoolean && offset != 0)
             unsafe.putBoolean(object, offset, value);
         else
@@ -150,6 +176,8 @@ public class FieldReflection {
     }
 
     public void setObject(Object object, Object value) {
+        assertTypeSet(Type.OBJECT);
+
         if (putObject && offset != 0)
             unsafe.putObject(object, offset, value);
         else
@@ -161,6 +189,8 @@ public class FieldReflection {
     }
 
     public int getInteger(Object object) {
+        assertTypeGet(Type.INTEGER);
+
         if (getInt && offset != 0)
             return unsafe.getInt(object, offset);
         else
@@ -172,6 +202,8 @@ public class FieldReflection {
     }
 
     public long getLong(Object object) {
+        assertTypeGet(Type.LONG);
+
         if (getLong && offset != 0)
             return unsafe.getLong(object, offset);
         else
@@ -183,6 +215,8 @@ public class FieldReflection {
     }
 
     public byte getByte(Object object) {
+        assertTypeGet(Type.BYTE);
+
         if (getByte && offset != 0)
             return unsafe.getByte(object, offset);
         else
@@ -194,6 +228,8 @@ public class FieldReflection {
     }
 
     public short getShort(Object object) {
+        assertTypeGet(Type.SHORT);
+
         if (getShort && offset != 0)
             return unsafe.getShort(object, offset);
         else
@@ -205,6 +241,8 @@ public class FieldReflection {
     }
 
     public float getFloat(Object object) {
+        assertTypeGet(Type.FLOAT);
+
         if (getFloat && offset != 0)
             return unsafe.getFloat(object, offset);
         else
@@ -216,6 +254,8 @@ public class FieldReflection {
     }
 
     public double getDouble(Object object) {
+        assertTypeGet(Type.DOUBLE);
+
         if (getDouble && offset != 0)
             return unsafe.getDouble(object, offset);
         else
@@ -227,6 +267,8 @@ public class FieldReflection {
     }
 
     public char getChar(Object object) {
+        assertTypeGet(Type.CHAR);
+
         if (getChar && offset != 0)
             return unsafe.getChar(object, offset);
         else
@@ -238,6 +280,8 @@ public class FieldReflection {
     }
 
     public boolean getBoolean(Object object) {
+        assertTypeGet(Type.BOOLEAN);
+
         if (getBoolean && offset != 0)
             return unsafe.getBoolean(object, offset);
         else
@@ -249,6 +293,8 @@ public class FieldReflection {
     }
 
     public Object getObject(Object object) {
+        assertTypeGet(Type.OBJECT);
+
         if (getObject && offset != 0)
             return unsafe.getObject(object, offset);
         else
