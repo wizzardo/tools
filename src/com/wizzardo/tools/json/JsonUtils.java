@@ -180,22 +180,16 @@ class JsonUtils {
         String value;
         int l = k - from;
         if (!needDecoding) {
-            boolean isTrue = isTrue(s, from, l);
-            if (setter != null && setter.getType() == FieldReflection.Type.BOOLEAN) {
-                setter.setBoolean(binder.getObject(), isTrue);
-                return i;
-            }
-
-            if (JsonUtils.isNull(s, from, l)) {
+            if (isNull(s, from, l)) {
                 set(setter, binder, null);
                 return i;
             }
-            if (isTrue) {
-                set(setter, binder, Boolean.TRUE);
+            if (isTrue(s, from, l)) {
+                setBoolean(setter, binder, true);
                 return i;
             }
             if (isFalse(s, from, l)) {
-                set(setter, binder, Boolean.FALSE);
+                setBoolean(setter, binder, false);
                 return i;
             }
 
@@ -211,6 +205,13 @@ class JsonUtils {
     private static void set(JsonFieldSetter setter, JsonBinder binder, Object value) {
         if (setter != null)
             setter.set(binder.getObject(), new JsonItem(value));
+        else
+            binder.add(value);
+    }
+
+    private static void setBoolean(JsonFieldSetter setter, JsonBinder binder, boolean value) {
+        if (setter != null)
+            setter.setBoolean(binder.getObject(), value);
         else
             binder.add(value);
     }
