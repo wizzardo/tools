@@ -994,6 +994,13 @@ public class JsonTest {
         JsonFieldSetter.BooleanSetter booleanSetter = new JsonFieldSetter.BooleanSetter(f);
         booleanSetter.set(aClass, new JsonItem("True"));
         Assert.assertEquals(true, aClass.b);
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.parse("{i:'some string'}", FieldSetterTestClass.class);
+            }
+        }, IllegalStateException.class, "Can not set 'some string' (class java.lang.String) to int com.wizzardo.tools.json.JsonTest$FieldSetterTestClass.i");
     }
 
     static class IntPrimitiveClass {

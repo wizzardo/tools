@@ -204,7 +204,11 @@ class JsonUtils {
 
     private static void set(JsonFieldSetter setter, JsonBinder binder, Object value) {
         if (setter != null)
-            setter.set(binder.getObject(), new JsonItem(value));
+            try {
+                setter.set(binder.getObject(), new JsonItem(value));
+            } catch (NullPointerException e) {
+                throw new IllegalStateException("Can not set '" + value + "' (" + value.getClass() + ") to " + setter);
+            }
         else
             binder.add(value);
     }

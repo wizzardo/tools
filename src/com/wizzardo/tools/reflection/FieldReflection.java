@@ -61,6 +61,11 @@ public class FieldReflection {
         OBJECT
     }
 
+    @Override
+    public String toString() {
+        return field.toString();
+    }
+
     private void assertTypeGet(Type t) {
         if (type != t)
             throw new IllegalStateException("Can not get " + t + " value from field " + field);

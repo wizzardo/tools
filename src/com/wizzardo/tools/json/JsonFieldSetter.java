@@ -55,7 +55,7 @@ abstract class JsonFieldSetter extends FieldReflection {
         }
 
         public void set(Object object, JsonItem value) {
-            setByte(object, value.asByte((byte) 0));
+            setByte(object, value.asByte());
         }
     }
 
@@ -65,7 +65,7 @@ abstract class JsonFieldSetter extends FieldReflection {
         }
 
         public void set(Object object, JsonItem value) {
-            setShort(object, value.asShort((short) 0));
+            setShort(object, value.asShort());
         }
     }
 
@@ -76,7 +76,7 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         @Override
         public void set(Object object, JsonItem value) {
-            setInteger(object, value.asInteger(0));
+            setInteger(object, value.asInteger());
         }
     }
 
@@ -87,7 +87,7 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         @Override
         public void set(Object object, JsonItem value) {
-            setLong(object, value.asLong(0l));
+            setLong(object, value.asLong());
         }
     }
 
@@ -98,7 +98,7 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         @Override
         public void set(Object object, JsonItem value) {
-            setFloat(object, value.asFloat(0f));
+            setFloat(object, value.asFloat());
         }
     }
 
@@ -109,7 +109,7 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         @Override
         public void set(Object object, JsonItem value) {
-            setDouble(object, value.asDouble(0d));
+            setDouble(object, value.asDouble());
         }
     }
 
@@ -120,7 +120,7 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         @Override
         public void set(Object object, JsonItem value) {
-            setChar(object, value.asChar('0'));
+            setChar(object, value.asChar());
         }
     }
 
@@ -131,7 +131,7 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         @Override
         public void set(Object object, JsonItem value) {
-            setBoolean(object, value.asBoolean(Boolean.FALSE));
+            setBoolean(object, value.asBoolean());
         }
     }
 
