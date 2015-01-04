@@ -66,6 +66,8 @@ public class NodeTest {
         Assert.assertEquals("lo", Node.parse(s).textOwn());
 
 
+        s = "<xml>\n\t\tololo\n\t\t</xml>";
+        Assert.assertEquals("ololo", Node.parse(s).text());
     }
 
     @Test

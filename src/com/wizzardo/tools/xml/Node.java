@@ -466,6 +466,14 @@ public class Node {
         return parse(new String(bout.toByteArray()), html, gsp);
     }
 
+    private static StringBuilder trimRight(StringBuilder sb) {
+        int l = sb.length();
+        while (l > 0 && sb.charAt(l - 1) <= ' ') {
+            sb.setLength(--l);
+        }
+        return sb;
+    }
+
     private static int parse(char[] s, int from, Node xml, boolean html, boolean gsp) {
         int i = from;
         StringBuilder sb = new StringBuilder();
@@ -515,7 +523,7 @@ public class Node {
 
             if (!inTag && inAnotherLanguageTag) {
                 String t;
-                if (ch == '>' && (t = sb.toString().trim()).endsWith("</" + xml.name)) {
+                if (ch == '>' && (t = trimRight(sb).toString().trim()).endsWith("</" + xml.name)) {
                     xml.add(new TextNode(t.substring(0, t.length() - 2 - xml.name.length())));
                     sb.setLength(0);
                     break outer;
@@ -559,7 +567,7 @@ public class Node {
                         break;
                     }
                     if (sb.length() > 0 && !(html && inAnotherLanguageTag)) {
-                        xml.add(new TextNode(sb.toString()));
+                        xml.add(new TextNode(trimRight(sb).toString()));
                         sb.setLength(0);
                     }
                     if (xml.name() != null)
@@ -678,7 +686,7 @@ public class Node {
                         attribute = false;
                     }
                     if (checkClose && sb.length() > 0) {
-                        xml.add(new TextNode(sb.toString()));
+                        xml.add(new TextNode(trimRight(sb).toString()));
                         sb.setLength(0);
                     }
                     end = true;
@@ -715,7 +723,7 @@ public class Node {
             xml.attribute(attributeName, null);
         }
         String t;
-        if (sb.length() > 0 && !(t = sb.toString()).equals(xml.name)) {
+        if (sb.length() > 0 && !(t = trimRight(sb).toString()).equals(xml.name)) {
             xml.add(new TextNode(t));
             sb.setLength(0);
         }
