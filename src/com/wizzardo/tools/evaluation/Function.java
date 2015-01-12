@@ -271,18 +271,75 @@ class Function extends Expression {
         } catch (NoSuchMethodException e) {
             //ignore
         }
+        Method m = findExactMatch(clazz, method, argsClasses);
+        if (m == null)
+            m = findBoxedMatch(clazz, method, argsClasses);
+        if (m == null)
+            m = findNumberMatch(clazz, method, argsClasses);
+        return m;
+    }
+
+    private Method findExactMatch(Class clazz, String method, Class[] argsClasses) {
+        Class<?> arg;
+        Class<?> param;
         outer:
         for (Method m : clazz.getMethods()) {
             if (m.getName().equals(method) && ((m.getParameterTypes().length == 0 && argsClasses == null) || m.getParameterTypes().length == argsClasses.length)) {
 //                System.out.println("check args");
                 for (int i = 0; i < m.getParameterTypes().length; i++) {
-                    if (!(m.getParameterTypes()[i].isAssignableFrom(argsClasses[i])
-                            || (boxing.containsKey(m.getParameterTypes()[i]) && boxing.get(m.getParameterTypes()[i]).equals(argsClasses[i]))
-                            || (boxing.containsKey(m.getParameterTypes()[i]) && boxing.containsValue(argsClasses[i])))
-                            ) {
-//                        System.out.println(m.getParameterTypes()[i] + "\t" + (argsClasses[i]));
+                    arg = argsClasses[i];
+                    param = m.getParameterTypes()[i];
+                    if (arg != param && !param.isAssignableFrom(arg))
                         continue outer;
-                    }
+                }
+                return m;
+            }
+        }
+        return null;
+    }
+
+    private Method findBoxedMatch(Class clazz, String method, Class[] argsClasses) {
+        Class<?> arg;
+        Class<?> param;
+        outer:
+        for (Method m : clazz.getMethods()) {
+            if (m.getName().equals(method) && ((m.getParameterTypes().length == 0 && argsClasses == null) || m.getParameterTypes().length == argsClasses.length)) {
+//                System.out.println("check args");
+                for (int i = 0; i < m.getParameterTypes().length; i++) {
+                    arg = argsClasses[i];
+                    param = m.getParameterTypes()[i];
+                    if (param.isPrimitive() && boxing.get(param) == arg)
+                        continue;
+                    continue outer;
+                }
+                return m;
+            }
+        }
+        return null;
+    }
+
+    private Method findNumberMatch(Class clazz, String method, Class[] argsClasses) {
+        Class<?> arg;
+        Class<?> param;
+        outer:
+        for (Method m : clazz.getMethods()) {
+            if (m.getName().equals(method) && ((m.getParameterTypes().length == 0 && argsClasses == null) || m.getParameterTypes().length == argsClasses.length)) {
+//                System.out.println("check args");
+                for (int i = 0; i < m.getParameterTypes().length; i++) {
+                    arg = argsClasses[i];
+                    param = m.getParameterTypes()[i];
+                    if (param == char.class && arg == Character.class)
+                        continue;
+                    if (param == boolean.class && arg == Boolean.class)
+                        continue;
+                    int a = indexOfClass(arg, Boxed);
+                    if (a < 0)
+                        continue outer;
+                    int p = indexOfClass(param, primitives);
+                    if (p < 0)
+                        continue outer;
+                    if (p < a)
+                        continue outer;
                 }
                 return m;
             }
@@ -336,6 +393,17 @@ class Function extends Expression {
             put(short.class, Short.class);
         }
     };
+
+    private int indexOfClass(Class clazz, Class[] classes) {
+        for (int i = 0; i < classes.length; i++) {
+            if (clazz == classes[i])
+                return i;
+        }
+        return -1;
+    }
+
+    private static final Class[] primitives = new Class[]{byte.class, short.class, char.class, int.class, long.class, float.class, double.class};
+    private static final Class[] Boxed = new Class[]{Byte.class, Short.class, Character.class, Integer.class, Long.class, Float.class, Double.class};
 
 
     public Method getMethod() {
