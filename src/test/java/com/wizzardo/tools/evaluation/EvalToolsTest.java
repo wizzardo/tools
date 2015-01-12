@@ -346,7 +346,8 @@ public class EvalToolsTest {
         boolean exception = false;
         try {
             EvalTools.evaluate("x.put(5)", model);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
+            Assert.assertEquals(NoSuchMethodException.class, e.getClass());
             exception = true;
         }
         assertTrue(exception);
@@ -354,7 +355,8 @@ public class EvalToolsTest {
         exception = false;
         try {
             EvalTools.evaluate("x.b", model);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
+            Assert.assertEquals(NoSuchFieldException.class, e.getClass());
             exception = true;
         }
         assertTrue(exception);

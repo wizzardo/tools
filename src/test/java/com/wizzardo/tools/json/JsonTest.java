@@ -2,7 +2,6 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.io.FileTools;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.misc.WrappedException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,6 +11,7 @@ import java.io.IOException;
 import java.io.PipedOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -666,17 +666,6 @@ public class JsonTest {
         serializeTest.inner.counter = 1;
         serializeTest.inner.name = "foo";
         Assert.assertEquals("{\"inner\":{\"name\":\"foo\",\"counter\":1}}", JsonTools.serialize(serializeTest));
-
-        final IllegalAccessTest illegalAccessTest = new IllegalAccessTest();
-        testException(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Binder.get(IllegalAccessTest.class.getDeclaredField("value"), illegalAccessTest);
-                } catch (NoSuchFieldException ignored) {
-                }
-            }
-        }, WrappedException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class com.wizzardo.tools.json.JsonTest$IllegalAccessTest with modifiers \"private\"");
     }
 
     @Test
@@ -751,11 +740,22 @@ public class JsonTest {
 
         Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonArray());
         Assert.assertEquals(true, JsonTools.parse("{key:[]}").asJsonObject().get("key").isJsonArray());
-        Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonArray());
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonArray());
+            }
+        }, ClassCastException.class, "java.lang.String cannot be cast to com.wizzardo.tools.json.JsonArray");
 
         Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonObject());
         Assert.assertEquals(true, JsonTools.parse("{key:{}}").asJsonObject().get("key").isJsonObject());
-        Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonObject());
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonObject());
+            }
+        }, ClassCastException.class, "java.lang.String cannot be cast to com.wizzardo.tools.json.JsonObject");
 
 
         Assert.assertEquals("1", JsonTools.parse("{key:1}").asJsonObject().get("key").getAs(String.class));
@@ -829,6 +829,13 @@ public class JsonTest {
                 new JsonArrayBinder().setTemporaryKey("key");
             }
         }, UnsupportedOperationException.class, "arrays has no keys");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                Binder.getField(IntPrimitiveClass.class, "i").serializer.serialize(null, null, null);
+            }
+        }, IllegalStateException.class, "PrimitiveSerializer can serialize only primitives");
     }
 
     @Test
@@ -897,7 +904,7 @@ public class JsonTest {
         Assert.assertEquals(1, JsonUtils.parseValue(null, "1   ".toCharArray(), 0, 4, ' '));
         Assert.assertEquals(4, JsonUtils.parseKey(null, "k  : ".toCharArray(), 0, 5));
 
-        FieldInfo.charTree.append("k\\\"ey");
+        FieldInfo.charTree.append("k\\\"ey", "k\\\"ey");
         Assert.assertEquals(8, JsonUtils.parseKey(null, "'k\\\"ey':value".toCharArray(), 0, 15));
 
         testException(new Runnable() {
@@ -987,6 +994,176 @@ public class JsonTest {
         JsonFieldSetter.BooleanSetter booleanSetter = new JsonFieldSetter.BooleanSetter(f);
         booleanSetter.set(aClass, new JsonItem("True"));
         Assert.assertEquals(true, aClass.b);
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.parse("{i:'some string'}", FieldSetterTestClass.class);
+            }
+        }, IllegalStateException.class, "Can not set 'some string' (class java.lang.String) to int com.wizzardo.tools.json.JsonTest$FieldSetterTestClass.i");
+    }
+
+    static class IntPrimitiveClass {
+        int i;
+    }
+
+    static class LongPrimitiveClass {
+        long l;
+    }
+
+    static class BooleanPrimitiveClass {
+        boolean b;
+    }
+
+    static class FloatPrimitiveClass {
+        float f;
+    }
+
+    static class DoublePrimitiveClass {
+        double d;
+    }
+
+    static class ShortPrimitiveClass {
+        short s;
+    }
+
+    static class BytePrimitiveClass {
+        byte b;
+    }
+
+    static class CharPrimitiveClass {
+        char c;
+    }
+
+    @Test
+    public void primitivesTests() {
+        IntPrimitiveClass i = new IntPrimitiveClass();
+        i.i = 1;
+        Assert.assertEquals("{\"i\":1}", JsonTools.serialize(i));
+
+        LongPrimitiveClass l = new LongPrimitiveClass();
+        l.l = 1;
+        Assert.assertEquals("{\"l\":1}", JsonTools.serialize(l));
+
+        BooleanPrimitiveClass b = new BooleanPrimitiveClass();
+        b.b = true;
+        Assert.assertEquals("{\"b\":true}", JsonTools.serialize(b));
+
+        FloatPrimitiveClass f = new FloatPrimitiveClass();
+        f.f = 1.0f;
+        Assert.assertEquals("{\"f\":1.0}", JsonTools.serialize(f));
+
+        DoublePrimitiveClass d = new DoublePrimitiveClass();
+        d.d = 1.0;
+        Assert.assertEquals("{\"d\":1.0}", JsonTools.serialize(d));
+
+        ShortPrimitiveClass s = new ShortPrimitiveClass();
+        s.s = 1;
+        Assert.assertEquals("{\"s\":1}", JsonTools.serialize(s));
+
+        CharPrimitiveClass c = new CharPrimitiveClass();
+        c.c = '1';
+        Assert.assertEquals("{\"c\":\"1\"}", JsonTools.serialize(c));
+
+        BytePrimitiveClass bytePrimitiveClass = new BytePrimitiveClass();
+        bytePrimitiveClass.b = 1;
+        Assert.assertEquals("{\"b\":1}", JsonTools.serialize(bytePrimitiveClass));
+    }
+
+    @Test
+    public void primitivesTestsStringBuilder() {
+        StringBuilder sb = new StringBuilder();
+        IntPrimitiveClass i = new IntPrimitiveClass();
+        i.i = 1;
+        JsonTools.serialize(i, sb);
+        Assert.assertEquals("{\"i\":1}", sb.toString());
+        sb.setLength(0);
+
+        LongPrimitiveClass l = new LongPrimitiveClass();
+        l.l = 1;
+        JsonTools.serialize(l, sb);
+        Assert.assertEquals("{\"l\":1}", sb.toString());
+        sb.setLength(0);
+
+        BooleanPrimitiveClass b = new BooleanPrimitiveClass();
+        b.b = true;
+        JsonTools.serialize(b, sb);
+        Assert.assertEquals("{\"b\":true}", sb.toString());
+        sb.setLength(0);
+
+        FloatPrimitiveClass f = new FloatPrimitiveClass();
+        f.f = 1.0f;
+        JsonTools.serialize(f, sb);
+        Assert.assertEquals("{\"f\":1.0}", sb.toString());
+        sb.setLength(0);
+
+        DoublePrimitiveClass d = new DoublePrimitiveClass();
+        d.d = 1.0;
+        JsonTools.serialize(d, sb);
+        Assert.assertEquals("{\"d\":1.0}", sb.toString());
+        sb.setLength(0);
+    }
+
+    @Test
+    public void primitivesTestsOutputStream() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        IntPrimitiveClass i = new IntPrimitiveClass();
+        i.i = 1;
+        JsonTools.serialize(i, out);
+        Assert.assertEquals("{\"i\":1}", new String(out.toByteArray()));
+        out.reset();
+
+        LongPrimitiveClass l = new LongPrimitiveClass();
+        l.l = 1;
+        JsonTools.serialize(l, out);
+        Assert.assertEquals("{\"l\":1}", out.toString());
+        out.reset();
+
+        BooleanPrimitiveClass b = new BooleanPrimitiveClass();
+        b.b = true;
+        JsonTools.serialize(b, out);
+        Assert.assertEquals("{\"b\":true}", out.toString());
+        out.reset();
+
+        FloatPrimitiveClass f = new FloatPrimitiveClass();
+        f.f = 1.0f;
+        JsonTools.serialize(f, out);
+        Assert.assertEquals("{\"f\":1.0}", out.toString());
+        out.reset();
+
+        DoublePrimitiveClass d = new DoublePrimitiveClass();
+        d.d = 1.0;
+        JsonTools.serialize(d, out);
+        Assert.assertEquals("{\"d\":1.0}", out.toString());
+        out.reset();
+    }
+
+
+    static class FloatBoxedClass {
+        Float f;
+    }
+
+    static class DoubleBoxedClass {
+        Double d;
+    }
+
+    static class CharBoxedClass {
+        Character c;
+    }
+
+    @Test
+    public void boxedTests() {
+        FloatBoxedClass f = new FloatBoxedClass();
+        f.f = 1.0f;
+        Assert.assertEquals("{\"f\":1.0}", JsonTools.serialize(f));
+
+        DoubleBoxedClass d = new DoubleBoxedClass();
+        d.d = 1.0;
+        Assert.assertEquals("{\"d\":1.0}", JsonTools.serialize(d));
+
+        CharBoxedClass c = new CharBoxedClass();
+        c.c = '1';
+        Assert.assertEquals("{\"c\":\"1\"}", JsonTools.serialize(c));
     }
 
     @Test
@@ -1010,7 +1187,7 @@ public class JsonTest {
                 while (true)
                     appender.append(' ');
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1018,7 +1195,7 @@ public class JsonTest {
                 while (true)
                     appender.append("string");
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1026,7 +1203,7 @@ public class JsonTest {
                 while (true)
                     appender.append("string", 0, 6);
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1034,7 +1211,7 @@ public class JsonTest {
                 while (true)
                     appender.append("string_".toCharArray());
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1042,7 +1219,7 @@ public class JsonTest {
                 while (true)
                     appender.append("string_".toCharArray(), 0, 6);
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
         testException(new Runnable() {
             @Override
             public void run() {
@@ -1050,7 +1227,7 @@ public class JsonTest {
                 appender.append(' ');
                 appender.flush();
             }
-        }, WrappedException.class, "Pipe not connected");
+        }, IOException.class, "Pipe not connected");
     }
 
     private String appendData(Appender appender) {
@@ -1099,26 +1276,26 @@ public class JsonTest {
             public void run() {
                 Binder.createCollection(CustomList.class);
             }
-        }, WrappedException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class " +
+        }, IllegalAccessException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class " +
                 "com.wizzardo.tools.json.JsonTest$CustomList with modifiers \"private\"");
         testException(new Runnable() {
             @Override
             public void run() {
                 Binder.createCollection(NoSuchMethodExceptionTest.class);
             }
-        }, WrappedException.class, "com.wizzardo.tools.json.JsonTest$NoSuchMethodExceptionTest.<init>()");
+        }, NoSuchMethodException.class, "com.wizzardo.tools.json.JsonTest$NoSuchMethodExceptionTest.<init>()");
         testException(new Runnable() {
             @Override
             public void run() {
                 Binder.createCollection(ExceptionInConstructor.class);
             }
-        }, WrappedException.class, null);
+        }, InvocationTargetException.class, null);
         testException(new Runnable() {
             @Override
             public void run() {
                 Binder.createCollection(InstantiationExceptionTest.class);
             }
-        }, WrappedException.class, null);
+        }, InstantiationException.class, null);
     }
 
     private void testException(Runnable closure, Class exceptionClass, String message) {

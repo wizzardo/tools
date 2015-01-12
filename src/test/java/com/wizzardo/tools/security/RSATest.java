@@ -1,9 +1,10 @@
 package com.wizzardo.tools.security;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.Random;
-import junit.framework.Assert;
-import org.junit.Test;
 
 /**
  *

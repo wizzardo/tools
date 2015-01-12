@@ -1,7 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.misc.UncheckedThrow;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,6 +20,26 @@ abstract class Appender {
     public abstract void append(char[] s, int from, int to);
 
     public abstract void append(char s);
+
+    public void append(int s) {
+        append(String.valueOf(s));
+    }
+
+    public void append(long s) {
+        append(String.valueOf(s));
+    }
+
+    public void append(boolean s) {
+        append(String.valueOf(s));
+    }
+
+    public void append(float s) {
+        append(String.valueOf(s));
+    }
+
+    public void append(double s) {
+        append(String.valueOf(s));
+    }
 
     public abstract void flush();
 
@@ -79,6 +99,31 @@ abstract class Appender {
         }
 
         @Override
+        public void append(int s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(long s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(boolean s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(float s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(double s) {
+            sb.append(s);
+        }
+
+        @Override
         public void flush() {
         }
 
@@ -116,6 +161,31 @@ abstract class Appender {
         }
 
         @Override
+        public void append(int s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(long s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(boolean s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(float s) {
+            sb.append(s);
+        }
+
+        @Override
+        public void append(double s) {
+            sb.append(s);
+        }
+
+        @Override
         public void flush() {
         }
 
@@ -137,7 +207,7 @@ abstract class Appender {
             try {
                 out.write(s);
             } catch (IOException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
         }
 
@@ -146,7 +216,7 @@ abstract class Appender {
             try {
                 out.append(s, from, to);
             } catch (IOException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
         }
 
@@ -155,7 +225,7 @@ abstract class Appender {
             try {
                 out.write(s, from, to - from);
             } catch (IOException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
         }
 
@@ -164,7 +234,7 @@ abstract class Appender {
             try {
                 out.append(s);
             } catch (IOException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
         }
 
@@ -173,7 +243,7 @@ abstract class Appender {
             try {
                 out.flush();
             } catch (IOException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
         }
     }

@@ -17,9 +17,9 @@ public class CharTreeTest {
                 "Pragma", "User-Agent", "Content-Type", "Content-Length",
                 "Close", "Keep-Alive"
         };
-        CharTree tree = new CharTree();
+        CharTree<String> tree = new CharTree<String>();
         for (String string : strings) {
-            tree.append(string);
+            tree.append(string, string);
         }
 
         for (String string : strings) {
@@ -29,11 +29,11 @@ public class CharTreeTest {
 
     @Test
     public void test2() {
-        CharTree tree = new CharTree();
-        tree.append("foo");
-        tree.append("bar");
-        tree.append("foobar");
-        tree.append("foo");
+        CharTree<String> tree = new CharTree<String>()
+                .append("foo", "foo")
+                .append("bar", "bar")
+                .append("foobar", "foobar")
+                .append("foo", "foo");
 
         Assert.assertEquals("foo", tree.get("foo".toCharArray()));
         Assert.assertEquals("bar", tree.get("bar".toCharArray()));

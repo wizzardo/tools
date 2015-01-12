@@ -1,10 +1,13 @@
 package com.wizzardo.tools.http;
 
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.misc.UncheckedThrow;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +158,7 @@ public class Request extends RequestArguments<Request> {
                 try {
                     Thread.sleep(pauseBetweenRetries);
                 } catch (InterruptedException ex1) {
-                    throw new WrappedException(ex1);
+                    throw UncheckedThrow.rethrow(ex1);
                 }
                 return execute(++retryNumber);
             }

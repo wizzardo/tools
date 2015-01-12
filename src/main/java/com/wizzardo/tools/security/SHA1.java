@@ -4,7 +4,7 @@
  */
 package com.wizzardo.tools.security;
 
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.misc.UncheckedThrow;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +24,7 @@ public class SHA1 {
         try {
             sha1 = MessageDigest.getInstance("SHA-1");
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -50,7 +50,7 @@ public class SHA1 {
             sha1.update(b, 0, b.length);
             return sha1BytesToString(sha1.digest());
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -70,7 +70,7 @@ public class SHA1 {
             sha1.update(b, 0, b.length);
             return sha1.digest();
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -87,7 +87,7 @@ public class SHA1 {
             }
             return sha1BytesToString(sha1.digest());
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 
@@ -115,7 +115,7 @@ public class SHA1 {
             }
             return sha1.digest();
         } catch (NoSuchAlgorithmException ex) {
-            throw new WrappedException(ex);
+            throw UncheckedThrow.rethrow(ex);
         }
     }
 

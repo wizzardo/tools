@@ -1,5 +1,6 @@
 package com.wizzardo.tools.reflection;
 
+import com.wizzardo.tools.avian.AvianTools;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
@@ -12,6 +13,13 @@ public class UnsafeTools {
     private static Unsafe unsafe;
 
     static {
+        init();
+    }
+
+    private static void init() {
+        if (AvianTools.IS_AVIAN_VM)
+            return;
+
         Field f = null;
         try {
             f = Unsafe.class.getDeclaredField("theUnsafe");

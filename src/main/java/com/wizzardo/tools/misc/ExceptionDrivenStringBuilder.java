@@ -5,6 +5,9 @@ package com.wizzardo.tools.misc;
  * Date: 8/24/14
  */
 public class ExceptionDrivenStringBuilder implements Appendable {
+    private static final char[] CHARS_TRUE = new char[]{'t', 'r', 'u', 'e'};
+    private static final char[] CHARS_FALSE = new char[]{'f', 'a', 'l', 's', 'e'};
+
     private int limit = 16;
     private char[] buffer = new char[limit];
     private int length = 0;
@@ -40,6 +43,9 @@ public class ExceptionDrivenStringBuilder implements Appendable {
         } catch (ArrayIndexOutOfBoundsException ex) {
             ensureCapacity(length);
             buffer[length - 1] = ch;
+        } catch (IndexOutOfBoundsException ex) {
+            buffer[length - 1] = ch;
+            return append(ch);
         }
         return this;
     }
@@ -54,7 +60,10 @@ public class ExceptionDrivenStringBuilder implements Appendable {
             s.getChars(from, to, buffer, length);
         } catch (ArrayIndexOutOfBoundsException ex) {
             ensureCapacity(length + l);
-            s.getChars(from, to, buffer, length);
+            return append(s, from, to);
+        } catch (IndexOutOfBoundsException ex) {
+            ensureCapacity(length + l);
+            return append(s, from, to);
         }
         length += l;
         return this;
@@ -69,7 +78,10 @@ public class ExceptionDrivenStringBuilder implements Appendable {
             System.arraycopy(chars, from, buffer, this.length, length);
         } catch (ArrayIndexOutOfBoundsException ex) {
             ensureCapacity(length + this.length);
-            System.arraycopy(chars, from, buffer, this.length, length);
+            return append(chars, from, length);
+        } catch (IndexOutOfBoundsException ex) {
+            ensureCapacity(length + this.length);
+            return append(chars, from, length);
         }
         this.length += length;
         return this;
@@ -89,7 +101,10 @@ public class ExceptionDrivenStringBuilder implements Appendable {
             length = NumberToChars.toChars(i, buffer, length);
         } catch (ArrayIndexOutOfBoundsException ex) {
             ensureCapacity(length + 11);
-            length = NumberToChars.toChars(i, buffer, length);
+            return append(i);
+        } catch (IndexOutOfBoundsException ex) {
+            ensureCapacity(length + 11);
+            return append(i);
         }
         return this;
     }
@@ -99,8 +114,19 @@ public class ExceptionDrivenStringBuilder implements Appendable {
             length = NumberToChars.toChars(i, buffer, length);
         } catch (ArrayIndexOutOfBoundsException ex) {
             ensureCapacity(length + 20);
-            length = NumberToChars.toChars(i, buffer, length);
+            return append(i);
+        } catch (IndexOutOfBoundsException ex) {
+            ensureCapacity(length + 20);
+            return append(i);
         }
+        return this;
+    }
+
+    public ExceptionDrivenStringBuilder append(boolean b) {
+        if (b)
+            append(CHARS_TRUE);
+        else
+            append(CHARS_FALSE);
         return this;
     }
 

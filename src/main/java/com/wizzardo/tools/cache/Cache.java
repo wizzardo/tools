@@ -57,6 +57,7 @@ public class Cache<K, V> {
         Holder<K, V> holder = map.remove(k);
         if (holder == null)
             return null;
+        holder.setRemoved();
         onRemoveItem(holder.getKey(), holder.get());
         return holder.get();
     }
@@ -97,6 +98,9 @@ public class Cache<K, V> {
     public void onRemoveItem(K k, V v) {
     }
 
+    public void onAddItem(K k, V v) {
+    }
+
     private V getFromCache(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
         Holder<K, V> f = map.get(key);
         if (f == null) {
@@ -113,10 +117,13 @@ public class Cache<K, V> {
                     failed = false;
                 } finally {
                     ft.done();
-                    if (failed && removeOnException)
+                    if (failed && removeOnException) {
                         map.remove(key);
-                    else
+                        f.setRemoved();
+                    } else {
                         updateTimingCache(f);
+                        onAddItem(f.getKey(), f.get());
+                    }
                 }
             }
         } else if (updateTTL) {
@@ -132,6 +139,7 @@ public class Cache<K, V> {
     public void put(final K key, final V value, long ttl) {
         Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
         map.put(key, h);
+        onAddItem(key, value);
         updateTimingCache(h);
     }
 
@@ -143,6 +151,7 @@ public class Cache<K, V> {
         Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
         if (map.putIfAbsent(key, h) == null) {
             updateTimingCache(h);
+            onAddItem(key, value);
             return true;
         }
         return false;
@@ -208,6 +217,25 @@ public class Cache<K, V> {
             return holder.getTimingsHolder().ttl;
 
         return ttl;
+    }
+
+    public void removeOldest() {
+        Holder<K, V> holder = null;
+        for (TimingsHolder th : timings) {
+            for (Entry<Holder<K, V>, Long> e : th.timings) {
+                if (e.getValue() != e.getKey().validUntil)
+                    continue;
+
+                if (!e.getKey().isRemoved()) {
+                    if (holder == null || e.getKey().getValidUntil() < holder.validUntil)
+                        holder = e.getKey();
+
+                    break;
+                }
+            }
+        }
+        if (holder != null)
+            remove(holder.getKey());
     }
 
     class TimingsHolder {

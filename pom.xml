@@ -1,129 +1,48 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.wizzardo.tools</groupId>
-    <artifactId>tools</artifactId>
-    <packaging>jar</packaging>
-    <version>0.11-SNAPSHOT</version>
-    <name>tools</name>
-    <description>Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other</description>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>oss-parent</artifactId>
+    <groupId>org.sonatype.oss</groupId>
+    <version>7</version>
+  </parent>
+  <groupId>com.wizzardo.tools</groupId>
+  <artifactId>tools</artifactId>
+  <version>0.11-SNAPSHOT</version>
+  <description>Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other</description>
+  <url>https://github.com/wizzardo/Tools</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>Wizzardo</id>
+      <name>Mikhail Bobrutskov</name>
+      <email>wizzardobox@gmail.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git@github.com:wizzardo/Tools.git</connection>
+    <developerConnection>scm:git:git@github.com:wizzardo/Tools.git</developerConnection>
     <url>https://github.com/wizzardo/Tools</url>
-
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
-        </license>
-    </licenses>
-
-    <scm>
-        <connection>scm:git:git@github.com:wizzardo/Tools.git</connection>
-        <developerConnection>scm:git:git@github.com:wizzardo/Tools.git</developerConnection>
-        <url>https://github.com/wizzardo/Tools</url>
-    </scm>
-
-    <developers>
-        <developer>
-            <id>Wizzardo</id>
-            <name>Mikhail Bobrutskov</name>
-            <email>wizzardobox@gmail.com</email>
-        </developer>
-    </developers>
-
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.2.4</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>1.1.39</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
-
-    <build>
-        <directory>out</directory>
-        <sourceDirectory>src</sourceDirectory>
-        <outputDirectory>out/classes</outputDirectory>
-
-        <testSourceDirectory>test</testSourceDirectory>
-        <testOutputDirectory>out/test-classes</testOutputDirectory>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.10</version>
-                <configuration>
-                    <reportsDirectory>out/test-reports</reportsDirectory>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.3.1</version>
-                <configuration>
-                    <outputDirectory>out</outputDirectory>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-        </plugins>
-    </build>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

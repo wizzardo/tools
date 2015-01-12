@@ -1,6 +1,7 @@
 package com.wizzardo.tools.reflection;
 
-import com.wizzardo.tools.misc.WrappedException;
+import com.wizzardo.tools.avian.AvianTools;
+import com.wizzardo.tools.misc.UncheckedThrow;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
@@ -37,6 +38,9 @@ public class FieldReflection {
     protected static final boolean getObject = hasMethod(Unsafe.class, "getObject", Object.class, long.class);
 
     private static Boolean hasMethod(Class clazz, String name, Class... args) {
+        if (AvianTools.IS_AVIAN_VM)
+            return false;
+
         try {
             clazz.getDeclaredMethod(name, args);
         } catch (NoSuchMethodException e) {
@@ -57,201 +61,252 @@ public class FieldReflection {
         OBJECT
     }
 
+    @Override
+    public String toString() {
+        return field.toString();
+    }
+
+    private void assertTypeGet(Type t) {
+        if (type != t)
+            throw new IllegalStateException("Can not get " + t + " value from field " + field);
+    }
+
+    private void assertTypeSet(Type t) {
+        if (type != t)
+            throw new IllegalStateException("Can not set " + t + " value to field " + field);
+    }
+
     public void setInteger(Object object, int value) {
+        assertTypeSet(Type.INTEGER);
+
         if (putInt && offset != 0)
             unsafe.putInt(object, offset, value);
         else
             try {
                 field.setInt(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public void setLong(Object object, long value) {
+        assertTypeSet(Type.LONG);
+
         if (putLong && offset != 0)
             unsafe.putLong(object, offset, value);
         else
             try {
                 field.setLong(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public void setByte(Object object, byte value) {
+        assertTypeSet(Type.BYTE);
+
         if (putByte && offset != 0)
             unsafe.putByte(object, offset, value);
         else
             try {
                 field.setByte(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public void setShort(Object object, short value) {
+        assertTypeSet(Type.SHORT);
+
         if (putShort && offset != 0)
             unsafe.putShort(object, offset, value);
         else
             try {
                 field.setShort(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public void setFloat(Object object, float value) {
+        assertTypeSet(Type.FLOAT);
+
         if (putFloat && offset != 0)
             unsafe.putFloat(object, offset, value);
         else
             try {
                 field.setFloat(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public void setDouble(Object object, double value) {
+        assertTypeSet(Type.DOUBLE);
+
         if (putDouble && offset != 0)
             unsafe.putDouble(object, offset, value);
         else
             try {
                 field.setDouble(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public void setChar(Object object, char value) {
+        assertTypeSet(Type.CHAR);
+
         if (putChar && offset != 0)
             unsafe.putChar(object, offset, value);
         else
             try {
                 field.setChar(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public void setBoolean(Object object, boolean value) {
+        assertTypeSet(Type.BOOLEAN);
+
         if (putBoolean && offset != 0)
             unsafe.putBoolean(object, offset, value);
         else
             try {
                 field.setBoolean(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public void setObject(Object object, Object value) {
+        assertTypeSet(Type.OBJECT);
+
         if (putObject && offset != 0)
             unsafe.putObject(object, offset, value);
         else
             try {
                 field.set(object, value);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public int getInteger(Object object) {
+        assertTypeGet(Type.INTEGER);
+
         if (getInt && offset != 0)
             return unsafe.getInt(object, offset);
         else
             try {
                 return field.getInt(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public long getLong(Object object) {
+        assertTypeGet(Type.LONG);
+
         if (getLong && offset != 0)
             return unsafe.getLong(object, offset);
         else
             try {
                 return field.getLong(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public byte getByte(Object object) {
+        assertTypeGet(Type.BYTE);
+
         if (getByte && offset != 0)
             return unsafe.getByte(object, offset);
         else
             try {
                 return field.getByte(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public short getShort(Object object) {
+        assertTypeGet(Type.SHORT);
+
         if (getShort && offset != 0)
             return unsafe.getShort(object, offset);
         else
             try {
                 return field.getShort(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public float getFloat(Object object) {
+        assertTypeGet(Type.FLOAT);
+
         if (getFloat && offset != 0)
             return unsafe.getFloat(object, offset);
         else
             try {
                 return field.getFloat(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public double getDouble(Object object) {
+        assertTypeGet(Type.DOUBLE);
+
         if (getDouble && offset != 0)
             return unsafe.getDouble(object, offset);
         else
             try {
                 return field.getDouble(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public char getChar(Object object) {
+        assertTypeGet(Type.CHAR);
+
         if (getChar && offset != 0)
             return unsafe.getChar(object, offset);
         else
             try {
                 return field.getChar(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public boolean getBoolean(Object object) {
+        assertTypeGet(Type.BOOLEAN);
+
         if (getBoolean && offset != 0)
             return unsafe.getBoolean(object, offset);
         else
             try {
                 return field.getBoolean(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
     public Object getObject(Object object) {
+        assertTypeGet(Type.OBJECT);
+
         if (getObject && offset != 0)
             return unsafe.getObject(object, offset);
         else
             try {
                 return field.get(object);
             } catch (IllegalAccessException e) {
-                throw new WrappedException(e);
+                throw UncheckedThrow.rethrow(e);
             }
     }
 
