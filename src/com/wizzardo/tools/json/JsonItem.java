@@ -306,7 +306,7 @@ public class JsonItem {
             ((JsonArray) ob).toJson(sb);
         else if (ob.getClass() == String.class) {
             sb.append('"');
-            sb.append(JsonTools.escape(ob.toString()));
+            JsonTools.escape(ob.toString(), sb);
             sb.append('"');
         } else
             Binder.toJSON(ob, sb);
