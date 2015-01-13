@@ -149,7 +149,7 @@ public class Binder {
     private static Serializer simpleSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
-            appendNumberOrBoolean(object, appender);
+            appender.append(String.valueOf(object));
         }
     };
     private static Serializer intNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
@@ -632,10 +632,6 @@ public class Binder {
             serializer = nullSerializer;
         appendName(name, sb, true);
         serializer.serialize(src, sb, null);
-    }
-
-    private static void appendNumberOrBoolean(Object ob, Appender sb) {
-        sb.append(ob);
     }
 
     private static void appendString(Object ob, Appender sb) {
