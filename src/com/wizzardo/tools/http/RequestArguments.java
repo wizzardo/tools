@@ -112,7 +112,8 @@ public class RequestArguments<T extends RequestArguments> {
                 sb.append("; ");
             sb.append(c.key).append("=").append(c.value);
         }
-        headers.put("Cookie", sb.toString());
+        if (sb.length() > 0)
+            headers.put("Cookie", sb.toString());
         return self();
     }
 
