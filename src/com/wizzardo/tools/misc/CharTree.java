@@ -1,5 +1,8 @@
 package com.wizzardo.tools.misc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author: wizzardo
  * Date: 7/30/14
@@ -17,6 +20,10 @@ public class CharTree<V> {
 
     public CharTree<V> append(String s, V value) {
         return append(s.toCharArray(), value);
+    }
+
+    public CharTree<V> appendReverse(String s, V value) {
+        return append(reverse(s.toCharArray()), value);
     }
 
     public CharTree<V> append(char[] chars, V value) {
@@ -63,6 +70,62 @@ public class CharTree<V> {
             node = node.next(chars[i]);
         }
         return node == null ? null : node.value;
+    }
+
+    public V findStarts(char[] chars) {
+        return findStarts(chars, 0, chars.length);
+    }
+
+    public V findStarts(char[] chars, int offset, int length) {
+        CharTreeNode<V> node = root;
+        for (int i = offset; i < offset + length && node != null && node.value == null; i++) {
+            node = node.next(chars[i]);
+        }
+        return node == null ? null : node.value;
+    }
+
+    public List<V> findAllStarts(char[] chars) {
+        return findAllStarts(chars, 0, chars.length);
+    }
+
+    public List<V> findAllStarts(char[] chars, int offset, int length) {
+        CharTreeNode<V> node = root;
+        List<V> list = new ArrayList<V>();
+        for (int i = offset; i < offset + length && node != null; i++) {
+            node = node.next(chars[i]);
+            if (node != null && node.value != null)
+                list.add(node.value);
+        }
+        return list;
+    }
+
+    public V findEnds(char[] chars) {
+        return findEnds(chars, 0, chars.length);
+    }
+
+    public V findEnds(char[] chars, int offset, int length) {
+        CharTreeNode<V> node = root;
+        int l = chars.length - 1;
+        for (int i = offset; i < offset + length && node != null && node.value == null; i++) {
+            node = node.next(chars[l - i]);
+        }
+        return node == null ? null : node.value;
+    }
+
+    public List<V> findAllEnds(char[] chars) {
+        return findAllEnds(chars, 0, chars.length);
+    }
+
+    public List<V> findAllEnds(char[] chars, int offset, int length) {
+        CharTreeNode<V> node = root;
+        int l = chars.length - 1;
+        List<V> list = new ArrayList<V>();
+        for (int i = offset; i < offset + length && node != null; i++) {
+            node = node.next(chars[l - i]);
+            if (node != null && node.value != null)
+                list.add(node.value);
+        }
+        return list;
     }
 
     public static abstract class CharTreeNode<V> {
@@ -176,5 +239,15 @@ public class CharTree<V> {
         public String toString() {
             return "single " + b;
         }
+    }
+
+    public static char[] reverse(char[] chars) {
+        char c;
+        for (int i = 0, j = chars.length - 1; i < j; i++, j--) {
+            c = chars[i];
+            chars[i] = chars[j];
+            chars[j] = c;
+        }
+        return chars;
     }
 }

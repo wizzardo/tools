@@ -39,4 +39,30 @@ public class CharTreeTest {
         Assert.assertEquals("bar", tree.get("bar".toCharArray()));
         Assert.assertEquals("foobar", tree.get("foobar".toCharArray()));
     }
+
+    @Test
+    public void testStarts() {
+        CharTree<String> tree = new CharTree<String>()
+                .append("foo", "foo")
+                .append("bar", "bar")
+                .append("foobar", "foobar");
+
+        Assert.assertEquals("foo", tree.findStarts("foo_".toCharArray()));
+        Assert.assertEquals("bar", tree.findStarts("bar_".toCharArray()));
+        Assert.assertEquals("foo", tree.findStarts("foobar_".toCharArray()));
+        Assert.assertEquals("[foo, foobar]", tree.findAllStarts("foobar_".toCharArray()).toString());
+    }
+
+    @Test
+    public void testEnds() {
+        CharTree<String> tree = new CharTree<String>()
+                .appendReverse("foo", "foo")
+                .appendReverse("bar", "bar")
+                .appendReverse("foobar", "foobar");
+
+        Assert.assertEquals("foo", tree.findEnds("_foo".toCharArray()));
+        Assert.assertEquals("bar", tree.findEnds("_bar".toCharArray()));
+        Assert.assertEquals("bar", tree.findEnds("_foobar".toCharArray()));
+        Assert.assertEquals("[bar, foobar]", tree.findAllEnds("_foobar".toCharArray()).toString());
+    }
 }
