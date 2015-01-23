@@ -1,7 +1,5 @@
 package com.wizzardo.tools.reflection;
 
-import com.wizzardo.tools.avian.AvianTools;
-
 /**
  * @author: wizzardo
  * Date: 8/8/14
@@ -16,10 +14,7 @@ public class StringReflection {
         init();
     }
 
-    private static void init(){
-        if (AvianTools.IS_AVIAN_VM)
-            return;
-
+    private static void init() {
         value = getFieldReflection(String.class, "value", true);
         offset = getFieldReflection(String.class, "offset", false);
         count = getFieldReflection(String.class, "count", false);
@@ -46,12 +41,15 @@ public class StringReflection {
     }
 
     public static int offset(String s) {
-        if (offset != null)
+        if (value != null && offset != null)
             return offset.getInteger(s);
         return 0;
     }
 
     public static String createString(char[] chars) {
+        if (value == null)
+            return new String(chars);
+
         String s = new String();
 
         value.setObject(s, chars);
@@ -61,6 +59,9 @@ public class StringReflection {
     }
 
     public static String createString(char[] chars, int hash) {
+        if (value == null)
+            return new String(chars);
+
         String s = new String();
         value.setObject(s, chars);
 
