@@ -9,6 +9,16 @@ import com.wizzardo.tools.reflection.FieldReflection;
  */
 class JsonUtils {
 
+    private static long[] fractionalShift;
+
+    static {
+        fractionalShift = new long[19];
+        fractionalShift[0] = 1;
+        for (int i = 1; i < fractionalShift.length; i++) {
+            fractionalShift[i] = fractionalShift[i - 1] * 10;
+        }
+    }
+
     static int trimRight(char[] s, int from, int to) {
         while ((from < to) && (s[to - 1] <= ' ')) {
             to--;
@@ -48,31 +58,46 @@ class JsonUtils {
         boolean floatValue = false;
         long l = 0;
         char ch;
-        for (; i < to; i++) {
+        while (i < to) {
             ch = s[i];
             if (ch >= '0' && ch <= '9') {
-                if (!floatValue)
-                    l = l * 10 + (ch - '0');
-            } else if (ch == '.' && !floatValue)
+                l = l * 10 + (ch - '0');
+            } else if (ch == '.') {
                 floatValue = true;
-            else
                 break;
-
+            } else
+                break;
+            i++;
         }
         if (binder == null)
             return i;
 
-        if (minus)
-            l = -l;
-
         double d = 0;
         if (floatValue) {
-            if (minus)
-                from++;
-            d = Double.parseDouble(new String(s, from, i - from));
+            long number = l;
+            i++;
+            int fractionalPartStart = i;
+
+            while (i < to) {
+                ch = s[i];
+                if (ch >= '0' && ch <= '9')
+                    number = number * 10 + (ch - '0');
+                else
+                    break;
+                i++;
+            }
+
+//            if (ch != '"' && ch != '\'' && ch != '}' && ch != ']' && ch != ',')
+//                throw new NumberFormatException("can't parse '" + new String(s, from, i - from + 1) + "' as number");
+
+            d = ((double) number) / fractionalShift[i - fractionalPartStart];
+
             if (minus)
                 d = -d;
         }
+
+        if (minus)
+            l = -l;
 
         JsonFieldSetter setter = binder.getFieldSetter();
         if (setter != null && setter.getType() != FieldReflection.Type.OBJECT) {
