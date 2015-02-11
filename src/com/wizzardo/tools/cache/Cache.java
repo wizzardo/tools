@@ -138,9 +138,13 @@ public class Cache<K, V> {
 
     public void put(final K key, final V value, long ttl) {
         Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
-        map.put(key, h);
+        Holder<K, V> old = map.put(key, h);
         onAddItem(key, value);
         updateTimingCache(h);
+        if (old != null) {
+            old.setRemoved();
+            onRemoveItem(old.k, old.v);
+        }
     }
 
     public boolean putIfAbsent(final K key, final V value) {
