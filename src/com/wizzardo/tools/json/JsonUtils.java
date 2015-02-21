@@ -57,7 +57,7 @@ class JsonUtils {
 
         boolean floatValue = false;
         long l = 0;
-        char ch;
+        char ch = 0;
         while (i < to) {
             ch = s[i];
             if (ch >= '0' && ch <= '9') {
@@ -90,10 +90,30 @@ class JsonUtils {
 //            if (ch != '"' && ch != '\'' && ch != '}' && ch != ']' && ch != ',')
 //                throw new NumberFormatException("can't parse '" + new String(s, from, i - from + 1) + "' as number");
 
-            d = ((double) number) / fractionalShift[i - fractionalPartStart];
 
             if (minus)
-                d = -d;
+                d = -((double) number) / fractionalShift[i - fractionalPartStart];
+            else
+                d = ((double) number) / fractionalShift[i - fractionalPartStart];
+
+            if (ch == 'e' || ch == 'E') {
+                i++;
+                int degree = 0;
+                minus = s[i] == '-';
+                if (minus)
+                    i++;
+
+                while (i < to) {
+                    ch = s[i];
+                    if (ch >= '0' && ch <= '9')
+                        degree = degree * 10 + (ch - '0');
+                    else
+                        break;
+                    i++;
+                }
+
+                d = (minus) ? d / Math.pow(10, degree) : d * Math.pow(10, degree);
+            }
         }
 
         if (minus)
