@@ -95,29 +95,34 @@ class JsonUtils {
                 d = -((double) number) / fractionalShift[i - fractionalPartStart];
             else
                 d = ((double) number) / fractionalShift[i - fractionalPartStart];
-
-            if (ch == 'e' || ch == 'E') {
-                i++;
-                int degree = 0;
-                minus = s[i] == '-';
-                if (minus)
-                    i++;
-
-                while (i < to) {
-                    ch = s[i];
-                    if (ch >= '0' && ch <= '9')
-                        degree = degree * 10 + (ch - '0');
-                    else
-                        break;
-                    i++;
-                }
-
-                d = (minus) ? d / Math.pow(10, degree) : d * Math.pow(10, degree);
-            }
         }
 
         if (minus)
             l = -l;
+
+        if (ch == 'e' || ch == 'E') {
+            if (!floatValue) {
+                d = l;
+                floatValue = true;
+            }
+
+            i++;
+            int degree = 0;
+            minus = s[i] == '-';
+            if (minus)
+                i++;
+
+            while (i < to) {
+                ch = s[i];
+                if (ch >= '0' && ch <= '9')
+                    degree = degree * 10 + (ch - '0');
+                else
+                    break;
+                i++;
+            }
+
+            d = (minus) ? d / Math.pow(10, degree) : d * Math.pow(10, degree);
+        }
 
         JsonFieldSetter setter = binder.getFieldSetter();
         if (setter != null && setter.getType() != FieldReflection.Type.OBJECT) {
