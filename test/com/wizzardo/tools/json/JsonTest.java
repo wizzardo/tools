@@ -1298,6 +1298,17 @@ public class JsonTest {
         }, InstantiationException.class, null);
     }
 
+    static class DoubleHolder {
+        double d;
+    }
+
+    @Test
+    public void testScientificNotation(){
+        Assert.assertEquals(1.0, JsonTools.parse("{d:1e}", DoubleHolder.class).d, 0.00001);
+        Assert.assertEquals(100.0, JsonTools.parse("{d:1e2}", DoubleHolder.class).d, 0.00001);
+        Assert.assertEquals(0.01, JsonTools.parse("{d:1e-2}", DoubleHolder.class).d, 0.00001);
+    }
+
     private void testException(Runnable closure, Class exceptionClass, String message) {
         boolean exception = false;
         try {
