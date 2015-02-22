@@ -841,6 +841,7 @@ public class JsonTest {
     @Test
     public void jsonToolsTests() throws IOException {
         Assert.assertNotNull(new JsonTools()); // just for coverage
+        Assert.assertNotNull(new Binder()); // just for coverage
 
         File temp = File.createTempFile("prefix", "suffix");
         temp.deleteOnExit();

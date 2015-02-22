@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: moxa
  * Date: 3/23/13
  */
-public class Binder {
+class Binder {
 
     private static final int SYNTHETIC = 0x00001000;
     private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
