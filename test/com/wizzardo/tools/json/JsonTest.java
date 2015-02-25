@@ -1199,6 +1199,8 @@ public class JsonTest {
 
         Assert.assertEquals(new Character((char) 1), JsonTools.parse("{\"c\":1}", CharBoxedClass.class).c);
         Assert.assertEquals(new Boolean(true), JsonTools.parse("{\"b\":true}", BooleanBoxedClass.class).b);
+        Assert.assertEquals(new Boolean(true), JsonTools.parse("{\"b\":1}", BooleanBoxedClass.class).b);
+        Assert.assertEquals(new Boolean(false), JsonTools.parse("{\"b\":0}", BooleanBoxedClass.class).b);
     }
 
     @Test

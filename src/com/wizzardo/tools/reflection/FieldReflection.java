@@ -62,12 +62,12 @@ public class FieldReflection {
         return field.toString();
     }
 
-    private void assertTypeGet(Type t) {
+    protected void assertTypeGet(Type t) {
         if (type != t)
             throw new IllegalStateException("Can not get " + t + " value from field " + field);
     }
 
-    private void assertTypeSet(Type t) {
+    protected void assertTypeSet(Type t) {
         if (type != t)
             throw new IllegalStateException("Can not set " + t + " value to field " + field);
     }

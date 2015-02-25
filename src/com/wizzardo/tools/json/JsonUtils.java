@@ -125,7 +125,7 @@ class JsonUtils {
         }
 
         JsonFieldSetter setter = binder.getFieldSetter();
-        if (setter != null && setter.getType() != FieldReflection.Type.OBJECT) {
+        if (setter != null) {
             setNumber(setter, binder.getObject(), l, d, floatValue);
             return i;
         }
