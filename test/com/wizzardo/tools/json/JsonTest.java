@@ -1140,6 +1140,18 @@ public class JsonTest {
     }
 
 
+    static class IntBoxedClass {
+        Integer i;
+    }
+
+    static class LongBoxedClass {
+        Long l;
+    }
+
+    static class BooleanBoxedClass {
+        Boolean b;
+    }
+
     static class FloatBoxedClass {
         Float f;
     }
@@ -1148,12 +1160,20 @@ public class JsonTest {
         Double d;
     }
 
+    static class ShortBoxedClass {
+        Short s;
+    }
+
+    static class ByteBoxedClass {
+        Byte b;
+    }
+
     static class CharBoxedClass {
         Character c;
     }
 
     @Test
-    public void boxedTests() {
+    public void boxedSerializeTests() {
         FloatBoxedClass f = new FloatBoxedClass();
         f.f = 1.0f;
         Assert.assertEquals("{\"f\":1.0}", JsonTools.serialize(f));
@@ -1165,6 +1185,20 @@ public class JsonTest {
         CharBoxedClass c = new CharBoxedClass();
         c.c = '1';
         Assert.assertEquals("{\"c\":\"1\"}", JsonTools.serialize(c));
+    }
+
+    @Test
+    public void boxedDeserializeTests() {
+        Assert.assertEquals(1.0f, JsonTools.parse("{\"f\":1.0}", FloatBoxedClass.class).f, 0.001);
+        Assert.assertEquals(1.0d, JsonTools.parse("{\"d\":1.0}", DoubleBoxedClass.class).d, 0.001);
+
+        Assert.assertEquals(new Integer(1), JsonTools.parse("{\"i\":1}", IntBoxedClass.class).i);
+        Assert.assertEquals(new Long(1), JsonTools.parse("{\"l\":1}", LongBoxedClass.class).l);
+        Assert.assertEquals(new Short((short) 1), JsonTools.parse("{\"s\":1}", ShortBoxedClass.class).s);
+        Assert.assertEquals(new Byte((byte) 1), JsonTools.parse("{\"b\":1}", ByteBoxedClass.class).b);
+
+        Assert.assertEquals(new Character((char) 1), JsonTools.parse("{\"c\":1}", CharBoxedClass.class).c);
+        Assert.assertEquals(new Boolean(true), JsonTools.parse("{\"b\":true}", BooleanBoxedClass.class).b);
     }
 
     @Test
