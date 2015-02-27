@@ -1,4 +1,4 @@
-package main.java.com.wizzardo.tools.misc;
+package com.wizzardo.tools.misc;
 
 /**
  * @author: wizzardo

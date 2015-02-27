@@ -1,4 +1,4 @@
-package main.java.com.wizzardo.tools.cache;
+package com.wizzardo.tools.cache;
 
 import com.wizzardo.tools.cache.Cache;
 import com.wizzardo.tools.cache.Computable;
