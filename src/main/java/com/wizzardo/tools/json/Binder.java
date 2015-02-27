@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: moxa
  * Date: 3/23/13
  */
-public class Binder {
+class Binder {
 
     private static final int SYNTHETIC = 0x00001000;
     private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
@@ -149,7 +149,7 @@ public class Binder {
     private static Serializer simpleSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
-            appendNumberOrBoolean(object, appender);
+            appender.append(String.valueOf(object));
         }
     };
     private static Serializer intNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
@@ -632,10 +632,6 @@ public class Binder {
             serializer = nullSerializer;
         appendName(name, sb, true);
         serializer.serialize(src, sb, null);
-    }
-
-    private static void appendNumberOrBoolean(Object ob, Appender sb) {
-        sb.append(ob);
     }
 
     private static void appendString(Object ob, Appender sb) {

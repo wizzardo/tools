@@ -1,6 +1,5 @@
 package com.wizzardo.tools.reflection;
 
-import com.wizzardo.tools.avian.AvianTools;
 import com.wizzardo.tools.misc.UncheckedThrow;
 import sun.misc.Unsafe;
 
@@ -38,9 +37,6 @@ public class FieldReflection {
     protected static final boolean getObject = hasMethod(Unsafe.class, "getObject", Object.class, long.class);
 
     private static Boolean hasMethod(Class clazz, String name, Class... args) {
-        if (AvianTools.IS_AVIAN_VM)
-            return false;
-
         try {
             clazz.getDeclaredMethod(name, args);
         } catch (NoSuchMethodException e) {
@@ -66,12 +62,12 @@ public class FieldReflection {
         return field.toString();
     }
 
-    private void assertTypeGet(Type t) {
+    protected void assertTypeGet(Type t) {
         if (type != t)
             throw new IllegalStateException("Can not get " + t + " value from field " + field);
     }
 
-    private void assertTypeSet(Type t) {
+    protected void assertTypeSet(Type t) {
         if (type != t)
             throw new IllegalStateException("Can not set " + t + " value to field " + field);
     }

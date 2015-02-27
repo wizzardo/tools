@@ -43,6 +43,30 @@ abstract class JsonFieldSetter extends FieldReflection {
         if (cl.isEnum())
             return new EnumSetter(f);
 
+        if (cl == Boolean.class)
+            return new BooleanBoxedSetter(f);
+
+        if (cl == Integer.class)
+            return new IntBoxedSetter(f);
+
+        if (cl == Long.class)
+            return new LongBoxedSetter(f);
+
+        if (cl == Byte.class)
+            return new ByteBoxedSetter(f);
+
+        if (cl == Short.class)
+            return new ShortBoxedSetter(f);
+
+        if (cl == Character.class)
+            return new CharBoxedSetter(f);
+
+        if (cl == Float.class)
+            return new FloatBoxedSetter(f);
+
+        if (cl == Double.class)
+            return new DoubleBoxedSetter(f);
+
         return new ObjectSetter(f);
     }
 
@@ -157,6 +181,134 @@ abstract class JsonFieldSetter extends FieldReflection {
             Class cl = field.getType();
             Object ob = value == null ? null : value.asEnum(cl);
             setObject(object, ob);
+        }
+    }
+
+    public static class BooleanBoxedSetter extends BooleanSetter {
+        BooleanBoxedSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void setBoolean(Object object, boolean value) {
+            setObject(object, value ? Boolean.TRUE : Boolean.FALSE);
+        }
+
+        @Override
+        public Type getType() {
+            return Type.BOOLEAN;
+        }
+    }
+
+    public static class IntBoxedSetter extends IntSetter {
+        IntBoxedSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void setInteger(Object object, int value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public Type getType() {
+            return Type.INTEGER;
+        }
+    }
+
+    public static class LongBoxedSetter extends LongSetter {
+        LongBoxedSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void setLong(Object object, long value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public Type getType() {
+            return Type.LONG;
+        }
+    }
+
+    public static class ShortBoxedSetter extends ShortSetter {
+        ShortBoxedSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void setShort(Object object, short value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public Type getType() {
+            return Type.SHORT;
+        }
+    }
+
+    public static class ByteBoxedSetter extends ByteSetter {
+        ByteBoxedSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void setByte(Object object, byte value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public Type getType() {
+            return Type.BYTE;
+        }
+    }
+
+    public static class CharBoxedSetter extends CharSetter {
+        CharBoxedSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void setChar(Object object, char value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public Type getType() {
+            return Type.CHAR;
+        }
+    }
+
+    public static class FloatBoxedSetter extends FloatSetter {
+        FloatBoxedSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void setFloat(Object object, float value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public Type getType() {
+            return Type.FLOAT;
+        }
+    }
+
+    public static class DoubleBoxedSetter extends DoubleSetter {
+        DoubleBoxedSetter(Field f) {
+            super(f);
+        }
+
+        @Override
+        public void setDouble(Object object, double value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public Type getType() {
+            return Type.DOUBLE;
         }
     }
 }

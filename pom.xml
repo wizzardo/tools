@@ -9,7 +9,7 @@
   </parent>
   <groupId>com.wizzardo.tools</groupId>
   <artifactId>tools</artifactId>
-  <version>0.11-SNAPSHOT</version>
+  <version>0.12-SNAPSHOT</version>
   <description>Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other</description>
   <url>https://github.com/wizzardo/Tools</url>
   <licenses>
