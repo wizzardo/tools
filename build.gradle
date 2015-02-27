@@ -1,5 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility = 1.6
 
@@ -7,10 +8,26 @@ repositories {
     mavenLocal()
     mavenCentral()
 }
+group = "com.wizzardo.tools"
+archivesBaseName = "tools"
+version = "0.12-SNAPSHOT"
 
-jar {
-    baseName = 'com.wizzardo.tools'
-    version = '0.12-SNAPSHOT'
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
 }
 
 dependencies {
@@ -18,43 +35,48 @@ dependencies {
     testCompile 'com.google.code.gson:gson:2.2.4'
 }
 
-task createPom {
-    pom {
-        project {
-            groupId 'com.wizzardo.tools'
-            artifactId 'tools'
-            version '0.12-SNAPSHOT'
+release {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            description 'Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other'
-            url 'https://github.com/wizzardo/Tools'
-
-            licenses {
-                license {
-                    name 'MIT License'
-                    url 'http://www.opensource.org/licenses/mit-license.php'
-                    distribution 'repo'
-                }
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
             }
 
-            scm {
-                connection 'scm:git:git@github.com:wizzardo/Tools.git'
-                developerConnection 'scm:git:git@github.com:wizzardo/Tools.git'
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'Tools'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other'
                 url 'https://github.com/wizzardo/Tools'
-            }
 
-            developers {
-                developer {
-                    id 'Wizzardo'
-                    name 'Mikhail Bobrutskov'
-                    email 'wizzardobox@gmail.com'
+                scm {
+                    connection 'scm:git:git@github.com:wizzardo/Tools.git'
+                    developerConnection 'scm:git:git@github.com:wizzardo/Tools.git'
+                    url 'https://github.com/wizzardo/Tools'
                 }
-            }
 
-            parent {
-                groupId 'org.sonatype.oss'
-                artifactId 'oss-parent'
-                version 7
+
+                licenses {
+                    license {
+                        name 'MIT License'
+                        url 'http://www.opensource.org/licenses/mit-license.php'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'Wizzardo'
+                        name 'Mikhail Bobrutskov'
+                        email 'wizzardobox@gmail.com'
+                    }
+                }
             }
         }
-    }.writeTo("pom.xml")
+    }
 }
