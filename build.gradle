@@ -10,7 +10,7 @@ repositories {
 
 jar {
     baseName = 'com.wizzardo.tools'
-    version = '0.11-SNAPSHOT'
+    version = '0.12-SNAPSHOT'
 }
 
 dependencies {
@@ -23,7 +23,7 @@ task createPom {
         project {
             groupId 'com.wizzardo.tools'
             artifactId 'tools'
-            version '0.11-SNAPSHOT'
+            version '0.12-SNAPSHOT'
 
             description 'Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other'
             url 'https://github.com/wizzardo/Tools'
