@@ -35,7 +35,7 @@ dependencies {
     testCompile 'com.google.code.gson:gson:2.2.4'
 }
 
-release {
+uploadArchives {
     repositories {
         mavenDeployer {
             beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
