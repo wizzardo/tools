@@ -1,0 +1,5 @@
+archivesBaseName = "tools-exception"
+ext {
+    descriptionString = 'exception tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"

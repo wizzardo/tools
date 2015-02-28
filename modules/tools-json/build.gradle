@@ -1,0 +1,12 @@
+dependencies {
+    compile project(':modules:tools-reflection')
+    compile project(':modules:tools-misc')
+    compile project(':modules:tools-io')
+}
+
+archivesBaseName = "tools-json"
+ext {
+    descriptionString = 'json tools'
+}
+
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"

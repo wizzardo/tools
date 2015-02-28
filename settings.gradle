@@ -1,2 +1,8 @@
 rootProject.name = 'tools'
+include ':modules:tools-reflection',
+        ':modules:tools-misc',
+        ':modules:tools-exception',
+        ':modules:tools-json',
+        ':modules:tools-io'
+
 

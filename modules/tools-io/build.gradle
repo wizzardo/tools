@@ -1,0 +1,10 @@
+dependencies {
+    compile project(':modules:tools-misc')
+}
+
+archivesBaseName = "tools-io"
+ext {
+    descriptionString = 'io tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+
