@@ -20,13 +20,13 @@ maven:
 <dependency>
     <groupId>com.wizzardo.tools</groupId>
     <artifactId>tools</artifactId>
-    <version>0.9</version>
+    <version>0.11</version>
 </dependency>
 ```
 
 gradle:
 ```
-compile 'com.wizzardo.tools:tools:0.9'
+compile 'com.wizzardo.tools:tools:0.11'
 ```
 
 License
