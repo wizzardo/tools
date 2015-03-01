@@ -642,7 +642,7 @@ public class JsonTest {
 
         ArraySerializeTest3 arraySerializeTest3 = new ArraySerializeTest3();
         arraySerializeTest3.strings = new Map[1];
-        arraySerializeTest3.strings[0] = new HashMap<String, Long>();
+        arraySerializeTest3.strings[0] = new LinkedHashMap<String, Long>();
         arraySerializeTest3.strings[0].put("foo", 1l);
         arraySerializeTest3.strings[0].put("bar", 2l);
         Assert.assertEquals("{\"strings\":[{\"foo\":1,\"bar\":2}]}", JsonTools.serialize(arraySerializeTest3));
