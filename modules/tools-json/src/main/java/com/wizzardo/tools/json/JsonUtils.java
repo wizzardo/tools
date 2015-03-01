@@ -231,7 +231,7 @@ class JsonUtils {
         int l = k - from;
         if (!needDecoding) {
             if (isNull(s, from, l)) {
-                set(setter, binder, null);
+                setNull(setter, binder);
                 return i;
             }
             if (isTrue(s, from, l)) {
@@ -268,6 +268,13 @@ class JsonUtils {
             setter.setBoolean(binder.getObject(), value);
         else
             binder.add(value);
+    }
+
+    private static void setNull(JsonFieldSetter setter, JsonBinder binder) {
+        if (setter != null)
+            setter.setObject(binder.getObject(), null);
+        else
+            binder.add(new JsonItem(null));
     }
 
     static int parseKey(JsonBinder binder, char[] s, int from, int to) {
