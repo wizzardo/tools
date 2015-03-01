@@ -231,7 +231,7 @@ public class JsonItem {
     }
 
     public <T extends Enum<T>> Enum<T> asEnum(Class<T> cl) {
-        return Enum.valueOf(cl, asString());
+        return JsonUtils.asEnum(cl, asString());
     }
 
     public JsonObject asJsonObject() {

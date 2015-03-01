@@ -247,7 +247,7 @@ class JsonUtils {
         } else
             value = JsonTools.unescape(s, from, k);
 
-        set(setter, binder, value);
+        setString(setter, binder, value);
 
         return i;
     }
@@ -256,6 +256,17 @@ class JsonUtils {
         if (setter != null)
             try {
                 setter.set(binder.getObject(), new JsonItem(value));
+            } catch (NullPointerException e) {
+                throw new IllegalStateException("Can not set '" + value + "' (" + value.getClass() + ") to " + setter);
+            }
+        else
+            binder.add(value);
+    }
+
+    private static void setString(JsonFieldSetter setter, JsonBinder binder, String value) {
+        if (setter != null)
+            try {
+                setter.setString(binder.getObject(), value);
             } catch (NullPointerException e) {
                 throw new IllegalStateException("Can not set '" + value + "' (" + value.getClass() + ") to " + setter);
             }
@@ -365,5 +376,9 @@ class JsonUtils {
         binder.setTemporaryKey(value);
 
         return i + 1;
+    }
+
+    public static <T extends Enum<T>> Enum<T> asEnum(Class<T> cl, String name) {
+        return Enum.valueOf(cl, name);
     }
 }
