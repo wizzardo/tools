@@ -1,0 +1,10 @@
+dependencies {
+    compile project(':modules:tools-collections')
+}
+
+archivesBaseName = "tools-xml"
+ext {
+    descriptionString = 'xml tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+

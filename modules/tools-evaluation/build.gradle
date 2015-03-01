@@ -1,0 +1,11 @@
+dependencies {
+    compile project(':modules:tools-exception')
+    compile project(':modules:tools-collections')
+}
+
+archivesBaseName = "tools-evaluation"
+ext {
+    descriptionString = 'evaluation tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+

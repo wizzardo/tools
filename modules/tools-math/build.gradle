@@ -1,0 +1,6 @@
+archivesBaseName = "tools-math"
+ext {
+    descriptionString = 'math tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+

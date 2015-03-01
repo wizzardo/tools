@@ -1,8 +1,16 @@
 rootProject.name = 'tools'
-include ':modules:tools-reflection',
-        ':modules:tools-misc',
+include ':modules:tools-cache',
+        ':modules:tools-collections',
+        ':modules:tools-evaluation',
         ':modules:tools-exception',
+        ':modules:tools-http',
+        ':modules:tools-image',
+        ':modules:tools-io',
         ':modules:tools-json',
-        ':modules:tools-io'
+        ':modules:tools-math',
+        ':modules:tools-misc',
+        ':modules:tools-reflection',
+        ':modules:tools-security',
+        ':modules:tools-xml'
 
 

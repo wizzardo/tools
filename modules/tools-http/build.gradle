@@ -1,0 +1,12 @@
+dependencies {
+    compile project(':modules:tools-exception')
+    compile project(':modules:tools-io')
+    compile project(':modules:tools-security')
+}
+
+archivesBaseName = "tools-http"
+ext {
+    descriptionString = 'http tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+

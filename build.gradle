@@ -1,4 +1,4 @@
-allprojects{
+allprojects {
     apply plugin: 'java'
 
     sourceCompatibility = 1.6
@@ -21,10 +21,19 @@ apply from: 'gradle/sonatype.gradle'
 
 
 dependencies {
-    compile project(':modules:tools-reflection')
-    compile project(':modules:tools-misc')
-    compile project(':modules:tools-json')
+    compile project(':modules:tools-cache')
+    compile project(':modules:tools-collections')
+    compile project(':modules:tools-evaluation')
+    compile project(':modules:tools-exception')
+    compile project(':modules:tools-http')
+    compile project(':modules:tools-image')
     compile project(':modules:tools-io')
+    compile project(':modules:tools-json')
+    compile project(':modules:tools-math')
+    compile project(':modules:tools-misc')
+    compile project(':modules:tools-reflection')
+    compile project(':modules:tools-security')
+    compile project(':modules:tools-xml')
 
     testCompile 'junit:junit:4.11'
     testCompile 'com.google.code.gson:gson:2.2.4'

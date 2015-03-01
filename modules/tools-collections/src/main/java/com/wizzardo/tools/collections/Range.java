@@ -186,7 +186,7 @@ public class Range implements Iterable<Integer>, List<Integer> {
     }
 
     public String toString() {
-        return from + ".." + to;
+        return from + "src/main" + to;
     }
 
 }

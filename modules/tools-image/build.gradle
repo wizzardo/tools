@@ -1,0 +1,10 @@
+dependencies {
+    compile project(':modules:tools-io')
+}
+
+archivesBaseName = "tools-image"
+ext {
+    descriptionString = 'image tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+

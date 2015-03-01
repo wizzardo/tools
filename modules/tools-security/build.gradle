@@ -1,0 +1,10 @@
+dependencies {
+    compile project(':modules:tools-io')
+}
+
+archivesBaseName = "tools-security"
+ext {
+    descriptionString = 'security tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+
