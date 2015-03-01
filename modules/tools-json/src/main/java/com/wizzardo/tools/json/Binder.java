@@ -560,9 +560,9 @@ class Binder {
         Constructor c = cachedConstructors.get(clazz);
         if (c == null) {
             if (clazz == List.class)
-                c = initDefaultConstructor(ArrayList.class);
+                c = initDefaultConstructor(List.class, ArrayList.class);
             else if (clazz == Set.class)
-                c = initDefaultConstructor(HashSet.class);
+                c = initDefaultConstructor(Set.class, HashSet.class);
             else
                 c = initDefaultConstructor(clazz);
         }
@@ -573,7 +573,7 @@ class Binder {
         Constructor c = cachedConstructors.get(clazz);
         if (c == null) {
             if (clazz == Map.class)
-                c = initDefaultConstructor(HashMap.class);
+                c = initDefaultConstructor(Map.class, HashMap.class);
             else
                 c = initDefaultConstructor(clazz);
         }
@@ -581,10 +581,14 @@ class Binder {
     }
 
     private static Constructor initDefaultConstructor(Class clazz) {
+        return initDefaultConstructor(clazz, clazz);
+    }
+
+    private static Constructor initDefaultConstructor(Class classKey, Class classReal) {
         Constructor c;
         try {
-            c = clazz.getDeclaredConstructor();
-            cachedConstructors.put(clazz, c);
+            c = classReal.getDeclaredConstructor();
+            cachedConstructors.put(classKey, c);
         } catch (NoSuchMethodException e) {
             throw UncheckedThrow.rethrow(e);
         }
