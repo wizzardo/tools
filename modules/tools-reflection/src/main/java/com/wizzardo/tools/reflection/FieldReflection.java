@@ -306,6 +306,11 @@ public class FieldReflection {
             }
     }
 
+    protected FieldReflection() {
+        offset = 0;
+        type = Type.OBJECT;
+    }
+
     public FieldReflection(Class clazz, String name, boolean setAccessible) throws NoSuchFieldException {
         this(clazz.getDeclaredField(name), setAccessible);
     }

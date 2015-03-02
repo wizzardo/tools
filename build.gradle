@@ -45,3 +45,8 @@ task fatJar(type: Jar) {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
+
+task copyJars(type: Copy, dependsOn: subprojects.jar) {
+    from(subprojects.jar)
+    into project.file('build/libs')
+}
