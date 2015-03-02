@@ -8,3 +8,11 @@ ext {
 }
 apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
 
+
+compileJava {
+    // I only managed to get this working when I forked
+    // and passed 'javac' as an executable
+    options.compilerArgs << '-XDignore.symbol.file'
+    options.fork = true
+    options.forkOptions.executable = 'javac'
+}
