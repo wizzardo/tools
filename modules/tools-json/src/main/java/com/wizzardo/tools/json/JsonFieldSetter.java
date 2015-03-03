@@ -10,6 +10,9 @@ import java.lang.reflect.Field;
  */
 abstract class JsonFieldSetter extends FieldReflection {
 
+    protected JsonFieldSetter() {
+    }
+
     protected JsonFieldSetter(Field f) {
         super(f);
     }
@@ -77,6 +80,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     abstract void set(Object object, JsonItem value);
 
     public static class ByteSetter extends JsonFieldSetter {
+        protected ByteSetter() {
+        }
+
 
         ByteSetter(Field f) {
             super(f);
@@ -93,6 +99,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class ShortSetter extends JsonFieldSetter {
+        protected ShortSetter() {
+        }
+
         ShortSetter(Field f) {
             super(f);
         }
@@ -108,6 +117,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class IntSetter extends JsonFieldSetter {
+        protected IntSetter() {
+        }
+
         IntSetter(Field f) {
             super(f);
         }
@@ -124,6 +136,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class LongSetter extends JsonFieldSetter {
+        protected LongSetter() {
+        }
+
         LongSetter(Field f) {
             super(f);
         }
@@ -140,6 +155,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class FloatSetter extends JsonFieldSetter {
+        protected FloatSetter() {
+        }
+
         FloatSetter(Field f) {
             super(f);
         }
@@ -156,6 +174,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class DoubleSetter extends JsonFieldSetter {
+        protected DoubleSetter() {
+        }
+
         DoubleSetter(Field f) {
             super(f);
         }
@@ -172,6 +193,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class CharSetter extends JsonFieldSetter {
+        protected CharSetter() {
+        }
+
         CharSetter(Field f) {
             super(f);
         }
@@ -191,6 +215,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class BooleanSetter extends JsonFieldSetter {
+        protected BooleanSetter() {
+        }
+
         BooleanSetter(Field f) {
             super(f);
         }
@@ -207,6 +234,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class ObjectSetter extends JsonFieldSetter {
+        protected ObjectSetter() {
+        }
+
         ObjectSetter(Field f) {
             super(f);
         }
@@ -219,6 +249,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class EnumSetter extends JsonFieldSetter {
+        protected EnumSetter() {
+        }
+
         EnumSetter(Field f) {
             super(f);
         }
@@ -238,6 +271,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class BooleanBoxedSetter extends BooleanSetter {
+        protected BooleanBoxedSetter() {
+        }
+
         BooleanBoxedSetter(Field f) {
             super(f);
         }
@@ -254,6 +290,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class IntBoxedSetter extends IntSetter {
+        protected IntBoxedSetter() {
+        }
+
         IntBoxedSetter(Field f) {
             super(f);
         }
@@ -270,6 +309,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class LongBoxedSetter extends LongSetter {
+        protected LongBoxedSetter() {
+        }
+
         LongBoxedSetter(Field f) {
             super(f);
         }
@@ -286,6 +328,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class ShortBoxedSetter extends ShortSetter {
+        protected ShortBoxedSetter() {
+        }
+
         ShortBoxedSetter(Field f) {
             super(f);
         }
@@ -302,6 +347,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class ByteBoxedSetter extends ByteSetter {
+        protected ByteBoxedSetter() {
+        }
+
         ByteBoxedSetter(Field f) {
             super(f);
         }
@@ -318,6 +366,9 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class CharBoxedSetter extends CharSetter {
+        protected CharBoxedSetter() {
+        }
+
         CharBoxedSetter(Field f) {
             super(f);
         }
@@ -334,8 +385,16 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class FloatBoxedSetter extends FloatSetter {
+        protected FloatBoxedSetter() {
+        }
+
         FloatBoxedSetter(Field f) {
             super(f);
+        }
+
+        @Override
+        public void setString(Object object, String value) {
+            setObject(object, StringConverter.toFloat(value));
         }
 
         @Override
@@ -350,8 +409,16 @@ abstract class JsonFieldSetter extends FieldReflection {
     }
 
     public static class DoubleBoxedSetter extends DoubleSetter {
+        protected DoubleBoxedSetter() {
+        }
+
         DoubleBoxedSetter(Field f) {
             super(f);
+        }
+
+        @Override
+        public void setString(Object object, String value) {
+            setObject(object, StringConverter.toDouble(value));
         }
 
         @Override

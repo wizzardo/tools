@@ -1,5 +1,8 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.reflection.FieldReflection;
+
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -10,12 +13,86 @@ public class JavaMapBinder extends JavaObjectBinder {
     private Map that;
     private Generic[] type;
     private boolean valueIsMap;
+    private JsonFieldSetter valueSetter;
 
     public JavaMapBinder(Generic generic) {
         super(generic);
         that = (Map) object;
         type = getTypes(generic);
         valueIsMap = Map.class.isAssignableFrom(type[1].clazz);
+        valueSetter = getValueSetter(type[0].clazz, type[1].clazz);
+    }
+
+    protected JsonFieldSetter getValueSetter(Class classKey, Class classValue) {
+        final StringConverter keyConverter = StringConverter.getConverter(classKey);
+        final StringConverter valueConverter = StringConverter.getConverter(classValue);
+        if (valueConverter == null || keyConverter == null)
+            return null;
+
+            return new JsonFieldSetter.ObjectSetter() {
+                @Override
+                public void setString(Object object, String value) {
+                    put(keyConverter, valueConverter, value);
+                }
+
+                @Override
+                public void setObject(Object object, Object value) {
+                    put(keyConverter, value);
+                }
+
+                @Override
+                public Type getType() {
+                    return valueConverter.type;
+                }
+
+                @Override
+                public void setInteger(Object object, int value) {
+                    setObject(object, value);
+                }
+
+                @Override
+                public void setLong(Object object, long value) {
+                    setObject(object, value);
+                }
+
+                @Override
+                public void setByte(Object object, byte value) {
+                    setObject(object, value);
+                }
+
+                @Override
+                public void setShort(Object object, short value) {
+                    setObject(object, value);
+                }
+
+                @Override
+                public void setFloat(Object object, float value) {
+                    setObject(object, value);
+                }
+
+                @Override
+                public void setDouble(Object object, double value) {
+                    setObject(object, value);
+                }
+
+                @Override
+                public void setChar(Object object, char value) {
+                    setObject(object, value);
+                }
+
+                @Override
+                public void setBoolean(Object object, boolean value) {
+                    setObject(object, value);
+                }
+            };
+    }
+
+    protected void put(StringConverter keyConverter, StringConverter valueConverter, String value) {
+        put(keyConverter, valueConverter.convert(value));
+    }
+
+    protected void put(StringConverter keyConverter, Object value) {
+        that.put(keyConverter.convert(tempKey), value);
     }
 
     @Override
@@ -68,6 +145,6 @@ public class JavaMapBinder extends JavaObjectBinder {
 
     @Override
     public JsonFieldSetter getFieldSetter() {
-        return null;
+        return valueSetter;
     }
 }
