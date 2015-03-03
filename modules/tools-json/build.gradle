@@ -1,7 +1,6 @@
 dependencies {
     compile project(':modules:tools-reflection')
     compile project(':modules:tools-misc')
-    compile project(':modules:tools-io')
 }
 
 archivesBaseName = "tools-json"

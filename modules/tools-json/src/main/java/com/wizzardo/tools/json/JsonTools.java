@@ -1,12 +1,9 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.io.FileTools;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.SoftThreadLocal;
 import com.wizzardo.tools.reflection.StringReflection;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 
 /**
@@ -86,10 +83,6 @@ public class JsonTools {
             return sb;
         }
     };
-
-    public static JsonItem parse(File file) throws IOException {
-        return parse(FileTools.text(file, FileTools.UTF_8));
-    }
 
     public static JsonItem parse(String s) {
         return new JsonItem(parse(s, (Generic<Object>) null));

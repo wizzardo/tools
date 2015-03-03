@@ -843,11 +843,6 @@ public class JsonTest {
         Assert.assertNotNull(new JsonTools()); // just for coverage
         Assert.assertNotNull(new Binder()); // just for coverage
 
-        File temp = File.createTempFile("prefix", "suffix");
-        temp.deleteOnExit();
-        FileTools.text(temp, "{key:value}");
-        Assert.assertEquals("value", JsonTools.parse(temp).asJsonObject().get("key").asString());
-
         //only for java 6
         Assert.assertEquals("value", JsonTools.parse(" {key:value}".substring(1)).asJsonObject().get("key").asString());
 
