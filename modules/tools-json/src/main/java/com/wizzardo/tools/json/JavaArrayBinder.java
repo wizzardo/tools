@@ -15,6 +15,7 @@ class JavaArrayBinder implements JsonBinder {
     private Binder.SerializerType serializer;
     private Class clazz;
     private Generic generic;
+    private JsonFieldSetter valueSetter;
 
     public JavaArrayBinder(Generic generic) {
         if (generic != null)
@@ -32,6 +33,30 @@ class JavaArrayBinder implements JsonBinder {
             throw new IllegalArgumentException("this binder only for collections and arrays! not for " + clazz);
         }
 
+        valueSetter = getValueSetter(clazz);
+    }
+
+    protected JsonFieldSetter getValueSetter(Class clazz) {
+        final StringConverter converter = StringConverter.getConverter(clazz);
+        if (converter == null)
+            return null;
+
+        return new JsonFieldSetter.ObjectSetter() {
+            @Override
+            public void setString(Object object, String value) {
+                add(converter.convert(value));
+            }
+
+            @Override
+            public void setObject(Object object, Object value) {
+                add(value);
+            }
+
+            @Override
+            public Type getType() {
+                return converter.type;
+            }
+        };
     }
 
     @Override
@@ -68,7 +93,7 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public JsonFieldSetter getFieldSetter() {
-        return null;
+        return valueSetter;
     }
 
     @Override

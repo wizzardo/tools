@@ -228,6 +228,46 @@ abstract class JsonFieldSetter extends FieldReflection {
             Object ob = value == null ? null : value.getAs(field.getType());
             setObject(object, ob);
         }
+
+        @Override
+        public void setInteger(Object object, int value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public void setLong(Object object, long value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public void setByte(Object object, byte value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public void setShort(Object object, short value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public void setFloat(Object object, float value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public void setDouble(Object object, double value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public void setChar(Object object, char value) {
+            setObject(object, value);
+        }
+
+        @Override
+        public void setBoolean(Object object, boolean value) {
+            setObject(object, value);
+        }
     }
 
     public static class EnumSetter extends JsonFieldSetter {
