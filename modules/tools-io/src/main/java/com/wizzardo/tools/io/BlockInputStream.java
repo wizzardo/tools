@@ -1,7 +1,5 @@
 package com.wizzardo.tools.io;
 
-import com.wizzardo.tools.misc.BoyerMoore;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;

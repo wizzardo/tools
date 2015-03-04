@@ -25,6 +25,7 @@ dependencies {
     compile project(':modules:tools-collections')
     compile project(':modules:tools-evaluation')
     compile project(':modules:tools-exception')
+    compile project(':modules:tools-helpers')
     compile project(':modules:tools-http')
     compile project(':modules:tools-image')
     compile project(':modules:tools-io')
