@@ -267,7 +267,7 @@ class JsonUtils {
         if (setter != null)
             try {
                 setter.setString(binder.getObject(), value);
-            } catch (NullPointerException e) {
+            } catch (Exception e) {
                 throw new IllegalStateException("Can not set '" + value + "' (" + value.getClass() + ") to " + setter);
             }
         else
