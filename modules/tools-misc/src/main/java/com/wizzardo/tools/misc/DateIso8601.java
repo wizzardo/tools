@@ -2,7 +2,10 @@ package com.wizzardo.tools.misc;
 
 import com.wizzardo.tools.reflection.StringReflection;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 /**
  * @author: wizzardo
@@ -12,6 +15,8 @@ public class DateIso8601 {
 
     private static final TimeZone Z = TimeZone.getTimeZone("GMT");
     private static final TimeZone LOCAL = TimeZone.getDefault();
+    private static final int HOUR = 1000 * 60 * 60;
+    private static final int MINUTE = 1000 * 60;
 
     /**
      * @param s should be in format YYYY-MM-DDTHH:mm:ss.sssZ
@@ -132,7 +137,7 @@ public class DateIso8601 {
         int hours = getInt2(chars, i + 1);
         i += 3;
         if (i >= length) {
-            calendar.setTimeZone(new SimpleTimeZone((int) TimeTools.Unit.HOUR.to(hours) * (plus ? 1 : -1)));
+            calendar.setTimeZone(new SimpleTimeZone(hours * HOUR * (plus ? 1 : -1)));
             return calendar.getTime();
         }
         c = chars[i];
@@ -142,7 +147,7 @@ public class DateIso8601 {
         }
 
         int minutes = getInt2(chars, i, c);
-        calendar.setTimeZone(new SimpleTimeZone((int) (TimeTools.Unit.HOUR.to(hours) + TimeTools.Unit.MINUTE.to(minutes)) * (plus ? 1 : -1)));
+        calendar.setTimeZone(new SimpleTimeZone((int) (hours * HOUR + minutes * MINUTE) * (plus ? 1 : -1)));
 
         return calendar.getTime();
     }
@@ -264,8 +269,8 @@ public class DateIso8601 {
             chars[i] = 'Z';
         else {
             chars[i] = offset < 0 ? '-' : '+';
-            int h = (int) TimeTools.Unit.HOUR.from(offset);
-            int m = (int) TimeTools.Unit.MINUTE.from(offset - TimeTools.Unit.HOUR.to(offset));
+            int h = offset / HOUR;
+            int m = (offset - h * HOUR) / MINUTE;
             append2(chars, h, i + 1);
             append2(chars, m, i + 3);
         }
