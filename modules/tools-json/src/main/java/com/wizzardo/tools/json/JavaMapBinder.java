@@ -1,8 +1,5 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.reflection.FieldReflection;
-
-import java.util.Date;
 import java.util.Map;
 
 /**
@@ -29,22 +26,22 @@ public class JavaMapBinder extends JavaObjectBinder {
         if (valueConverter == null || keyConverter == null)
             return null;
 
-            return new JsonFieldSetter.ObjectSetter() {
-                @Override
-                public void setString(Object object, String value) {
-                    put(keyConverter, valueConverter, value);
-                }
+        return new JsonFieldSetter.ObjectSetter() {
+            @Override
+            public void setString(Object object, String value) {
+                put(keyConverter, valueConverter, value);
+            }
 
-                @Override
-                public void setObject(Object object, Object value) {
-                    put(keyConverter, value);
-                }
+            @Override
+            public void setObject(Object object, Object value) {
+                put(keyConverter, value);
+            }
 
-                @Override
-                public Type getType() {
-                    return valueConverter.type;
-                }
-            };
+            @Override
+            public Type getType() {
+                return valueConverter.type;
+            }
+        };
     }
 
     protected void put(StringConverter keyConverter, StringConverter valueConverter, String value) {

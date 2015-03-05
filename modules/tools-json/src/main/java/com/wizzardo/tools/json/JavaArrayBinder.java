@@ -33,7 +33,8 @@ class JavaArrayBinder implements JsonBinder {
             throw new IllegalArgumentException("this binder only for collections and arrays! not for " + clazz);
         }
 
-        valueSetter = getValueSetter(clazz);
+        if (generic.typeParameters.length == 1)
+            valueSetter = getValueSetter(generic.typeParameters[0].clazz);
     }
 
     protected JsonFieldSetter getValueSetter(Class clazz) {
@@ -44,12 +45,12 @@ class JavaArrayBinder implements JsonBinder {
         return new JsonFieldSetter.ObjectSetter() {
             @Override
             public void setString(Object object, String value) {
-                add(converter.convert(value));
+                l.add(converter.convert(value));
             }
 
             @Override
             public void setObject(Object object, Object value) {
-                add(value);
+                l.add(value);
             }
 
             @Override
@@ -61,7 +62,7 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public void add(Object value) {
-        add(new JsonItem(value));
+        l.add(value);
     }
 
     @Override
