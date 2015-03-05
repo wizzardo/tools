@@ -1,12 +1,10 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.io.FileTools;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.PipedOutputStream;
 import java.lang.reflect.Array;
@@ -1306,7 +1304,7 @@ public class JsonTest {
     }
 
     @Test
-    public void testScientificNotation(){
+    public void testScientificNotation() {
         Assert.assertEquals(1.0, JsonTools.parse("{d:1e}", DoubleHolder.class).d, 0.00001);
         Assert.assertEquals(100.0, JsonTools.parse("{d:1e2}", DoubleHolder.class).d, 0.00001);
         Assert.assertEquals(0.01, JsonTools.parse("{d:1e-2}", DoubleHolder.class).d, 0.00001);
@@ -1317,6 +1315,8 @@ public class JsonTest {
         try {
             closure.run();
         } catch (Exception e) {
+            if (!e.getClass().equals(exceptionClass))
+                e.printStackTrace();
             Assert.assertEquals(exceptionClass, e.getClass());
             Assert.assertEquals(message, e.getMessage());
             exception = true;
