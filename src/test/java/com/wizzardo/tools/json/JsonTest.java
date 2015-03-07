@@ -394,6 +394,11 @@ public class JsonTest {
         List<Map<String, Integer>> listMaps;
     }
 
+    static class MapTest2 {
+        Map<String, IntPrimitiveClass> ints;
+        Map<String, Map<String, Integer>> maps;
+    }
+
     @Test
     public void testMapBinding() {
         String data = "{integerStringMap:{'1':'value'},integerStringArrayMap:{'2':['foo','bar']},map:{'key':'object'},listMaps:[{'foo':1,'bar':2},{'foo':3,'bar':4}]}";
@@ -406,6 +411,21 @@ public class JsonTest {
         assertEquals((Integer) 2, mapTest.listMaps.get(0).get("bar"));
         assertEquals((Integer) 3, mapTest.listMaps.get(1).get("foo"));
         assertEquals((Integer) 4, mapTest.listMaps.get(1).get("bar"));
+
+
+        data = "{ints:{a:{i:1},b:{i:2}}, maps:{foo:{a:1, b:2}, bar:{c:3, d:4}}}";
+        MapTest2 m = JsonTools.parse(data, MapTest2.class);
+        assertEquals(2, m.ints.size());
+        assertEquals(1, m.ints.get("a").i);
+        assertEquals(2, m.ints.get("b").i);
+
+        assertEquals(2, m.maps.size());
+        assertEquals(2, m.maps.get("foo").size());
+        assertEquals(Integer.valueOf(1), m.maps.get("foo").get("a"));
+        assertEquals(Integer.valueOf(2), m.maps.get("foo").get("b"));
+        assertEquals(2, m.maps.get("bar").size());
+        assertEquals(Integer.valueOf(3), m.maps.get("bar").get("c"));
+        assertEquals(Integer.valueOf(4), m.maps.get("bar").get("d"));
     }
 
     @Test
@@ -827,6 +847,13 @@ public class JsonTest {
                 new JsonArrayBinder().setTemporaryKey("key");
             }
         }, UnsupportedOperationException.class, "arrays has no keys");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                new JavaArrayBinder(new Generic(List.class)).add(new JsonItem(null));
+            }
+        }, UnsupportedOperationException.class, "only raw objects are supported");
 
         testException(new Runnable() {
             @Override

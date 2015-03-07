@@ -73,14 +73,6 @@ public class JavaMapBinder extends JavaObjectBinder {
     }
 
     @Override
-    public void add(JsonItem value) {
-        if (Binder.setValue(object, tempKey, value))
-            return;
-
-        that.put(JsonItem.getAs(tempKey, type[0].clazz), value.getAs(type[1].clazz));
-    }
-
-    @Override
     public JsonBinder getObjectBinder() {
         if (valueIsMap)
             return new JavaMapBinder(type[1]);

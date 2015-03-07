@@ -67,7 +67,7 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public void add(JsonItem value) {
-        l.add(value.getAs(generic.typeParameters[0].clazz));
+        throw new UnsupportedOperationException("only raw objects are supported");
     }
 
     @Override
