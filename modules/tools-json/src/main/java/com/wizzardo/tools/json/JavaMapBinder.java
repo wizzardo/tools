@@ -11,17 +11,18 @@ public class JavaMapBinder extends JavaObjectBinder {
     private Generic[] type;
     private boolean valueIsMap;
     private JsonFieldSetter valueSetter;
+    private StringConverter keyConverter;
 
     public JavaMapBinder(Generic generic) {
         super(generic);
         that = (Map) object;
         type = getTypes(generic);
         valueIsMap = Map.class.isAssignableFrom(type[1].clazz);
-        valueSetter = getValueSetter(type[0].clazz, type[1].clazz);
+        keyConverter = StringConverter.getConverter(type[0].clazz);
+        valueSetter = getValueSetter(type[1].clazz);
     }
 
-    protected JsonFieldSetter getValueSetter(Class classKey, Class classValue) {
-        final StringConverter keyConverter = StringConverter.getConverter(classKey);
+    protected JsonFieldSetter getValueSetter(Class classValue) {
         final StringConverter valueConverter = StringConverter.getConverter(classValue);
         if (valueConverter == null || keyConverter == null)
             return null;
@@ -68,7 +69,7 @@ public class JavaMapBinder extends JavaObjectBinder {
 
     @Override
     public void add(Object value) {
-        add(new JsonItem(value));
+        put(keyConverter, value);
     }
 
     @Override

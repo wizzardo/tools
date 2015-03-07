@@ -82,7 +82,7 @@ abstract class StringConverter<T> {
     abstract T convert(String s);
 
     static StringConverter getConverter(Class clazz) {
-        if (clazz == String.class)
+        if (clazz == String.class || clazz == Object.class)
             return TO_STRING;
         if (clazz == Integer.class)
             return TO_INTEGER;
