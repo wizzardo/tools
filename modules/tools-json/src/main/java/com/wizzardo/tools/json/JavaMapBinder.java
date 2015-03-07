@@ -82,10 +82,6 @@ public class JavaMapBinder extends JavaObjectBinder {
 
     @Override
     public JsonBinder getObjectBinder() {
-        JsonBinder binder = super.getObjectBinder();
-        if (binder != null)
-            return binder;
-
         if (valueIsMap)
             return new JavaMapBinder(type[1]);
         else
@@ -94,10 +90,6 @@ public class JavaMapBinder extends JavaObjectBinder {
 
     @Override
     public JsonBinder getArrayBinder() {
-        JsonBinder binder = super.getArrayBinder();
-        if (binder != null)
-            return binder;
-
         return new JavaArrayBinder(type[1]);
     }
 
