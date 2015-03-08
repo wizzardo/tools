@@ -426,19 +426,6 @@ class Binder {
         return getFields(clazz).get(key);
     }
 
-    public static boolean setValue(Object object, String key, JsonItem value) {
-        Class clazz = object.getClass();
-        return setValue(object, getField(clazz, key), value);
-    }
-
-    public static boolean setValue(Object object, FieldInfo fieldInfo, JsonItem value) {
-        if (fieldInfo == null)
-            return false;
-
-        fieldInfo.setter.set(object, value);
-        return true;
-    }
-
     static Serializer getReturnType(Field field) {
         return classToSerializer(field.getType());
     }

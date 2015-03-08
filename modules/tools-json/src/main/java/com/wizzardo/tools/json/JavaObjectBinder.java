@@ -30,12 +30,15 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public void add(Object value) {
-        add(new JsonItem(value));
+        FieldInfo fieldInfo = getField();
+        if (fieldInfo == null)
+            return;
+        fieldInfo.setter.setObject(object, value);
     }
 
     @Override
     public void add(JsonItem value) {
-        Binder.setValue(object, getField(), value);
+        throw new UnsupportedOperationException("only raw objects are supported");
     }
 
     @Override

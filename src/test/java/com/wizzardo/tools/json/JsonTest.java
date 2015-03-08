@@ -858,6 +858,13 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
+                new JavaObjectBinder(new Generic(StringHolder.class)).add(new JsonItem(null));
+            }
+        }, UnsupportedOperationException.class, "only raw objects are supported");
+
+        testException(new Runnable() {
+            @Override
+            public void run() {
                 Binder.getField(IntPrimitiveClass.class, "i").serializer.serialize(null, null, null);
             }
         }, IllegalStateException.class, "PrimitiveSerializer can serialize only primitives");

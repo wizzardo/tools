@@ -131,9 +131,9 @@ class JsonUtils {
         }
 
         if (!floatValue)
-            set(setter, binder, l);
+            binder.add(l);
         else
-            set(setter, binder, d);
+            binder.add(d);
 
         return i;
     }
@@ -250,17 +250,6 @@ class JsonUtils {
         setString(setter, binder, value);
 
         return i;
-    }
-
-    private static void set(JsonFieldSetter setter, JsonBinder binder, Object value) {
-        if (setter != null)
-            try {
-                setter.set(binder.getObject(), new JsonItem(value));
-            } catch (NullPointerException e) {
-                throw new IllegalStateException("Can not set '" + value + "' (" + value.getClass() + ") to " + setter);
-            }
-        else
-            binder.add(value);
     }
 
     private static void setString(JsonFieldSetter setter, JsonBinder binder, String value) {
