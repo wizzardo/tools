@@ -991,7 +991,7 @@ public class JsonTest {
         Field f = FieldSetterTestClass.class.getDeclaredField("b");
         f.setAccessible(true);
         JsonFieldSetter.BooleanSetter booleanSetter = new JsonFieldSetter.BooleanSetter(f);
-        booleanSetter.set(aClass, new JsonItem("True"));
+        booleanSetter.setString(aClass, "True");
         Assert.assertEquals(true, aClass.b);
 
         testException(new Runnable() {

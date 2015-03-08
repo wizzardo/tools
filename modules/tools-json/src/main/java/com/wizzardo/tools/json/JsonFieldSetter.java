@@ -77,16 +77,10 @@ abstract class JsonFieldSetter extends FieldReflection {
         setObject(object, value);
     }
 
-    abstract void set(Object object, JsonItem value);
-
     public static class ByteSetter extends JsonFieldSetter {
 
         ByteSetter(Field f) {
             super(f);
-        }
-
-        public void set(Object object, JsonItem value) {
-            setByte(object, value.asByte());
         }
 
         @Override
@@ -99,10 +93,6 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         ShortSetter(Field f) {
             super(f);
-        }
-
-        public void set(Object object, JsonItem value) {
-            setShort(object, value.asShort());
         }
 
         @Override
@@ -118,11 +108,6 @@ abstract class JsonFieldSetter extends FieldReflection {
         }
 
         @Override
-        public void set(Object object, JsonItem value) {
-            setInteger(object, value.asInteger());
-        }
-
-        @Override
         public void setString(Object object, String value) {
             setInteger(object, Integer.parseInt(value));
         }
@@ -135,11 +120,6 @@ abstract class JsonFieldSetter extends FieldReflection {
         }
 
         @Override
-        public void set(Object object, JsonItem value) {
-            setLong(object, value.asLong());
-        }
-
-        @Override
         public void setString(Object object, String value) {
             setLong(object, Long.parseLong(value));
         }
@@ -148,11 +128,6 @@ abstract class JsonFieldSetter extends FieldReflection {
     public static class FloatSetter extends JsonFieldSetter {
         FloatSetter(Field f) {
             super(f);
-        }
-
-        @Override
-        public void set(Object object, JsonItem value) {
-            setFloat(object, value.asFloat());
         }
 
         @Override
@@ -168,11 +143,6 @@ abstract class JsonFieldSetter extends FieldReflection {
         }
 
         @Override
-        public void set(Object object, JsonItem value) {
-            setDouble(object, value.asDouble());
-        }
-
-        @Override
         public void setString(Object object, String value) {
             setDouble(object, Double.parseDouble(value));
         }
@@ -182,11 +152,6 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         CharSetter(Field f) {
             super(f);
-        }
-
-        @Override
-        public void set(Object object, JsonItem value) {
-            setChar(object, value.asChar());
         }
 
         @Override
@@ -205,11 +170,6 @@ abstract class JsonFieldSetter extends FieldReflection {
         }
 
         @Override
-        public void set(Object object, JsonItem value) {
-            setBoolean(object, value.asBoolean());
-        }
-
-        @Override
         public void setString(Object object, String value) {
             setBoolean(object, Boolean.parseBoolean(value));
         }
@@ -221,12 +181,6 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         ObjectSetter(Field f) {
             super(f);
-        }
-
-        @Override
-        public void set(Object object, JsonItem value) {
-            Object ob = value == null ? null : value.getAs(field.getType());
-            setObject(object, ob);
         }
 
         @Override
@@ -274,13 +228,6 @@ abstract class JsonFieldSetter extends FieldReflection {
 
         EnumSetter(Field f) {
             super(f);
-        }
-
-        @Override
-        public void set(Object object, JsonItem value) {
-            Class cl = field.getType();
-            Object ob = value == null ? null : value.asEnum(cl);
-            setObject(object, ob);
         }
 
         @Override
