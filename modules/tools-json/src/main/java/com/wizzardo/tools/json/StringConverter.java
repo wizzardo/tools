@@ -75,6 +75,16 @@ abstract class StringConverter<T> {
         }
     };
 
+    static final StringConverter TO_CHARACTER = new StringConverter<Character>(FieldReflection.Type.CHAR) {
+        @Override
+        Character convert(String s) {
+            if (s.length() > 1) {
+                return (char) Integer.parseInt(s);
+            } else
+                return s.charAt(0);
+        }
+    };
+
     protected StringConverter(FieldReflection.Type type) {
         this.type = type;
     }
