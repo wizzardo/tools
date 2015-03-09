@@ -22,6 +22,7 @@ public class StringConverterTest {
         Assert.assertEquals(TO_FLOAT, getConverter(Float.class));
         Assert.assertEquals(TO_DOUBLE, getConverter(Double.class));
         Assert.assertEquals(TO_DATE, getConverter(Date.class));
+        Assert.assertEquals(TO_CHARACTER, getConverter(Character.class));
 
         Assert.assertEquals(TO_STRING, getConverter(String.class));
         Assert.assertEquals(TO_STRING, getConverter(Object.class));
@@ -36,6 +37,8 @@ public class StringConverterTest {
         Assert.assertEquals(Short.valueOf((short) 1), getConverter(Short.class).convert("1"));
         Assert.assertEquals(Float.valueOf(1.0f), getConverter(Float.class).convert("1.0"));
         Assert.assertEquals(Double.valueOf(1.0), getConverter(Double.class).convert("1.0"));
+        Assert.assertEquals(Character.valueOf('\n'), getConverter(Character.class).convert("10"));
+        Assert.assertEquals(Character.valueOf('\n'), getConverter(Character.class).convert("\n"));
         Assert.assertEquals(new Date(1175783410123l), getConverter(Date.class).convert("2007-04-05T14:30:10.123Z"));
 
         Assert.assertEquals("foobar", getConverter(String.class).convert("foobar"));

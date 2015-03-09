@@ -110,6 +110,8 @@ abstract class StringConverter<T> {
             return TO_SHORT;
         if (clazz == Byte.class)
             return TO_BYTE;
+        if (clazz == Character.class)
+            return TO_CHARACTER;
 
         return null;
     }
