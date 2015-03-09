@@ -105,7 +105,7 @@ public class JsonTools {
         char[] data = StringReflection.chars(s);
         int offset = 0;
         if (data.length != s.length())
-            offset = StringReflection.offset(s);
+            offset = StringReflection.offset(s); // for java 6
         return parse(data, offset, s.length(), generic);
     }
 

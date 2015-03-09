@@ -972,6 +972,8 @@ public class JsonTest {
         boolean b;
         byte bb;
         short s;
+        char ch1;
+        char ch2;
     }
 
     @Test
@@ -984,6 +986,8 @@ public class JsonTest {
                 ",b:'false'" +
                 ",bb:'6'" +
                 ",s:'7'" +
+                ",ch1:8" +
+                ",ch2:'10'" +
                 "}";
         FieldSetterTestClass aClass = JsonTools.parse(json, FieldSetterTestClass.class);
 
@@ -994,6 +998,8 @@ public class JsonTest {
         Assert.assertEquals(false, aClass.b);
         Assert.assertEquals((byte) 6, aClass.bb);
         Assert.assertEquals((short) 7, aClass.s);
+        Assert.assertEquals((char) 8, aClass.ch1);
+        Assert.assertEquals('\n', aClass.ch2);
 
         Field f = FieldSetterTestClass.class.getDeclaredField("b");
         f.setAccessible(true);
@@ -1198,6 +1204,7 @@ public class JsonTest {
         Assert.assertEquals(1.0d, JsonTools.parse("{\"d\":1.0}", DoubleBoxedClass.class).d, 0.001);
 
         Assert.assertEquals(new Integer(1), JsonTools.parse("{\"i\":1}", IntBoxedClass.class).i);
+        Assert.assertEquals(new Integer(1), JsonTools.parse("{\"i\":\"1\"}", IntBoxedClass.class).i);
         Assert.assertEquals(new Long(1), JsonTools.parse("{\"l\":1}", LongBoxedClass.class).l);
         Assert.assertEquals(new Short((short) 1), JsonTools.parse("{\"s\":1}", ShortBoxedClass.class).s);
         Assert.assertEquals(new Byte((byte) 1), JsonTools.parse("{\"b\":1}", ByteBoxedClass.class).b);

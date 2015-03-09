@@ -157,7 +157,7 @@ abstract class JsonFieldSetter extends FieldReflection {
         @Override
         public void setString(Object object, String value) {
             if (value.length() > 1) {
-                setChar(object, value.charAt(Integer.parseInt(value)));
+                setChar(object, (char) Integer.parseInt(value));
             } else
                 setChar(object, value.charAt(0));
         }
