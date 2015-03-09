@@ -538,6 +538,9 @@ public class JsonTest {
         arr = (StringHolder[]) (Object) JsonTools.parse(s.toCharArray(), Array.class, StringHolder.class);
         assertEquals(1, arr.length);
         assertEquals("value", arr[0].value);
+
+
+        assertEquals(null, JsonTools.parse("{value:null}", StringHolder.class).value);
     }
 
     @Test
@@ -754,6 +757,10 @@ public class JsonTest {
         Assert.assertEquals(-1d, (double) JsonTools.parse("{key:'-1.0'}").asJsonObject().get("key").asDouble(0d), 0);
 
         Assert.assertEquals(true, JsonTools.parse("{key:'True'}").asJsonObject().get("key").asBoolean(false));
+
+        Assert.assertEquals(new Date(1175783410123l), JsonTools.parse("{key:'2007-04-05T14:30:10.123Z'}").asJsonObject().get("key").getAs(Date.class));
+        Assert.assertEquals("string", JsonTools.parse("{key:'string'}").asJsonObject().get("key").getAs(String.class));
+        Assert.assertEquals(SomeEnum.ONE, JsonTools.parse("{key:'ONE'}").asJsonObject().get("key").asEnum(SomeEnum.class));
 
 
         Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonArray());
