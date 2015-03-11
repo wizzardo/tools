@@ -15,7 +15,6 @@ archivesBaseName = "tools"
 ext {
     descriptionString = 'Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other'
 }
-version = "0.12-SNAPSHOT"
 
 apply from: 'gradle/sonatype.gradle'
 
