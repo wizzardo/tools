@@ -16,14 +16,14 @@ public class AESTest {
             byte[] data1 = new byte[1024 * 1024];
             Random random = new Random();
             random.nextBytes(data1);
-            String md5 = MD5.getMD5AsString(data1);
+            String md5 = MD5.create().update(data1).asString();
 
             AES aes = new AES("ololo key");
             byte[] enc = aes.encrypt(data1);
-            Assert.assertNotSame(md5, MD5.getMD5AsString(enc));
+            Assert.assertNotSame(md5, MD5.create().update(enc).asString());
             aes = new AES("ololo key");
             byte[] dec = aes.decrypt(enc);
-            Assert.assertEquals(md5, MD5.getMD5AsString(dec));
+            Assert.assertEquals(md5, MD5.create().update(dec).asString());
         }
     }
 }

@@ -203,9 +203,9 @@ public class BlockReaderTest {
 
         MD5 md5 = new MD5();
         String[] hashes = new String[3];
-        hashes[0] = MD5.getMD5AsString(data1);
-        hashes[1] = MD5.getMD5AsString(data2);
-        hashes[2] = MD5.getMD5AsString(data3);
+        hashes[0] = MD5.create().update(data1).asString();
+        hashes[1] = MD5.create().update(data2).asString();
+        hashes[2] = MD5.create().update(data3).asString();
 
         md5.update(data1, 0, data1.length);
         assertEquals(hashes[0], md5.toString());

@@ -27,7 +27,7 @@ public class RSA {
 
     public String getStringToTransfer() {
         String s = publicKey.toString() + "\n" + modulus;
-        s = s + "\n" + MD5.getMD5AsString(s.getBytes());
+        s = s + "\n" + MD5.create().update(s).asString();
         return s;
     }
 

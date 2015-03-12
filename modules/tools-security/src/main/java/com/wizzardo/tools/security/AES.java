@@ -39,7 +39,7 @@ public class AES {
     }
 
     public static SecretKey generateKeyAsMD5(String key) {
-        return generateKey(MD5.getMD5(key.getBytes()));
+        return generateKey(MD5.create().update(key).asBytes());
     }
 
     /**
@@ -129,7 +129,7 @@ public class AES {
     public static byte[] toTransfer(SecretKey key) {
         byte[] b = new byte[32];
         System.arraycopy(key.getEncoded(), 0, b, 0, 16);
-        System.arraycopy(MD5.getMD5(key.getEncoded()), 0, b, 16, 16);
+        System.arraycopy(MD5.create().update(key.getEncoded()).asBytes(), 0, b, 16, 16);
         return b;
     }
 
