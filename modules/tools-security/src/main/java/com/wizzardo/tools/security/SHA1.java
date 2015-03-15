@@ -4,23 +4,12 @@
  */
 package com.wizzardo.tools.security;
 
-import com.wizzardo.tools.misc.UncheckedThrow;
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 /**
  * @author Moxa
  */
 public class SHA1 extends Hash {
-
-    @Override
-    protected MessageDigest init() {
-        try {
-            return MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException ex) {
-            throw UncheckedThrow.rethrow(ex);
-        }
+    public SHA1() {
+        super("SHA-1");
     }
 
     @Override

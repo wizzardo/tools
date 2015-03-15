@@ -17,14 +17,8 @@ import java.util.Arrays;
  * @author Moxa
  */
 public class MD5 extends Hash {
-
-    @Override
-    protected MessageDigest init() {
-        try {
-            return MessageDigest.getInstance("md5");
-        } catch (NoSuchAlgorithmException ex) {
-            throw UncheckedThrow.rethrow(ex);
-        }
+    public MD5() {
+        super("md5");
     }
 
     @Override

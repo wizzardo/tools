@@ -1,10 +1,13 @@
 package com.wizzardo.tools.security;
 
+import com.wizzardo.tools.misc.UncheckedThrow;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 /**
@@ -14,11 +17,17 @@ public abstract class Hash {
     private static final Charset UTF8 = Charset.forName("utf-8");
     private MessageDigest hash;
 
-    public Hash() {
-        hash = init();
+    public Hash(String name) {
+        hash = init(name);
     }
 
-    protected abstract MessageDigest init();
+    protected MessageDigest init(String name) {
+        try {
+            return MessageDigest.getInstance(name);
+        } catch (NoSuchAlgorithmException ex) {
+            throw UncheckedThrow.rethrow(ex);
+        }
+    }
 
     protected abstract int hexStringLength();
 
@@ -42,7 +51,7 @@ public abstract class Hash {
     }
 
     /**
-     *  update hash with getBytes(UTF8)
+     * update hash with getBytes(UTF8)
      */
     public Hash update(String s) {
         return update(s.getBytes(UTF8));
