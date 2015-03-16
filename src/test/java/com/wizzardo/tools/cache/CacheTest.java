@@ -155,7 +155,7 @@ public class CacheTest {
 
     @Test
     public void memoryLimitedCacheTest() throws InterruptedException {
-        Cache<String, MemoryLimitedCache.SizeProvider> cache = new MemoryLimitedCache<String, MemoryLimitedCache.SizeProvider>(5, 1, new Computable<String, MemoryLimitedCache.SizeProvider>() {
+        MemoryLimitedCache<String, MemoryLimitedCache.SizeProvider> cache = new MemoryLimitedCache<String, MemoryLimitedCache.SizeProvider>(5, 1, new Computable<String, MemoryLimitedCache.SizeProvider>() {
             @Override
             public MemoryLimitedCache.SizeProvider compute(final String s) {
                 return new MemoryLimitedCache.SizeProvider() {
@@ -176,6 +176,9 @@ public class CacheTest {
         Assert.assertEquals(1, cache.size());
         cache.get("foo4");
         Assert.assertEquals(1, cache.size());
+
+        Assert.assertEquals(4, cache.memoryUsed());
+        Assert.assertEquals(5, cache.limit());
     }
 
     @Test
