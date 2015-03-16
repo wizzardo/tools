@@ -3,6 +3,8 @@ package com.wizzardo.tools.cache;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @author: moxa
  * Date: 9/27/13
@@ -174,5 +176,36 @@ public class CacheTest {
         Assert.assertEquals(1, cache.size());
         cache.get("foo4");
         Assert.assertEquals(1, cache.size());
+    }
+
+    @Test
+    public void wait_test() {
+        final AtomicInteger counter = new AtomicInteger();
+        final Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+                counter.incrementAndGet();
+                return s.toUpperCase();
+            }
+        });
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                cache.get("foo");
+                Assert.assertEquals(1, counter.get());
+            }
+        });
+        t.start();
+        cache.get("foo");
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+        }
+        Assert.assertEquals(1, counter.get());
+
     }
 }
