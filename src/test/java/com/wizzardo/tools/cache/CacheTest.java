@@ -1,9 +1,5 @@
-package com.wizzardo.tools;
+package com.wizzardo.tools.cache;
 
-import com.wizzardo.tools.cache.Cache;
-import com.wizzardo.tools.cache.Computable;
-import com.wizzardo.tools.cache.MemoryLimitedCache;
-import com.wizzardo.tools.cache.SizeLimitedCache;
 import org.junit.Assert;
 import org.junit.Test;
 
