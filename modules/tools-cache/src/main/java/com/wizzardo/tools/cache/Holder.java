@@ -9,7 +9,7 @@ class Holder<K, V> {
     protected V v;
     protected K k;
     protected volatile boolean done = false;
-    protected long validUntil;
+    protected volatile long validUntil;
     private Cache.TimingsHolder timingsHolder;
 
     public Holder(K k, Cache.TimingsHolder timingsHolder) {
@@ -51,10 +51,6 @@ class Holder<K, V> {
 
     public void setValidUntil(long validUntil) {
         this.validUntil = validUntil;
-    }
-
-    public long getValidUntil() {
-        return validUntil;
     }
 
     public K getKey() {

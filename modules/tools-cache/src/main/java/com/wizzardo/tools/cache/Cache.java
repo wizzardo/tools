@@ -231,7 +231,7 @@ public class Cache<K, V> {
                     continue;
 
                 if (!e.getKey().isRemoved()) {
-                    if (holder == null || e.getKey().getValidUntil() < holder.validUntil)
+                    if (holder == null || e.getKey().validUntil < holder.validUntil)
                         holder = e.getKey();
 
                     break;
