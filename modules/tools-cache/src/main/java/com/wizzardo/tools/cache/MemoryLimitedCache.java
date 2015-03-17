@@ -1,8 +1,5 @@
 package com.wizzardo.tools.cache;
 
-import com.wizzardo.tools.cache.Cache;
-import com.wizzardo.tools.cache.Computable;
-
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -31,7 +28,12 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
         if (v == null)
             return;
 
-        if (size.addAndGet(checkAndGetSize(v)) > limit)
+        updateSize(v, true);
+    }
+
+    private void updateSize(V v, boolean increment) {
+        long add = increment ? checkAndGetSize(v) : -checkAndGetSize(v);
+        if (size.addAndGet(add) > limit)
             removeOldest();
     }
 
@@ -40,8 +42,7 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
         if (v == null)
             return;
 
-        if (size.addAndGet(-checkAndGetSize(v)) > limit)
-            removeOldest();
+        updateSize(v, false);
     }
 
     private long checkAndGetSize(V v) {
