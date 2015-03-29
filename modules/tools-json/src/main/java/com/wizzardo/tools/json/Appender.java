@@ -13,6 +13,9 @@ import java.nio.charset.Charset;
  * Date: 16.09.14
  */
 abstract class Appender {
+
+    public static final Charset UTF8 = Charset.forName("utf-8");
+
     public abstract void append(String s);
 
     public abstract void append(String s, int from, int to);
@@ -199,7 +202,7 @@ abstract class Appender {
         private OutputStreamWriter out;
 
         StreamAppender(OutputStream out) {
-            this.out = new OutputStreamWriter(out, Charset.forName("utf-8"));
+            this.out = new OutputStreamWriter(out, UTF8);
         }
 
         @Override
