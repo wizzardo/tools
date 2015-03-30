@@ -136,6 +136,15 @@ public class JsonTools {
         return null;
     }
 
+    /**
+     * @return bytes array with UTF-8 json representation of the object
+     */
+    public byte[] serializeToBytes(Object src) {
+        ExceptionDrivenStringBuilder builder = stringBuilderThreadLocal.getValue();
+        Binder.toJSON(src, Appender.create(builder));
+        return builder.toUtf8Bytes();
+    }
+
     public static String serialize(Object src) {
         Appender sb = Appender.create(stringBuilderThreadLocal.getValue());
         Binder.toJSON(src, sb);

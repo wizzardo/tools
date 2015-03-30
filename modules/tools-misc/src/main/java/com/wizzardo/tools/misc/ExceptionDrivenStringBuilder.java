@@ -8,9 +8,10 @@ public class ExceptionDrivenStringBuilder implements Appendable {
     private static final char[] CHARS_TRUE = new char[]{'t', 'r', 'u', 'e'};
     private static final char[] CHARS_FALSE = new char[]{'f', 'a', 'l', 's', 'e'};
 
-    private int limit = 16;
-    private char[] buffer = new char[limit];
-    private int length = 0;
+    protected int limit = 16;
+    protected char[] buffer = new char[limit];
+    protected int length = 0;
+    protected Utf8Tools utf8Buffer;
 
     private void ensureCapacity(int length) {
         if (length >= limit) {
@@ -141,5 +142,16 @@ public class ExceptionDrivenStringBuilder implements Appendable {
     @Override
     public String toString() {
         return new String(buffer, 0, length);
+    }
+
+    public int length() {
+        return length;
+    }
+
+    public byte[] toUtf8Bytes() {
+        if (utf8Buffer == null)
+            utf8Buffer = new Utf8Tools();
+
+        return utf8Buffer.toBytes(buffer, 0, length);
     }
 }
