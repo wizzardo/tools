@@ -11,7 +11,7 @@ public class ExceptionDrivenStringBuilder implements Appendable {
     protected int limit = 16;
     protected char[] buffer = new char[limit];
     protected int length = 0;
-    protected Utf8Tools utf8Buffer;
+    protected UTF8 utf8Buffer;
 
     private void ensureCapacity(int length) {
         if (length >= limit) {
@@ -150,7 +150,7 @@ public class ExceptionDrivenStringBuilder implements Appendable {
 
     public byte[] toUtf8Bytes() {
         if (utf8Buffer == null)
-            utf8Buffer = new Utf8Tools();
+            utf8Buffer = new UTF8();
 
         return utf8Buffer.toBytes(buffer, 0, length);
     }

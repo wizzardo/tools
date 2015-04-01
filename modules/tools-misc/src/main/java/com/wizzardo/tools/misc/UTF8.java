@@ -5,7 +5,7 @@ import java.util.Arrays;
 /**
  * Created by wizzardo on 30.03.15.
  */
-public class Utf8Tools {
+public class UTF8 {
 
     protected byte[] buffer;
 
