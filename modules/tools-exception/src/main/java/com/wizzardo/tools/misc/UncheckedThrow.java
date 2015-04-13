@@ -1,5 +1,7 @@
 package com.wizzardo.tools.misc;
 
+import java.util.concurrent.Callable;
+
 /**
  * @author: wizzardo
  * Date: 08.12.14
@@ -11,9 +13,29 @@ public class UncheckedThrow {
         throw (T) toThrow;
     }
 
-    public static RuntimeException rethrow(final Exception ex) {
+    public static RuntimeException rethrow(Exception ex) {
         UncheckedThrow.<RuntimeException>throwsUnchecked(ex);
 
         return new IllegalStateException("unreachable statement");
+    }
+
+    public static void run(UncheckedRunnable runnable) {
+        try {
+            runnable.run();
+        } catch (Exception e) {
+            throw rethrow(e);
+        }
+    }
+
+    public static <T> T call(Callable<T> callable) {
+        try {
+            return callable.call();
+        } catch (Exception e) {
+            throw rethrow(e);
+        }
+    }
+
+    public interface UncheckedRunnable {
+        void run() throws Exception;
     }
 }
