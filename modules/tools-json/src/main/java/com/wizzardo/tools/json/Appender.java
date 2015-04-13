@@ -1,7 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.misc.UncheckedThrow;
+import com.wizzardo.tools.misc.Unchecked;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -210,7 +210,7 @@ abstract class Appender {
             try {
                 out.write(s);
             } catch (IOException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             }
         }
 
@@ -219,7 +219,7 @@ abstract class Appender {
             try {
                 out.append(s, from, to);
             } catch (IOException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             }
         }
 
@@ -228,7 +228,7 @@ abstract class Appender {
             try {
                 out.write(s, from, to - from);
             } catch (IOException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             }
         }
 
@@ -237,7 +237,7 @@ abstract class Appender {
             try {
                 out.append(s);
             } catch (IOException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             }
         }
 
@@ -246,7 +246,7 @@ abstract class Appender {
             try {
                 out.flush();
             } catch (IOException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             }
         }
     }

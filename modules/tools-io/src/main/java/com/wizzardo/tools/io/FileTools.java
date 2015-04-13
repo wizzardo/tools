@@ -1,6 +1,6 @@
 package com.wizzardo.tools.io;
 
-import com.wizzardo.tools.misc.UncheckedThrow;
+import com.wizzardo.tools.misc.Unchecked;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -71,13 +71,13 @@ public class FileTools {
         try {
             out = new FileOutputStream(file);
         } catch (FileNotFoundException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         }
 
         try {
             IOTools.copy(stream, out);
         } catch (IOException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         } finally {
             IOTools.close(out);
         }
@@ -88,12 +88,12 @@ public class FileTools {
         try {
             out = new FileOutputStream(file);
         } catch (FileNotFoundException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         }
         try {
             out.write(bytes, offset, length);
         } catch (IOException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         } finally {
             IOTools.close(out);
         }
@@ -105,7 +105,7 @@ public class FileTools {
         try {
             in = new FileInputStream(file);
         } catch (FileNotFoundException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         }
 
         byte[] b = new byte[(int) file.length()];
@@ -115,7 +115,7 @@ public class FileTools {
                 total += r;
             }
         } catch (IOException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         } finally {
             IOTools.close(in);
         }

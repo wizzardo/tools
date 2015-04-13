@@ -4,7 +4,7 @@
  */
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.misc.UncheckedThrow;
+import com.wizzardo.tools.misc.Unchecked;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -154,9 +154,9 @@ public abstract class Expression {
             try {
                 r = map.getClass().newInstance();
             } catch (InstantiationException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             } catch (IllegalAccessException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             }
             Iterator<Map.Entry<String, Expression>> i = map.entrySet().iterator();
             while (i.hasNext()) {
@@ -216,9 +216,9 @@ public abstract class Expression {
             try {
                 r = collection.getClass().newInstance();
             } catch (InstantiationException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             } catch (IllegalAccessException e) {
-                throw UncheckedThrow.rethrow(e);
+                throw Unchecked.rethrow(e);
             }
             Iterator<Expression> i = collection.iterator();
             while (i.hasNext()) {

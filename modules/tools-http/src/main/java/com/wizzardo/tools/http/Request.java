@@ -1,6 +1,6 @@
 package com.wizzardo.tools.http;
 
-import com.wizzardo.tools.misc.UncheckedThrow;
+import com.wizzardo.tools.misc.Unchecked;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
@@ -158,7 +158,7 @@ public class Request extends RequestArguments<Request> {
                 try {
                     Thread.sleep(pauseBetweenRetries);
                 } catch (InterruptedException ex1) {
-                    throw UncheckedThrow.rethrow(ex1);
+                    throw Unchecked.rethrow(ex1);
                 }
                 return execute(++retryNumber);
             }

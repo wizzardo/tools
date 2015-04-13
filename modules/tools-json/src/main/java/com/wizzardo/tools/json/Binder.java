@@ -1,7 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.DateIso8601;
-import com.wizzardo.tools.misc.UncheckedThrow;
+import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.FieldReflection;
 
 import java.lang.reflect.*;
@@ -577,7 +577,7 @@ class Binder {
             c = classReal.getDeclaredConstructor();
             cachedConstructors.put(classKey, c);
         } catch (NoSuchMethodException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         }
         return c;
     }
@@ -586,11 +586,11 @@ class Binder {
         try {
             return c.newInstance();
         } catch (IllegalAccessException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         } catch (InstantiationException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         } catch (InvocationTargetException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.misc.UncheckedThrow;
+import com.wizzardo.tools.misc.Unchecked;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -110,7 +110,7 @@ public class UserFunction extends Expression {
                 }
             return r;
         } catch (Exception e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         }
     }
 

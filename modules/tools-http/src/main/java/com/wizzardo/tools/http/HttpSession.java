@@ -1,6 +1,6 @@
 package com.wizzardo.tools.http;
 
-import com.wizzardo.tools.misc.UncheckedThrow;
+import com.wizzardo.tools.misc.Unchecked;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -39,7 +39,7 @@ public class HttpSession extends RequestArguments<HttpSession> {
         try {
             return getCookies(new URL(url));
         } catch (MalformedURLException e) {
-            throw UncheckedThrow.rethrow(e);
+            throw Unchecked.rethrow(e);
         }
     }
 

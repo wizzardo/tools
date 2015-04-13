@@ -1,6 +1,6 @@
 package com.wizzardo.tools.security;
 
-import com.wizzardo.tools.misc.UncheckedThrow;
+import com.wizzardo.tools.misc.Unchecked;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +25,7 @@ public abstract class Hash {
         try {
             return MessageDigest.getInstance(name);
         } catch (NoSuchAlgorithmException ex) {
-            throw UncheckedThrow.rethrow(ex);
+            throw Unchecked.rethrow(ex);
         }
     }
 
