@@ -20,18 +20,32 @@ public class Unchecked {
     }
 
     public static void run(UncheckedRunnable runnable) {
+        run(runnable, null);
+    }
+
+    public static <T> T call(Callable<T> callable) {
+        return call(callable, null);
+    }
+
+    public static void run(UncheckedRunnable runnable, Runnable finaly) {
         try {
             runnable.run();
         } catch (Exception e) {
             throw rethrow(e);
+        } finally {
+            if (finaly != null)
+                finaly.run();
         }
     }
 
-    public static <T> T call(Callable<T> callable) {
+    public static <T> T call(Callable<T> callable, Runnable finaly) {
         try {
             return callable.call();
         } catch (Exception e) {
             throw rethrow(e);
+        } finally {
+            if (finaly != null)
+                finaly.run();
         }
     }
 
