@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.security.DigestException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -74,6 +75,18 @@ public abstract class Hash {
      */
     public byte[] asBytes() {
         return hash.digest();
+    }
+
+    public void asBytes(byte[] bytes) {
+        asBytes(bytes, 0);
+    }
+
+    public void asBytes(byte[] bytes, int offset) {
+        try {
+            hash.digest(bytes, offset, hash.getDigestLength());
+        } catch (DigestException e) {
+            throw Unchecked.rethrow(e);
+        }
     }
 
     public Hash update(InputStream in) throws IOException {

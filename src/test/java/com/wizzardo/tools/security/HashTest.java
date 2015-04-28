@@ -17,12 +17,18 @@ public class HashTest {
     public void md5_test() {
         String data = "foo bar\n";
         Assert.assertEquals("5ceaa7ed396ccb8e959c02753cb4bd18", MD5.create().update(data).asString());
+        byte[] hash = new byte[16];
+        MD5.create().update(data).asBytes(hash);
+        Assert.assertArrayEquals(MD5.create().update(data).asBytes(), hash);
     }
 
     @Test
     public void sha1_test() {
         String data = "foo bar\n";
         Assert.assertEquals("d53a205a336e07cf9eac45471b3870f9489288ec", SHA1.create().update(data).asString());
+        byte[] hash = new byte[20];
+        SHA1.create().update(data).asBytes(hash);
+        Assert.assertArrayEquals(SHA1.create().update(data).asBytes(), hash);
     }
 
     @Test
