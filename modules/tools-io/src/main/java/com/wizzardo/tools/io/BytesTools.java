@@ -63,9 +63,12 @@ public class BytesTools {
     }
 
     public static byte[] toBytes(long l, int bytesCount) {
+        return toBytes(l, new byte[bytesCount], 0, bytesCount);
+    }
+
+    public static byte[] toBytes(long l, byte[] bytes, int offset, int bytesCount) {
         int k = (bytesCount - 1) * 8;
-        byte[] bytes = new byte[bytesCount];
-        for (int i = 0; i < bytesCount; i++) {
+        for (int i = offset; i < bytesCount + offset; i++) {
             bytes[i] = (byte) (l >> k);
             k -= 8;
         }
