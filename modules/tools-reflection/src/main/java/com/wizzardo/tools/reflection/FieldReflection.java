@@ -357,4 +357,8 @@ public class FieldReflection {
     public Type getType() {
         return type;
     }
+
+    public Field getField() {
+        return field;
+    }
 }
