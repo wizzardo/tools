@@ -562,7 +562,7 @@ public class Node {
                     break;
                 }
                 case '<': {
-                    if (comment) {
+                    if (comment || inString) {
                         sb.append(s[i]);
                         break;
                     }
