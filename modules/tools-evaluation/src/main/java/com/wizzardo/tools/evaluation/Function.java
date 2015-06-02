@@ -177,6 +177,8 @@ class Function extends Expression {
                 return constructor.newInstance(arr);
             } else if (method == null) {
                 method = findMethod(getClass(instance), methodName, arr);
+                if (method == null && instance.getClass() == Class.class)
+                    method = findMethod(instance.getClass(), methodName, arr);
             }
             if (method == null) {
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
