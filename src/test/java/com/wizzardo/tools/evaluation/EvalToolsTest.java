@@ -8,9 +8,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -447,14 +449,14 @@ public class EvalToolsTest {
         Assert.assertEquals("-1b", eh.get(model));
         Assert.assertEquals("-1b", eh.get(model));
         Assert.assertTrue(((Operation) eh).rightPart().hardcoded);
-        Assert.assertEquals("b",((Operation) eh).rightPart().result);
+        Assert.assertEquals("b", ((Operation) eh).rightPart().result);
 
         eh = EvalTools.prepare("a + 'b' + 2");
         model.put("a", 2);
         Assert.assertEquals("2b2", eh.get(model));
         Assert.assertEquals("2b2", eh.get(model));
         Assert.assertTrue(((Operation) eh).rightPart().hardcoded);
-        Assert.assertEquals(2,((Operation) eh).rightPart().result);
+        Assert.assertEquals(2, ((Operation) eh).rightPart().result);
     }
 
     @Test
@@ -469,11 +471,11 @@ public class EvalToolsTest {
         Expression eh;
 
         eh = EvalTools.prepare("a=2");
-        Variable a = new Variable("a",0);
+        Variable a = new Variable("a", 0);
         eh.setVariable(a);
         eh.get();
 
-        Assert.assertEquals(2,a.get());
+        Assert.assertEquals(2, a.get());
     }
 
     @Test
@@ -932,5 +934,55 @@ public class EvalToolsTest {
 
         assertEquals(true, EvalTools.evaluate("true && new Object()", model));
         assertEquals(true, EvalTools.evaluate("!null", model));
+    }
+
+    public static class Foo {
+        @Override
+        public String toString() {
+            return "foo";
+        }
+    }
+
+    @Test
+    public void testImports() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+        List<String> imports = new ArrayList<String>();
+        Expression exp;
+
+        final String s = "def counter = new AtomicInteger()";
+        checkException(new Runnable() {
+            @Override
+            public void run() {
+                EvalTools.prepare(s);
+            }
+        }, ClassNotFoundException.class, "Can not find class 'AtomicInteger'");
+
+
+        imports.add("java.util.concurrent.atomic.AtomicInteger");
+        exp = EvalTools.prepare(s, model, functions, imports, false);
+        Assert.assertEquals(AtomicInteger.class, exp.get(model).getClass());
+
+        imports.clear();
+        imports.add("java.util.concurrent.atomic.*");
+        exp = EvalTools.prepare(s, model, functions, imports, false);
+        Assert.assertEquals(AtomicInteger.class, exp.get(model).getClass());
+
+        imports.clear();
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("new EvalToolsTest.Foo()", model, functions, imports, false);
+        Assert.assertEquals(Foo.class, exp.get(model).getClass());
+    }
+
+    private void checkException(Runnable runnable, Class<? extends Exception> exceptionClass, String message) {
+        boolean b = false;
+        try {
+            runnable.run();
+            b = true;
+        } catch (Exception e) {
+            Assert.assertEquals(exceptionClass, e.getClass());
+            Assert.assertEquals(message, e.getMessage());
+        }
+        Assert.assertFalse(b);
     }
 }
