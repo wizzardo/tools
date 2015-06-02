@@ -829,7 +829,7 @@ public class EvalTools {
         if (thatObject == null) {
             Matcher m = CLASS.matcher(exp);
             if (m.find()) {
-                Class clazz = findClass(m.group());
+                Class clazz = findClass(m.group(), imports);
                 if (clazz != null) {
                     thatObject = new Expression.Holder(clazz);
                     exp = exp.substring(m.end());
