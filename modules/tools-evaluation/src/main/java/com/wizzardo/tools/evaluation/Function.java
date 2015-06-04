@@ -9,6 +9,7 @@ import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ class Function extends Expression {
     private Method method;
     private Constructor constructor;
     private Field field;
+    private Getter getter;
     private String methodName;
     private Expression[] args;
     private String fieldName;
@@ -126,6 +128,49 @@ class Function extends Expression {
 
     private ThreadLocal<Object[]> tempArray = new ThreadLocal<Object[]>();
 
+    interface Getter {
+        Object get(Object instance) throws IllegalAccessException, InvocationTargetException;
+    }
+
+    static class FieldGetter implements Getter {
+        final Field field;
+
+        FieldGetter(Field field) {
+            this.field = field;
+        }
+
+        @Override
+        public Object get(Object instance) throws IllegalAccessException {
+            return field.get(instance);
+        }
+    }
+
+    static class MethodGetter implements Getter {
+        final Method method;
+
+        MethodGetter(Method method) {
+            this.method = method;
+        }
+
+        @Override
+        public Object get(Object instance) throws IllegalAccessException, InvocationTargetException {
+            return method.invoke(instance);
+        }
+    }
+
+    static class MapGetter implements Getter {
+        final String fieldName;
+
+        MapGetter(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public Object get(Object instance) throws IllegalAccessException, InvocationTargetException {
+            return ((Map) instance).get(fieldName);
+        }
+    }
+
     public Object get(Map<String, Object> model) {
         if (hardcoded) {
             return result;
@@ -162,12 +207,8 @@ class Function extends Expression {
                 }
             }
 
-            if (fieldName != null || field != null) {
-                if (instance instanceof Map) {
-                    return ((Map) instance).get(fieldName);
-                }
-                prepareField(instance);
-                return field.get(instance);
+            if (fieldName != null || getter != null) {
+                return getGetter(instance).get(instance);
             }
             if (EvalTools.CONSTRUCTOR.equals(methodName)) {
                 constructor = findConstructor(getClass(instance), arr);
@@ -200,6 +241,54 @@ class Function extends Expression {
         } catch (Exception e) {
             throw Unchecked.rethrow(e);
         }
+    }
+
+    private Getter getGetter(Object instance) {
+        if (getter != null)
+            return getter;
+
+        if (instance instanceof Map)
+            return getter = new MapGetter(fieldName);
+
+
+        Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
+        Field field = null;
+        while (clazz != null && field == null)
+            try {
+                field = clazz.getDeclaredField(fieldName);
+                fieldName = null;
+            } catch (NoSuchFieldException ignored) {
+                clazz = clazz.getSuperclass();
+            }
+        if (field != null)
+            return getter = new FieldGetter(field);
+
+        String methodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+        clazz = instance instanceof Class ? (Class) instance : instance.getClass();
+        Method method = null;
+        while (clazz != null && method == null)
+            try {
+                method = clazz.getDeclaredMethod(methodName);
+            } catch (NoSuchMethodException e) {
+                clazz = clazz.getSuperclass();
+            }
+        if (method != null)
+            return getter = new MethodGetter(method);
+
+        if (instance instanceof Class) {
+            clazz = instance.getClass();
+            method = null;
+            while (clazz != null && method == null)
+                try {
+                    method = clazz.getDeclaredMethod(methodName);
+                } catch (NoSuchMethodException e) {
+                    clazz = clazz.getSuperclass();
+                }
+            if (method != null)
+                return getter = new MethodGetter(method);
+        }
+
+        throw Unchecked.rethrow(new NoSuchFieldException(fieldName));
     }
 
     private boolean chechMeta(Object instance) {
