@@ -937,9 +937,17 @@ public class EvalToolsTest {
     }
 
     public static class Foo {
+
+        private String foo = "foo";
+        public String bar = "bar";
+
         @Override
         public String toString() {
-            return "foo";
+            return foo;
+        }
+
+        public String getFoo() {
+            return foo;
         }
     }
 
@@ -972,6 +980,34 @@ public class EvalToolsTest {
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("new EvalToolsTest.Foo()", model, functions, imports, false);
         Assert.assertEquals(Foo.class, exp.get(model).getClass());
+    }
+
+    @Test
+    public void testGetter() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+        List<String> imports = new ArrayList<String>();
+        Expression exp;
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("new EvalToolsTest.Foo().bar", model, functions, imports, false);
+        Assert.assertEquals("bar", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("new EvalToolsTest.Foo().getFoo()", model, functions, imports, false);
+        Assert.assertEquals("foo", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("new EvalToolsTest.Foo().getFoo()", model, functions, imports, false);
+        Assert.assertEquals("foo", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("EvalToolsTest.getSimpleName()", model, functions, imports, false);
+        Assert.assertEquals("EvalToolsTest", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("EvalToolsTest.simpleName", model, functions, imports, false);
+        Assert.assertEquals("EvalToolsTest", exp.get(model));
     }
 
     private void checkException(Runnable runnable, Class<? extends Exception> exceptionClass, String message) {
