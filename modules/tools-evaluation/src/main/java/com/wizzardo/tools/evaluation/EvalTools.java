@@ -516,6 +516,7 @@ public class EvalTools {
                         continue;
                     }
                     if (c == '"' || c == '\'') {
+                        stringChar = c;
                         inString = true;
                     }
                 }

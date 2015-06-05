@@ -674,8 +674,11 @@ public class EvalToolsTest {
         Map<String, Object> model = new HashMap<String, Object>();
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
 
-        String s = "ololo";
-        List<String> l = EvalTools.getLines(s);
+        String s;
+        List<String> l;
+
+        s = "ololo";
+        l = EvalTools.getLines(s);
         Assert.assertEquals(1, l.size());
         Assert.assertEquals(s, l.get(0));
 
@@ -696,6 +699,13 @@ public class EvalToolsTest {
         Assert.assertEquals("int i = 1", l.get(0));
         Assert.assertEquals("i++", l.get(1));
         Assert.assertEquals("i=\";;\n\n\".length()", l.get(2));
+
+        s = "def a = new A(); a.foo = 'FOO'; a.foo";
+        l = EvalTools.getLines(s);
+        Assert.assertEquals(3, l.size());
+        Assert.assertEquals("def a = new A()", l.get(0));
+        Assert.assertEquals("a.foo = 'FOO'", l.get(1));
+        Assert.assertEquals("a.foo", l.get(2));
     }
 
 
