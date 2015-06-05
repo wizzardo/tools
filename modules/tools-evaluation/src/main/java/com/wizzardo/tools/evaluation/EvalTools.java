@@ -21,7 +21,7 @@ public class EvalTools {
     private static AtomicInteger variableCounter = new AtomicInteger();
 
     private static final Pattern NEW = Pattern.compile("^new +([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+(\\.[A-Z][a-zA-Z\\d]+)?)");
-    private static final Pattern CLASS = Pattern.compile("^([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)");
+    private static final Pattern CLASS = Pattern.compile("^([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*");
     private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
     private static final Pattern COMMA = Pattern.compile(",");
     private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
@@ -828,12 +828,15 @@ public class EvalTools {
 
         if (thatObject == null) {
             Matcher m = CLASS.matcher(exp);
-            if (m.find()) {
+            while (m.find()) {
                 Class clazz = findClass(m.group(), imports);
                 if (clazz != null) {
                     thatObject = new Expression.Holder(clazz);
                     exp = exp.substring(m.end());
+                    break;
                 }
+                if (m.start(3) >= 0)
+                    m = CLASS.matcher(exp.substring(0, m.start(3)));
             }
         }
 
