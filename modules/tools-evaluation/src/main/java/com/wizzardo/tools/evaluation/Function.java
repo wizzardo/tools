@@ -127,7 +127,7 @@ class Function extends Expression {
     private ThreadLocal<Object[]> tempArray = new ThreadLocal<Object[]>();
 
     interface Getter {
-        Object get(Object instance) throws IllegalAccessException, InvocationTargetException;
+        Object get(Object instance);
     }
 
     static class FieldGetter implements Getter {
@@ -138,8 +138,12 @@ class Function extends Expression {
         }
 
         @Override
-        public Object get(Object instance) throws IllegalAccessException {
-            return field.get(instance);
+        public Object get(Object instance) {
+            try {
+                return field.get(instance);
+            } catch (IllegalAccessException e) {
+                throw Unchecked.rethrow(e);
+            }
         }
     }
 
@@ -151,26 +155,32 @@ class Function extends Expression {
         }
 
         @Override
-        public Object get(Object instance) throws IllegalAccessException, InvocationTargetException {
-            return method.invoke(instance);
+        public Object get(Object instance) {
+            try {
+                return method.invoke(instance);
+            } catch (IllegalAccessException e) {
+                throw Unchecked.rethrow(e);
+            } catch (InvocationTargetException e) {
+                throw Unchecked.rethrow(e);
+            }
         }
     }
 
     static class MapGetter implements Getter {
-        final String fieldName;
+        final Object fieldName;
 
-        MapGetter(String fieldName) {
+        MapGetter(Object fieldName) {
             this.fieldName = fieldName;
         }
 
         @Override
-        public Object get(Object instance) throws IllegalAccessException, InvocationTargetException {
+        public Object get(Object instance) {
             return ((Map) instance).get(fieldName);
         }
     }
 
     interface Setter {
-        void set(Object instance, Object value) throws IllegalAccessException, InvocationTargetException;
+        void set(Object instance, Object value);
     }
 
     static class FieldSetter implements Setter {
@@ -181,8 +191,12 @@ class Function extends Expression {
         }
 
         @Override
-        public void set(Object instance, Object value) throws IllegalAccessException {
-            field.set(instance, value);
+        public void set(Object instance, Object value) {
+            try {
+                field.set(instance, value);
+            } catch (IllegalAccessException e) {
+                throw Unchecked.rethrow(e);
+            }
         }
     }
 
@@ -194,20 +208,26 @@ class Function extends Expression {
         }
 
         @Override
-        public void set(Object instance, Object value) throws IllegalAccessException, InvocationTargetException {
-            method.invoke(instance, value);
+        public void set(Object instance, Object value) {
+            try {
+                method.invoke(instance, value);
+            } catch (IllegalAccessException e) {
+                throw Unchecked.rethrow(e);
+            } catch (InvocationTargetException e) {
+                throw Unchecked.rethrow(e);
+            }
         }
     }
 
     static class MapSetter implements Setter {
-        final String fieldName;
+        final Object fieldName;
 
-        MapSetter(String fieldName) {
+        MapSetter(Object fieldName) {
             this.fieldName = fieldName;
         }
 
         @Override
-        public void set(Object instance, Object value) throws IllegalAccessException, InvocationTargetException {
+        public void set(Object instance, Object value) {
             ((Map) instance).put(fieldName, value);
         }
     }

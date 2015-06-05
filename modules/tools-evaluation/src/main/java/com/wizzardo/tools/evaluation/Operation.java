@@ -473,10 +473,6 @@ class Operation extends Expression {
         return null;
     }
 
-    private static Object set(Expression leftPart, Expression rightPart, Map<String, Object> model) {
-        return set(leftPart, rightPart, model, null);
-    }
-
     private static Object set(Expression leftPart, Expression rightPart, Map<String, Object> model, Operator operator) {
         //left part not yet executed
         Object ob1 = null;
@@ -493,34 +489,12 @@ class Operation extends Expression {
             if (function != null) {
                 ob1 = function.getThatObject().get(model);
             }
-            if (function != null && function.getFieldName() != null && ob1 instanceof Map) {
-                if (operator != null) {
-                    String key = function.getFieldName();
-                    Map m = (Map) ob1;
-                    return mapSetAndReturn(key, m, m.get(key), ob2, operator);
-                }
-
-                ((Map) ob1).put(function.getFieldName(), ob2);
-                return ob2;
-            }
-            if (function != null && function.getGetter(ob1) != null) {
+            if (function != null) {
                 Function.Setter setter = function.getSetter(ob1);
                 Function.Getter getter = function.getGetter(ob1);
-                if (operator != null) {
-                    try {
-                        return fieldSetAndReturn(ob1, setter, getter.get(ob1), ob2, operator);
-                    } catch (IllegalAccessException e) {
-                        throw Unchecked.rethrow(e);
-                    } catch (InvocationTargetException e) {
-                        throw Unchecked.rethrow(e);
-                    }
+                if (operator != null && getter != null && setter != null) {
+                    return setAndReturn(ob1, setter, getter.get(ob1), ob2, operator);
                 }
-
-//                try {
-//                    function.getField().set(ob1, ob2);
-//                } catch (IllegalAccessException e) {
-//                    throw Unchecked.rethrow(e);
-//                }
                 return ob2;
             }
 
@@ -535,7 +509,7 @@ class Operation extends Expression {
                     if (operator != null) {
                         Object key = operation.rightPart().get(model);
                         Map m = (Map) ob1;
-                        return mapSetAndReturn(key, m, m.get(key), ob2, operator);
+                        return setAndReturn(ob1, new Function.MapSetter(key), m.get(key), ob2, operator);
                     }
 
                     ((Map) ob1).put(operation.rightPart().get(model), ob2);
@@ -565,21 +539,10 @@ class Operation extends Expression {
 
             if (function != null) {
                 Object thatObject = function.getThatObject().get(model);
-                if (function.getFieldName() != null && thatObject instanceof Map) {
-                    String key = function.getFieldName();
-                    Map m = (Map) thatObject;
-                    return mapSetAndReturn(key, m, ob1, m.get(key), operator);
-                }
                 Function.Getter getter = function.getGetter(thatObject);
                 Function.Setter setter = function.getSetter(thatObject);
                 if (getter != null && setter != null) {
-                    try {
-                        return fieldSetAndReturn(thatObject, setter, null, getter.get(thatObject), operator);
-                    } catch (IllegalAccessException e) {
-                        throw Unchecked.rethrow(e);
-                    } catch (InvocationTargetException e) {
-                        throw Unchecked.rethrow(e);
-                    }
+                    return setAndReturn(thatObject, setter, null, getter.get(thatObject), operator);
                 }
             } else if (leftPart != null) {
                 ob1 = leftPart.get(model);
@@ -589,9 +552,9 @@ class Operation extends Expression {
 
             Variable v = getVariable(leftPart, rightPart);
             if (v != null)
-                return variableSetAndReturn(v, ob1, ob2, operator);
+                return setAndReturn(null, v, ob1, ob2, operator);
 
-            return mapSetAndReturn(leftPart != null ? leftPart.raw() : rightPart.raw(), model, ob1, ob2, operator);
+            return setAndReturn(model, new Function.MapSetter(leftPart != null ? leftPart.raw() : rightPart.raw()), ob1, ob2, operator);
         }
         return null;
     }
@@ -606,136 +569,20 @@ class Operation extends Expression {
         return null;
     }
 
-    private static Object variableSetAndReturn(Variable v, Object left, Object right, Operator operator) {
+    private static Object setAndReturn(Object thatObject, Function.Setter setter, Object left, Object right, Operator operator) {
         switch (operator) {
             case PLUS2: {
-                //post-increment
-                if (left != null) {
-                    Object r = increment(left);
-                    v.set(r);
-                    return left;
-                }
-                //pre-increment
-                if (right != null) {
-                    Object ob = increment(right);
-                    v.set(ob);
-                    return ob;
-                }
-            }
-            case MINUS2: {
-                //post-decrement
-                if (left != null) {
-                    Object r = decrement(left);
-                    v.set(r);
-                    return left;
-                }
-                //pre-decrement
-                if (right != null) {
-                    Object ob = decrement(right);
-                    v.set(ob);
-                    return ob;
-                }
-            }
-            case PLUS_EQUAL: {
-                Object r = plus(left, right, operator);
-                v.set(r);
-                return r;
-            }
-            case MINUS_EQUAL: {
-                Object r = minus(left, right);
-                v.set(r);
-                return r;
-            }
-            case MULTIPLY_EQUAL: {
-                Object r = multiply(left, right);
-                v.set(r);
-                return r;
-            }
-            case DIVIDE_EQUAL: {
-                Object r = divide(left, right);
-                v.set(r);
-                return r;
-            }
-            case EQUAL: {
-                v.set(right);
-                return right;
-            }
-        }
-        throw new UnsupportedOperationException("Not yet implemented:" + operator);
-    }
-
-    private static Object mapSetAndReturn(Object key, Map model, Object left, Object right, Operator operator) {
-        switch (operator) {
-            case PLUS2: {
-                //post-increment
-                if (left != null) {
-                    Object r = increment(left);
-                    model.put(key, r);
-                    return left;
-                }
-                //pre-increment
-                if (right != null) {
-                    Object ob = increment(right);
-                    model.put(key, ob);
-                    return ob;
-                }
-            }
-            case MINUS2: {
-                //post-decrement
-                if (left != null) {
-                    Object r = decrement(left);
-                    model.put(key, r);
-                    return left;
-                }
-                //pre-decrement
-                if (right != null) {
-                    Object ob = decrement(right);
-                    model.put(key, ob);
-                    return ob;
-                }
-            }
-            case PLUS_EQUAL: {
-                Object r = plus(left, right, operator);
-                model.put(key, r);
-                return r;
-            }
-            case MINUS_EQUAL: {
-                Object r = minus(left, right);
-                model.put(key, r);
-                return r;
-            }
-            case MULTIPLY_EQUAL: {
-                Object r = multiply(left, right);
-                model.put(key, r);
-                return r;
-            }
-            case DIVIDE_EQUAL: {
-                Object r = divide(left, right);
-                model.put(key, r);
-                return r;
-            }
-            case EQUAL: {
-                model.put(key, right);
-                return right;
-            }
-        }
-        throw new UnsupportedOperationException("Not yet implemented:" + operator);
-    }
-
-    private static Object fieldSetAndReturn(Object thatObject, Function.Setter setter, Object left, Object right, Operator operator) throws IllegalAccessException, InvocationTargetException {
-        switch (operator) {
-            case PLUS2: {
-                //pre-increment
-                if (right != null) {
-                    Object ob = increment(right);
-                    setter.set(thatObject, ob);
-                    return ob;
-                }
                 //post-increment
                 if (left != null) {
                     Object r = increment(left);
                     setter.set(thatObject, r);
                     return left;
+                }
+                //pre-increment
+                if (right != null) {
+                    Object ob = increment(right);
+                    setter.set(thatObject, ob);
+                    return ob;
                 }
             }
             case MINUS2: {
