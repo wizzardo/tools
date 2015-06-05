@@ -960,6 +960,10 @@ public class EvalToolsTest {
         public String getFoo() {
             return foo;
         }
+
+        public void setFoo(String foo) {
+            this.foo = foo;
+        }
     }
 
     @Test
@@ -1027,6 +1031,37 @@ public class EvalToolsTest {
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("EvalToolsTest.simpleName", model, functions, imports, false);
         Assert.assertEquals("EvalToolsTest", exp.get(model));
+    }
+
+    @Test
+    public void testSetter() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+        List<String> imports = new ArrayList<String>();
+        Expression exp;
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("new EvalToolsTest.Foo().bar = 'BAR'", model, functions, imports, false);
+        Assert.assertEquals("BAR", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("def foo = new EvalToolsTest.Foo(); foo.setFoo('FOO'); foo.foo", model, functions, imports, false);
+        Assert.assertEquals("FOO", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("def foo = new EvalToolsTest.Foo(); foo.foo = 'FOO'", model, functions, imports, false);
+        Assert.assertEquals("FOO", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("def foo = new EvalToolsTest.Foo(); foo.foobar = 'FOOBAR'", model, functions, imports, false);
+        Assert.assertEquals("FOOBAR", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("EvalToolsTest.Foo.foobar = 'FOOBAR'", model, functions, imports, false);
+        Assert.assertEquals("FOOBAR", exp.get(model));
+        Assert.assertEquals("FOOBAR", Foo.foobar);
+
+        Foo.foobar = "foobar";
     }
 
     private void checkException(Runnable runnable, Class<? extends Exception> exceptionClass, String message) {
