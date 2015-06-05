@@ -22,6 +22,7 @@ class Function extends Expression {
     private Constructor constructor;
     private Field field;
     private Getter getter;
+    private Setter setter;
     private String methodName;
     private Expression[] args;
     private String fieldName;
@@ -168,6 +169,49 @@ class Function extends Expression {
         }
     }
 
+    interface Setter {
+        void set(Object instance, Object value) throws IllegalAccessException, InvocationTargetException;
+    }
+
+    static class FieldSetter implements Setter {
+        final Field field;
+
+        FieldSetter(Field field) {
+            this.field = field;
+        }
+
+        @Override
+        public void set(Object instance, Object value) throws IllegalAccessException {
+            field.set(instance, value);
+        }
+    }
+
+    static class MethodSetter implements Setter {
+        final Method method;
+
+        MethodSetter(Method method) {
+            this.method = method;
+        }
+
+        @Override
+        public void set(Object instance, Object value) throws IllegalAccessException, InvocationTargetException {
+            method.invoke(instance, value);
+        }
+    }
+
+    static class MapSetter implements Setter {
+        final String fieldName;
+
+        MapSetter(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public void set(Object instance, Object value) throws IllegalAccessException, InvocationTargetException {
+            ((Map) instance).put(fieldName, value);
+        }
+    }
+
     public Object get(Map<String, Object> model) {
         if (hardcoded) {
             return result;
@@ -240,51 +284,80 @@ class Function extends Expression {
         }
     }
 
-    private Getter getGetter(Object instance) {
+    public Getter getGetter(Object instance) {
         if (getter != null)
             return getter;
+
+        if (fieldName == null)
+            return null;
 
         if (instance instanceof Map)
             return getter = new MapGetter(fieldName);
 
 
         Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
-        Field field = null;
-        while (clazz != null && field == null)
-            try {
-                field = clazz.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException ignored) {
-                clazz = clazz.getSuperclass();
-            }
+        Field field = findField(clazz, fieldName);
         if (field != null && !Modifier.isPrivate(field.getModifiers()))
             return getter = new FieldGetter(field);
 
         String methodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-        clazz = instance instanceof Class ? (Class) instance : instance.getClass();
-        Method method = null;
-        while (clazz != null && method == null)
-            try {
-                method = clazz.getDeclaredMethod(methodName);
-            } catch (NoSuchMethodException e) {
-                clazz = clazz.getSuperclass();
-            }
+        Method method = findMethod(clazz, methodName, 0);
         if (method != null)
             return getter = new MethodGetter(method);
 
         if (instance instanceof Class) {
             clazz = instance.getClass();
-            method = null;
-            while (clazz != null && method == null)
-                try {
-                    method = clazz.getDeclaredMethod(methodName);
-                } catch (NoSuchMethodException e) {
-                    clazz = clazz.getSuperclass();
-                }
+            method = findMethod(clazz, methodName, 0);
             if (method != null)
                 return getter = new MethodGetter(method);
         }
 
         throw Unchecked.rethrow(new NoSuchFieldException(fieldName));
+    }
+
+    public Setter getSetter(Object instance) {
+        if (setter != null)
+            return setter;
+
+        if (fieldName == null)
+            return null;
+
+        if (instance instanceof Map)
+            return setter = new MapSetter(fieldName);
+
+
+        Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
+        Field field = findField(clazz, fieldName);
+        if (field != null && !Modifier.isPrivate(field.getModifiers()))
+            return setter = new FieldSetter(field);
+
+        String methodName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+        Method method = findMethod(clazz, methodName, 1);
+        if (method != null)
+            return setter = new MethodSetter(method);
+
+        throw Unchecked.rethrow(new NoSuchFieldException(fieldName));
+    }
+
+    protected Method findMethod(Class clazz, String name, int paramsCount) {
+        while (clazz != null) {
+            for (Method m : clazz.getDeclaredMethods()) {
+                if (m.getName().equals(name) && paramsCount == m.getParameterTypes().length)
+                    return m;
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return null;
+    }
+
+    protected Field findField(Class clazz, String name) {
+        while (clazz != null)
+            try {
+                return clazz.getDeclaredField(name);
+            } catch (NoSuchFieldException ignored) {
+                clazz = clazz.getSuperclass();
+            }
+        return null;
     }
 
     private boolean chechMeta(Object instance) {
@@ -318,22 +391,6 @@ class Function extends Expression {
             }
         }
         return closure;
-    }
-
-    public Field prepareField(Object instance) {
-        if (field == null && fieldName != null) {
-            Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
-            while (clazz != null && field == null)
-                try {
-                    field = clazz.getDeclaredField(fieldName);
-                    fieldName = null;
-                } catch (NoSuchFieldException ignored) {
-                    clazz = clazz.getSuperclass();
-                }
-            if (field == null)
-                throw Unchecked.rethrow(new NoSuchFieldException(fieldName));
-        }
-        return field;
     }
 
     private Class getClass(Object ob) {

@@ -8,7 +8,7 @@ import com.wizzardo.tools.collections.Range;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -503,21 +503,24 @@ class Operation extends Expression {
                 ((Map) ob1).put(function.getFieldName(), ob2);
                 return ob2;
             }
-            if (function != null && function.prepareField(ob1) != null) {
+            if (function != null && function.getGetter(ob1) != null) {
+                Function.Setter setter = function.getSetter(ob1);
+                Function.Getter getter = function.getGetter(ob1);
                 if (operator != null) {
-                    Field key = function.getField();
                     try {
-                        return fieldSetAndReturn(ob1, key, key.get(ob1), ob2, operator);
+                        return fieldSetAndReturn(ob1, setter, getter.get(ob1), ob2, operator);
                     } catch (IllegalAccessException e) {
+                        throw Unchecked.rethrow(e);
+                    } catch (InvocationTargetException e) {
                         throw Unchecked.rethrow(e);
                     }
                 }
 
-                try {
-                    function.getField().set(ob1, ob2);
-                } catch (IllegalAccessException e) {
-                    throw Unchecked.rethrow(e);
-                }
+//                try {
+//                    function.getField().set(ob1, ob2);
+//                } catch (IllegalAccessException e) {
+//                    throw Unchecked.rethrow(e);
+//                }
                 return ob2;
             }
 
@@ -567,12 +570,14 @@ class Operation extends Expression {
                     Map m = (Map) thatObject;
                     return mapSetAndReturn(key, m, ob1, m.get(key), operator);
                 }
-
-                if (function.prepareField(thatObject) != null) {
-                    Field key = function.getField();
+                Function.Getter getter = function.getGetter(thatObject);
+                Function.Setter setter = function.getSetter(thatObject);
+                if (getter != null && setter != null) {
                     try {
-                        return fieldSetAndReturn(thatObject, key, null, key.get(thatObject), operator);
+                        return fieldSetAndReturn(thatObject, setter, null, getter.get(thatObject), operator);
                     } catch (IllegalAccessException e) {
+                        throw Unchecked.rethrow(e);
+                    } catch (InvocationTargetException e) {
                         throw Unchecked.rethrow(e);
                     }
                 }
@@ -717,19 +722,19 @@ class Operation extends Expression {
         throw new UnsupportedOperationException("Not yet implemented:" + operator);
     }
 
-    private static Object fieldSetAndReturn(Object thatObject, Field field, Object left, Object right, Operator operator) throws IllegalAccessException {
+    private static Object fieldSetAndReturn(Object thatObject, Function.Setter setter, Object left, Object right, Operator operator) throws IllegalAccessException, InvocationTargetException {
         switch (operator) {
             case PLUS2: {
                 //pre-increment
                 if (right != null) {
                     Object ob = increment(right);
-                    field.set(thatObject, ob);
+                    setter.set(thatObject, ob);
                     return ob;
                 }
                 //post-increment
                 if (left != null) {
                     Object r = increment(left);
-                    field.set(thatObject, r);
+                    setter.set(thatObject, r);
                     return left;
                 }
             }
@@ -737,38 +742,38 @@ class Operation extends Expression {
                 //pre-decrement
                 if (right != null) {
                     Object ob = decrement(right);
-                    field.set(thatObject, ob);
+                    setter.set(thatObject, ob);
                     return ob;
                 }
                 //post-decrement
                 if (left != null) {
                     Object r = decrement(left);
-                    field.set(thatObject, r);
+                    setter.set(thatObject, r);
                     return left;
                 }
             }
             case PLUS_EQUAL: {
                 Object r = plus(left, right, operator);
-                field.set(thatObject, r);
+                setter.set(thatObject, r);
                 return r;
             }
             case MINUS_EQUAL: {
                 Object r = minus(left, right);
-                field.set(thatObject, r);
+                setter.set(thatObject, r);
                 return r;
             }
             case MULTIPLY_EQUAL: {
                 Object r = multiply(left, right);
-                field.set(thatObject, r);
+                setter.set(thatObject, r);
                 return r;
             }
             case DIVIDE_EQUAL: {
                 Object r = divide(left, right);
-                field.set(thatObject, r);
+                setter.set(thatObject, r);
                 return r;
             }
             case EQUAL: {
-                field.set(thatObject, right);
+                setter.set(thatObject, right);
                 return right;
             }
         }
