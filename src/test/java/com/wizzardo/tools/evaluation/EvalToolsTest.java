@@ -940,6 +940,7 @@ public class EvalToolsTest {
 
         private String foo = "foo";
         public String bar = "bar";
+        public static String foobar = "foobar";
 
         @Override
         public String toString() {
@@ -1000,6 +1001,14 @@ public class EvalToolsTest {
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("new EvalToolsTest.Foo().getFoo()", model, functions, imports, false);
         Assert.assertEquals("foo", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("new EvalToolsTest.Foo().foobar", model, functions, imports, false);
+        Assert.assertEquals("foobar", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("EvalToolsTest.Foo.foobar", model, functions, imports, false);
+        Assert.assertEquals("foobar", exp.get(model));
 
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("EvalToolsTest.getSimpleName()", model, functions, imports, false);
