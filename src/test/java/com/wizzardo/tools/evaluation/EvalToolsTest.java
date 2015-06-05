@@ -999,7 +999,7 @@ public class EvalToolsTest {
         Assert.assertEquals("foo", exp.get(model));
 
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
-        exp = EvalTools.prepare("new EvalToolsTest.Foo().getFoo()", model, functions, imports, false);
+        exp = EvalTools.prepare("new EvalToolsTest.Foo().foo", model, functions, imports, false);
         Assert.assertEquals("foo", exp.get(model));
 
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");

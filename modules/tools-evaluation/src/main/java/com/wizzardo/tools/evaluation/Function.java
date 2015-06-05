@@ -7,10 +7,7 @@ package com.wizzardo.tools.evaluation;
 import com.wizzardo.tools.collections.CollectionTools;
 import com.wizzardo.tools.misc.Unchecked;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -256,11 +253,10 @@ class Function extends Expression {
         while (clazz != null && field == null)
             try {
                 field = clazz.getDeclaredField(fieldName);
-                fieldName = null;
             } catch (NoSuchFieldException ignored) {
                 clazz = clazz.getSuperclass();
             }
-        if (field != null)
+        if (field != null && !Modifier.isPrivate(field.getModifiers()))
             return getter = new FieldGetter(field);
 
         String methodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
