@@ -24,6 +24,7 @@ public class EvalTools {
     private static final Pattern CLASS = Pattern.compile("^([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*");
     private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
     private static final Pattern COMMA = Pattern.compile(",");
+    private static final Pattern MAP_KEY_VALUE = Pattern.compile("[a-zA-Z\\d]+ *: *.+");
     private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
     private static final Pattern LIST = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$\\{([^\\{\\}]+)\\}|\\$([\\.a-z]+[\\.a-zA-Z]*)");
@@ -1009,14 +1010,45 @@ public class EvalTools {
         int last = 0;
         while (m.find()) {
             if (countOpenBrackets(argsRaw, last, m.start()) == 0) {
-                l.add(argsRaw.substring(last, m.start()));
+                l.add(argsRaw.substring(last, m.start()).trim());
                 last = m.end();
             }
         }
         if (last > 0) {
-            l.add(argsRaw.substring(last));
+            l.add(argsRaw.substring(last).trim());
         } else if (last == 0 && argsRaw.length() > 0) {
-            l.add(argsRaw);
+            l.add(argsRaw.trim());
+        }
+
+        int mapStart = -1;
+        int mapEnd = -1;
+        while (mapStart == -1) {
+            for (int i = 0; i < l.size(); i++) {
+                String arg = l.get(i);
+                if (MAP_KEY_VALUE.matcher(arg).matches()) {
+                    if (mapStart == -1)
+                        mapStart = mapEnd = i;
+                    else
+                        mapEnd = i;
+                } else if (mapStart != -1)
+                    break;
+            }
+
+            if (mapStart != -1) {
+                StringBuilder sb = new StringBuilder("[");
+                for (int i = mapStart; i <= mapEnd; i++) {
+                    if (sb.length() > 1)
+                        sb.append(", ");
+                    sb.append(l.remove(mapStart));
+                }
+                sb.append("]");
+                l.add(mapStart, sb.toString());
+            } else
+                break;
+
+            //reset
+            mapStart = -1;
+            mapEnd = -1;
         }
         return l;
     }
