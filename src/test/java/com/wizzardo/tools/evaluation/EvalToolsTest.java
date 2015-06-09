@@ -1075,4 +1075,35 @@ public class EvalToolsTest {
         }
         Assert.assertFalse(b);
     }
+
+    @Test
+    public void testMapParam() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+        List<String> imports = new ArrayList<String>();
+        Expression exp;
+
+        functions.put("foo", new UserFunction("foo", "args['x']", "args"));
+
+        exp = EvalTools.prepare("foo([x:'bar'])", model, functions, imports, false);
+        Assert.assertEquals("bar", exp.get(model));
+
+        exp = EvalTools.prepare("foo(x:'bar')", model, functions, imports, false);
+        Assert.assertEquals("bar", exp.get(model));
+
+        exp = EvalTools.prepare("foo(x:'bar', y:'foo')", model, functions, imports, false);
+        Assert.assertEquals("bar", exp.get(model));
+
+
+        functions.put("foobar", new UserFunction("foobar", "foo.x + separator + bar.y", "foo", "separator", "bar"));
+
+        exp = EvalTools.prepare("foobar([x:'bar'], ' - ', [y:'foo'])", model, functions, imports, false);
+        Assert.assertEquals("bar - foo", exp.get(model));
+
+        exp = EvalTools.prepare("foobar(x:'bar', ' - ', y:'foo')", model, functions, imports, false);
+        Assert.assertEquals("bar - foo", exp.get(model));
+
+        exp = EvalTools.prepare("foobar(x:'bar', y:'BAR', ' - ', y:'foo', x:'FOO')", model, functions, imports, false);
+        Assert.assertEquals("bar - foo", exp.get(model));
+    }
 }
