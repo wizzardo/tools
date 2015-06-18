@@ -1,6 +1,5 @@
 package com.wizzardo.tools.misc.pool;
 
-import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
