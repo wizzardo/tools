@@ -59,7 +59,7 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             release(value);
         }
     }
