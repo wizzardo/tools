@@ -13,4 +13,6 @@ public interface Pool<T> {
 
     void release(T t);
 
+    void release(Holder<T> t);
+
 }

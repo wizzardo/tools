@@ -38,7 +38,7 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
         release(createHolder(t));
     }
 
-    protected void release(Holder<T> holder) {
+    public void release(Holder<T> holder) {
         queue().add(holder);
     }
 
@@ -60,7 +60,7 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
 
         @Override
         public void close() {
-            release(value);
+            release(this);
         }
     }
 
