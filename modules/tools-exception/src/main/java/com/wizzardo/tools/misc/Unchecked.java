@@ -1,5 +1,7 @@
 package com.wizzardo.tools.misc;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -49,7 +51,24 @@ public class Unchecked {
         }
     }
 
+    public static <T, C extends Closeable> T call(C closeable, Consumer<C, T> consumer) {
+        try {
+            return consumer.call(closeable);
+        } catch (Exception e) {
+            throw rethrow(e);
+        } finally {
+            try {
+                closeable.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
     public interface UncheckedRunnable {
         void run() throws Exception;
+    }
+
+    public interface Consumer<T, R> {
+        R call(T t) throws Exception;
     }
 }
