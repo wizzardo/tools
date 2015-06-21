@@ -2,6 +2,10 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.SoftThreadLocal;
+import com.wizzardo.tools.misc.pool.Holder;
+import com.wizzardo.tools.misc.pool.Pool;
+import com.wizzardo.tools.misc.pool.SoftHolder;
+import com.wizzardo.tools.misc.pool.ThreadLocalPool;
 import com.wizzardo.tools.reflection.StringReflection;
 
 import java.io.OutputStream;
@@ -69,18 +73,22 @@ public class JsonTools {
         UNESCAPES['u'] = 128;
     }
 
-
-    static SoftThreadLocal<ExceptionDrivenStringBuilder> stringBuilderThreadLocal = new SoftThreadLocal<ExceptionDrivenStringBuilder>() {
+    static Pool<ExceptionDrivenStringBuilder> builderPool = new ThreadLocalPool<ExceptionDrivenStringBuilder>() {
         @Override
-        protected ExceptionDrivenStringBuilder init() {
+        public ExceptionDrivenStringBuilder create() {
             return new ExceptionDrivenStringBuilder();
         }
 
         @Override
-        public ExceptionDrivenStringBuilder getValue() {
-            ExceptionDrivenStringBuilder sb = super.getValue();
-            sb.setLength(0);
-            return sb;
+        protected Holder<ExceptionDrivenStringBuilder> createHolder(ExceptionDrivenStringBuilder builder) {
+            return new SoftHolder<ExceptionDrivenStringBuilder>(this, builder) {
+                @Override
+                public ExceptionDrivenStringBuilder get() {
+                    ExceptionDrivenStringBuilder builder = super.get();
+                    builder.setLength(0);
+                    return builder;
+                }
+            };
         }
     };
 
@@ -140,15 +148,26 @@ public class JsonTools {
      * @return bytes array with UTF-8 json representation of the object
      */
     public byte[] serializeToBytes(Object src) {
-        ExceptionDrivenStringBuilder builder = stringBuilderThreadLocal.getValue();
-        Binder.toJSON(src, Appender.create(builder));
-        return builder.toUtf8Bytes();
+        Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
+        try {
+            ExceptionDrivenStringBuilder builder = holder.get();
+            Binder.toJSON(src, Appender.create(builder));
+            return builder.toUtf8Bytes();
+        } finally {
+            holder.close();
+        }
     }
 
     public static String serialize(Object src) {
-        Appender sb = Appender.create(stringBuilderThreadLocal.getValue());
-        Binder.toJSON(src, sb);
-        return sb.toString();
+        Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
+        try {
+            ExceptionDrivenStringBuilder builder = holder.get();
+            Appender sb = Appender.create(builder);
+            Binder.toJSON(src, sb);
+            return sb.toString();
+        } finally {
+            holder.close();
+        }
     }
 
     public static void serialize(Object src, OutputStream out) {

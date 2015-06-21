@@ -1,5 +1,8 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
+import com.wizzardo.tools.misc.pool.Holder;
+
 import java.util.ArrayList;
 
 import static com.wizzardo.tools.json.JsonUtils.*;
@@ -85,9 +88,15 @@ public class JsonArray extends ArrayList<JsonItem> {
     }
 
     public String toString() {
-        Appender sb = Appender.create(JsonTools.stringBuilderThreadLocal.getValue());
-        toJson(sb);
-        return sb.toString();
+        Holder<ExceptionDrivenStringBuilder> holder = JsonTools.builderPool.holder();
+        try {
+            ExceptionDrivenStringBuilder builder = holder.get();
+            Appender sb = Appender.create(builder);
+            toJson(sb);
+            return sb.toString();
+        } finally {
+            holder.close();
+        }
     }
 
     void toJson(Appender sb) {

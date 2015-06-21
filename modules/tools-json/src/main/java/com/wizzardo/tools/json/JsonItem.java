@@ -1,6 +1,8 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.DateIso8601;
+import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
+import com.wizzardo.tools.misc.pool.Holder;
 
 import java.lang.reflect.Array;
 import java.util.Date;
@@ -290,9 +292,15 @@ public class JsonItem {
     }
 
     public String toString() {
-        Appender sb = Appender.create(JsonTools.stringBuilderThreadLocal.getValue());
-        toJson(sb);
-        return sb.toString();
+        Holder<ExceptionDrivenStringBuilder> holder = JsonTools.builderPool.holder();
+        try {
+            ExceptionDrivenStringBuilder builder = holder.get();
+            Appender sb = Appender.create(builder);
+            toJson(sb);
+            return sb.toString();
+        } finally {
+            holder.close();
+        }
     }
 
     void toJson(Appender sb) {
