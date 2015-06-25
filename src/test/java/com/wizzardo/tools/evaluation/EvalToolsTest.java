@@ -1012,6 +1012,12 @@ public class EvalToolsTest {
         Assert.assertEquals(Num.ONE, exp.get(model));
 
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        model.put("a", Num.TWO);
+        exp = EvalTools.prepare("a == EvalToolsTest.Num.TWO", model, functions, imports, false);
+        Assert.assertEquals(true, exp.get(model));
+        model.clear();
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("new EvalToolsTest.Foo().bar", model, functions, imports, false);
         Assert.assertEquals("bar", exp.get(model));
 
@@ -1139,5 +1145,8 @@ public class EvalToolsTest {
         model.put("foo", new EvalToolsTest.Foo());
         exp = EvalTools.prepare("(EvalToolsTest.Foo) foo", model, functions, imports, false);
         Assert.assertEquals(Foo.class, exp.get(model).getClass());
+
+        assertEquals(HashMap.class, EvalTools.evaluate("(Map<Integer, String>) [:]", model).getClass());
+        assertEquals(ArrayList.class, EvalTools.evaluate("(List<Integer>) []", model).getClass());
     }
 }
