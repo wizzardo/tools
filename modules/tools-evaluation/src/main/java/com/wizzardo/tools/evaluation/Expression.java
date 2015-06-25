@@ -228,6 +228,35 @@ public abstract class Expression {
         }
     }
 
+    public static class CastExpression extends Expression {
+        protected Class clazz;
+        protected Expression inner;
+
+        public CastExpression(Class clazz, Expression inner) {
+            this.clazz = clazz;
+            this.inner = inner;
+        }
+
+        @Override
+        public void setVariable(Variable v) {
+            inner.setVariable(v);
+        }
+
+        @Override
+        public Expression clone() {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+            Object o = inner.get(model);
+            try {
+                return clazz.cast(o);
+            } catch (ClassCastException e) {
+                throw new ClassCastException(o.getClass().getCanonicalName() + " cannot be cast to " + clazz.getCanonicalName());
+            }
+        }
+    }
 
     public String raw() {
         return exp;
