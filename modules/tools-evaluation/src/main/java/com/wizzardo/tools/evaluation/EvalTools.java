@@ -830,6 +830,7 @@ public class EvalTools {
         }
 
         if (thatObject == null) {
+            String s = exp;
             Matcher m = CLASS.matcher(exp);
             while (m.find()) {
                 String className;
@@ -843,6 +844,12 @@ public class EvalTools {
                     thatObject = new Expression.Holder(clazz);
                     exp = exp.substring(m.end());
                     break;
+                } else {
+                    int i = s.lastIndexOf(".");
+                    if (i > 0) {
+                        s = s.substring(0, i);
+                        m = CLASS.matcher(s);
+                    }
                 }
             }
         }

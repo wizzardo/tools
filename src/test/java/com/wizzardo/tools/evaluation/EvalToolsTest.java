@@ -966,6 +966,10 @@ public class EvalToolsTest {
         }
     }
 
+    enum Num {
+        ONE, TWO
+    }
+
     @Test
     public void testImports() {
         Map<String, Object> model = new HashMap<String, Object>();
@@ -1003,6 +1007,9 @@ public class EvalToolsTest {
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
         List<String> imports = new ArrayList<String>();
         Expression exp;
+
+        exp = EvalTools.prepare("com.wizzardo.tools.evaluation.EvalToolsTest.Num.ONE", model, functions, imports, false);
+        Assert.assertEquals(Num.ONE, exp.get(model));
 
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("new EvalToolsTest.Foo().bar", model, functions, imports, false);
