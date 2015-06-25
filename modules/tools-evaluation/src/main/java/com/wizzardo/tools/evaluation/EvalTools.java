@@ -22,6 +22,7 @@ public class EvalTools {
 
     private static final Pattern NEW = Pattern.compile("^new +([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+(\\.[A-Z][a-zA-Z\\d]+)?)");
     private static final Pattern CLASS = Pattern.compile("^([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*");
+    private static final Pattern CAST = Pattern.compile("^\\(([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*\\)");
     private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
     private static final Pattern COMMA = Pattern.compile(",");
     private static final Pattern MAP_KEY_VALUE = Pattern.compile("[a-zA-Z\\d]+ *: *.+");
@@ -831,14 +832,34 @@ public class EvalTools {
         if (thatObject == null) {
             Matcher m = CLASS.matcher(exp);
             while (m.find()) {
-                Class clazz = findClass(m.group(), imports);
+                String className;
+                if (m.start(3) >= 0)
+                    className = exp.substring(0, m.start(3)) + "$" + exp.substring(m.start(3) + 1, m.end(3));
+                else
+                    className = m.group();
+
+                Class clazz = findClass(className, imports);
                 if (clazz != null) {
                     thatObject = new Expression.Holder(clazz);
                     exp = exp.substring(m.end());
                     break;
                 }
+            }
+        }
+
+        if (thatObject == null) {
+            Matcher m = CAST.matcher(exp);
+            while (m.find()) {
+                String className = m.group();
                 if (m.start(3) >= 0)
-                    m = CLASS.matcher(exp.substring(0, m.start(3)));
+                    className = exp.substring(1, m.start(3)) + "$" + exp.substring(m.start(3) + 1, m.end(3));
+                else
+                    className = className.substring(1, className.length() - 1);
+                Class clazz = findClass(className, imports);
+                if (clazz != null) {
+                    exp = exp.substring(m.end());
+                    return new Expression.CastExpression(clazz, prepare(exp, model, functions, imports, isTemplate));
+                }
             }
         }
 
@@ -987,6 +1008,17 @@ public class EvalTools {
                         return ClassLoader.getSystemClassLoader().loadClass(imp.substring(0, imp.length() - 1) + s);
                     } catch (ClassNotFoundException ignored) {
                     }
+                }
+            }
+            if (s.contains("$")) {
+                String mainClass = s.substring(0, s.indexOf('$'));
+                String subClass = s.substring(s.indexOf('$') + 1);
+                for (String imp : imports) {
+                    if (imp.endsWith("." + mainClass))
+                        try {
+                            return ClassLoader.getSystemClassLoader().loadClass(imp + "$" + subClass);
+                        } catch (ClassNotFoundException ignored) {
+                        }
                 }
             }
             if (s.contains(".")) {
