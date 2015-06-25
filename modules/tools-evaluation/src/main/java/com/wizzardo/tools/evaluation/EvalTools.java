@@ -19,10 +19,10 @@ public class EvalTools {
     static final String CONSTRUCTOR = "%constructor%";
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
-
-    private static final Pattern NEW = Pattern.compile("^new +([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+(\\.[A-Z][a-zA-Z\\d]+)?)");
-    private static final Pattern CLASS = Pattern.compile("^([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*");
-    private static final Pattern CAST = Pattern.compile("^\\(([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*\\)");
+    private static final Pattern CLEAN_CLASS = Pattern.compile("([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*");
+    private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern());
+    private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
+    private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*" + "\\)");
     private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
     private static final Pattern COMMA = Pattern.compile(",");
     private static final Pattern MAP_KEY_VALUE = Pattern.compile("[a-zA-Z\\d]+ *: *.+");
@@ -857,6 +857,12 @@ public class EvalTools {
         if (thatObject == null) {
             Matcher m = CAST.matcher(exp);
             while (m.find()) {
+                if (m.start(4) >= 0) {
+                    //remove generics
+                    exp = exp.substring(0, m.start(4)) + exp.substring(m.end(4));
+                    m = CAST.matcher(exp);
+                    continue;
+                }
                 String className = m.group();
                 if (m.start(3) >= 0)
                     className = exp.substring(1, m.start(3)) + "$" + exp.substring(m.start(3) + 1, m.end(3));
