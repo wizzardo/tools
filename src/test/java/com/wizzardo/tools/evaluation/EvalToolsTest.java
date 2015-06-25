@@ -1106,4 +1106,31 @@ public class EvalToolsTest {
         exp = EvalTools.prepare("foobar(x:'bar', y:'BAR', ' - ', y:'foo', x:'FOO')", model, functions, imports, false);
         Assert.assertEquals("bar - foo", exp.get(model));
     }
+
+    @Test
+    public void testCast() {
+        final Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
+        List<String> imports = new ArrayList<String>();
+        Expression exp;
+
+        assertEquals(Integer.class, EvalTools.evaluate("(Integer) 1", model).getClass());
+
+        checkException(new Runnable() {
+            @Override
+            public void run() {
+                EvalTools.evaluate("(String) 1", model);
+            }
+        }, ClassCastException.class, "java.lang.Integer cannot be cast to java.lang.String");
+
+
+        model.put("foo", new EvalToolsTest.Foo());
+        exp = EvalTools.prepare("(com.wizzardo.tools.evaluation.EvalToolsTest.Foo) foo", model, functions, imports, false);
+        Assert.assertEquals(Foo.class, exp.get(model).getClass());
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        model.put("foo", new EvalToolsTest.Foo());
+        exp = EvalTools.prepare("(EvalToolsTest.Foo) foo", model, functions, imports, false);
+        Assert.assertEquals(Foo.class, exp.get(model).getClass());
+    }
 }
