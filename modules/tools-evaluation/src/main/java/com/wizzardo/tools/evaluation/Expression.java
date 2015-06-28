@@ -272,6 +272,10 @@ public abstract class Expression {
         return get(null);
     }
 
+    public boolean isHardcoded() {
+        return hardcoded;
+    }
+
     static Object parse(String exp) {
         if (exp == null) {
             return null;
