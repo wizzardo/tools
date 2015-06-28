@@ -478,6 +478,7 @@ public class Node {
         int i = from;
         StringBuilder sb = new StringBuilder();
         boolean inString = false;
+        boolean inStringInGroovy = false;
         boolean name = false;
         boolean end = false;
         boolean attribute = false;
@@ -486,6 +487,7 @@ public class Node {
         boolean comment = false;
         boolean inTag = false;
         boolean inGroovy = false;
+        int brackets = 0;
         boolean inAnotherLanguageTag = false;
         char quote = 0, ch;
         outer:
@@ -496,26 +498,35 @@ public class Node {
                 switch (ch) {
                     case '}': {
                         sb.append('}');
-                        if (!inString) {
-                            inGroovy = false;
-                            xml.attribute(sb.toString(), null);
+                        if (!inStringInGroovy) {
+                            brackets--;
+                            inGroovy = brackets != 0;
+                            if (!inGroovy && !inString)
+                                xml.attribute(sb.toString(), null);
                         }
                         break;
                     }
                     case '\"':
                     case '\'': {
-                        if (inString) {
-                            if (quote == ch && s[i - i] != '\\')
-                                inString = false;
+                        if (inStringInGroovy) {
+                            if (quote == ch && s[i - 1] != '\\')
+                                inStringInGroovy = false;
                         } else {
                             quote = ch;
-                            inString = true;
+                            inStringInGroovy = true;
                         }
                         sb.append(ch);
                         break;
                     }
+                    case '{': {
+                        sb.append(ch);
+                        if (!inStringInGroovy) {
+                            brackets++;
+                        }
+                        break;
+                    }
                     default:
-                        sb.append(s[i]);
+                        sb.append(ch);
                 }
                 i++;
                 continue;
@@ -694,8 +705,9 @@ public class Node {
                     break;
                 }
                 case '{': {
-                    if (!inString && inTag && i > 0 && s[i - 1] == '$') {
+                    if (inTag && i > 0 && s[i - 1] == '$') {
                         inGroovy = true;
+                        brackets++;
                     }
                     sb.append('{');
                     break;

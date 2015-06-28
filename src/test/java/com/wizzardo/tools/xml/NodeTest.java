@@ -74,8 +74,40 @@ public class NodeTest {
     public void html() throws IOException {
         String s = "";
         for (File f : new File("src/test/resources/xml").listFiles()) {
-            System.out.println("parsing: "+f);
+            System.out.println("parsing: " + f);
             Node.parse(f, true);
         }
+    }
+
+    @Test
+    public void gsp_1() throws IOException {
+        String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${[].collect({it})}\"/></div>";
+        Node root = Node.parse(s, true, true);
+        Node div = root.children().get(0);
+        Assert.assertEquals("div", div.name());
+        Assert.assertEquals(1, div.children().size());
+
+        Node textField = div.children().get(0);
+        Assert.assertEquals("g:textField", textField.name());
+        Assert.assertEquals(0, textField.children().size());
+        Assert.assertEquals(2, textField.attributes().size());
+        Assert.assertEquals("${it.key}", textField.attr("name"));
+        Assert.assertEquals("${[].collect({it})}", textField.attr("placeholder"));
+    }
+
+    @Test
+    public void gsp_2() throws IOException {
+        String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${String.valueOf(it.getValue()).replace(\"\\\"\", \"\")}\"/></div>";
+        Node root = Node.parse(s, true, true);
+        Node div = root.children().get(0);
+        Assert.assertEquals("div", div.name());
+        Assert.assertEquals(1, div.children().size());
+
+        Node textField = div.children().get(0);
+        Assert.assertEquals("g:textField", textField.name());
+        Assert.assertEquals(0, textField.children().size());
+        Assert.assertEquals(2, textField.attributes().size());
+        Assert.assertEquals("${it.key}", textField.attr("name"));
+        Assert.assertEquals("${String.valueOf(it.getValue()).replace(\"\\\"\", \"\")}", textField.attr("placeholder"));
     }
 }
