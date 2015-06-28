@@ -281,6 +281,8 @@ class Function extends Expression {
                 method = findMethod(getClass(instance), methodName, arr);
                 if (method == null && instance.getClass() == Class.class)
                     method = findMethod(instance.getClass(), methodName, arr);
+                if (method != null && Modifier.isPublic(method.getModifiers()))
+                    method.setAccessible(true);
             }
             if (method == null) {
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
@@ -317,7 +319,7 @@ class Function extends Expression {
 
         Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
         Field field = findField(clazz, fieldName);
-        if (field != null && !Modifier.isPrivate(field.getModifiers()))
+        if (field != null && Modifier.isPublic(field.getModifiers()))
             return getter = new FieldGetter(field);
 
         String methodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
@@ -362,8 +364,11 @@ class Function extends Expression {
     protected Method findMethod(Class clazz, String name, int paramsCount) {
         while (clazz != null) {
             for (Method m : clazz.getDeclaredMethods()) {
-                if (m.getName().equals(name) && paramsCount == m.getParameterTypes().length)
+                if (m.getName().equals(name) && paramsCount == m.getParameterTypes().length) {
+                    if (Modifier.isPublic(m.getModifiers()))
+                        m.setAccessible(true);
                     return m;
+                }
             }
             clazz = clazz.getSuperclass();
         }

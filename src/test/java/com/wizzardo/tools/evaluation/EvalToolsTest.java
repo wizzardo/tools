@@ -949,6 +949,7 @@ public class EvalToolsTest {
     public static class Foo {
 
         private String foo = "foo";
+        String foofoo = "before get";
         public String bar = "bar";
         public static String foobar = "foobar";
 
@@ -959,6 +960,11 @@ public class EvalToolsTest {
 
         public String getFoo() {
             return foo;
+        }
+
+        public String getFoofoo() {
+            foofoo = "foofoo";
+            return foofoo;
         }
 
         public void setFoo(String foo) {
@@ -1008,6 +1014,9 @@ public class EvalToolsTest {
         List<String> imports = new ArrayList<String>();
         Expression exp;
 
+        exp = EvalTools.prepare("def entry=[foo:'bar'].entrySet().iterator().next(); entry.value", model, functions, imports, false);
+        Assert.assertEquals("bar", exp.get(model));
+
         exp = EvalTools.prepare("com.wizzardo.tools.evaluation.EvalToolsTest.Num.ONE", model, functions, imports, false);
         Assert.assertEquals(Num.ONE, exp.get(model));
 
@@ -1028,6 +1037,10 @@ public class EvalToolsTest {
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("new EvalToolsTest.Foo().foo", model, functions, imports, false);
         Assert.assertEquals("foo", exp.get(model));
+
+        imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
+        exp = EvalTools.prepare("new EvalToolsTest.Foo().foofoo", model, functions, imports, false);
+        Assert.assertEquals("foofoo", exp.get(model));
 
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("new EvalToolsTest.Foo().foobar", model, functions, imports, false);
