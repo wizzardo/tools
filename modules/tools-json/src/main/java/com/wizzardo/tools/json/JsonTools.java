@@ -1,11 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.misc.SoftThreadLocal;
-import com.wizzardo.tools.misc.pool.Holder;
-import com.wizzardo.tools.misc.pool.Pool;
-import com.wizzardo.tools.misc.pool.SoftHolder;
-import com.wizzardo.tools.misc.pool.ThreadLocalPool;
+import com.wizzardo.tools.misc.pool.*;
 import com.wizzardo.tools.reflection.StringReflection;
 
 import java.io.OutputStream;
@@ -73,24 +69,19 @@ public class JsonTools {
         UNESCAPES['u'] = 128;
     }
 
-    static Pool<ExceptionDrivenStringBuilder> builderPool = new ThreadLocalPool<ExceptionDrivenStringBuilder>() {
-        @Override
-        public ExceptionDrivenStringBuilder create() {
-            return new ExceptionDrivenStringBuilder();
-        }
-
-        @Override
-        protected Holder<ExceptionDrivenStringBuilder> createHolder(ExceptionDrivenStringBuilder builder) {
-            return new SoftHolder<ExceptionDrivenStringBuilder>(this, builder) {
+    static Pool<ExceptionDrivenStringBuilder> builderPool = new PoolBuilder<ExceptionDrivenStringBuilder>()
+            .supplier(new PoolBuilder.Supplier<ExceptionDrivenStringBuilder>() {
                 @Override
                 public ExceptionDrivenStringBuilder get() {
-                    ExceptionDrivenStringBuilder builder = super.get();
-                    builder.setLength(0);
-                    return builder;
+                    return new ExceptionDrivenStringBuilder();
                 }
-            };
-        }
-    };
+            }).resetter(new PoolBuilder.Resetter<ExceptionDrivenStringBuilder>() {
+                @Override
+                public ExceptionDrivenStringBuilder reset(ExceptionDrivenStringBuilder sb) {
+                    sb.setLength(0);
+                    return sb;
+                }
+            }).build();
 
     public static JsonItem parse(String s) {
         return new JsonItem(parse(s, (Generic<Object>) null));
