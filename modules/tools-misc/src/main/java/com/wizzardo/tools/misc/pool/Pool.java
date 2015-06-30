@@ -15,4 +15,10 @@ public interface Pool<T> {
 
     void release(Holder<T> t);
 
+    <R> R provide(Consumer<T, R> consumer);
+
+    interface Consumer<T, R> {
+        R consume(T t);
+    }
+
 }

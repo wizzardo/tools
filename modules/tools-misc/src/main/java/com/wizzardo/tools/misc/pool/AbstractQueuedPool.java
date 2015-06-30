@@ -46,6 +46,19 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
         return new SimpleHolder(t);
     }
 
+    public <R> R provide(Consumer<T, R> consumer) {
+        Queue<Holder<T>> queue = queue();
+        Holder<T> holder = queue.poll();
+        if (holder == null)
+            holder = createHolder(create());
+
+        try {
+            return consumer.consume(holder.get());
+        } finally {
+            queue.add(holder);
+        }
+    }
+
     protected class SimpleHolder implements Holder<T> {
         final T value;
 
