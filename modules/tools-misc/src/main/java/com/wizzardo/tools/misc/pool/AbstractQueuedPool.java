@@ -1,6 +1,7 @@
 package com.wizzardo.tools.misc.pool;
 
-import java.io.IOException;
+import com.wizzardo.tools.misc.Unchecked;
+
 import java.util.Queue;
 
 /**
@@ -53,7 +54,11 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
             holder = createHolder(create());
 
         try {
-            return consumer.consume(holder.get());
+            try {
+                return consumer.consume(holder.get());
+            } catch (Exception e) {
+                throw Unchecked.rethrow(e);
+            }
         } finally {
             queue.add(holder);
         }

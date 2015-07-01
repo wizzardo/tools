@@ -18,7 +18,7 @@ public interface Pool<T> {
     <R> R provide(Consumer<T, R> consumer);
 
     interface Consumer<T, R> {
-        R consume(T t);
+        R consume(T t) throws Exception;
     }
 
 }
