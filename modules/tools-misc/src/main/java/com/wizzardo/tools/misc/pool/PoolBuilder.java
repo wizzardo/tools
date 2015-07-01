@@ -17,8 +17,7 @@ public class PoolBuilder<T> {
 
     protected Resetter<T> resetter = new Resetter<T>() {
         @Override
-        public T reset(T t) {
-            return t;
+        public void reset(T t) {
         }
     };
 
@@ -28,7 +27,9 @@ public class PoolBuilder<T> {
             return new SoftHolder<T>(pool, value) {
                 @Override
                 public T get() {
-                    return resetter.reset(super.get());
+                    T t = super.get();
+                    resetter.reset(t);
+                    return t;
                 }
             };
         }
@@ -92,7 +93,7 @@ public class PoolBuilder<T> {
     }
 
     public interface Resetter<T> {
-        T reset(T t);
+        void reset(T t);
     }
 
     public interface HolderSupplier<T> {
