@@ -77,9 +77,8 @@ public class JsonTools {
                 }
             }).resetter(new PoolBuilder.Resetter<ExceptionDrivenStringBuilder>() {
                 @Override
-                public ExceptionDrivenStringBuilder reset(ExceptionDrivenStringBuilder sb) {
+                public void reset(ExceptionDrivenStringBuilder sb) {
                     sb.setLength(0);
-                    return sb;
                 }
             }).build();
 
