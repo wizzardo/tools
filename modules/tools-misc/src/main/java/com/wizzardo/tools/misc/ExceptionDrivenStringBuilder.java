@@ -7,6 +7,7 @@ package com.wizzardo.tools.misc;
 public class ExceptionDrivenStringBuilder implements Appendable {
     private static final char[] CHARS_TRUE = new char[]{'t', 'r', 'u', 'e'};
     private static final char[] CHARS_FALSE = new char[]{'f', 'a', 'l', 's', 'e'};
+    private static final char[] CHARS_NULL = new char[]{'n', 'u', 'l', 'l'};
 
     protected int limit = 16;
     protected char[] buffer = new char[limit];
@@ -30,7 +31,7 @@ public class ExceptionDrivenStringBuilder implements Appendable {
     @Override
     public ExceptionDrivenStringBuilder append(CharSequence csq, int start, int end) {
         if (csq == null)
-            return append("null", start, end);
+            return append(CHARS_NULL, 0, 4);
 
         for (int i = start; i < end; i++) {
             append(csq.charAt(i));
@@ -52,10 +53,13 @@ public class ExceptionDrivenStringBuilder implements Appendable {
     }
 
     public ExceptionDrivenStringBuilder append(String s) {
-        return append(s, 0, s.length());
+        return append(s, 0, s == null ? 4 : s.length());
     }
 
     public ExceptionDrivenStringBuilder append(String s, int from, int to) {
+        if (s == null)
+            return append(CHARS_NULL, 0, 4);
+
         int l = to - from;
         try {
             s.getChars(from, to, buffer, length);
