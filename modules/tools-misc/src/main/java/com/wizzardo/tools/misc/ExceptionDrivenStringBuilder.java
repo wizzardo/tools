@@ -154,4 +154,14 @@ public class ExceptionDrivenStringBuilder implements Appendable {
 
         return utf8Buffer.toBytes(buffer, 0, length);
     }
+
+    public ExceptionDrivenStringBuilder append(Consumer<ExceptionDrivenStringBuilder> consumer) {
+        consumer.consume(this);
+        return this;
+    }
+
+    public ExceptionDrivenStringBuilder append(Supplier<? extends CharSequence> supplier) {
+        return append(supplier.supply());
+    }
+
 }
