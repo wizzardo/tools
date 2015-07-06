@@ -1,6 +1,8 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.Consumer;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
+import com.wizzardo.tools.misc.Supplier;
 import com.wizzardo.tools.misc.pool.*;
 import com.wizzardo.tools.reflection.StringReflection;
 
@@ -70,14 +72,14 @@ public class JsonTools {
     }
 
     static Pool<ExceptionDrivenStringBuilder> builderPool = new PoolBuilder<ExceptionDrivenStringBuilder>()
-            .supplier(new PoolBuilder.Supplier<ExceptionDrivenStringBuilder>() {
+            .supplier(new Supplier<ExceptionDrivenStringBuilder>() {
                 @Override
-                public ExceptionDrivenStringBuilder get() {
+                public ExceptionDrivenStringBuilder supply() {
                     return new ExceptionDrivenStringBuilder();
                 }
-            }).resetter(new PoolBuilder.Resetter<ExceptionDrivenStringBuilder>() {
+            }).resetter(new Consumer<ExceptionDrivenStringBuilder>() {
                 @Override
-                public void reset(ExceptionDrivenStringBuilder sb) {
+                public void consume(ExceptionDrivenStringBuilder sb) {
                     sb.setLength(0);
                 }
             }).build();

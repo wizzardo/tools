@@ -1,5 +1,8 @@
 package com.wizzardo.tools.misc.pool;
 
+import com.wizzardo.tools.misc.Consumer;
+import com.wizzardo.tools.misc.Supplier;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -10,25 +13,25 @@ public class PoolBuilder<T> {
 
     protected Supplier<T> supplier = new Supplier<T>() {
         @Override
-        public T get() {
+        public T supply() {
             return null;
         }
     };
 
-    protected Resetter<T> resetter = new Resetter<T>() {
+    protected Consumer<T> resetter = new Consumer<T>() {
         @Override
-        public void reset(T t) {
+        public void consume(T t) {
         }
     };
 
     protected HolderSupplier<T> holderSupplier = new HolderSupplier<T>() {
         @Override
-        public Holder<T> get(Pool<T> pool, T value, final Resetter<T> resetter) {
+        public Holder<T> get(Pool<T> pool, T value, final Consumer<T> resetter) {
             return new SoftHolder<T>(pool, value) {
                 @Override
                 public T get() {
                     T t = super.get();
-                    resetter.reset(t);
+                    resetter.consume(t);
                     return t;
                 }
             };
@@ -44,7 +47,7 @@ public class PoolBuilder<T> {
         };
 
         @Override
-        public Queue<Holder<T>> get() {
+        public Queue<Holder<T>> supply() {
             return queue.get();
         }
     };
@@ -64,7 +67,7 @@ public class PoolBuilder<T> {
         return this;
     }
 
-    public PoolBuilder<T> resetter(Resetter<T> resetter) {
+    public PoolBuilder<T> resetter(Consumer<T> resetter) {
         this.resetter = resetter;
         return this;
     }
@@ -73,12 +76,12 @@ public class PoolBuilder<T> {
         return new AbstractQueuedPool<T>() {
             @Override
             public T create() {
-                return supplier.get();
+                return supplier.supply();
             }
 
             @Override
             protected Queue<Holder<T>> queue() {
-                return queueSupplier.get();
+                return queueSupplier.supply();
             }
 
             @Override
@@ -88,15 +91,7 @@ public class PoolBuilder<T> {
         };
     }
 
-    public interface Supplier<T> {
-        T get();
-    }
-
-    public interface Resetter<T> {
-        void reset(T t);
-    }
-
     public interface HolderSupplier<T> {
-        Holder<T> get(Pool<T> pool, T value, Resetter<T> resetter);
+        Holder<T> get(Pool<T> pool, T value, Consumer<T> resetter);
     }
 }
