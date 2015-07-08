@@ -613,6 +613,11 @@ public class Node {
                         }
                         sb.setLength(0);
                         attribute = false;
+                    } else if (inTag && !inString && sb.length() > 0 && attributeName != null && !attributeName.isEmpty()) {
+                        xml.attribute(attributeName, sb.toString());
+                        sb.setLength(0);
+                        attributeName = null;
+                        attribute = true;
                     }
                     if (!inString && inTag) {
                         attribute = true;
@@ -647,6 +652,10 @@ public class Node {
                     if (attribute) {
                         attributeName = sb.toString().trim();
                         sb.setLength(0);
+                    } else if (inTag && sb.length() > 0 && attributeName != null && !attributeName.isEmpty()) {
+                        xml.attribute(attributeName, sb.toString());
+                        sb.setLength(0);
+                        attributeName = null;
                     }
                     attribute = false;
                     if (comment) {
