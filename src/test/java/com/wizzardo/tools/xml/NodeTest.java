@@ -110,4 +110,23 @@ public class NodeTest {
         Assert.assertEquals("${it.key}", textField.attr("name"));
         Assert.assertEquals("${String.valueOf(it.getValue()).replace(\"\\\"\", \"\")}", textField.attr("placeholder"));
     }
+
+    @Test
+    public void gsp_3() throws IOException {
+        String s = "<div id=\"${id}\"><span>foo:</span>${foo}</div>";
+        Node root = Node.parse(s, true, true);
+        Node div = root.children().get(0);
+        Assert.assertEquals("div", div.name());
+        Assert.assertEquals(2, div.children().size());
+        Assert.assertEquals(1, div.attributes().size());
+        Assert.assertEquals("${id}", div.attr("id"));
+
+        Node span = div.children().get(0);
+        Assert.assertEquals("span", span.name());
+        Assert.assertEquals(1, span.children().size());
+        Assert.assertEquals("foo:", span.text());
+
+        Node foo = div.children().get(1);
+        Assert.assertEquals("${foo}", foo.text());
+    }
 }
