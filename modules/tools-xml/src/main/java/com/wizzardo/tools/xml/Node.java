@@ -501,8 +501,10 @@ public class Node {
                         if (!inStringInGroovy) {
                             brackets--;
                             inGroovy = brackets != 0;
-                            if (!inGroovy && !inString)
+                            if (!inGroovy && !inString && inTag) {
                                 xml.attribute(sb.toString(), null);
+                                sb.setLength(0);
+                            }
                         }
                         break;
                     }
@@ -551,7 +553,7 @@ public class Node {
                 continue;
             }
 
-            switch (s[i]) {
+            switch (ch) {
                 case '"': {
                     if (comment || !inTag) {
                         sb.append(s[i]);
@@ -583,8 +585,9 @@ public class Node {
                     }
                     if (xml.name() != null)
                         checkClose = true;
+                    else
+                        inTag = true;
                     name = true;
-                    inTag = true;
                     break;
                 }
                 case '\r':
@@ -705,7 +708,7 @@ public class Node {
                     break;
                 }
                 case '{': {
-                    if (inTag && i > 0 && s[i - 1] == '$') {
+                    if (i > 0 && s[i - 1] == '$') {
                         inGroovy = true;
                         brackets++;
                     }
