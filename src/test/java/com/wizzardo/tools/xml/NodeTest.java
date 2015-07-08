@@ -71,12 +71,30 @@ public class NodeTest {
     }
 
     @Test
-    public void html() throws IOException {
+    public void html_1() throws IOException {
         String s = "";
         for (File f : new File("src/test/resources/xml").listFiles()) {
             System.out.println("parsing: " + f);
             Node.parse(f, true);
         }
+    }
+
+    @Test
+    public void html_2() throws IOException {
+        String s = "<div width=100px></div>";
+        Node root = Node.parse(s, true);
+        Node div = root.children().get(0);
+        Assert.assertEquals(1, div.attributes().size());
+        Assert.assertEquals(0, div.children().size());
+        Assert.assertEquals("100px", div.attr("width"));
+
+        s = "<div width=100px height=50px></div>";
+        root = Node.parse(s, true);
+        div = root.children().get(0);
+        Assert.assertEquals(2, div.attributes().size());
+        Assert.assertEquals(0, div.children().size());
+        Assert.assertEquals("100px", div.attr("width"));
+        Assert.assertEquals("50px", div.attr("height"));
     }
 
     @Test
