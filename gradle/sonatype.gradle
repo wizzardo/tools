@@ -1,6 +1,11 @@
 apply plugin: 'maven'
 apply plugin: 'signing'
 
+if (!project.hasProperty("ossrhUsername"))
+    ext.ossrhUsername = ""
+if (!project.hasProperty("ossrhPassword"))
+    ext.ossrhPassword = ""
+
 task javadocJar(type: Jar) {
     classifier = 'javadoc'
     from javadoc
