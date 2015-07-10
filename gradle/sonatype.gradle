@@ -42,12 +42,12 @@ uploadArchives {
                 packaging 'jar'
                 // optionally artifactId can be defined here
                 description project.ext.descriptionString
-                url 'https://github.com/wizzardo/Tools'
+                url 'https://github.com/wizzardo/tools'
 
                 scm {
-                    connection 'scm:git:git@github.com:wizzardo/Tools.git'
-                    developerConnection 'scm:git:git@github.com:wizzardo/Tools.git'
-                    url 'https://github.com/wizzardo/Tools'
+                    connection 'scm:git:git@github.com:wizzardo/tools.git'
+                    developerConnection 'scm:git:git@github.com:wizzardo/tools.git'
+                    url 'https://github.com/wizzardo/tools'
                 }
 
 
