@@ -4,6 +4,7 @@ import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.pool.Holder;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import static com.wizzardo.tools.json.JsonUtils.*;
 
@@ -121,6 +122,16 @@ public class JsonArray extends ArrayList<JsonItem> {
             add((JsonItem) ob);
         } else
             add(new JsonItem(ob));
+        return this;
+    }
+
+    public JsonArray appendAll(Collection l) {
+        if (l == null)
+            append(new JsonItem(null));
+        else
+            for (Object ob : l) {
+                append(ob);
+            }
         return this;
     }
 }
