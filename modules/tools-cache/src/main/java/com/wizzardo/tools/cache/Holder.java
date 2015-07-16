@@ -38,7 +38,7 @@ class Holder<K, V> {
         return v;
     }
 
-    public void run(Computable<? super K, ? extends V> c, K k) {
+    public void run(Computable<? super K, ? extends V> c, K k) throws Exception {
         v = c.compute(k);
     }
 

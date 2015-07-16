@@ -6,5 +6,5 @@ package com.wizzardo.tools.cache;
  */
 public interface Computable<K, V> {
 
-    public V compute(K k);
+    V compute(K k) throws Exception;
 }

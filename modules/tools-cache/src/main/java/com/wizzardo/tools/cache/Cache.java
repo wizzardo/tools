@@ -1,5 +1,7 @@
 package com.wizzardo.tools.cache;
 
+import com.wizzardo.tools.misc.Unchecked;
+
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -115,6 +117,8 @@ public class Cache<K, V> {
                 try {
                     ft.run(c, key);
                     failed = false;
+                } catch (Exception e) {
+                    throw Unchecked.rethrow(e);
                 } finally {
                     ft.done();
                     if (failed && removeOnException) {
