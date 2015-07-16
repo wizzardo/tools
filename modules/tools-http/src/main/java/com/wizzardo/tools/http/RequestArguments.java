@@ -177,6 +177,10 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
+    public T addParameter(String key, Object value) {
+        return addParameter(key, String.valueOf(value));
+    }
+
     public T addParameter(String key, String value) {
         List<String> l = params.get(key);
         if (l == null) {
@@ -195,6 +199,10 @@ public class RequestArguments<T extends RequestArguments> {
     }
 
     public T param(String key, String value) {
+        return addParameter(key, value);
+    }
+
+    public T param(String key, Object value) {
         return addParameter(key, value);
     }
 
