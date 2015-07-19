@@ -9,6 +9,13 @@ allprojects {
     repositories {
         mavenCentral()
     }
+
+    test {
+        testLogging {
+            events "failed"
+            exceptionFormat "full"
+        }
+    }
 }
 
 archivesBaseName = "tools"
