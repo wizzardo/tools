@@ -14,14 +14,31 @@ import java.util.TimeZone;
 public class DateIso8601 {
 
     private static final TimeZone Z = TimeZone.getTimeZone("GMT");
-    private static final TimeZone LOCAL = TimeZone.getDefault();
+    private static volatile TimeZone defaultTimezone = TimeZone.getDefault();
     private static final int HOUR = 1000 * 60 * 60;
     private static final int MINUTE = 1000 * 60;
+
+    protected TimeZone tz = defaultTimezone;
+
+    public DateIso8601() {
+    }
+
+    public DateIso8601(TimeZone tz) {
+        this.tz = tz;
+    }
+
+    public static void setDefaultTimezone(TimeZone tz) {
+        defaultTimezone = tz;
+    }
+
+    public static TimeZone getDefaultTimezone() {
+        return defaultTimezone;
+    }
 
     /**
      * @param s should be in format YYYY-MM-DDTHH:mm:ss.sssZ
      */
-    public static Date parse(String s) {
+    public Date parse(String s) {
         //YYYY-MM-DDTHH:mm:ss.sssZ
         Calendar calendar = GregorianCalendar.getInstance();
         int length = s.length();
@@ -63,7 +80,7 @@ public class DateIso8601 {
             calendar.set(Calendar.MINUTE, 0);
             calendar.set(Calendar.SECOND, 0);
             calendar.set(Calendar.MILLISECOND, 0);
-            calendar.setTimeZone(LOCAL);
+            calendar.setTimeZone(tz);
             return calendar.getTime();
         }
 
@@ -79,7 +96,7 @@ public class DateIso8601 {
             if (i >= length) {
                 calendar.set(Calendar.SECOND, 0);
                 calendar.set(Calendar.MILLISECOND, 0);
-                calendar.setTimeZone(LOCAL);
+                calendar.setTimeZone(tz);
                 return calendar.getTime();
             }
 
@@ -95,7 +112,7 @@ public class DateIso8601 {
 
                 if (i >= length) {
                     calendar.set(Calendar.MILLISECOND, 0);
-                    calendar.setTimeZone(LOCAL);
+                    calendar.setTimeZone(tz);
                     return calendar.getTime();
                 }
 
@@ -121,7 +138,7 @@ public class DateIso8601 {
 
 
         if (i == length) {
-            calendar.setTimeZone(LOCAL);
+            calendar.setTimeZone(tz);
             return calendar.getTime();
         }
         if (chars[i] == 'Z') {
