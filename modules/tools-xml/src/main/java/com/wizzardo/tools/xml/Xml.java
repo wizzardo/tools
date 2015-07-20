@@ -48,17 +48,17 @@ public class Xml extends Node {
             parse(s.toCharArray(), s.indexOf("?>") + 2, xml, html, gsp);
         } else if (html) {
             int i = 0;
-            Node document = new Node("document");
-            while ((i = parse(s.toCharArray(), i, xml, html, gsp) + 1) < s.length()) {
-                if (xml.name == null && xml.children.size() == 1)
-                    xml = xml.children.get(0);
-                document.add(xml);
-                xml = new Node();
+            xml.name("document");
+            Node child = new Node();
+            while ((i = parse(s.toCharArray(), i, child, html, gsp) + 1) < s.length()) {
+                if (child.name == null && child.children.size() == 1)
+                    child = child.children.get(0);
+                xml.add(child);
+                child = new Node();
             }
-            if (xml.name == null && xml.children.size() == 1)
-                xml = xml.children.get(0);
-            document.add(xml);
-            return document;
+            if (child.name == null && child.children.size() == 1)
+                child = child.children.get(0);
+            xml.add(child);
         } else {
             parse(s.toCharArray(), 0, xml, html, gsp);
         }
