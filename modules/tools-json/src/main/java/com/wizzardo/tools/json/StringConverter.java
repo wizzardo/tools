@@ -145,6 +145,6 @@ abstract class StringConverter<T> {
     }
 
     static Date toDate(String s) {
-        return DateIso8601.parse(s);
+        return new DateIso8601().parse(s);
     }
 }

@@ -286,7 +286,7 @@ public class JsonItem {
         } else if (Character.class == clazz || char.class == clazz) {
             return (T) asChar();
         } else if (Date.class == clazz) {
-            return (T) DateIso8601.parse(asString());
+            return (T) StringConverter.toDate(asString());
         }
         return null;
     }
