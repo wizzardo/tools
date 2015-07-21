@@ -22,32 +22,6 @@ public class Node {
     protected String name;
     protected Node parent;
 
-    protected static final Set<String> selfClosedTags = new HashSet<String>();
-    protected static final Set<String> anotherLanguageTags = new HashSet<String>();
-
-    static {
-        selfClosedTags.add("area");
-        selfClosedTags.add("base");
-        selfClosedTags.add("br");
-        selfClosedTags.add("col");
-        selfClosedTags.add("command");
-        selfClosedTags.add("embed");
-        selfClosedTags.add("hr");
-        selfClosedTags.add("img");
-        selfClosedTags.add("input");
-        selfClosedTags.add("keygen");
-        selfClosedTags.add("link");
-        selfClosedTags.add("meta");
-        selfClosedTags.add("param");
-        selfClosedTags.add("source");
-        selfClosedTags.add("track");
-        selfClosedTags.add("wbr");
-        selfClosedTags.add("!doctype");
-
-        anotherLanguageTags.add("script");
-        anotherLanguageTags.add("style");
-    }
-
     public Node(String name) {
         this.name = name;
     }
@@ -369,16 +343,6 @@ public class Node {
             }
             return b && (next == null || next.check(n));
         }
-    }
-
-    protected static StringBuilder trimRight(StringBuilder sb) {
-        int l = sb.length();
-        while (l > 0 && sb.charAt(l - 1) <= ' ') {
-            l--;
-        }
-        if (l != sb.length())
-            sb.setLength(l);
-        return sb;
     }
 
     public String toXML() {

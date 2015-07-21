@@ -18,56 +18,56 @@ public class NodeTest {
         Node xml;
 
         s = "I say: '${hello}'";
-        Assert.assertEquals("I say: '${hello}'", new Xml(s, true).textOwn());
+        Assert.assertEquals("I say: '${hello}'", new XmlParser().parse(s, true).textOwn());
 
         s = "<xml><xml>";
-        Assert.assertEquals("xml", new Xml(s).name());
+        Assert.assertEquals("xml", new XmlParser().parse(s).name());
         s = "<xml/>";
-        Assert.assertEquals("xml", new Xml(s).name());
+        Assert.assertEquals("xml", new XmlParser().parse(s).name());
 
         s = "<xml attr><xml>";
-        Assert.assertEquals(true, new Xml(s).hasAttr("attr"));
+        Assert.assertEquals(true, new XmlParser().parse(s).hasAttr("attr"));
         s = "<xml attr ><xml>";
-        Assert.assertEquals(true, new Xml(s).hasAttr("attr"));
+        Assert.assertEquals(true, new XmlParser().parse(s).hasAttr("attr"));
         s = "<xml attr />";
-        Assert.assertEquals(true, new Xml(s).hasAttr("attr"));
+        Assert.assertEquals(true, new XmlParser().parse(s).hasAttr("attr"));
         s = "<xml attr/>";
-        Assert.assertEquals(true, new Xml(s).hasAttr("attr"));
+        Assert.assertEquals(true, new XmlParser().parse(s).hasAttr("attr"));
         s = "<xml attr attr2/>";
-        Assert.assertEquals(true, new Xml(s).hasAttr("attr"));
+        Assert.assertEquals(true, new XmlParser().parse(s).hasAttr("attr"));
 
         s = "<xml attr=\"qwerty\"/>";
-        Assert.assertEquals("qwerty", new Xml(s).attr("attr"));
+        Assert.assertEquals("qwerty", new XmlParser().parse(s).attr("attr"));
         s = "<xml attr=\"qwerty\" attr2/>";
-        Assert.assertEquals("qwerty", new Xml(s).attr("attr"));
+        Assert.assertEquals("qwerty", new XmlParser().parse(s).attr("attr"));
         s = "<xml attr2 attr=\"qwerty\"/>";
-        Assert.assertEquals("qwerty", new Xml(s).attr("attr"));
+        Assert.assertEquals("qwerty", new XmlParser().parse(s).attr("attr"));
 
         s = "<xml><child></child></xml>";
-        Assert.assertEquals(1, new Xml(s).size());
+        Assert.assertEquals(1, new XmlParser().parse(s).size());
         s = "<xml><child/></xml>";
-        Assert.assertEquals(1, new Xml(s).size());
+        Assert.assertEquals(1, new XmlParser().parse(s).size());
         s = "<xml><child attr=\"qwerty\"/></xml>";
-        Assert.assertEquals(1, new Xml(s).size());
-        Assert.assertEquals("qwerty", new Xml(s).first().attr("attr"));
+        Assert.assertEquals(1, new XmlParser().parse(s).size());
+        Assert.assertEquals("qwerty", new XmlParser().parse(s).first().attr("attr"));
 
 
         s = "<xml><child/><child/><child/>ololo</xml>";
-        Assert.assertEquals(4, new Xml(s).size());
-        Assert.assertEquals("ololo", new Xml(s).text());
-        Assert.assertEquals("ololo", new Xml(s).textOwn());
+        Assert.assertEquals(4, new XmlParser().parse(s).size());
+        Assert.assertEquals("ololo", new XmlParser().parse(s).text());
+        Assert.assertEquals("ololo", new XmlParser().parse(s).textOwn());
         s = "<xml><child/><child/><child>ololo</child></xml>";
-        Assert.assertEquals(3, new Xml(s).size());
-        Assert.assertEquals("ololo", new Xml(s).text());
-        Assert.assertEquals("", new Xml(s).textOwn());
+        Assert.assertEquals(3, new XmlParser().parse(s).size());
+        Assert.assertEquals("ololo", new XmlParser().parse(s).text());
+        Assert.assertEquals("", new XmlParser().parse(s).textOwn());
         s = "<xml><child/><child/><child>ololo</child>lo</xml>";
-        Assert.assertEquals(4, new Xml(s).size());
-        Assert.assertEquals("ololo lo", new Xml(s).text());
-        Assert.assertEquals("lo", new Xml(s).textOwn());
+        Assert.assertEquals(4, new XmlParser().parse(s).size());
+        Assert.assertEquals("ololo lo", new XmlParser().parse(s).text());
+        Assert.assertEquals("lo", new XmlParser().parse(s).textOwn());
 
 
         s = "<xml>\n\t\tololo\n\t\t</xml>";
-        Assert.assertEquals("ololo", new Xml(s).text());
+        Assert.assertEquals("ololo", new XmlParser().parse(s).text());
     }
 
     @Test
@@ -75,21 +75,21 @@ public class NodeTest {
         String s = "";
         for (File f : new File("src/test/resources/xml").listFiles()) {
             System.out.println("parsing: " + f);
-            new Xml(f, true);
+            new XmlParser().parse(f, true);
         }
     }
 
     @Test
     public void html_2() throws IOException {
         String s = "<div width=100px></div>";
-        Node root = new Xml(s, true);
+        Node root = new XmlParser().parse(s, true);
         Node div = root.children().get(0);
         Assert.assertEquals(1, div.attributes().size());
         Assert.assertEquals(0, div.children().size());
         Assert.assertEquals("100px", div.attr("width"));
 
         s = "<div width=100px height=50px></div>";
-        root = new Xml(s, true);
+        root = new XmlParser().parse(s, true);
         div = root.children().get(0);
         Assert.assertEquals(2, div.attributes().size());
         Assert.assertEquals(0, div.children().size());
@@ -100,7 +100,7 @@ public class NodeTest {
     @Test
     public void gsp_1() throws IOException {
         String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${[].collect({it})}\"/></div>";
-        Node root = new Xml(s, true, true);
+        Node root = new XmlParser().parse(s, true, true);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(1, div.children().size());
@@ -116,7 +116,7 @@ public class NodeTest {
     @Test
     public void gsp_2() throws IOException {
         String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${String.valueOf(it.getValue()).replace(\"\\\"\", \"\")}\"/></div>";
-        Node root = new Xml(s, true, true);
+        Node root = new XmlParser().parse(s, true, true);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(1, div.children().size());
@@ -132,7 +132,7 @@ public class NodeTest {
     @Test
     public void gsp_3() throws IOException {
         String s = "<div id=\"${id}\"><span>foo:</span>${foo}</div>";
-        Node root = new Xml(s, true, true);
+        Node root = new XmlParser().parse(s, true, true);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(2, div.children().size());
