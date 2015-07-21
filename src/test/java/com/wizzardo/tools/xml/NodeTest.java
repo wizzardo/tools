@@ -18,7 +18,7 @@ public class NodeTest {
         Node xml;
 
         s = "I say: '${hello}'";
-        Assert.assertEquals("I say: '${hello}'", new XmlParser().parse(s, true).textOwn());
+        Assert.assertEquals("I say: '${hello}'", new XmlParser().parse(s).textOwn());
 
         s = "<xml><xml>";
         Assert.assertEquals("xml", new XmlParser().parse(s).name());
@@ -75,21 +75,21 @@ public class NodeTest {
         String s = "";
         for (File f : new File("src/test/resources/xml").listFiles()) {
             System.out.println("parsing: " + f);
-            new XmlParser().parse(f, true);
+            new HtmlParser().parse(f);
         }
     }
 
     @Test
     public void html_2() throws IOException {
         String s = "<div width=100px></div>";
-        Node root = new XmlParser().parse(s, true);
+        Node root = new HtmlParser().parse(s);
         Node div = root.children().get(0);
         Assert.assertEquals(1, div.attributes().size());
         Assert.assertEquals(0, div.children().size());
         Assert.assertEquals("100px", div.attr("width"));
 
         s = "<div width=100px height=50px></div>";
-        root = new XmlParser().parse(s, true);
+        root = new HtmlParser().parse(s);
         div = root.children().get(0);
         Assert.assertEquals(2, div.attributes().size());
         Assert.assertEquals(0, div.children().size());
@@ -100,7 +100,14 @@ public class NodeTest {
     @Test
     public void gsp_1() throws IOException {
         String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${[].collect({it})}\"/></div>";
-        Node root = new XmlParser().parse(s, true, true);
+        Node root = new HtmlParser() {
+            @Override
+            protected HtmlParserContext createContext() {
+                HtmlParserContext context = super.createContext();
+                context.gsp = true;
+                return context;
+            }
+        }.parse(s);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(1, div.children().size());
@@ -116,7 +123,14 @@ public class NodeTest {
     @Test
     public void gsp_2() throws IOException {
         String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${String.valueOf(it.getValue()).replace(\"\\\"\", \"\")}\"/></div>";
-        Node root = new XmlParser().parse(s, true, true);
+        Node root = new HtmlParser() {
+            @Override
+            protected HtmlParserContext createContext() {
+                HtmlParserContext context = super.createContext();
+                context.gsp = true;
+                return context;
+            }
+        }.parse(s);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(1, div.children().size());
@@ -132,7 +146,14 @@ public class NodeTest {
     @Test
     public void gsp_3() throws IOException {
         String s = "<div id=\"${id}\"><span>foo:</span>${foo}</div>";
-        Node root = new XmlParser().parse(s, true, true);
+        Node root = new HtmlParser() {
+            @Override
+            protected HtmlParserContext createContext() {
+                HtmlParserContext context = super.createContext();
+                context.gsp = true;
+                return context;
+            }
+        }.parse(s);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(2, div.children().size());
