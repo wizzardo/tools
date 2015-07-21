@@ -30,260 +30,122 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
         protected int brackets = 0;
         protected boolean inAnotherLanguageTag = false;
         protected char quote = 0, ch;
+        protected boolean finished = false;
 
-        protected int parse(char[] s, Node xml) {
-            outer:
-            while (i < s.length) {
-                ch = s[i];
-
-                if (gsp && inGroovy) {
-                    switch (ch) {
-                        case '}': {
-                            sb.append('}');
-                            if (!inStringInGroovy) {
-                                brackets--;
-                                inGroovy = brackets != 0;
-                                if (!inGroovy && !inString && inTag) {
-                                    xml.attribute(sb.toString(), null);
-                                    sb.setLength(0);
-                                }
-                            }
-                            break;
-                        }
-                        case '\"':
-                        case '\'': {
-                            if (inStringInGroovy) {
-                                if (quote == ch && s[i - 1] != '\\')
-                                    inStringInGroovy = false;
-                            } else {
-                                quote = ch;
-                                inStringInGroovy = true;
-                            }
-                            sb.append(ch);
-                            break;
-                        }
-                        case '{': {
-                            sb.append(ch);
-                            if (!inStringInGroovy) {
-                                brackets++;
-                            }
-                            break;
-                        }
-                        default:
-                            sb.append(ch);
-                    }
-                    i++;
-                    continue;
-                }
-
-                if (!inTag && inAnotherLanguageTag) {
-                    String t;
-                    if (ch == '>' && (t = trimRight(sb).toString().trim()).endsWith("</" + xml.name)) {
-                        xml.add(new TextNode(t.substring(0, t.length() - 2 - xml.name.length())));
-                        sb.setLength(0);
-                        break outer;
-                    }
-                    sb.append(ch);
-                    i++;
-                    continue;
-                }
-
-                if (checkClose && html && s[i] != '/' && inAnotherLanguageTag) {
-                    sb.append('<').append(s[i]);
-                    i++;
-                    checkClose = false;
-                    continue;
-                }
-
+        protected boolean onChar(char[] s, Node xml) {
+            if (gsp && inGroovy) {
                 switch (ch) {
-                    case '"': {
-                        if (comment || !inTag) {
-                            sb.append(s[i]);
-                            break;
-                        }
-                        boolean switchInString = (i == 0 || s[i - 1] != '\\');
-                        if (!switchInString && inString) {
-                            sb.append('"');
-                        }
-                        if (switchInString) {
-                            inString = !inString;
-                        }
-                        if (!inString) {
-                            xml.attribute(attributeName, sb.toString());
-                            attributeName = null;
-                            sb.setLength(0);
-                            attribute = false;
-                        }
-                        break;
-                    }
-                    case '<': {
-                        if (comment || inString) {
-                            sb.append(s[i]);
-                            break;
-                        }
-                        if (sb.length() > 0 && !(html && inAnotherLanguageTag)) {
-                            xml.add(new TextNode(trimRight(sb).toString()));
-                            sb.setLength(0);
-                        }
-                        if (xml.name() != null)
-                            checkClose = true;
-                        else
-                            inTag = true;
-                        name = true;
-                        break;
-                    }
-                    case '\r':
-                    case '\n':
-                    case '\t':
-                    case ' ': {
-                        if (comment) {
-                            sb.append(s[i]);
-                            break;
-                        }
-                        if (name) {
-                            name = false;
-                            if (!end) {
-                                xml.name(sb.toString());
-                                inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
+                    case '}': {
+                        sb.append('}');
+                        if (!inStringInGroovy) {
+                            brackets--;
+                            inGroovy = brackets != 0;
+                            if (!inGroovy && !inString && inTag) {
+                                xml.attribute(sb.toString(), null);
                                 sb.setLength(0);
-                                attribute = true;
                             }
-                        } else if (attribute) {
-                            attributeName = sb.toString().trim();
-                            if (attributeName.length() > 0) {
-                                xml.attribute(attributeName, null);
-                            }
-                            sb.setLength(0);
-                            attribute = false;
-                        } else if (inTag && !inString && sb.length() > 0 && attributeName != null && !attributeName.isEmpty()) {
-                            xml.attribute(attributeName, sb.toString());
-                            sb.setLength(0);
-                            attributeName = null;
-                            attribute = true;
-                        }
-                        if (!inString && inTag) {
-                            attribute = true;
-                        } else if (sb.length() != 0) {
-                            sb.append(s[i]);
                         }
                         break;
                     }
-                    case '=': {
-                        if (comment || !inTag) {
-                            sb.append(s[i]);
-                            break;
+                    case '\"':
+                    case '\'': {
+                        if (inStringInGroovy) {
+                            if (quote == ch && s[i - 1] != '\\')
+                                inStringInGroovy = false;
+                        } else {
+                            quote = ch;
+                            inStringInGroovy = true;
                         }
-                        if (attribute) {
-                            attributeName = sb.toString().trim();
-                            sb.setLength(0);
-                            attribute = false;
-                        } else if (inString) {
-                            sb.append('=');
-                        }
-                        break;
-                    }
-                    case '>': {
-//                    if ("script".equals(xml.name)) {
-//                        System.out.println();
-//                    }
-                        if (html && (inString || (inAnotherLanguageTag && !inTag && !sb.toString().equals(xml.name)))) {
-                            sb.append('>');
-                            break;
-                        }
-
-                        if (attribute) {
-                            attributeName = sb.toString().trim();
-                            sb.setLength(0);
-                        } else if (inTag && sb.length() > 0 && attributeName != null && !attributeName.isEmpty()) {
-                            xml.attribute(attributeName, sb.toString());
-                            sb.setLength(0);
-                            attributeName = null;
-                        }
-                        attribute = false;
-                        if (comment) {
-                            if (sb.charAt(sb.length() - 1) == '-' && sb.charAt(sb.length() - 2) == '-') {
-                                xml.add(new XmlComment(sb.substring(2, sb.length() - 2).trim()));
-                                sb.setLength(0);
-                                comment = false;
-                            } else {
-                                sb.append('>');
-                            }
-                            break;
-                        }
-                        inTag = false;
-                        if (name) {
-                            name = false;
-                            if (!end) {
-                                xml.name(sb.toString());
-                                inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
-                                sb.setLength(0);
-                            } else {
-                                if (xml.name() == null) {
-                                    xml.name(sb.toString());
-                                    inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
-                                    sb.setLength(0);
-                                } else if (!sb.toString().equals(xml.name))
-                                    throw new IllegalStateException("illegal close tag: " + sb.toString() + ". close tag must be: " + xml.name());
-                            }
-                        }
-//                    if (!end && xml.name == null) {
-//                        System.out.println();
-//                    }
-                        if (end) {
-                            break outer;
-                        } else if (html && selfClosedTags.contains(xml.name().toLowerCase())) {
-                            break outer;
-                        }
-                        break;
-                    }
-                    case '/': {
-                        if (comment) {
-                            sb.append(s[i]);
-                            break;
-                        }
-                        if (!checkClose && (inString || !inTag)) {
-                            sb.append('/');
-                            break;
-                        }
-                        if (attribute) {
-                            attributeName = sb.toString().trim();
-                            sb.setLength(0);
-                            attribute = false;
-                        }
-                        if (checkClose && sb.length() > 0) {
-                            xml.add(new TextNode(trimRight(sb).toString()));
-                            sb.setLength(0);
-                        }
-                        end = true;
-                        checkClose = false;
+                        sb.append(ch);
                         break;
                     }
                     case '{': {
-                        if (i > 0 && s[i - 1] == '$') {
-                            inGroovy = true;
+                        sb.append(ch);
+                        if (!inStringInGroovy) {
                             brackets++;
                         }
-                        sb.append('{');
+                        break;
+                    }
+                    default:
+                        sb.append(ch);
+                }
+                i++;
+                return true;
+            }
+
+            if (!inTag && inAnotherLanguageTag) {
+                String t;
+                if (ch == '>' && (t = trimRight(sb).toString().trim()).endsWith("</" + xml.name)) {
+                    xml.add(new TextNode(t.substring(0, t.length() - 2 - xml.name.length())));
+                    sb.setLength(0);
+                    finished = true;
+                    return true;
+                }
+                sb.append(ch);
+                i++;
+                return true;
+            }
+
+            if (checkClose && html && s[i] != '/' && inAnotherLanguageTag) {
+                sb.append('<').append(s[i]);
+                i++;
+                checkClose = false;
+                return true;
+            }
+            return false;
+        }
+
+        protected int parse(char[] s, Node xml) {
+            outer:
+            while (i < s.length && !finished) {
+                ch = s[i];
+                if (onChar(s, xml))
+                    continue;
+
+                switch (ch) {
+                    case '"': {
+                        onQuotationMark(s, xml);
+                        break;
+                    }
+                    case '<': {
+                        onLessThanSign(s, xml);
+                        break;
+                    }
+                    case '\r': {
+                        onCarriageReturnSign(s, xml);
+                        break;
+                    }
+                    case '\n': {
+                        onLineFeedSign(s, xml);
+                        break;
+                    }
+                    case '\t': {
+                        onTabSign(s, xml);
+                        break;
+                    }
+                    case ' ': {
+                        onSpaceSign(s, xml);
+                        break;
+                    }
+                    case '=': {
+                        onEqualsSign(s);
+                        break;
+                    }
+                    case '>': {
+                        if (onGreaterThanSign(xml))
+                            break outer;
+                        break;
+                    }
+                    case '/': {
+                        onSlash(s, xml);
+                        break;
+                    }
+                    case '{': {
+                        onCurlyBracketOpen(s[i - 1]);
                         break;
                     }
                     default: {
-                        if (checkClose && !end) {
-                            if (s[i] == '!') {
-                                comment = true;
-                                inTag = false;
-                            } else {
-                                Node child = new Node();
-                                T context = createContext();
-                                context.i = i - 1;
-                                context.html = html;
-                                context.gsp = gsp;
-                                i = context.parse(s, child);
-                                xml.add(child);
-                            }
-                            checkClose = false;
-                            name = false;
-                        } else
-                            sb.append(s[i]);
+                        processDefault(s, xml);
                         break;
                     }
                 }
@@ -298,6 +160,206 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 sb.setLength(0);
             }
             return i;
+        }
+
+        protected void processDefault(char[] s, Node xml) {
+            if (checkClose && !end) {
+                if (s[i] == '!') {
+                    comment = true;
+                    inTag = false;
+                } else {
+                    Node child = new Node();
+                    T context = createContext();
+                    context.i = i - 1;
+                    context.html = html;
+                    context.gsp = gsp;
+                    i = context.parse(s, child);
+                    xml.add(child);
+                }
+                checkClose = false;
+                name = false;
+            } else
+                sb.append(s[i]);
+        }
+
+        protected void onCarriageReturnSign(char[] s, Node xml) {
+            onSpaceSign(s, xml);
+        }
+
+        protected void onLineFeedSign(char[] s, Node xml) {
+            onSpaceSign(s, xml);
+        }
+
+        protected void onTabSign(char[] s, Node xml) {
+            onSpaceSign(s, xml);
+        }
+
+        protected void onSpaceSign(char[] s, Node xml) {
+            if (comment) {
+                sb.append(s[i]);
+                return;
+            }
+            if (name) {
+                name = false;
+                if (!end) {
+                    xml.name(sb.toString());
+                    inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
+                    sb.setLength(0);
+                    attribute = true;
+                }
+            } else if (attribute) {
+                attributeName = sb.toString().trim();
+                if (attributeName.length() > 0) {
+                    xml.attribute(attributeName, null);
+                }
+                sb.setLength(0);
+                attribute = false;
+            } else if (inTag && !inString && sb.length() > 0 && attributeName != null && !attributeName.isEmpty()) {
+                xml.attribute(attributeName, sb.toString());
+                sb.setLength(0);
+                attributeName = null;
+                attribute = true;
+            }
+            if (!inString && inTag) {
+                attribute = true;
+            } else if (sb.length() != 0) {
+                sb.append(s[i]);
+            }
+        }
+
+        protected void onEqualsSign(char[] s) {
+            if (comment || !inTag) {
+                sb.append(s[i]);
+                return;
+            }
+            if (attribute) {
+                attributeName = sb.toString().trim();
+                sb.setLength(0);
+                attribute = false;
+            } else if (inString) {
+                sb.append('=');
+            }
+        }
+
+        protected boolean onGreaterThanSign(Node xml) {
+            //                    if ("script".equals(xml.name)) {
+//                        System.out.println();
+//                    }
+            if (html && (inString || (inAnotherLanguageTag && !inTag && !sb.toString().equals(xml.name)))) {
+                sb.append('>');
+                return false;
+            }
+
+            if (attribute) {
+                attributeName = sb.toString().trim();
+                sb.setLength(0);
+            } else if (inTag && sb.length() > 0 && attributeName != null && !attributeName.isEmpty()) {
+                xml.attribute(attributeName, sb.toString());
+                sb.setLength(0);
+                attributeName = null;
+            }
+            attribute = false;
+            if (comment) {
+                if (sb.charAt(sb.length() - 1) == '-' && sb.charAt(sb.length() - 2) == '-') {
+                    xml.add(new XmlComment(sb.substring(2, sb.length() - 2).trim()));
+                    sb.setLength(0);
+                    comment = false;
+                } else {
+                    sb.append('>');
+                }
+                return false;
+            }
+            inTag = false;
+            if (name) {
+                name = false;
+                if (!end) {
+                    xml.name(sb.toString());
+                    inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
+                    sb.setLength(0);
+                } else {
+                    if (xml.name() == null) {
+                        xml.name(sb.toString());
+                        inAnotherLanguageTag = anotherLanguageTags.contains(xml.name);
+                        sb.setLength(0);
+                    } else if (!sb.toString().equals(xml.name))
+                        throw new IllegalStateException("illegal close tag: " + sb.toString() + ". close tag must be: " + xml.name());
+                }
+            }
+//                    if (!end && xml.name == null) {
+//                        System.out.println();
+//                    }
+            if (end) {
+                return true;
+            } else if (html && selfClosedTags.contains(xml.name().toLowerCase())) {
+                return true;
+            }
+            return false;
+        }
+
+        protected void onCurlyBracketOpen(char s) {
+            if (i > 0 && s == '$') {
+                inGroovy = true;
+                brackets++;
+            }
+            sb.append('{');
+        }
+
+        protected void onSlash(char[] s, Node xml) {
+            if (comment) {
+                sb.append(s[i]);
+                return;
+            }
+            if (!checkClose && (inString || !inTag)) {
+                sb.append('/');
+                return;
+            }
+            if (attribute) {
+                attributeName = sb.toString().trim();
+                sb.setLength(0);
+                attribute = false;
+            }
+            if (checkClose && sb.length() > 0) {
+                xml.add(new TextNode(trimRight(sb).toString()));
+                sb.setLength(0);
+            }
+            end = true;
+            checkClose = false;
+        }
+
+        protected void onLessThanSign(char[] s, Node xml) {
+            if (comment || inString) {
+                sb.append(s[i]);
+                return;
+            }
+            if (sb.length() > 0 && !(html && inAnotherLanguageTag)) {
+                xml.add(new TextNode(trimRight(sb).toString()));
+                sb.setLength(0);
+            }
+            if (xml.name() != null)
+                checkClose = true;
+            else
+                inTag = true;
+            name = true;
+        }
+
+        protected void onQuotationMark(char[] s, Node xml) {
+            if (comment || !inTag) {
+                sb.append(s[i]);
+                return;
+            }
+            boolean switchInString = (i == 0 || s[i - 1] != '\\');
+            if (!switchInString && inString) {
+                sb.append('"');
+            }
+            if (switchInString) {
+                inString = !inString;
+            }
+            if (!inString) {
+                xml.attribute(attributeName, sb.toString());
+                attributeName = null;
+                sb.setLength(0);
+                attribute = false;
+            }
         }
 
     }
