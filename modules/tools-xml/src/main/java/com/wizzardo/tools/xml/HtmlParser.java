@@ -34,55 +34,11 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
     }
 
     public class HtmlParserContext extends XmlParser.XmlParserContext {
-        protected boolean gsp = false;
         protected boolean html = true;
         protected boolean inAnotherLanguageTag = false;
-        protected boolean inStringInGroovy = false;
-        protected boolean inGroovy = false;
-        protected int brackets = 0;
 
         @Override
         protected boolean onChar(char[] s, Node xml) {
-            if (gsp && inGroovy) {
-                switch (ch) {
-                    case '}': {
-                        sb.append('}');
-                        if (!inStringInGroovy) {
-                            brackets--;
-                            inGroovy = brackets != 0;
-                            if (!inGroovy && !inString && inTag) {
-                                xml.attribute(sb.toString(), null);
-                                sb.setLength(0);
-                            }
-                        }
-                        break;
-                    }
-                    case '\"':
-                    case '\'': {
-                        if (inStringInGroovy) {
-                            if (quote == ch && s[i - 1] != '\\')
-                                inStringInGroovy = false;
-                        } else {
-                            quote = ch;
-                            inStringInGroovy = true;
-                        }
-                        sb.append(ch);
-                        break;
-                    }
-                    case '{': {
-                        sb.append(ch);
-                        if (!inStringInGroovy) {
-                            brackets++;
-                        }
-                        break;
-                    }
-                    default:
-                        sb.append(ch);
-                }
-                i++;
-                return true;
-            }
-
             if (!inTag && inAnotherLanguageTag) {
                 String t;
                 if (ch == '>' && (t = trimRight(sb).toString().trim()).endsWith("</" + xml.name)) {
@@ -136,13 +92,6 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
             inAnotherLanguageTag = anotherLanguageTags.contains(name);
         }
 
-        protected void onCurlyBracketOpen(char[] s, Node xml) {
-            if (i > 0 && s[i - 1] == '$') {
-                inGroovy = true;
-                brackets++;
-            }
-            super.onCurlyBracketOpen(s, xml);
-        }
     }
 
     @Override

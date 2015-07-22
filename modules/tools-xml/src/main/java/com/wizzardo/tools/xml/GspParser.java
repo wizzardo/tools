@@ -1,0 +1,74 @@
+package com.wizzardo.tools.xml;
+
+/**
+ * Created by wizzardo on 21.07.15.
+ */
+public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<T> {
+
+
+    public class GspParserContext extends HtmlParser.HtmlParserContext {
+        protected boolean gsp = true;
+        protected boolean inGroovy = false;
+        protected int brackets = 0;
+        protected boolean inStringInGroovy = false;
+        protected char quote = 0;
+
+        @Override
+        protected boolean onChar(char[] s, Node xml) {
+            if (gsp && inGroovy) {
+                switch (ch) {
+                    case '}': {
+                        sb.append('}');
+                        if (!inStringInGroovy) {
+                            brackets--;
+                            inGroovy = brackets != 0;
+                            if (!inGroovy && !inString && inTag) {
+                                xml.attribute(sb.toString(), null);
+                                sb.setLength(0);
+                            }
+                        }
+                        break;
+                    }
+                    case '\"':
+                    case '\'': {
+                        if (inStringInGroovy) {
+                            if (quote == ch && s[i - 1] != '\\')
+                                inStringInGroovy = false;
+                        } else {
+                            quote = ch;
+                            inStringInGroovy = true;
+                        }
+                        sb.append(ch);
+                        break;
+                    }
+                    case '{': {
+                        sb.append(ch);
+                        if (!inStringInGroovy) {
+                            brackets++;
+                        }
+                        break;
+                    }
+                    default:
+                        sb.append(ch);
+                }
+                i++;
+                return true;
+            }
+            return false;
+        }
+
+        protected void onCurlyBracketOpen(char[] s, Node xml) {
+            if (i > 0 && s[i - 1] == '$') {
+                inGroovy = true;
+                brackets++;
+            }
+            super.onCurlyBracketOpen(s, xml);
+        }
+
+    }
+
+    @Override
+    protected T createContext() {
+        return (T) new GspParserContext();
+    }
+}

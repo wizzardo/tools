@@ -21,7 +21,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
         protected boolean checkClose = false;
         protected boolean comment = false;
         protected boolean inTag = false;
-        protected char quote = 0, ch;
+        protected char ch;
         protected boolean finished = false;
 
         protected boolean onChar(char[] s, Node xml) {

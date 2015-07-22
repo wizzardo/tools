@@ -100,14 +100,7 @@ public class NodeTest {
     @Test
     public void gsp_1() throws IOException {
         String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${[].collect({it})}\"/></div>";
-        Node root = new HtmlParser() {
-            @Override
-            protected HtmlParserContext createContext() {
-                HtmlParserContext context = super.createContext();
-                context.gsp = true;
-                return context;
-            }
-        }.parse(s);
+        Node root = new GspParser().parse(s);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(1, div.children().size());
@@ -123,14 +116,7 @@ public class NodeTest {
     @Test
     public void gsp_2() throws IOException {
         String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${String.valueOf(it.getValue()).replace(\"\\\"\", \"\")}\"/></div>";
-        Node root = new HtmlParser() {
-            @Override
-            protected HtmlParserContext createContext() {
-                HtmlParserContext context = super.createContext();
-                context.gsp = true;
-                return context;
-            }
-        }.parse(s);
+        Node root = new GspParser().parse(s);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(1, div.children().size());
@@ -146,14 +132,7 @@ public class NodeTest {
     @Test
     public void gsp_3() throws IOException {
         String s = "<div id=\"${id}\"><span>foo:</span>${foo}</div>";
-        Node root = new HtmlParser() {
-            @Override
-            protected HtmlParserContext createContext() {
-                HtmlParserContext context = super.createContext();
-                context.gsp = true;
-                return context;
-            }
-        }.parse(s);
+        Node root = new GspParser().parse(s);
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(2, div.children().size());
