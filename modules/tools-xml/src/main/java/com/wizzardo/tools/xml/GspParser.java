@@ -5,9 +5,7 @@ package com.wizzardo.tools.xml;
  */
 public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<T> {
 
-
     public class GspParserContext extends HtmlParser.HtmlParserContext {
-        protected boolean gsp = true;
         protected boolean inGroovy = false;
         protected int brackets = 0;
         protected boolean inStringInGroovy = false;
@@ -15,7 +13,7 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
 
         @Override
         protected boolean onChar(char[] s, Node xml) {
-            if (gsp && inGroovy) {
+            if (inGroovy) {
                 switch (ch) {
                     case '}': {
                         sb.append('}');

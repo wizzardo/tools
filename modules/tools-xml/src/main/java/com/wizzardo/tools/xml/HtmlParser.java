@@ -34,7 +34,6 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
     }
 
     public class HtmlParserContext extends XmlParser.XmlParserContext {
-        protected boolean html = true;
         protected boolean inAnotherLanguageTag = false;
 
         @Override
@@ -52,7 +51,7 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
                 return true;
             }
 
-            if (checkClose && html && s[i] != '/' && inAnotherLanguageTag) {
+            if (checkClose && s[i] != '/' && inAnotherLanguageTag) {
                 sb.append('<').append(s[i]);
                 i++;
                 checkClose = false;
@@ -63,11 +62,11 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
 
         @Override
         protected boolean onGreaterThanSign(char[] s, Node xml) {
-            if (html && (inString || (inAnotherLanguageTag && !inTag && !sb.toString().equals(xml.name)))) {
+            if (inString || (inAnotherLanguageTag && !inTag && !sb.toString().equals(xml.name))) {
                 sb.append('>');
                 return false;
             }
-            return super.onGreaterThanSign(s, xml) || html && selfClosedTags.contains(xml.name().toLowerCase());
+            return super.onGreaterThanSign(s, xml) || selfClosedTags.contains(xml.name().toLowerCase());
 
         }
 
@@ -77,7 +76,7 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
                 sb.append(s[i]);
                 return;
             }
-            if (sb.length() > 0 && !(html && inAnotherLanguageTag)) {
+            if (sb.length() > 0 && !inAnotherLanguageTag) {
                 xml.add(new TextNode(trimRight(sb).toString()));
                 sb.setLength(0);
             }
