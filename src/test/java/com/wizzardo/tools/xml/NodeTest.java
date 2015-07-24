@@ -175,4 +175,18 @@ public class NodeTest {
         Node foo = div.children().get(1);
         Assert.assertEquals("${foo}", foo.text());
     }
+
+    @Test
+    public void gsp_comment_1() throws IOException {
+        String s = "" +
+                "<div>\n" +
+                "    %{--<p>$test</p>--}%\n" +
+                "</div>\n";
+        Node root = new GspParser().parse(s);
+        Node div = root.children().get(0);
+        Assert.assertEquals("div", div.name());
+        Assert.assertEquals(1, div.children().size());
+        Assert.assertEquals(0, div.attributes().size());
+        Assert.assertEquals("%{--<p>$test</p>--}%", div.children().get(0).textOwn());
+    }
 }
