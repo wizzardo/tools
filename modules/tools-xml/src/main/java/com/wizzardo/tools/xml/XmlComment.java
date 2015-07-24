@@ -20,4 +20,9 @@ public class XmlComment extends TextNode {
     protected String ownText() {
         return "<!-- " + text + " -->";
     }
+
+    @Override
+    public boolean isComment() {
+        return true;
+    }
 }

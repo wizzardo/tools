@@ -266,6 +266,10 @@ public class Node {
         return text(false);
     }
 
+    public boolean isComment() {
+        return false;
+    }
+
     protected String text(boolean recursive) {
         if (children == null || children.isEmpty()) {
             return null;
