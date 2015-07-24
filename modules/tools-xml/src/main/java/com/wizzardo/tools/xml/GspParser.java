@@ -52,6 +52,27 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
                 i++;
                 return true;
             }
+
+            if (!comment && ch == '%' && i < s.length - 3 && s[i + 1] == '{' && s[i + 2] == '-' && s[i + 3] == '-') {
+                comment = true;
+                i += 4;
+                return true;
+            }
+
+            if (comment) {
+                if (ch == '-' && i < s.length - 3 && s[i + 1] == '-' && s[i + 2] == '}' && s[i + 3] == '%') {
+                    xml.add(new GspComment(sb.toString()));
+                    sb.setLength(0);
+                    comment = false;
+                    i += 4;
+                    return true;
+                } else {
+                    sb.append(ch);
+                    i++;
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -68,5 +89,31 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
     @Override
     protected T createContext() {
         return (T) new GspParserContext();
+    }
+
+    private class GspComment extends TextNode {
+        public GspComment(String text) {
+            super(text);
+        }
+
+        @Override
+        public String toString() {
+            return "gsp comment: " + text;
+        }
+
+        @Override
+        protected String text(boolean recursive) {
+            return "%{--" + text + "--}%";
+        }
+
+        @Override
+        protected String ownText() {
+            return "%{--" + text + "--}%";
+        }
+
+        @Override
+        public boolean isComment() {
+            return true;
+        }
     }
 }
