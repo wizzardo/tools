@@ -71,12 +71,31 @@ public class NodeTest {
     }
 
     @Test
-    public void xml_1() throws IOException {
+    public void xml_comment_1() throws IOException {
         String s = "<div><!--   <comment>   --></div>";
         Node div = new XmlParser().parse(s);
         Assert.assertEquals(0, div.attributes().size());
         Assert.assertEquals(1, div.children().size());
+        Assert.assertEquals(true, div.children().get(0).isComment());
         Assert.assertEquals("<!-- <comment> -->", div.children().get(0).ownText());
+    }
+
+    @Test
+    public void xml_comment_2() throws IOException {
+        String s = "" +
+                "<div>\n" +
+                "    <!--[if IE]>\n" +
+                "        According to the conditional comment this is IE<br />\n" +
+                "    <![endif]-->\n" +
+                "</div>\n";
+        Node div = new XmlParser().parse(s);
+        Assert.assertEquals(0, div.attributes().size());
+        Assert.assertEquals(1, div.children().size());
+        Assert.assertEquals(true, div.children().get(0).isComment());
+        Assert.assertEquals("" +
+                "<!-- [if IE]>\n" +
+                "        According to the conditional comment this is IE<br />\n" +
+                "    <![endif] -->", div.children().get(0).ownText());
     }
 
     @Test
