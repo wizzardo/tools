@@ -71,6 +71,15 @@ public class NodeTest {
     }
 
     @Test
+    public void xml_1() throws IOException {
+        String s = "<div><!--   <comment>   --></div>";
+        Node div = new XmlParser().parse(s);
+        Assert.assertEquals(0, div.attributes().size());
+        Assert.assertEquals(1, div.children().size());
+        Assert.assertEquals("<!-- <comment> -->", div.children().get(0).ownText());
+    }
+
+    @Test
     public void html_1() throws IOException {
         String s = "";
         for (File f : new File("src/test/resources/xml").listFiles()) {
