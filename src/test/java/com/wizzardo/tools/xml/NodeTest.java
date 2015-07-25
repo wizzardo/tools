@@ -189,4 +189,31 @@ public class NodeTest {
         Assert.assertEquals(0, div.attributes().size());
         Assert.assertEquals("%{--<p>$test</p>--}%", div.children().get(0).textOwn());
     }
+
+    @Test
+    public void gsp_comment_2() throws IOException {
+        String s = "" +
+                "<div %{--foo=\"${bar}\"--}%>\n" +
+                "    \n" +
+                "</div>\n";
+        Node root = new GspParser().parse(s);
+        Node div = root.children().get(0);
+        Assert.assertEquals("div", div.name());
+        Assert.assertEquals(0, div.children().size());
+        Assert.assertEquals(0, div.attributes().size());
+    }
+
+    @Test
+    public void gsp_comment_3() throws IOException {
+        String s = "" +
+                "<div foo=\"bar%{--_$id--}%_0\">\n" +
+                "    \n" +
+                "</div>\n";
+        Node root = new GspParser().parse(s);
+        Node div = root.children().get(0);
+        Assert.assertEquals("div", div.name());
+        Assert.assertEquals(0, div.children().size());
+        Assert.assertEquals(1, div.attributes().size());
+        Assert.assertEquals("bar_0", div.attr("foo"));
+    }
 }
