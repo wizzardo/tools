@@ -21,6 +21,7 @@ public class Node {
     protected List<Node> children;
     protected String name;
     protected Node parent;
+    protected int lineNumber;
 
     public Node(String name) {
         this.name = name;
@@ -64,6 +65,10 @@ public class Node {
             attributes = new LinkedHashMap<String, String>();
         }
         return attributes;
+    }
+
+    public int getLineNumber() {
+        return lineNumber;
     }
 
     public List<Node> children() {

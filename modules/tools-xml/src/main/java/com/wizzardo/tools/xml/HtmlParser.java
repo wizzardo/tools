@@ -77,7 +77,7 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
                 return;
             }
             if (sb.length() > 0 && !inAnotherLanguageTag) {
-                xml.add(new TextNode(trimRight(sb).toString()));
+                xml.add(addLineNumber(new TextNode(trimRight(sb).toString())));
                 sb.setLength(0);
             }
             if (xml.name() != null)

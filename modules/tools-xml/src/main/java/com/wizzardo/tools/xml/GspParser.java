@@ -62,7 +62,7 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
             if (comment) {
                 if (ch == '-' && i < s.length - 3 && s[i + 1] == '-' && s[i + 2] == '}' && s[i + 3] == '%') {
                     if (!inTag) {
-                        xml.add(new GspComment(sb.toString()));
+                        xml.add(addLineNumber(new GspComment(sb.toString())));
                         sb.setLength(0);
                     }
                     comment = false;

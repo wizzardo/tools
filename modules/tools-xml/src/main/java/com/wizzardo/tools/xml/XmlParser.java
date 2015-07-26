@@ -23,6 +23,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
         protected boolean inTag = false;
         protected char ch;
         protected boolean finished = false;
+        protected int lineNumber = 1;
 
         protected boolean onChar(char[] s, Node xml) {
             return false;
@@ -32,6 +33,9 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             outer:
             while (i < s.length && !finished) {
                 ch = s[i];
+                if (ch == '\n')
+                    lineNumber++;
+
                 if (onChar(s, xml))
                     continue;
 
@@ -89,7 +93,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             }
             String t;
             if (sb.length() > 0 && !(t = trimRight(sb).toString()).equals(xml.name)) {
-                xml.add(new TextNode(t));
+                xml.add(addLineNumber(new TextNode(t)));
                 sb.setLength(0);
             }
             return i;
@@ -102,9 +106,12 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                     inTag = false;
                 } else {
                     Node child = new Node();
+                    addLineNumber(child);
                     T context = createContext();
+                    context.lineNumber = lineNumber;
                     context.i = i - 1;
                     i = context.parse(s, child);
+                    lineNumber = context.lineNumber;
                     xml.add(child);
                 }
                 checkClose = false;
@@ -184,7 +191,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             attribute = false;
             if (comment) {
                 if (sb.charAt(sb.length() - 1) == '-' && sb.charAt(sb.length() - 2) == '-') {
-                    xml.add(new XmlComment(sb.substring(2, sb.length() - 2).trim()));
+                    xml.add(addLineNumber(new XmlComment(sb.substring(2, sb.length() - 2).trim())));
                     sb.setLength(0);
                     comment = false;
                 } else {
@@ -233,7 +240,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 attribute = false;
             }
             if (checkClose && sb.length() > 0) {
-                xml.add(new TextNode(trimRight(sb).toString()));
+                xml.add(addLineNumber(new TextNode(trimRight(sb).toString())));
                 sb.setLength(0);
             }
             end = true;
@@ -246,7 +253,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 return;
             }
             if (sb.length() > 0) {
-                xml.add(new TextNode(trimRight(sb).toString()));
+                xml.add(addLineNumber(new TextNode(trimRight(sb).toString())));
                 sb.setLength(0);
             }
             if (xml.name() != null)
@@ -276,6 +283,10 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             }
         }
 
+        protected Node addLineNumber(Node node) {
+            node.lineNumber = lineNumber;
+            return node;
+        }
     }
 
     public Node parse(String s) {
@@ -296,6 +307,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
     public Node parse(Node xml, String s) {
         // check first char
         s = s.trim();
+        xml.lineNumber = 1;
         T context = createContext();
         if (s.startsWith("<?xml ")) {
             context.i = s.indexOf("?>") + 2;
