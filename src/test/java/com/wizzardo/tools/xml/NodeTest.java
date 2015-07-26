@@ -99,6 +99,34 @@ public class NodeTest {
     }
 
     @Test
+    public void xml_line_number_1() throws IOException {
+        String s = "" +
+                "<div>\n" +
+                "    <b>\n" +
+                "        test\n" +
+                "    </b>\n" +
+                "    <b>\n" +
+                "        test_2\n" +
+                "    </b>\n" +
+                "</div>";
+        Node div = new XmlParser().parse(s);
+        Assert.assertEquals(0, div.attributes().size());
+        Assert.assertEquals(2, div.children().size());
+        Assert.assertEquals(1, div.getLineNumber());
+
+        Node b;
+        b = div.children().get(0);
+        Assert.assertEquals(1, b.children().size());
+        Assert.assertEquals(2, b.getLineNumber());
+        Assert.assertEquals(4, b.children().get(0).getLineNumber());
+
+        b = div.children().get(1);
+        Assert.assertEquals(1, b.children().size());
+        Assert.assertEquals(5, b.getLineNumber());
+        Assert.assertEquals(7, b.children().get(0).getLineNumber());
+    }
+
+    @Test
     public void html_1() throws IOException {
         String s = "";
         for (File f : new File("src/test/resources/xml").listFiles()) {
