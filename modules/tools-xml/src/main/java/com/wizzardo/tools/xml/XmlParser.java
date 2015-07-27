@@ -24,6 +24,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
         protected char ch;
         protected boolean finished = false;
         protected int lineNumber = 1;
+        protected int textStartLineNumber;
 
         protected boolean onChar(char[] s, Node xml) {
             return false;
@@ -116,8 +117,11 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 }
                 checkClose = false;
                 name = false;
-            } else
+            } else {
+                if (sb.length() == 0)
+                    textStartLineNumber = lineNumber;
                 sb.append(s[i]);
+            }
         }
 
         protected void onCarriageReturnSign(char[] s, Node xml) {
@@ -285,6 +289,11 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
 
         protected Node addLineNumber(Node node) {
             node.lineNumber = lineNumber;
+            return node;
+        }
+
+        protected Node addLineNumber(TextNode node) {
+            node.lineNumber = textStartLineNumber;
             return node;
         }
     }
