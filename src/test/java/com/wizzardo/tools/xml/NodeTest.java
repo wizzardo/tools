@@ -106,24 +106,31 @@ public class NodeTest {
                 "        test\n" +
                 "    </b>\n" +
                 "    <b>\n" +
+                "\n" +
+                "\n" +
                 "        test_2\n" +
                 "    </b>\n" +
+                "    <!--   <comment>   -->\n" +
                 "</div>";
         Node div = new XmlParser().parse(s);
         Assert.assertEquals(0, div.attributes().size());
-        Assert.assertEquals(2, div.children().size());
+        Assert.assertEquals(3, div.children().size());
         Assert.assertEquals(1, div.getLineNumber());
 
         Node b;
         b = div.children().get(0);
         Assert.assertEquals(1, b.children().size());
         Assert.assertEquals(2, b.getLineNumber());
-        Assert.assertEquals(4, b.children().get(0).getLineNumber());
+        Assert.assertEquals(3, b.children().get(0).getLineNumber());
 
         b = div.children().get(1);
         Assert.assertEquals(1, b.children().size());
         Assert.assertEquals(5, b.getLineNumber());
-        Assert.assertEquals(7, b.children().get(0).getLineNumber());
+        Assert.assertEquals(8, b.children().get(0).getLineNumber());
+
+        b = div.children().get(2);
+        Assert.assertEquals(true, b.isComment());
+        Assert.assertEquals(10, b.getLineNumber());
     }
 
     @Test
