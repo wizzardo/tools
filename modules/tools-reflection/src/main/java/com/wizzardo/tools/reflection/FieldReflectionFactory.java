@@ -13,6 +13,14 @@ public class FieldReflectionFactory {
 
     protected static final Unsafe unsafe = UnsafeTools.getUnsafe();
 
+    public FieldReflection create(Class clazz, String name, boolean setAccessible) throws NoSuchFieldException {
+        return create(clazz.getDeclaredField(name), setAccessible);
+    }
+
+    public FieldReflection create(Class clazz, String name) throws NoSuchFieldException {
+        return create(clazz.getDeclaredField(name), false);
+    }
+
     public FieldReflection create(Field field, boolean setAccessible) {
         if (setAccessible)
             field.setAccessible(true);
