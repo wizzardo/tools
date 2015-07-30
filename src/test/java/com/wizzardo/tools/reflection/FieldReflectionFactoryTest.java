@@ -13,6 +13,29 @@ import java.lang.reflect.Modifier;
  */
 public class FieldReflectionFactoryTest {
 
+    @Test
+    public void testUnsafe() {
+        Assert.assertTrue(FieldReflectionFactory.putInt);
+        Assert.assertTrue(FieldReflectionFactory.putLong);
+        Assert.assertTrue(FieldReflectionFactory.putByte);
+        Assert.assertTrue(FieldReflectionFactory.putShort);
+        Assert.assertTrue(FieldReflectionFactory.putChar);
+        Assert.assertTrue(FieldReflectionFactory.putFloat);
+        Assert.assertTrue(FieldReflectionFactory.putDouble);
+        Assert.assertTrue(FieldReflectionFactory.putBoolean);
+        Assert.assertTrue(FieldReflectionFactory.putObject);
+
+        Assert.assertTrue(FieldReflectionFactory.getInt);
+        Assert.assertTrue(FieldReflectionFactory.getLong);
+        Assert.assertTrue(FieldReflectionFactory.getByte);
+        Assert.assertTrue(FieldReflectionFactory.getShort);
+        Assert.assertTrue(FieldReflectionFactory.getChar);
+        Assert.assertTrue(FieldReflectionFactory.getFloat);
+        Assert.assertTrue(FieldReflectionFactory.getDouble);
+        Assert.assertTrue(FieldReflectionFactory.getBoolean);
+        Assert.assertTrue(FieldReflectionFactory.getObject);
+    }
+
     public static class TestClass {
         public int i = 1;
         public long l = 2l;

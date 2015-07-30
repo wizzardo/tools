@@ -1,19 +1,71 @@
 package com.wizzardo.tools.reflection.field;
 
 import com.wizzardo.tools.reflection.FieldReflection;
+import com.wizzardo.tools.reflection.UnsafeTools;
+import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * Created by wizzardo on 28.07.15.
  */
-public abstract class AbstractGetterSetter extends FieldReflection {
+public abstract class AbstractGetterSetter implements FieldReflection {
+    protected static final Unsafe unsafe = UnsafeTools.getUnsafe();
+    protected Field field;
+    protected final long offset;
+    protected final Type type;
 
     protected AbstractGetterSetter() {
+        offset = 0;
+        type = null;
     }
 
     public AbstractGetterSetter(Field field) {
-        super(field);
+        this(field, false);
+    }
+    public AbstractGetterSetter(Field field, boolean setAccessible) {
+        this.field = field;
+        if (setAccessible)
+            field.setAccessible(true);
+
+        if (unsafe != null && (field.getModifiers() & Modifier.STATIC) == 0)
+            offset = unsafe.objectFieldOffset(field);
+        else
+            offset = 0;
+
+        Class cl = field.getType();
+        if (cl == int.class)
+            type = Type.INTEGER;
+        else if (cl == long.class)
+            type = Type.LONG;
+        else if (cl == byte.class)
+            type = Type.BYTE;
+        else if (cl == short.class)
+            type = Type.SHORT;
+        else if (cl == float.class)
+            type = Type.FLOAT;
+        else if (cl == double.class)
+            type = Type.DOUBLE;
+        else if (cl == char.class)
+            type = Type.CHAR;
+        else if (cl == boolean.class)
+            type = Type.BOOLEAN;
+        else
+            type = Type.OBJECT;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public Field getField() {
+        return field;
+    }
+
+    @Override
+    public String toString() {
+        return field.toString();
     }
 
     @Override

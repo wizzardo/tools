@@ -20,7 +20,7 @@ class FieldInfo {
         this.field = field;
         this.generic = new Generic(field.getGenericType());
         this.serializer = serializer;
-        setter = JsonFieldSetter.createSetter(field);
+        setter = (JsonFieldSetter) new JsonFieldSetterFactory().create(field, true);
 
         if (!charTree.contains(field.getName()))
             charTree.append(field.getName(), field.getName());

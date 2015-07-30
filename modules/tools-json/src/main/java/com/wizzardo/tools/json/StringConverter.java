@@ -1,7 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.DateIso8601;
-import com.wizzardo.tools.reflection.FieldReflection;
+import com.wizzardo.tools.reflection.field.Type;
 
 import java.util.Date;
 
@@ -10,72 +10,72 @@ import java.util.Date;
  */
 abstract class StringConverter<T> {
 
-    final FieldReflection.Type type;
+    final Type type;
 
-    static final StringConverter TO_INTEGER = new StringConverter<Integer>(FieldReflection.Type.INTEGER) {
+    static final StringConverter TO_INTEGER = new StringConverter<Integer>(Type.INTEGER) {
         @Override
         Integer convert(String s) {
             return toInteger(s);
         }
     };
 
-    static final StringConverter TO_LONG = new StringConverter<Long>(FieldReflection.Type.LONG) {
+    static final StringConverter TO_LONG = new StringConverter<Long>(Type.LONG) {
         @Override
         Long convert(String s) {
             return toLong(s);
         }
     };
 
-    static final StringConverter TO_BOOLEAN = new StringConverter<Boolean>(FieldReflection.Type.BOOLEAN) {
+    static final StringConverter TO_BOOLEAN = new StringConverter<Boolean>(Type.BOOLEAN) {
         @Override
         Boolean convert(String s) {
             return toBoolean(s);
         }
     };
 
-    static final StringConverter TO_SHORT = new StringConverter<Short>(FieldReflection.Type.SHORT) {
+    static final StringConverter TO_SHORT = new StringConverter<Short>(Type.SHORT) {
         @Override
         Short convert(String s) {
             return toShort(s);
         }
     };
 
-    static final StringConverter TO_BYTE = new StringConverter<Byte>(FieldReflection.Type.BYTE) {
+    static final StringConverter TO_BYTE = new StringConverter<Byte>(Type.BYTE) {
         @Override
         Byte convert(String s) {
             return toByte(s);
         }
     };
 
-    static final StringConverter TO_FLOAT = new StringConverter<Float>(FieldReflection.Type.FLOAT) {
+    static final StringConverter TO_FLOAT = new StringConverter<Float>(Type.FLOAT) {
         @Override
         Float convert(String s) {
             return toFloat(s);
         }
     };
 
-    static final StringConverter TO_DOUBLE = new StringConverter<Double>(FieldReflection.Type.DOUBLE) {
+    static final StringConverter TO_DOUBLE = new StringConverter<Double>(Type.DOUBLE) {
         @Override
         Double convert(String s) {
             return toDouble(s);
         }
     };
 
-    static final StringConverter TO_DATE = new StringConverter<Date>(FieldReflection.Type.OBJECT) {
+    static final StringConverter TO_DATE = new StringConverter<Date>(Type.OBJECT) {
         @Override
         Date convert(String s) {
             return toDate(s);
         }
     };
 
-    static final StringConverter TO_STRING = new StringConverter<String>(FieldReflection.Type.OBJECT) {
+    static final StringConverter TO_STRING = new StringConverter<String>(Type.OBJECT) {
         @Override
         String convert(String s) {
             return s;
         }
     };
 
-    static final StringConverter TO_CHARACTER = new StringConverter<Character>(FieldReflection.Type.CHAR) {
+    static final StringConverter TO_CHARACTER = new StringConverter<Character>(Type.CHAR) {
         @Override
         Character convert(String s) {
             if (s.length() > 1) {
@@ -85,7 +85,7 @@ abstract class StringConverter<T> {
         }
     };
 
-    protected StringConverter(FieldReflection.Type type) {
+    protected StringConverter(Type type) {
         this.type = type;
     }
 

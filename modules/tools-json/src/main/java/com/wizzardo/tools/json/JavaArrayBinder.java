@@ -1,5 +1,7 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.reflection.field.Type;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;

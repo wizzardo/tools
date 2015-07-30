@@ -13,12 +13,45 @@ public class FieldReflectionFactory {
 
     protected static final Unsafe unsafe = UnsafeTools.getUnsafe();
 
+    protected static final boolean putInt = hasMethod(Unsafe.class, "putInt", Object.class, long.class, int.class);
+    protected static final boolean putLong = hasMethod(Unsafe.class, "putLong", Object.class, long.class, long.class);
+    protected static final boolean putByte = hasMethod(Unsafe.class, "putByte", Object.class, long.class, byte.class);
+    protected static final boolean putShort = hasMethod(Unsafe.class, "putShort", Object.class, long.class, short.class);
+    protected static final boolean putFloat = hasMethod(Unsafe.class, "putFloat", Object.class, long.class, float.class);
+    protected static final boolean putDouble = hasMethod(Unsafe.class, "putDouble", Object.class, long.class, double.class);
+    protected static final boolean putChar = hasMethod(Unsafe.class, "putChar", Object.class, long.class, char.class);
+    protected static final boolean putBoolean = hasMethod(Unsafe.class, "putBoolean", Object.class, long.class, boolean.class);
+    protected static final boolean putObject = hasMethod(Unsafe.class, "putObject", Object.class, long.class, Object.class);
+
+    protected static final boolean getInt = hasMethod(Unsafe.class, "getInt", Object.class, long.class);
+    protected static final boolean getLong = hasMethod(Unsafe.class, "getLong", Object.class, long.class);
+    protected static final boolean getByte = hasMethod(Unsafe.class, "getByte", Object.class, long.class);
+    protected static final boolean getShort = hasMethod(Unsafe.class, "getShort", Object.class, long.class);
+    protected static final boolean getFloat = hasMethod(Unsafe.class, "getFloat", Object.class, long.class);
+    protected static final boolean getDouble = hasMethod(Unsafe.class, "getDouble", Object.class, long.class);
+    protected static final boolean getChar = hasMethod(Unsafe.class, "getChar", Object.class, long.class);
+    protected static final boolean getBoolean = hasMethod(Unsafe.class, "getBoolean", Object.class, long.class);
+    protected static final boolean getObject = hasMethod(Unsafe.class, "getObject", Object.class, long.class);
+
+    private static Boolean hasMethod(Class clazz, String name, Class... args) {
+        try {
+            clazz.getDeclaredMethod(name, args);
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+        return true;
+    }
+
     public FieldReflection create(Class clazz, String name, boolean setAccessible) throws NoSuchFieldException {
         return create(clazz.getDeclaredField(name), setAccessible);
     }
 
     public FieldReflection create(Class clazz, String name) throws NoSuchFieldException {
         return create(clazz.getDeclaredField(name), false);
+    }
+
+    public FieldReflection create(Field field) {
+        return create(field, false);
     }
 
     public FieldReflection create(Field field, boolean setAccessible) {
@@ -152,27 +185,27 @@ public class FieldReflectionFactory {
         return new BooleanUnsafeGetterSetter(field);
     }
 
-    protected FieldReflection.Type getType(Field field) {
+    protected Type getType(Field field) {
         Class cl = field.getType();
-        FieldReflection.Type type;
+        Type type;
         if (cl == int.class)
-            type = FieldReflection.Type.INTEGER;
+            type = Type.INTEGER;
         else if (cl == long.class)
-            type = FieldReflection.Type.LONG;
+            type = Type.LONG;
         else if (cl == byte.class)
-            type = FieldReflection.Type.BYTE;
+            type = Type.BYTE;
         else if (cl == short.class)
-            type = FieldReflection.Type.SHORT;
+            type = Type.SHORT;
         else if (cl == float.class)
-            type = FieldReflection.Type.FLOAT;
+            type = Type.FLOAT;
         else if (cl == double.class)
-            type = FieldReflection.Type.DOUBLE;
+            type = Type.DOUBLE;
         else if (cl == char.class)
-            type = FieldReflection.Type.CHAR;
+            type = Type.CHAR;
         else if (cl == boolean.class)
-            type = FieldReflection.Type.BOOLEAN;
+            type = Type.BOOLEAN;
         else
-            type = FieldReflection.Type.OBJECT;
+            type = Type.OBJECT;
         return type;
     }
 }
