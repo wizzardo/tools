@@ -14,6 +14,26 @@ import java.lang.reflect.Field;
 public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
     @Override
+    public JsonFieldSetter create(Class clazz, String name, boolean setAccessible) throws NoSuchFieldException {
+        return (JsonFieldSetter) super.create(clazz, name, setAccessible);
+    }
+
+    @Override
+    public JsonFieldSetter create(Class clazz, String name) throws NoSuchFieldException {
+        return (JsonFieldSetter) super.create(clazz, name);
+    }
+
+    @Override
+    public JsonFieldSetter create(Field field) {
+        return (JsonFieldSetter) super.create(field);
+    }
+
+    @Override
+    public JsonFieldSetter create(Field field, boolean setAccessible) {
+        return (JsonFieldSetter) super.create(field, setAccessible);
+    }
+
+    @Override
     protected JsonFieldSetter createReflection(Field f) {
         Class cl = f.getType();
         if (cl.isEnum())
