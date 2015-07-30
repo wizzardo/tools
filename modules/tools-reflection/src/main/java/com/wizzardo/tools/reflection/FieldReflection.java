@@ -10,7 +10,7 @@ import java.lang.reflect.Modifier;
  * @author: wizzardo
  * Date: 3/22/14
  */
-public class FieldReflection {
+public abstract class FieldReflection {
     protected static final Unsafe unsafe = UnsafeTools.getUnsafe();
     protected Field field;
     protected final long offset;
@@ -62,249 +62,41 @@ public class FieldReflection {
         return field.toString();
     }
 
-    protected void assertTypeGet(Type t) {
-        if (type != t)
-            throw new IllegalStateException("Can not get " + t + " value from field " + field);
-    }
+    public abstract void setInteger(Object object, int value);
 
-    protected void assertTypeSet(Type t) {
-        if (type != t)
-            throw new IllegalStateException("Can not set " + t + " value to field " + field);
-    }
+    public abstract void setLong(Object object, long value);
 
-    public void setInteger(Object object, int value) {
-        assertTypeSet(Type.INTEGER);
+    public abstract void setByte(Object object, byte value);
 
-        if (putInt && offset != 0)
-            unsafe.putInt(object, offset, value);
-        else
-            try {
-                field.setInt(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
+    public abstract void setShort(Object object, short value);
 
-    public void setLong(Object object, long value) {
-        assertTypeSet(Type.LONG);
+    public abstract void setFloat(Object object, float value);
 
-        if (putLong && offset != 0)
-            unsafe.putLong(object, offset, value);
-        else
-            try {
-                field.setLong(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
+    public abstract void setDouble(Object object, double value);
 
-    public void setByte(Object object, byte value) {
-        assertTypeSet(Type.BYTE);
+    public abstract void setChar(Object object, char value);
 
-        if (putByte && offset != 0)
-            unsafe.putByte(object, offset, value);
-        else
-            try {
-                field.setByte(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
+    public abstract void setBoolean(Object object, boolean value);
 
-    public void setShort(Object object, short value) {
-        assertTypeSet(Type.SHORT);
+    public abstract void setObject(Object object, Object value);
 
-        if (putShort && offset != 0)
-            unsafe.putShort(object, offset, value);
-        else
-            try {
-                field.setShort(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
+    public abstract int getInteger(Object object);
 
-    public void setFloat(Object object, float value) {
-        assertTypeSet(Type.FLOAT);
+    public abstract long getLong(Object object);
 
-        if (putFloat && offset != 0)
-            unsafe.putFloat(object, offset, value);
-        else
-            try {
-                field.setFloat(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
+    public abstract byte getByte(Object object);
 
-    public void setDouble(Object object, double value) {
-        assertTypeSet(Type.DOUBLE);
+    public abstract short getShort(Object object);
 
-        if (putDouble && offset != 0)
-            unsafe.putDouble(object, offset, value);
-        else
-            try {
-                field.setDouble(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
+    public abstract float getFloat(Object object);
 
-    public void setChar(Object object, char value) {
-        assertTypeSet(Type.CHAR);
+    public abstract double getDouble(Object object);
 
-        if (putChar && offset != 0)
-            unsafe.putChar(object, offset, value);
-        else
-            try {
-                field.setChar(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
+    public abstract char getChar(Object object);
 
-    public void setBoolean(Object object, boolean value) {
-        assertTypeSet(Type.BOOLEAN);
+    public abstract boolean getBoolean(Object object);
 
-        if (putBoolean && offset != 0)
-            unsafe.putBoolean(object, offset, value);
-        else
-            try {
-                field.setBoolean(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public void setObject(Object object, Object value) {
-        assertTypeSet(Type.OBJECT);
-
-        if (putObject && offset != 0)
-            unsafe.putObject(object, offset, value);
-        else
-            try {
-                field.set(object, value);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public int getInteger(Object object) {
-        assertTypeGet(Type.INTEGER);
-
-        if (getInt && offset != 0)
-            return unsafe.getInt(object, offset);
-        else
-            try {
-                return field.getInt(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public long getLong(Object object) {
-        assertTypeGet(Type.LONG);
-
-        if (getLong && offset != 0)
-            return unsafe.getLong(object, offset);
-        else
-            try {
-                return field.getLong(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public byte getByte(Object object) {
-        assertTypeGet(Type.BYTE);
-
-        if (getByte && offset != 0)
-            return unsafe.getByte(object, offset);
-        else
-            try {
-                return field.getByte(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public short getShort(Object object) {
-        assertTypeGet(Type.SHORT);
-
-        if (getShort && offset != 0)
-            return unsafe.getShort(object, offset);
-        else
-            try {
-                return field.getShort(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public float getFloat(Object object) {
-        assertTypeGet(Type.FLOAT);
-
-        if (getFloat && offset != 0)
-            return unsafe.getFloat(object, offset);
-        else
-            try {
-                return field.getFloat(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public double getDouble(Object object) {
-        assertTypeGet(Type.DOUBLE);
-
-        if (getDouble && offset != 0)
-            return unsafe.getDouble(object, offset);
-        else
-            try {
-                return field.getDouble(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public char getChar(Object object) {
-        assertTypeGet(Type.CHAR);
-
-        if (getChar && offset != 0)
-            return unsafe.getChar(object, offset);
-        else
-            try {
-                return field.getChar(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public boolean getBoolean(Object object) {
-        assertTypeGet(Type.BOOLEAN);
-
-        if (getBoolean && offset != 0)
-            return unsafe.getBoolean(object, offset);
-        else
-            try {
-                return field.getBoolean(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
-
-    public Object getObject(Object object) {
-        assertTypeGet(Type.OBJECT);
-
-        if (getObject && offset != 0)
-            return unsafe.getObject(object, offset);
-        else
-            try {
-                return field.get(object);
-            } catch (IllegalAccessException e) {
-                throw Unchecked.rethrow(e);
-            }
-    }
+    public abstract Object getObject(Object object);
 
     protected FieldReflection() {
         offset = 0;

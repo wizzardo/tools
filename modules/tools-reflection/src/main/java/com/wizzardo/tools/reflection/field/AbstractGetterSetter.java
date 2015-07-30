@@ -9,6 +9,9 @@ import java.lang.reflect.Field;
  */
 public abstract class AbstractGetterSetter extends FieldReflection {
 
+    protected AbstractGetterSetter() {
+    }
+
     public AbstractGetterSetter(Field field) {
         super(field);
     }

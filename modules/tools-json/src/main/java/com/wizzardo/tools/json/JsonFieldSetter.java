@@ -1,6 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.reflection.FieldReflection;
+import com.wizzardo.tools.reflection.field.AbstractGetterSetter;
 
 import java.lang.reflect.Field;
 
@@ -8,7 +9,7 @@ import java.lang.reflect.Field;
  * @author: wizzardo
  * Date: 3/22/14
  */
-abstract class JsonFieldSetter extends FieldReflection {
+abstract class JsonFieldSetter extends AbstractGetterSetter {
 
     protected JsonFieldSetter() {
     }
