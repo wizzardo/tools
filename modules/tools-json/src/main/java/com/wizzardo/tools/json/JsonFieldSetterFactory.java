@@ -24,77 +24,70 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
     }
 
     @Override
-    public JsonFieldSetter create(Field field) {
-        return (JsonFieldSetter) super.create(field);
-    }
-
-    @Override
     public JsonFieldSetter create(Field field, boolean setAccessible) {
         return (JsonFieldSetter) super.create(field, setAccessible);
     }
 
     @Override
-    protected JsonFieldSetter createReflection(Field f) {
+    public JsonFieldSetter create(Field f) {
         Class cl = f.getType();
-        if (cl.isEnum())
-            return new ReflectionEnumSetter(f);
+        boolean b = isUnsafeAvailable(f) && getObject && putObject;
+        if (b) {
+            if (cl.isEnum())
+                return new UnsafeEnumSetter(f);
 
-        if (cl == Boolean.class)
-            return new ReflectionBoxedSetter(f, StringConverter.TO_BOOLEAN);
+            if (cl == Boolean.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_BOOLEAN);
 
-        if (cl == Integer.class)
-            return new ReflectionBoxedSetter(f, StringConverter.TO_INTEGER);
+            if (cl == Integer.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_INTEGER);
 
-        if (cl == Long.class)
-            return new ReflectionBoxedSetter(f, StringConverter.TO_LONG);
+            if (cl == Long.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_LONG);
 
-        if (cl == Byte.class)
-            return new ReflectionBoxedSetter(f, StringConverter.TO_BYTE);
+            if (cl == Byte.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_BYTE);
 
-        if (cl == Short.class)
-            return new ReflectionBoxedSetter(f, StringConverter.TO_SHORT);
+            if (cl == Short.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_SHORT);
 
-        if (cl == Character.class)
-            return new ReflectionBoxedSetter(f, StringConverter.TO_CHARACTER);
+            if (cl == Character.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_CHARACTER);
 
-        if (cl == Float.class)
-            return new ReflectionBoxedSetter(f, StringConverter.TO_FLOAT);
+            if (cl == Float.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_FLOAT);
 
-        if (cl == Double.class)
-            return new ReflectionBoxedSetter(f, StringConverter.TO_DOUBLE);
-        return (JsonFieldSetter) super.createReflection(f);
-    }
+            if (cl == Double.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_DOUBLE);
+        } else {
+            if (cl.isEnum())
+                return new ReflectionEnumSetter(f);
 
-    @Override
-    protected JsonFieldSetter createUnsafe(Field f) {
-        Class cl = f.getType();
-        if (cl.isEnum())
-            return new UnsafeEnumSetter(f);
+            if (cl == Boolean.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_BOOLEAN);
 
-        if (cl == Boolean.class)
-            return new UnsafeBoxedSetter(f, StringConverter.TO_BOOLEAN);
+            if (cl == Integer.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_INTEGER);
 
-        if (cl == Integer.class)
-            return new UnsafeBoxedSetter(f, StringConverter.TO_INTEGER);
+            if (cl == Long.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_LONG);
 
-        if (cl == Long.class)
-            return new UnsafeBoxedSetter(f, StringConverter.TO_LONG);
+            if (cl == Byte.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_BYTE);
 
-        if (cl == Byte.class)
-            return new UnsafeBoxedSetter(f, StringConverter.TO_BYTE);
+            if (cl == Short.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_SHORT);
 
-        if (cl == Short.class)
-            return new UnsafeBoxedSetter(f, StringConverter.TO_SHORT);
+            if (cl == Character.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_CHARACTER);
 
-        if (cl == Character.class)
-            return new UnsafeBoxedSetter(f, StringConverter.TO_CHARACTER);
+            if (cl == Float.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_FLOAT);
 
-        if (cl == Float.class)
-            return new UnsafeBoxedSetter(f, StringConverter.TO_FLOAT);
-
-        if (cl == Double.class)
-            return new UnsafeBoxedSetter(f, StringConverter.TO_DOUBLE);
-        return (JsonFieldSetter) super.createReflection(f);
+            if (cl == Double.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_DOUBLE);
+        }
+        return (JsonFieldSetter) super.create(f);
     }
 
     @Override
@@ -494,7 +487,7 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
         }
     }
 
-    public static class UnsafeShortSetter extends ByteUnsafeGetterSetter implements JsonFieldSetter {
+    public static class UnsafeShortSetter extends ShortUnsafeGetterSetter implements JsonFieldSetter {
 
         UnsafeShortSetter(Field f) {
             super(f);

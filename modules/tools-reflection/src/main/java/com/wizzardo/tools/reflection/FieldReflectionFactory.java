@@ -50,43 +50,69 @@ public class FieldReflectionFactory {
         return create(clazz.getDeclaredField(name), false);
     }
 
-    public FieldReflection create(Field field) {
-        return create(field, false);
-    }
-
     public FieldReflection create(Field field, boolean setAccessible) {
         if (setAccessible)
             field.setAccessible(true);
 
-
-        if (unsafe != null && (field.getModifiers() & Modifier.STATIC) == 0)
-            return createUnsafe(field);
-        else
-            return createReflection(field);
+        return create(field);
     }
 
-    protected FieldReflection createReflection(Field field) {
+    public FieldReflection create(Field field) {
+        boolean b = isUnsafeAvailable(field);
+
         switch (getType(field)) {
             case BOOLEAN:
-                return createBooleanReflectionGetterSetter(field);
+                if (b && getBoolean && putBoolean)
+                    return createBooleanUnsafeGetterSetter(field);
+                else
+                    return createBooleanReflectionGetterSetter(field);
             case BYTE:
-                return createByteReflectionGetterSetter(field);
+                if (b && getByte && putByte)
+                    return createByteUnsafeGetterSetter(field);
+                else
+                    return createByteReflectionGetterSetter(field);
             case CHAR:
-                return createCharReflectionGetterSetter(field);
+                if (b && getChar && putChar)
+                    return createCharUnsafeGetterSetter(field);
+                else
+                    return createCharReflectionGetterSetter(field);
             case DOUBLE:
-                return createDoubleReflectionGetterSetter(field);
+                if (b && getDouble && putDouble)
+                    return createDoubleUnsafeGetterSetter(field);
+                else
+                    return createDoubleReflectionGetterSetter(field);
             case FLOAT:
-                return createFloatReflectionGetterSetter(field);
+                if (b && getFloat && putFloat)
+                    return createFloatUnsafeGetterSetter(field);
+                else
+                    return createFloatReflectionGetterSetter(field);
             case INTEGER:
-                return createIntegerReflectionGetterSetter(field);
+                if (b && getInt && putInt)
+                    return createIntegerUnsafeGetterSetter(field);
+                else
+                    return createIntegerReflectionGetterSetter(field);
             case LONG:
-                return createLongReflectionGetterSetter(field);
+                if (b && getLong && putLong)
+                    return createLongUnsafeGetterSetter(field);
+                else
+                    return createLongReflectionGetterSetter(field);
             case OBJECT:
-                return createObjectReflectionGetterSetter(field);
+                if (b && getObject && putObject)
+                    return createObjectUnsafeGetterSetter(field);
+                else
+                    return createObjectReflectionGetterSetter(field);
             case SHORT:
-                return createShortReflectionGetterSetter(field);
+                if (b && getShort && putShort)
+                    return createShortUnsafeGetterSetter(field);
+                else
+                    return createShortReflectionGetterSetter(field);
         }
+
         return null;
+    }
+
+    protected boolean isUnsafeAvailable(Field field) {
+        return unsafe != null && (field.getModifiers() & Modifier.STATIC) == 0;
     }
 
     protected FieldReflection createShortReflectionGetterSetter(Field field) {
@@ -123,30 +149,6 @@ public class FieldReflectionFactory {
 
     protected FieldReflection createBooleanReflectionGetterSetter(Field field) {
         return new BooleanReflectionGetterSetter(field);
-    }
-
-    protected FieldReflection createUnsafe(Field field) {
-        switch (getType(field)) {
-            case BOOLEAN:
-                return createBooleanUnsafeGetterSetter(field);
-            case BYTE:
-                return createByteUnsafeGetterSetter(field);
-            case CHAR:
-                return createCharUnsafeGetterSetter(field);
-            case DOUBLE:
-                return createDoubleUnsafeGetterSetter(field);
-            case FLOAT:
-                return createFloatUnsafeGetterSetter(field);
-            case INTEGER:
-                return createIntegerUnsafeGetterSetter(field);
-            case LONG:
-                return createLongUnsafeGetterSetter(field);
-            case OBJECT:
-                return createObjectUnsafeGetterSetter(field);
-            case SHORT:
-                return createShortUnsafeGetterSetter(field);
-        }
-        return null;
     }
 
     protected FieldReflection createShortUnsafeGetterSetter(Field field) {
