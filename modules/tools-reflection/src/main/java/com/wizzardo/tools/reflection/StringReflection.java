@@ -25,7 +25,7 @@ public class StringReflection {
 
     private static FieldReflection getFieldReflection(Class clazz, String fieldName, boolean printStackTrace) {
         try {
-            return new FieldReflection(clazz, fieldName, true);
+            return new FieldReflectionFactory().create(clazz, fieldName, true);
         } catch (NoSuchFieldException e) {
             if (printStackTrace)
                 e.printStackTrace();
