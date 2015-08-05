@@ -50,4 +50,6 @@ public interface FieldReflection {
     Object getObject(Object object);
 
     Type getType();
+
+    Field getField();
 }
