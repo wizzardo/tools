@@ -7,6 +7,7 @@ import com.wizzardo.tools.misc.pool.*;
 import com.wizzardo.tools.reflection.StringReflection;
 
 import java.io.OutputStream;
+import java.io.Writer;
 
 /**
  * @author: wizzardo
@@ -163,6 +164,12 @@ public class JsonTools {
     }
 
     public static void serialize(Object src, OutputStream out) {
+        Appender appender = Appender.create(out);
+        Binder.toJSON(src, appender);
+        appender.flush();
+    }
+
+    public static void serialize(Object src, Writer out) {
         Appender appender = Appender.create(out);
         Binder.toJSON(src, appender);
         appender.flush();

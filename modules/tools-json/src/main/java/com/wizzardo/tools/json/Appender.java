@@ -6,6 +6,7 @@ import com.wizzardo.tools.misc.Unchecked;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 
 /**
@@ -67,7 +68,11 @@ abstract class Appender {
     }
 
     static Appender create(OutputStream out) {
-        return new StreamAppender(out);
+        return new WriterAppender(new OutputStreamWriter(out, UTF8));
+    }
+
+    static Appender create(Writer out) {
+        return new WriterAppender(out);
     }
 
     private static class StringBuilderAppender extends Appender {
@@ -198,11 +203,11 @@ abstract class Appender {
         }
     }
 
-    private static class StreamAppender extends Appender {
-        private OutputStreamWriter out;
+    private static class WriterAppender extends Appender {
+        private Writer out;
 
-        StreamAppender(OutputStream out) {
-            this.out = new OutputStreamWriter(out, UTF8);
+        WriterAppender(Writer out) {
+            this.out = out;
         }
 
         @Override
