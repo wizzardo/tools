@@ -39,19 +39,25 @@ public class UTF8 {
         int limit = off + length;
         int l = 0;
 
-        while (off < limit && chars[off] < 128) {
-            bytes[l++] = (byte) chars[off++];
+        int ch;
+        while (off < limit) {
+            if ((ch = chars[off++]) < 128)
+                bytes[l++] = (byte) ch;
+            else {
+                off--;
+                break;
+            }
         }
 
         while (off < limit) {
-            char ch = chars[off++];
-            if (ch < 128) {
-                bytes[l++] = (byte) ch;
-            } else if (ch < 2048) {
-                bytes[l++] = (byte) (192 | ch >> 6);
-                bytes[l++] = (byte) (128 | ch & 63);
-            } else if (ch >= '\uD800' && ch < '\uE000') {//surrogate
-                int r = off < limit ? parseSurrogate(ch, chars[off]) : -1;
+            int c = chars[off++];
+            if (c < 128) {
+                bytes[l++] = (byte) c;
+            } else if (c < 2048) {
+                bytes[l++] = (byte) (192 | c >> 6);
+                bytes[l++] = (byte) (128 | c & 63);
+            } else if (c >= '\uD800' && c < '\uE000') {//surrogate
+                int r = off < limit ? parseSurrogate(c, chars[off]) : -1;
                 if (r < 0) {
                     bytes[l++] = '?';
                 } else {
@@ -62,16 +68,16 @@ public class UTF8 {
                     ++off;
                 }
             } else {
-                bytes[l++] = (byte) (224 | ch >> 12);
-                bytes[l++] = (byte) (128 | ch >> 6 & 63);
-                bytes[l++] = (byte) (128 | ch & 63);
+                bytes[l++] = (byte) (224 | c >> 12);
+                bytes[l++] = (byte) (128 | c >> 6 & 63);
+                bytes[l++] = (byte) (128 | c & 63);
             }
         }
 
         return l;
     }
 
-    private static int parseSurrogate(char ch, char ch2) {
+    private static int parseSurrogate(int ch, int ch2) {
         if (ch >= '\uD800' && ch < '\uDC00') {
             if (ch2 >= '\uDC00' && ch2 < '\uE000')
                 return ((ch & 1023) << 10 | ch2 & 1023) + 65536;
