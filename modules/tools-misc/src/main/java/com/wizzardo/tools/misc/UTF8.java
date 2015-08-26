@@ -25,9 +25,9 @@ public class UTF8 {
     }
 
     public static byte[] encode(char[] chars, int off, int length) {
-        byte[] bytes = new byte[length * 4];
-        int l = encode(chars, off, length, bytes);
-        return Arrays.copyOf(bytes, l);
+        byte[] bytes = new byte[count(chars, off, length)];
+        encode(chars, off, length, bytes);
+        return bytes;
     }
 
     public static byte[] encodeAndTrim(char[] chars, int off, int length, byte[] bytes) {
@@ -71,6 +71,41 @@ public class UTF8 {
                 bytes[l++] = (byte) (224 | c >> 12);
                 bytes[l++] = (byte) (128 | c >> 6 & 63);
                 bytes[l++] = (byte) (128 | c & 63);
+            }
+        }
+
+        return l;
+    }
+
+    public static int count(char[] chars, int off, int length) {
+        int limit = off + length;
+        int l = 0;
+
+        while (off < limit) {
+            if (chars[off++] < 128)
+                l++;
+            else {
+                off--;
+                break;
+            }
+        }
+
+        while (off < limit) {
+            int c = chars[off++];
+            if (c < 128) {
+                l++;
+            } else if (c < 2048) {
+                l += 2;
+            } else if (c >= '\uD800' && c < '\uE000') {//surrogate
+                int r = off < limit ? parseSurrogate(c, chars[off]) : -1;
+                if (r < 0) {
+                    l++;
+                } else {
+                    l += 4;
+                    ++off;
+                }
+            } else {
+                l += 3;
             }
         }
 
