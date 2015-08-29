@@ -129,9 +129,9 @@ public class ExceptionDrivenStringBuilder implements Appendable {
 
     public ExceptionDrivenStringBuilder append(boolean b) {
         if (b)
-            append(CHARS_TRUE);
+            append(CHARS_TRUE, 0, 4);
         else
-            append(CHARS_FALSE);
+            append(CHARS_FALSE, 0, 5);
         return this;
     }
 
