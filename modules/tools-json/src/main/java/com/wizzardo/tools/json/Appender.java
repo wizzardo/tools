@@ -1,6 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
+import com.wizzardo.tools.misc.NumberToChars;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.io.IOException;
@@ -14,6 +15,10 @@ import java.nio.charset.Charset;
  * Date: 16.09.14
  */
 abstract class Appender {
+
+    private static final char[] CHARS_TRUE = new char[]{'t', 'r', 'u', 'e'};
+    private static final char[] CHARS_FALSE = new char[]{'f', 'a', 'l', 's', 'e'};
+    private static final char[] CHARS_NULL = new char[]{'n', 'u', 'l', 'l'};
 
     public static final Charset UTF8 = Charset.forName("utf-8");
 
@@ -205,18 +210,50 @@ abstract class Appender {
 
     private static class WriterAppender extends Appender {
         private Writer out;
+        private char[] buffer = new char[20];
 
         WriterAppender(Writer out) {
             this.out = out;
         }
 
         @Override
+        public void append(int i) {
+            int l = NumberToChars.toChars(i, buffer, 0);
+            append(buffer, 0, l);
+        }
+
+        @Override
+        public void append(long s) {
+            int l = NumberToChars.toChars(s, buffer, 0);
+            append(buffer, 0, l);
+        }
+
+        @Override
+        public void append(boolean s) {
+            if (s)
+                append(CHARS_TRUE, 0, 4);
+            else
+                append(CHARS_FALSE, 0, 5);
+        }
+
+        @Override
+        public void append(Object ob) {
+            if (ob == null)
+                append(CHARS_NULL, 0, 4);
+            else
+                super.append(ob);
+        }
+
+        @Override
         public void append(String s) {
-            try {
-                out.write(s);
-            } catch (IOException e) {
-                throw Unchecked.rethrow(e);
-            }
+            if (s == null)
+                append(CHARS_NULL, 0, 4);
+            else
+                try {
+                    out.write(s);
+                } catch (IOException e) {
+                    throw Unchecked.rethrow(e);
+                }
         }
 
         @Override
