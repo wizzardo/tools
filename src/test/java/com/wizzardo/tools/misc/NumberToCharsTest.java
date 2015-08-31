@@ -132,6 +132,43 @@ public class NumberToCharsTest {
     }
 
     @Test
+    public void toBytesTestInteger() {
+        byte[] bytes = new byte[11];
+        int i;
+        Assert.assertEquals(String.valueOf(i = 1), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 12), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 123), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 1234), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 12345), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 123456), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 1234567), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 12345678), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 123456789), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = 1234567890), new String(bytes, 0, toChars(i, bytes, 0)));
+
+        Assert.assertEquals(String.valueOf(i = -1), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -12), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -123), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -1234), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -12345), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -123456), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -1234567), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -12345678), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -123456789), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = -1234567890), new String(bytes, 0, toChars(i, bytes, 0)));
+
+        Assert.assertEquals(String.valueOf(i = Integer.MIN_VALUE), new String(bytes, 0, toChars(i, bytes, 0)));
+        Assert.assertEquals(String.valueOf(i = Integer.MAX_VALUE), new String(bytes, 0, toChars(i, bytes, 0)));
+
+        for (int j = 1; j > 0; j *= 10) {
+            Assert.assertEquals(String.valueOf(j), new String(bytes, 0, toChars(j, bytes, 0)));
+        }
+        for (int j = -1; j < 0; j *= 10) {
+            Assert.assertEquals(String.valueOf(j), new String(bytes, 0, toChars(j, bytes, 0)));
+        }
+    }
+
+    @Test
     public void toCharsTestLong() {
         char[] chars = new char[20];
         long l;
@@ -183,6 +220,61 @@ public class NumberToCharsTest {
         }
         for (long j = -1; j < 0; j *= 10) {
             Assert.assertEquals(String.valueOf(j), new String(chars, 0, toChars(j, chars, 0)));
+        }
+    }
+
+    @Test
+    public void toBytesTestLong() {
+        byte[] bytes = new byte[20];
+        long l;
+        Assert.assertEquals(String.valueOf(l = 1), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 12), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 123), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 1234), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 12345), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 123456), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 1234567), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 12345678), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 123456789), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 1234567890), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 12345678901l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 123456789012l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 1234567890123l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 12345678901234l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 123456789012345l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 1234567890123456l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 12345678901234567l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 123456789012345678l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = 1234567890123456789l), new String(bytes, 0, toChars(l, bytes, 0)));
+
+        Assert.assertEquals(String.valueOf(l = -1), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -12), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -123), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -1234), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -12345), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -123456), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -1234567), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -12345678), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -123456789), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -1234567890), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -12345678901l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -123456789012l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -1234567890123l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -12345678901234l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -123456789012345l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -1234567890123456l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -12345678901234567l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -123456789012345678l), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = -1234567890123456789l), new String(bytes, 0, toChars(l, bytes, 0)));
+
+        Assert.assertEquals(String.valueOf(l = Long.MAX_VALUE), new String(bytes, 0, toChars(l, bytes, 0)));
+        Assert.assertEquals(String.valueOf(l = Long.MIN_VALUE), new String(bytes, 0, toChars(l, bytes, 0)));
+
+        for (long j = 1; j > 0; j *= 10) {
+            Assert.assertEquals(String.valueOf(j), new String(bytes, 0, toChars(j, bytes, 0)));
+        }
+        for (long j = -1; j < 0; j *= 10) {
+            Assert.assertEquals(String.valueOf(j), new String(bytes, 0, toChars(j, bytes, 0)));
         }
     }
 
