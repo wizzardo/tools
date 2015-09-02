@@ -74,7 +74,7 @@ abstract class Appender {
     }
 
     static Appender create(OutputStream out) {
-        return new WriterAppender(new OutputStreamWriter(out, UTF8));
+        return new UTF8WriterAppender(out);
     }
 
     static Appender create(Writer out) {
@@ -288,6 +288,48 @@ abstract class Appender {
         public void flush() {
             try {
                 out.flush();
+            } catch (IOException e) {
+                throw Unchecked.rethrow(e);
+            }
+        }
+    }
+
+    private static class UTF8WriterAppender extends WriterAppender<UTF8Writer> {
+        UTF8WriterAppender(OutputStream out) {
+            super(new UTF8Writer(out));
+        }
+
+        @Override
+        public void append(int i) {
+            try {
+                out.write(i);
+            } catch (IOException e) {
+                throw Unchecked.rethrow(e);
+            }
+        }
+
+        @Override
+        public void append(long l) {
+            try {
+                out.write(l);
+            } catch (IOException e) {
+                throw Unchecked.rethrow(e);
+            }
+        }
+
+        @Override
+        public void append(String s) {
+            try {
+                out.write(s);
+            } catch (IOException e) {
+                throw Unchecked.rethrow(e);
+            }
+        }
+
+        @Override
+        public void append(boolean b) {
+            try {
+                out.write(b);
             } catch (IOException e) {
                 throw Unchecked.rethrow(e);
             }
