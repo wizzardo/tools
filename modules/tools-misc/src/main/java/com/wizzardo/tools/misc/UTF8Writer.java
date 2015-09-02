@@ -26,7 +26,7 @@ public class UTF8Writer extends Writer {
     public void write(char[] chars, int off, int len) throws IOException {
         int limit = len + off;
         for (int i = off; i < limit; i += batchSize) {
-            int l = UTF8.encode(chars, off, Math.min(off - limit, batchSize), bytes);
+            int l = UTF8.encode(chars, off, Math.min(limit - off, batchSize), bytes);
             out.write(bytes, 0, l);
         }
     }
@@ -61,6 +61,16 @@ public class UTF8Writer extends Writer {
             out.write(CHARS_FALSE, 0, 5);
     }
 
+    @Override
+    public Writer append(char c) throws IOException {
+        if (c < 128) {
+            out.write((byte) c);
+        } else {
+            int l = UTF8.encode(c, bytes, 0);
+            out.write(bytes, 0, l);
+        }
+        return this;
+    }
 
     @Override
     public void flush() throws IOException {

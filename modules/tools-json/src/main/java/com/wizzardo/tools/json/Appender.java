@@ -260,7 +260,7 @@ abstract class Appender {
         @Override
         public void append(String s, int from, int to) {
             try {
-                out.write(s, from, to);
+                out.write(s, from, to - from);
             } catch (IOException e) {
                 throw Unchecked.rethrow(e);
             }

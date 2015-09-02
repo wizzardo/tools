@@ -77,6 +77,26 @@ public class UTF8 {
         return l;
     }
 
+    public static int encode(char ch, byte[] bytes, int offset) {
+        if (ch < 128) {
+            bytes[offset++] = (byte) ch;
+            return offset;
+        }
+
+        if (ch < 2048) {
+            bytes[offset++] = (byte) (192 | ch >> 6);
+            bytes[offset++] = (byte) (128 | ch & 63);
+        } else if (ch >= '\uD800' && ch < '\uE000') {//surrogate
+            bytes[offset++] = '?';
+        } else {
+            bytes[offset++] = (byte) (224 | ch >> 12);
+            bytes[offset++] = (byte) (128 | ch >> 6 & 63);
+            bytes[offset++] = (byte) (128 | ch & 63);
+        }
+
+        return offset;
+    }
+
     public static int count(char[] chars, int off, int length) {
         int limit = off + length;
         int l = 0;
