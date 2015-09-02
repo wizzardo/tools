@@ -2,6 +2,7 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.NumberToChars;
+import com.wizzardo.tools.misc.UTF8Writer;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.io.IOException;
@@ -208,11 +209,11 @@ abstract class Appender {
         }
     }
 
-    private static class WriterAppender extends Appender {
-        private Writer out;
-        private char[] buffer = new char[20];
+    private static class WriterAppender<T extends Writer> extends Appender {
+        protected T out;
+        protected char[] buffer = new char[20];
 
-        WriterAppender(Writer out) {
+        WriterAppender(T out) {
             this.out = out;
         }
 
@@ -259,7 +260,7 @@ abstract class Appender {
         @Override
         public void append(String s, int from, int to) {
             try {
-                out.append(s, from, to);
+                out.write(s, from, to);
             } catch (IOException e) {
                 throw Unchecked.rethrow(e);
             }
