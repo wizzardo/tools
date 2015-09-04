@@ -131,8 +131,8 @@ public class Cache<K, V> {
             }
             Holder<K, V> ft = new Holder<K, V>(key, timings.peek());
             f = map.putIfAbsent(key, ft);
-            boolean failed = true;
             if (f == null) {
+                boolean failed = true;
                 f = ft;
                 try {
                     ft.run(c, key);
@@ -151,16 +151,21 @@ public class Cache<K, V> {
                             outdated.remove(key);
                     }
                 }
+                return f.get();
             }
-        } else if (updateTTL) {
-            updateTimingCache(f);
         }
+
         if (!f.done && outdated != null) {
             V v = outdated.get(key);
             if (v != null)
                 return v;
         }
-        return f.get();
+
+        V v = f.get();
+        if (updateTTL)
+            updateTimingCache(f);
+
+        return v;
     }
 
     public void put(final K key, final V value) {
