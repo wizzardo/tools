@@ -3,6 +3,7 @@ package com.wizzardo.tools.cache;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -209,6 +210,39 @@ public class CacheTest {
         } catch (InterruptedException e) {
         }
         Assert.assertEquals(1, counter.get());
+    }
 
+    @Test
+    public void outdated_test() throws InterruptedException {
+        final Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            AtomicInteger counter = new AtomicInteger();
+
+            @Override
+            public String compute(String s) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return s + "_" + counter.getAndIncrement();
+            }
+        }).allowOutdated();
+
+        Assert.assertEquals("foo_0", cache.get("foo"));
+        Assert.assertEquals(1, cache.size());
+
+        Thread.sleep(1200);
+        final CountDownLatch latch = new CountDownLatch(1);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Assert.assertEquals("foo_1", cache.get("foo"));
+                latch.countDown();
+            }
+        }).start();
+
+        Thread.sleep(100);
+        Assert.assertEquals("foo_0", cache.get("foo"));
+        latch.await();
     }
 }
