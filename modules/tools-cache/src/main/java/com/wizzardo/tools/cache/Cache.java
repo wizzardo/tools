@@ -2,6 +2,8 @@ package com.wizzardo.tools.cache;
 
 import com.wizzardo.tools.misc.Unchecked;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -19,6 +21,7 @@ public class Cache<K, V> {
     private Computable<? super K, ? extends V> computable;
     private volatile boolean removeOnException = true;
     private volatile boolean destroyed;
+    private Cache<K, V> outdated;
 
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
         this.ttl = ttlSec * 1000;
@@ -29,6 +32,15 @@ public class Cache<K, V> {
 
     public Cache(long ttlSec) {
         this(ttlSec, null);
+    }
+
+    public Cache<K, V> allowOutdated() {
+        return allowOutdated(ttl <= 1000 ? 1 : ttl / 2000);
+    }
+
+    public Cache<K, V> allowOutdated(long ttlSec) {
+        outdated = new Cache<K, V>(ttlSec);
+        return this;
     }
 
     public V get(K k) {
@@ -61,6 +73,7 @@ public class Cache<K, V> {
             return null;
         holder.setRemoved();
         onRemoveItem(holder.getKey(), holder.get());
+        putToOutdated(holder);
         return holder.get();
     }
 
@@ -76,8 +89,10 @@ public class Cache<K, V> {
                 h = timings.poll().getKey();
                 if (h.validUntil <= time) {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
-                    if (map.remove(h.getKey(), h))
-                        onRemoveItem(h.getKey(), h.get());
+                    if (map.remove(h.k, h)) {
+                        onRemoveItem(h.k, h.v);
+                        putToOutdated(h);
+                    }
                 }
             }
             if (entry != null)
@@ -85,6 +100,11 @@ public class Cache<K, V> {
         }
 
         return nextWakeUp;
+    }
+
+    private void putToOutdated(Holder<K, V> h) {
+        if (outdated != null)
+            outdated.put(h.k, h.v);
     }
 
     public void destroy() {
@@ -127,11 +147,18 @@ public class Cache<K, V> {
                     } else {
                         updateTimingCache(f);
                         onAddItem(f.getKey(), f.get());
+                        if (outdated != null)
+                            outdated.remove(key);
                     }
                 }
             }
         } else if (updateTTL) {
             updateTimingCache(f);
+        }
+        if (!f.done && outdated != null) {
+            V v = outdated.get(key);
+            if (v != null)
+                return v;
         }
         return f.get();
     }
