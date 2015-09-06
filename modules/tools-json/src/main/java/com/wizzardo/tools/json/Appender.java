@@ -31,17 +31,11 @@ abstract class Appender {
 
     public abstract void append(char s);
 
-    public void append(int s) {
-        append(String.valueOf(s));
-    }
+    public abstract void append(int s);
 
-    public void append(long s) {
-        append(String.valueOf(s));
-    }
+    public abstract void append(long s);
 
-    public void append(boolean s) {
-        append(String.valueOf(s));
-    }
+    public abstract void append(boolean s);
 
     public void append(float s) {
         append(String.valueOf(s));
