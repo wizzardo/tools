@@ -1234,54 +1234,83 @@ public class JsonTest {
         appender = Appender.create(new OutputStreamWriter(outputStream));
         Assert.assertEquals(appendData(appender), new String(outputStream.toByteArray()));
 
+        testException(Appender.create(new PipedOutputStream()), "Pipe not connected");
+        testException(Appender.create(new OutputStreamWriter(new PipedOutputStream())), "Pipe not connected");
+    }
+
+    private void testException(final Appender appender, final String message) {
         testException(new Runnable() {
             @Override
             public void run() {
-                Appender appender = Appender.create(new PipedOutputStream());
-                while (true)
-                    appender.append(' ');
-            }
-        }, IOException.class, "Pipe not connected");
-        testException(new Runnable() {
-            @Override
-            public void run() {
-                Appender appender = Appender.create(new PipedOutputStream());
-                while (true)
-                    appender.append("string");
-            }
-        }, IOException.class, "Pipe not connected");
-        testException(new Runnable() {
-            @Override
-            public void run() {
-                Appender appender = Appender.create(new PipedOutputStream());
-                while (true)
-                    appender.append("string", 0, 6);
-            }
-        }, IOException.class, "Pipe not connected");
-        testException(new Runnable() {
-            @Override
-            public void run() {
-                Appender appender = Appender.create(new PipedOutputStream());
-                while (true)
-                    appender.append("string_".toCharArray());
-            }
-        }, IOException.class, "Pipe not connected");
-        testException(new Runnable() {
-            @Override
-            public void run() {
-                Appender appender = Appender.create(new PipedOutputStream());
-                while (true)
-                    appender.append("string_".toCharArray(), 0, 6);
-            }
-        }, IOException.class, "Pipe not connected");
-        testException(new Runnable() {
-            @Override
-            public void run() {
-                Appender appender = Appender.create(new PipedOutputStream());
                 appender.append(' ');
                 appender.flush();
+                assert false;
             }
-        }, IOException.class, "Pipe not connected");
+        }, IOException.class, message);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                appender.append("string");
+                appender.flush();
+                assert false;
+            }
+        }, IOException.class, message);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                appender.append("string", 0, 6);
+                appender.flush();
+                assert false;
+            }
+        }, IOException.class, message);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                appender.append("string_".toCharArray());
+                appender.flush();
+                assert false;
+            }
+        }, IOException.class, message);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                appender.append("string_".toCharArray(), 0, 6);
+                appender.flush();
+                assert false;
+            }
+        }, IOException.class, message);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                appender.append(' ');
+                appender.flush();
+                assert false;
+            }
+        }, IOException.class, message);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                appender.append(1);
+                appender.flush();
+                assert false;
+            }
+        }, IOException.class, message);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                appender.append(1l);
+                appender.flush();
+                assert false;
+            }
+        }, IOException.class, message);
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                appender.append(true);
+                appender.flush();
+                assert false;
+            }
+        }, IOException.class, message);
     }
 
     private String appendData(Appender appender) {
@@ -1292,7 +1321,27 @@ public class JsonTest {
         appender.append("string_".toCharArray(), 3, 6);
         appender.flush();
 
-        return "string_ing_string_ing";
+        appender.append(' ');
+        appender.append(true);
+        appender.append('/');
+        appender.append(false);
+
+        appender.append(' ');
+        appender.append(1);
+        appender.append(' ');
+        appender.append(2l);
+        appender.append(' ');
+        appender.append(3d);
+        appender.append(' ');
+        appender.append(4f);
+
+        appender.append(' ');
+        appender.append((String) null);
+        appender.append('/');
+        appender.append((Object) null);
+
+        appender.flush();
+        return "string_ing_string_ing true/false 1 2 3.0 4.0 null/null";
     }
 
     static class CustomList extends ArrayList {
