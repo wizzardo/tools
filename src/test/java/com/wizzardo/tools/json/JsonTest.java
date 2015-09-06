@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PipedOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -1227,6 +1228,10 @@ public class JsonTest {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         appender = Appender.create(outputStream);
+        Assert.assertEquals(appendData(appender), new String(outputStream.toByteArray()));
+
+        outputStream.reset();
+        appender = Appender.create(new OutputStreamWriter(outputStream));
         Assert.assertEquals(appendData(appender), new String(outputStream.toByteArray()));
 
         testException(new Runnable() {
