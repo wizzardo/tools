@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 /**
  * Created by wizzardo on 30.03.15.
@@ -29,6 +30,69 @@ public class Utf8ToolsTest {
             for (char j = '\uDC00'; j < '\uE000'; j++) {
                 chars[1] = j;
                 Assert.assertArrayEquals("fails on " + (int) i + " " + (int) j, new String(chars).getBytes(utf8), UTF8.encode(chars));
+            }
+        }
+    }
+
+    @Test
+    public void decode() {
+        Charset charset = Charset.forName("UTF-8");
+        byte[] bytes;
+        char[] chars = new char[2];
+
+        bytes = new byte[1];
+        for (int i = 0; i <= 0x7F; i++) {
+            bytes[0] = (byte) i;
+            int r = UTF8.decode(bytes, 0, bytes.length, chars);
+            Assert.assertEquals(new String(bytes, charset), new String(chars, 0, r));
+        }
+
+        bytes = new byte[2];
+        for (int i = 0; i < 256; i++) {
+            bytes[0] = (byte) (i & 0x1f | 0xc0);
+            for (int j = 0; j < 256; j++) {
+                bytes[1] = (byte) (j & 0x7f | 0x80);
+                int r = UTF8.decode(bytes, 0, bytes.length, chars);
+                Assert.assertEquals(i + " " + j, new String(bytes, charset), new String(chars, 0, r));
+            }
+        }
+
+        bytes = new byte[3];
+        for (int i = 0; i < 256; i++) {
+            bytes[0] = (byte) (i & 0xef | 0xe0);
+            for (int j = 32; j < 64; j++) {
+                bytes[1] = (byte) (j & 0x7f | 0x80);
+                for (int k = 0; k < 64; k++) {
+                    bytes[2] = (byte) (k & 0x7f | 0x80);
+                    int r = UTF8.decode(bytes, 0, bytes.length, chars);
+                    String expected = new String(bytes, charset);
+                    if (expected.charAt(0) >= '\uD800' && expected.charAt(0) <= '\uDFFF')
+                        Assert.assertEquals('�', chars[0]);
+                    else
+                        Assert.assertEquals(i + " " + j + " " + k, expected, new String(chars, 0, r));
+                }
+            }
+        }
+
+        bytes = new byte[4];
+        for (int i = 0; i < 256; i++) {
+            bytes[0] = (byte) (i & 0xf7 | 0xf0);
+            for (int j = 16; j < 64; j++) {
+                bytes[1] = (byte) (j & 0x7f | 0x80);
+                for (int k = 0; k < 64; k++) {
+                    bytes[2] = (byte) (k & 0x7f | 0x80);
+                    for (int m = 0; m < 64; m++) {
+                        bytes[3] = (byte) (m & 0x7f | 0x80);
+                        int r = UTF8.decode(bytes, 0, bytes.length, chars);
+                        if (r == 1 && chars[0] == '�') {
+                            char[] c = new String(bytes, charset).toCharArray();
+                            for (char aC : c) {
+                                Assert.assertEquals('�', aC);
+                            }
+                        } else
+                            Assert.assertEquals(i + " " + j + " " + k + " " + m, new String(bytes, charset), new String(chars, 0, r));
+                    }
+                }
             }
         }
     }
