@@ -3,6 +3,7 @@ package com.wizzardo.tools.misc;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
@@ -95,5 +96,34 @@ public class Utf8ToolsTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void decode_continuous_1() throws UnsupportedEncodingException {
+        String s = "€";
+        char[] chars = new char[1];
+        byte[] bytes = s.getBytes("utf-8");
+
+        Assert.assertEquals(3, bytes.length);
+
+        int read;
+        UTF8.DecodeOffsets offsets = new UTF8.DecodeOffsets();
+
+        read = 1;
+        offsets = UTF8.decode(bytes, read, chars, offsets);
+        Assert.assertEquals(0, offsets.bytesOffset);
+        Assert.assertEquals(0, offsets.charsOffset);
+
+        read++;
+        offsets = UTF8.decode(bytes, read, chars, offsets);
+        Assert.assertEquals(0, offsets.bytesOffset);
+        Assert.assertEquals(0, offsets.charsOffset);
+
+        read++;
+        offsets = UTF8.decode(bytes, read, chars, offsets);
+        Assert.assertEquals(3, offsets.bytesOffset);
+        Assert.assertEquals(1, offsets.charsOffset);
+
+        Assert.assertEquals(s.charAt(0), chars[0]);
     }
 }
