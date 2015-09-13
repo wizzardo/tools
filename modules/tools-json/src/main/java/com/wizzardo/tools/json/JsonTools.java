@@ -140,7 +140,7 @@ public class JsonTools {
     /**
      * @return bytes array with UTF-8 json representation of the object
      */
-    public byte[] serializeToBytes(Object src) {
+    public static byte[] serializeToBytes(Object src) {
         Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
         try {
             ExceptionDrivenStringBuilder builder = holder.get();
