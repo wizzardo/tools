@@ -691,6 +691,68 @@ public class JsonTest {
     }
 
     @Test
+    public void serializeToWriter() {
+        Map data = new LinkedHashMap();
+        data.put(1, 1);
+        data.put("2", "2");
+        data.put("escaped", "esca\"ped");
+        data.put("array", new int[]{1, 2, 3});
+        data.put("list", Arrays.asList(1, 2, 3));
+        data.put("map", new HashMap() {{
+            put("foo", "bar");
+        }});
+        data.put("null", null);
+        data.put("integers", new Integer[]{1, 2, 3});
+        data.put("enum", SomeEnum.ONE);
+        data.put("date", new Date(1343723216000l));
+
+        String result = "{\"1\":1" +
+                ",\"2\":\"2\"" +
+                ",\"escaped\":\"esca\\\"ped\"" +
+                ",\"array\":[1,2,3]" +
+                ",\"list\":[1,2,3]" +
+                ",\"map\":{\"foo\":\"bar\"}" +
+                ",\"null\":null" +
+                ",\"integers\":[1,2,3]" +
+                ",\"enum\":\"ONE\"" +
+                ",\"date\":\"2012-07-31T08:26:56.000Z\"" +
+                "}";
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        JsonTools.serialize(data, new OutputStreamWriter(out));
+        Assert.assertEquals(result, new String(out.toByteArray()));
+    }
+
+    @Test
+    public void serializeToBytes() {
+        Map data = new LinkedHashMap();
+        data.put(1, 1);
+        data.put("2", "2");
+        data.put("escaped", "esca\"ped");
+        data.put("array", new int[]{1, 2, 3});
+        data.put("list", Arrays.asList(1, 2, 3));
+        data.put("map", new HashMap() {{
+            put("foo", "bar");
+        }});
+        data.put("null", null);
+        data.put("integers", new Integer[]{1, 2, 3});
+        data.put("enum", SomeEnum.ONE);
+        data.put("date", new Date(1343723216000l));
+
+        String result = "{\"1\":1" +
+                ",\"2\":\"2\"" +
+                ",\"escaped\":\"esca\\\"ped\"" +
+                ",\"array\":[1,2,3]" +
+                ",\"list\":[1,2,3]" +
+                ",\"map\":{\"foo\":\"bar\"}" +
+                ",\"null\":null" +
+                ",\"integers\":[1,2,3]" +
+                ",\"enum\":\"ONE\"" +
+                ",\"date\":\"2012-07-31T08:26:56.000Z\"" +
+                "}";
+        Assert.assertEquals(result, new String(JsonTools.serializeToBytes(data)));
+    }
+
+    @Test
     public void testJsonItem() {
         Assert.assertEquals(1, (int) JsonTools.parse("{key:1}").asJsonObject().get("key").asInteger(0));
         Assert.assertEquals(1l, (long) JsonTools.parse("{key:1}").asJsonObject().get("key").asLong(0l));
