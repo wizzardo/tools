@@ -2,9 +2,8 @@ package com.wizzardo.tools.collections;
 
 import com.wizzardo.tools.collections.Range;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import javax.swing.*;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -16,6 +15,12 @@ public class CollectionTools {
     public static <T> void each(Iterable<T> c, Closure<Void, ? super T> closure) {
         for (T t : c) {
             closure.execute(t);
+        }
+    }
+
+    public static <K, V> void each(Map<K, V> c, Closure2<Void, ? super K, ? super V> closure) {
+        for (Map.Entry<K, V> e : c.entrySet()) {
+            closure.execute(e.getKey(), e.getValue());
         }
     }
 
@@ -135,6 +140,20 @@ public class CollectionTools {
             sb.append(t);
         }
         return sb.toString();
+    }
+
+    public static <K, V, T> Map<K, List<V>> group(Iterable<T> c, Closure<K, ? super T> toKey, Closure<V, ? super T> toValue) {
+        HashMap<K, List<V>> map = new HashMap<K, List<V>>();
+        for (T t : c) {
+            K key = toKey.execute(t);
+            List<V> list = map.get(key);
+            if (list == null) {
+                list = new ArrayList<V>();
+                map.put(key, list);
+            }
+            list.add(toValue.execute(t));
+        }
+        return map;
     }
 
     public static interface Closure<R, T> {
