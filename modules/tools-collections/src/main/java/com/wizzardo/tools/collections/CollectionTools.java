@@ -123,6 +123,16 @@ public class CollectionTools {
         return null;
     }
 
+    public static <T, C extends Iterable<T>> C removeAll(C c, Closure<Boolean, ? super T> closure) {
+        Iterator<T> iterator = c.iterator();
+        while (iterator.hasNext()) {
+            T t = iterator.next();
+            if (closure.execute(t))
+                iterator.remove();
+        }
+        return c;
+    }
+
     public static <T> boolean every(Iterable<T> c, Closure<Boolean, ? super T> closure) {
         boolean b = true;
         for (T t : c) {
