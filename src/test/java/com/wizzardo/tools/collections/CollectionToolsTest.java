@@ -71,6 +71,61 @@ public class CollectionToolsTest {
     }
 
     @Test
+    public void grep() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+        List<Integer> result = CollectionTools.grep(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it % 2 == 0;
+            }
+        });
+
+        Assert.assertEquals(1, result.size());
+        Assert.assertNotSame(list, result);
+        Assert.assertEquals((Integer) 2, result.get(0));
+    }
+
+    @Test
+    public void findAll() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+        List<Integer> result = CollectionTools.findAll(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it % 2 == 0;
+            }
+        });
+
+        Assert.assertEquals(1, result.size());
+        Assert.assertNotSame(list, result);
+        Assert.assertEquals((Integer) 2, result.get(0));
+    }
+
+    @Test
+    public void find() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+        Integer result = CollectionTools.find(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it % 2 == 0;
+            }
+        });
+
+        Assert.assertEquals((Integer) 2, result);
+    }
+
+    @Test
     public void group() {
         List<Integer> list = new ArrayList<Integer>() {{
             add(1);
