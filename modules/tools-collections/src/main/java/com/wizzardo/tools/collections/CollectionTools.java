@@ -79,7 +79,7 @@ public class CollectionTools {
     public static <T> List<T> grep(Iterable<T> c, Pattern p) {
         List<T> l = new ArrayList<T>();
         for (T t : c) {
-            if (t.toString().matches(p.pattern()))
+            if (p.matcher(String.valueOf(t)).matches())
                 l.add(t);
         }
         return l;
