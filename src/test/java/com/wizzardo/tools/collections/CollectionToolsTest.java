@@ -126,6 +126,47 @@ public class CollectionToolsTest {
     }
 
     @Test
+    public void remove() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+        Integer result = CollectionTools.remove(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it % 2 == 0;
+            }
+        });
+
+        Assert.assertEquals((Integer) 2, result);
+        Assert.assertEquals(2, list.size());
+        Assert.assertEquals((Integer) 1, list.get(0));
+        Assert.assertEquals((Integer) 3, list.get(1));
+    }
+
+
+    @Test
+    public void removeAll() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+        List<Integer> result = CollectionTools.removeAll(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it % 2 == 0;
+            }
+        });
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertSame(list, result);
+        Assert.assertEquals((Integer) 1, list.get(0));
+        Assert.assertEquals((Integer) 3, list.get(1));
+    }
+
+    @Test
     public void group() {
         List<Integer> list = new ArrayList<Integer>() {{
             add(1);
