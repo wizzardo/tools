@@ -145,7 +145,6 @@ public class CollectionToolsTest {
         Assert.assertEquals((Integer) 3, list.get(1));
     }
 
-
     @Test
     public void removeAll() {
         List<Integer> list = new ArrayList<Integer>() {{
@@ -164,6 +163,54 @@ public class CollectionToolsTest {
         Assert.assertSame(list, result);
         Assert.assertEquals((Integer) 1, list.get(0));
         Assert.assertEquals((Integer) 3, list.get(1));
+    }
+
+    @Test
+    public void every() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+        boolean result = CollectionTools.every(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it > 0;
+            }
+        });
+        Assert.assertEquals(true, result);
+
+        result = CollectionTools.every(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it % 2 == 0;
+            }
+        });
+        Assert.assertEquals(false, result);
+    }
+
+    @Test
+    public void any() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+        boolean result = CollectionTools.any(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it % 2 == 0;
+            }
+        });
+        Assert.assertEquals(true, result);
+
+        result = CollectionTools.every(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it > 5;
+            }
+        });
+        Assert.assertEquals(false, result);
     }
 
     @Test
