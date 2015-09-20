@@ -214,6 +214,17 @@ public class CollectionToolsTest {
     }
 
     @Test
+    public void join() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+        String result = CollectionTools.join(list, ", ");
+        Assert.assertEquals("1, 2, 3", result);
+    }
+
+    @Test
     public void group() {
         List<Integer> list = new ArrayList<Integer>() {{
             add(1);
