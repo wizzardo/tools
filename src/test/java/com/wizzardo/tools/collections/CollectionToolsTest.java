@@ -4,9 +4,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 /**
  * Created by wizzardo on 14.09.15.
@@ -83,6 +85,52 @@ public class CollectionToolsTest {
                 return it % 2 == 0;
             }
         });
+
+        Assert.assertEquals(1, result.size());
+        Assert.assertNotSame(list, result);
+        Assert.assertEquals((Integer) 2, result.get(0));
+    }
+
+    @Test
+    public void grep_pattern() {
+        List<String> list = new ArrayList<String>() {{
+            add("1");
+            add("2");
+            add("3");
+        }};
+        List<String> result = CollectionTools.grep(list, Pattern.compile("2"));
+
+        Assert.assertEquals(1, result.size());
+        Assert.assertNotSame(list, result);
+        Assert.assertEquals("2", result.get(0));
+    }
+
+    @Test
+    public void grep_class() {
+        List<Number> list = new ArrayList<Number>() {{
+            add(1);
+            add(2l);
+            add(3d);
+        }};
+        List<Number> result = CollectionTools.grep(list, Long.class);
+
+        Assert.assertEquals(1, result.size());
+        Assert.assertNotSame(list, result);
+        Assert.assertEquals(2l, result.get(0));
+    }
+
+    @Test
+    public void grep_collection() {
+        List<Integer> list = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+
+
+        List<Integer> result = CollectionTools.grep(list, new HashSet<Integer>() {{
+            add(2);
+        }});
 
         Assert.assertEquals(1, result.size());
         Assert.assertNotSame(list, result);
