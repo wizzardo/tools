@@ -3,10 +3,7 @@ package com.wizzardo.tools.collections;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -31,6 +28,20 @@ public class CollectionToolsTest {
             }
         });
         Assert.assertEquals(6, counter.get());
+
+        Map<Integer, Integer> map = new HashMap<Integer, Integer>() {{
+            put(1, 2);
+            put(2, 3);
+        }};
+        counter.set(0);
+        CollectionTools.each(map, new CollectionTools.Closure2<Void, Integer, Integer>() {
+            @Override
+            public Void execute(Integer key, Integer value) {
+                counter.addAndGet(key * value);
+                return null;
+            }
+        });
+        Assert.assertEquals(8, counter.get());
     }
 
     @Test
