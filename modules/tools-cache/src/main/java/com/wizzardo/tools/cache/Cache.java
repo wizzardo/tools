@@ -2,8 +2,6 @@ package com.wizzardo.tools.cache;
 
 import com.wizzardo.tools.misc.Unchecked;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -16,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Cache<K, V> {
 
     private final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
-    private final Queue<TimingsHolder> timings = new ConcurrentLinkedQueue<TimingsHolder>();
+    private final Queue<TimingsHolder<K, V>> timings = new ConcurrentLinkedQueue<TimingsHolder<K, V>>();
     private long ttl;
     private Computable<? super K, ? extends V> computable;
     private volatile boolean removeOnException = true;
@@ -26,7 +24,7 @@ public class Cache<K, V> {
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
         this.ttl = ttlSec * 1000;
         this.computable = computable;
-        timings.add(new TimingsHolder(ttl));
+        timings.add(new TimingsHolder<K, V>(ttl));
         CacheCleaner.addCache(this);
     }
 
@@ -78,14 +76,14 @@ public class Cache<K, V> {
     }
 
     long refresh(long time) {
-        Map.Entry<Holder<K, V>, Long> entry;
+        TimingEntry<Holder<K, V>> entry;
         Holder<K, V> h;
         long nextWakeUp = Long.MAX_VALUE;
 
-        for (TimingsHolder timingsHolder : timings) {
-            Queue<Entry<Holder<K, V>, Long>> timings = timingsHolder.timings;
+        for (TimingsHolder<K, V> timingsHolder : timings) {
+            Queue<TimingEntry<Holder<K, V>>> timings = timingsHolder.timings;
 
-            while ((entry = timings.peek()) != null && entry.getValue().compareTo(time) <= 0) {
+            while ((entry = timings.peek()) != null && entry.timing <= time) {
                 h = timings.poll().getKey();
                 if (h.validUntil <= time) {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
@@ -96,7 +94,7 @@ public class Cache<K, V> {
                 }
             }
             if (entry != null)
-                nextWakeUp = Math.min(nextWakeUp, entry.getValue());
+                nextWakeUp = Math.min(nextWakeUp, entry.timing);
         }
 
         return nextWakeUp;
@@ -197,18 +195,18 @@ public class Cache<K, V> {
         return false;
     }
 
-    private TimingsHolder findTimingsHolder(long ttl) {
-        for (TimingsHolder holder : timings)
+    private TimingsHolder<K, V> findTimingsHolder(long ttl) {
+        for (TimingsHolder<K, V> holder : timings)
             if (holder.ttl == ttl)
                 return holder;
 
-        TimingsHolder holder = new TimingsHolder(ttl);
+        TimingsHolder<K, V> holder = new TimingsHolder<K, V>(ttl);
         timings.add(holder);
         return holder;
     }
 
     private void updateTimingCache(final Holder<K, V> key) {
-        TimingsHolder timingsHolder = key.getTimingsHolder();
+        TimingsHolder<K, V> timingsHolder = key.getTimingsHolder();
         if (timingsHolder.ttl <= 0)
             return;
 
@@ -216,23 +214,7 @@ public class Cache<K, V> {
         key.setValidUntil(timing);
 
         CacheCleaner.updateWakeUp(timing);
-
-        timingsHolder.timings.add(new Entry<Holder<K, V>, Long>() {
-            @Override
-            public Holder<K, V> getKey() {
-                return key;
-            }
-
-            @Override
-            public Long getValue() {
-                return timing;
-            }
-
-            @Override
-            public Long setValue(Long value) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
+        timingsHolder.timings.add(new TimingEntry<Holder<K, V>>(key, timing));
     }
 
     public int size() {
@@ -261,9 +243,9 @@ public class Cache<K, V> {
 
     public void removeOldest() {
         Holder<K, V> holder = null;
-        for (TimingsHolder th : timings) {
-            for (Entry<Holder<K, V>, Long> e : th.timings) {
-                if (e.getValue() != e.getKey().validUntil)
+        for (TimingsHolder<K, V> th : timings) {
+            for (TimingEntry<Holder<K, V>> e : th.timings) {
+                if (e.timing != e.getKey().validUntil)
                     continue;
 
                 if (!e.getKey().isRemoved()) {
@@ -278,12 +260,26 @@ public class Cache<K, V> {
             remove(holder.getKey());
     }
 
-    class TimingsHolder {
-        Queue<Entry<Holder<K, V>, Long>> timings = new ConcurrentLinkedQueue<Entry<Holder<K, V>, Long>>();
+    static class TimingsHolder<K, V> {
+        Queue<TimingEntry<Holder<K, V>>> timings = new ConcurrentLinkedQueue<TimingEntry<Holder<K, V>>>();
         long ttl;
 
         private TimingsHolder(long ttl) {
             this.ttl = ttl;
+        }
+    }
+
+    static class TimingEntry<K> {
+        private final K k;
+        private final long timing;
+
+        public TimingEntry(K k, long timing) {
+            this.k = k;
+            this.timing = timing;
+        }
+
+        public K getKey() {
+            return k;
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.wizzardo.tools.cache;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -11,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class CacheCleaner extends Thread {
 
-    private Set<Cache> caches = Collections.newSetFromMap(new ConcurrentHashMap<Cache, Boolean>());
+    private Set<WeakReference<Cache>> caches = Collections.newSetFromMap(new ConcurrentHashMap<WeakReference<Cache>, Boolean>());
     private volatile long wakeup = -1;
     private volatile boolean sleeping = false;
 
@@ -28,7 +29,7 @@ class CacheCleaner extends Thread {
     }
 
     static void addCache(Cache cache) {
-        instance.caches.add(cache);
+        instance.caches.add(new WeakReference<Cache>(cache));
     }
 
     static int size() {
@@ -63,13 +64,13 @@ class CacheCleaner extends Thread {
 
             Long time = System.currentTimeMillis();
 
-            Iterator<Cache> iterator = caches.iterator();
+            Iterator<WeakReference<Cache>> iterator = caches.iterator();
             Long wakeup = time + (24 * 3600 * 1000);
 
             while (iterator.hasNext()) {
-                Cache<?, ?> cache = iterator.next();
+                Cache<?, ?> cache = iterator.next().get();
 
-                if (cache.isDestroyed()) {
+                if (cache == null || cache.isDestroyed()) {
                     iterator.remove();
                     continue;
                 }

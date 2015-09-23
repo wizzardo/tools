@@ -248,6 +248,7 @@ public class CacheTest {
 
     @Test
     public void destroy_test() throws InterruptedException {
+        System.gc();
         Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
@@ -258,7 +259,12 @@ public class CacheTest {
         cache.get("foo");
 
         Assert.assertEquals(1, cache.size());
+
+        Thread.sleep(1020);
+        Assert.assertEquals(0, cache.size());
         Assert.assertEquals(1, CacheCleaner.size());
+        cache.get("foo");
+        Assert.assertEquals(1, cache.size());
 
         cache.destroy();
         Assert.assertEquals(0, cache.size());
