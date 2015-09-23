@@ -31,6 +31,10 @@ class CacheCleaner extends Thread {
         instance.caches.add(cache);
     }
 
+    static int size() {
+        return instance.caches.size();
+    }
+
     static void updateWakeUp(long wakeup) {
 //        System.out.println("updateWakeUp");
         if (instance.wakeup < wakeup && instance.wakeup > 0)

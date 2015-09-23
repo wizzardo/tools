@@ -245,4 +245,28 @@ public class CacheTest {
         Assert.assertEquals("foo_0", cache.get("foo"));
         latch.await();
     }
+
+    @Test
+    public void destroy_test() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        });
+
+        cache.get("foo");
+
+        Assert.assertEquals(1, cache.size());
+        Assert.assertEquals(1, CacheCleaner.size());
+
+        cache.destroy();
+        Assert.assertEquals(0, cache.size());
+        Assert.assertEquals(true, cache.isDestroyed());
+        Assert.assertEquals(1, CacheCleaner.size());
+
+        Thread.sleep(1020);
+        Assert.assertEquals(0, CacheCleaner.size());
+
+    }
 }
