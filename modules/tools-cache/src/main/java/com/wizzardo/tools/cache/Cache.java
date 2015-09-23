@@ -108,6 +108,8 @@ public class Cache<K, V> {
     public void destroy() {
         destroyed = true;
         clear();
+        if (outdated != null)
+            outdated.destroy();
     }
 
     public void clear() {
