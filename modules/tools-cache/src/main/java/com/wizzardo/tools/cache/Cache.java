@@ -84,10 +84,10 @@ public class Cache<K, V> {
             Queue<TimingEntry<Holder<K, V>>> timings = timingsHolder.timings;
 
             while ((entry = timings.peek()) != null) {
-                if (entry.k.isRemoved()) {
+                if (entry.value.isRemoved() || entry.value.validUntil != entry.timing) {
                     timings.poll();
                 } else if (entry.timing <= time) {
-                    h = timings.poll().getKey();
+                    h = timings.poll().value;
                     if (h.validUntil <= time) {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
                         if (map.remove(h.k, h)) {
@@ -217,7 +217,7 @@ public class Cache<K, V> {
         if (timingsHolder.ttl <= 0)
             return;
 
-        final Long timing = timingsHolder.ttl + System.currentTimeMillis();
+        long timing = timingsHolder.ttl + System.currentTimeMillis();
         key.setValidUntil(timing);
 
         CacheCleaner.updateWakeUp(timing);
@@ -252,12 +252,12 @@ public class Cache<K, V> {
         Holder<K, V> holder = null;
         for (TimingsHolder<K, V> th : timings) {
             for (TimingEntry<Holder<K, V>> e : th.timings) {
-                if (e.timing != e.getKey().validUntil)
+                if (e.timing != e.value.validUntil)
                     continue;
 
-                if (!e.getKey().isRemoved()) {
-                    if (holder == null || e.getKey().validUntil < holder.validUntil)
-                        holder = e.getKey();
+                if (!e.value.isRemoved()) {
+                    if (holder == null || e.value.validUntil < holder.validUntil)
+                        holder = e.value;
 
                     break;
                 }
@@ -277,16 +277,12 @@ public class Cache<K, V> {
     }
 
     static class TimingEntry<K> {
-        private final K k;
-        private final long timing;
+        final K value;
+        final long timing;
 
-        public TimingEntry(K k, long timing) {
-            this.k = k;
+        public TimingEntry(K value, long timing) {
+            this.value = value;
             this.timing = timing;
-        }
-
-        public K getKey() {
-            return k;
         }
     }
 }
