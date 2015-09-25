@@ -83,15 +83,20 @@ public class Cache<K, V> {
         for (TimingsHolder<K, V> timingsHolder : timings) {
             Queue<TimingEntry<Holder<K, V>>> timings = timingsHolder.timings;
 
-            while ((entry = timings.peek()) != null && entry.timing <= time) {
-                h = timings.poll().getKey();
-                if (h.validUntil <= time) {
+            while ((entry = timings.peek()) != null) {
+                if (entry.k.isRemoved()) {
+                    timings.poll();
+                } else if (entry.timing <= time) {
+                    h = timings.poll().getKey();
+                    if (h.validUntil <= time) {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
-                    if (map.remove(h.k, h)) {
-                        onRemoveItem(h.k, h.v);
-                        putToOutdated(h);
+                        if (map.remove(h.k, h)) {
+                            onRemoveItem(h.k, h.v);
+                            putToOutdated(h);
+                        }
                     }
-                }
+                } else
+                    break;
             }
             if (entry != null)
                 nextWakeUp = Math.min(nextWakeUp, entry.timing);
