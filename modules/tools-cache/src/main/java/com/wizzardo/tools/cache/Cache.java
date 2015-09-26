@@ -2,8 +2,8 @@ package com.wizzardo.tools.cache;
 
 import com.wizzardo.tools.misc.Unchecked;
 
-import java.util.Map;
-import java.util.Map.Entry;
+import java.lang.ref.WeakReference;
+import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -75,7 +75,11 @@ public class Cache<K, V> {
         return holder.get();
     }
 
-    long refresh(long time) {
+    public void refresh() {
+        refresh(System.currentTimeMillis());
+    }
+
+    synchronized long refresh(long time) {
         TimingEntry<Holder<K, V>> entry;
         Holder<K, V> h;
         long nextWakeUp = Long.MAX_VALUE;
@@ -84,11 +88,12 @@ public class Cache<K, V> {
             Queue<TimingEntry<Holder<K, V>>> timings = timingsHolder.timings;
 
             while ((entry = timings.peek()) != null) {
-                if (entry.value.isRemoved() || entry.value.validUntil != entry.timing) {
+                h = entry.value.get();
+                if (h == null || h.isRemoved() || h.validUntil != entry.timing) {
                     timings.poll();
                 } else if (entry.timing <= time) {
-                    h = timings.poll().value;
-                    if (h.validUntil <= time) {
+                    h = timings.poll().value.get();
+                    if (h != null && h.validUntil <= time) {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
                         if (map.remove(h.k, h)) {
                             onRemoveItem(h.k, h.v);
@@ -251,16 +256,19 @@ public class Cache<K, V> {
     public void removeOldest() {
         Holder<K, V> holder = null;
         for (TimingsHolder<K, V> th : timings) {
-            for (TimingEntry<Holder<K, V>> e : th.timings) {
-                if (e.timing != e.value.validUntil)
+            Iterator<TimingEntry<Holder<K, V>>> iterator = th.timings.iterator();
+            while (iterator.hasNext()) {
+                TimingEntry<Holder<K, V>> next = iterator.next();
+                Holder<K, V> temp = next.value.get();
+                if (temp == null || temp.isRemoved() || next.timing != temp.validUntil) {
+                    iterator.remove();
                     continue;
-
-                if (!e.value.isRemoved()) {
-                    if (holder == null || e.value.validUntil < holder.validUntil)
-                        holder = e.value;
-
-                    break;
                 }
+
+                if (holder == null || temp.validUntil < holder.validUntil)
+                    holder = temp;
+
+                break;
             }
         }
         if (holder != null)
@@ -277,11 +285,11 @@ public class Cache<K, V> {
     }
 
     static class TimingEntry<K> {
-        final K value;
+        final WeakReference<K> value;
         final long timing;
 
         public TimingEntry(K value, long timing) {
-            this.value = value;
+            this.value = new WeakReference<K>(value);
             this.timing = timing;
         }
     }
