@@ -78,6 +78,54 @@ public class UTF8 {
         return l;
     }
 
+    public static void encode(char[] chars, int off, int length, Supplier<byte[]> bytesSupplier, BytesConsumer bytesConsumer) {
+        int limit = off + length;
+        while (off < limit) {
+            byte[] bytes = bytesSupplier.supply();
+            int ll = bytes.length - 4;
+            if (ll < 0)
+                throw new IllegalArgumentException("bytesSupplier.supply().length must be >= 4");
+
+            int l = 0;
+            int ch;
+            while (off < limit && l <= ll) {
+                if ((ch = chars[off++]) < 128)
+                    bytes[l++] = (byte) ch;
+                else {
+                    off--;
+                    break;
+                }
+            }
+
+            while (off < limit && l <= ll) {
+                int c = chars[off++];
+                if (c < 128) {
+                    bytes[l++] = (byte) c;
+                } else if (c < 2048) {
+                    bytes[l++] = (byte) (192 | c >> 6);
+                    bytes[l++] = (byte) (128 | c & 63);
+                } else if (c >= '\uD800' && c < '\uE000') {//surrogate
+                    int r = off < limit ? parseSurrogate(c, chars[off]) : -1;
+                    if (r < 0) {
+                        bytes[l++] = '?';
+                    } else {
+                        bytes[l++] = (byte) (240 | r >> 18);
+                        bytes[l++] = (byte) (128 | r >> 12 & 63);
+                        bytes[l++] = (byte) (128 | r >> 6 & 63);
+                        bytes[l++] = (byte) (128 | r & 63);
+                        ++off;
+                    }
+                } else {
+                    bytes[l++] = (byte) (224 | c >> 12);
+                    bytes[l++] = (byte) (128 | c >> 6 & 63);
+                    bytes[l++] = (byte) (128 | c & 63);
+                }
+            }
+
+            bytesConsumer.consume(bytes, 0, l);
+        }
+    }
+
     public static int encode(char ch, byte[] bytes, int offset) {
         if (ch < 128) {
             bytes[offset++] = (byte) ch;
@@ -380,5 +428,9 @@ public class UTF8 {
 
     public static char lowSurrogate(int codePoint) {
         return (char) ((codePoint & 0x3ff) + '\uDC00');
+    }
+
+    public interface BytesConsumer {
+        void consume(byte[] buffer, int offset, int length);
     }
 }
