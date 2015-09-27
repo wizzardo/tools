@@ -3,6 +3,7 @@ package com.wizzardo.tools.json;
 import com.wizzardo.tools.misc.Consumer;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.Supplier;
+import com.wizzardo.tools.misc.UTF8;
 import com.wizzardo.tools.misc.pool.*;
 import com.wizzardo.tools.reflection.StringReflection;
 
@@ -145,7 +146,18 @@ public class JsonTools {
         try {
             ExceptionDrivenStringBuilder builder = holder.get();
             Binder.toJSON(src, Appender.create(builder));
-            return builder.toUtf8Bytes();
+            return builder.toBytes();
+        } finally {
+            holder.close();
+        }
+    }
+
+    public static void serialize(Object src, Supplier<byte[]> bytesSupplier, UTF8.BytesConsumer bytesConsumer) {
+        Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
+        try {
+            ExceptionDrivenStringBuilder builder = holder.get();
+            Binder.toJSON(src, Appender.create(builder));
+            builder.toBytes(bytesSupplier, bytesConsumer);
         } finally {
             holder.close();
         }

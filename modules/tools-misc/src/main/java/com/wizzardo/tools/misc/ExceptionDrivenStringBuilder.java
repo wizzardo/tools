@@ -152,11 +152,18 @@ public class ExceptionDrivenStringBuilder implements Appendable {
         return length;
     }
 
-    public byte[] toUtf8Bytes() {
+    /**
+     * @return byte array with UTF-8 encoded string
+     **/
+    public byte[] toBytes() {
         if (utf8Buffer == null)
             utf8Buffer = new UTF8();
 
         return utf8Buffer.toBytes(buffer, 0, length);
+    }
+
+    public void toBytes(Supplier<byte[]> bytesSupplier, UTF8.BytesConsumer bytesConsumer) {
+        UTF8.encode(buffer, 0, length, bytesSupplier, bytesConsumer);
     }
 
     public ExceptionDrivenStringBuilder append(Consumer<ExceptionDrivenStringBuilder> consumer) {
