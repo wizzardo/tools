@@ -3,6 +3,7 @@ package com.wizzardo.tools.misc;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -125,5 +126,27 @@ public class Utf8ToolsTest {
         Assert.assertEquals(1, offsets.charsOffset);
 
         Assert.assertEquals(s.charAt(0), chars[0]);
+    }
+
+    @Test
+    public void test_supplier_consumer() throws UnsupportedEncodingException {
+        String s = "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€";
+        char[] chars = s.toCharArray();
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        UTF8.encode(chars, 0, chars.length, new Supplier<byte[]>() {
+            @Override
+            public byte[] supply() {
+                return new byte[4];
+            }
+        }, new UTF8.BytesConsumer() {
+            @Override
+            public void consume(byte[] buffer, int offset, int length) {
+                out.write(buffer, offset, length);
+            }
+        });
+
+        Assert.assertArrayEquals(s.getBytes("utf-8"), out.toByteArray());
     }
 }
