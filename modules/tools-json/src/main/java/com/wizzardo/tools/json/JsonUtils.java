@@ -138,6 +138,117 @@ class JsonUtils {
         return i;
     }
 
+    static int parseNumber(JsonBinder binder, byte[] s, int from, int to, NumberParsingContext context) {
+        if (context.done)
+            throw new IllegalArgumentException("already parsed");
+
+        boolean minus = s[from] == '-' || context.negative;
+        int i = from;
+        if (minus) {
+            if (context.started)
+                throw new NumberFormatException();
+
+            context.negative = true;
+            i++;
+        }
+        context.started = true;
+
+
+        boolean floatValue = context.floatValue;
+        long l = context.l;
+        int ch = 0;
+        if (!floatValue)
+            while (i < to) {
+                ch = s[i];
+                if (ch >= '0' && ch <= '9') {
+                    l = l * 10 + (ch - '0');
+                } else if (ch == '.') {
+                    context.floatValue = floatValue = true;
+                    context.big = l;
+                    context.l = l;
+                    break;
+                } else
+                    break;
+                i++;
+            }
+
+        if (binder == null)
+            return i;
+
+        double d = 0;
+        if (floatValue) {
+            long number = context.big;
+            i++;
+            int fractional = context.fractional;
+
+            while (i < to) {
+                ch = s[i];
+                if (ch >= '0' && ch <= '9')
+                    number = number * 10 + (ch - '0');
+                else
+                    break;
+                i++;
+                fractional++;
+            }
+            context.fractional = fractional;
+            context.big = number;
+
+            context.done = ch == ',' || ch == ']' || ch == '&';
+//            if (ch != '"' && ch != '\'' && ch != '}' && ch != ']' && ch != ',')
+//                throw new NumberFormatException("can't parse '" + new String(s, from, i - from + 1) + "' as number");
+
+
+            if (minus)
+                d = -((double) number) / fractionalShift[fractional];
+            else
+                d = ((double) number) / fractionalShift[fractional];
+        } else
+            context.done = ch == ',' || ch == ']' || ch == '&';
+
+        if (!context.done)
+            return i;
+
+        if (minus)
+            l = -l;
+
+        if (ch == 'e' || ch == 'E') {
+            if (!floatValue) {
+                d = l;
+                floatValue = true;
+            }
+
+            i++;
+            int degree = 0;
+            minus = s[i] == '-';
+            if (minus)
+                i++;
+
+            while (i < to) {
+                ch = s[i];
+                if (ch >= '0' && ch <= '9')
+                    degree = degree * 10 + (ch - '0');
+                else
+                    break;
+                i++;
+            }
+
+            d = (minus) ? d / Math.pow(10, degree) : d * Math.pow(10, degree);
+        }
+
+        JsonFieldSetter setter = binder.getFieldSetter();
+        if (setter != null) {
+            setNumber(setter, binder.getObject(), l, d, floatValue);
+            return i;
+        }
+
+        if (!floatValue)
+            binder.add(l);
+        else
+            binder.add(d);
+
+        return i;
+    }
+
     private static void setNumber(FieldReflection setter, Object object, long l, double d, boolean floatValue) {
         switch (setter.getType()) {
             case INTEGER: {
