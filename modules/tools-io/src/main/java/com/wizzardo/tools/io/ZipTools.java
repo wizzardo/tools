@@ -17,12 +17,20 @@ public class ZipTools {
         private int method = ZipOutputStream.DEFLATED;
 
         public ZipBuilder append(String name, byte[] bytes) {
-            entries.add(new BytesEntry(name, bytes));
-            return this;
+            return append(new BytesEntry(name, bytes));
         }
 
         public ZipBuilder append(File f) {
-            entries.add(new FileEntry(f));
+            return append(new FileEntry(f));
+        }
+
+
+        public ZipBuilder append(String name, InputStream in) {
+            return append(new StreamEntry(name, in));
+        }
+
+        public ZipBuilder append(ZipBuilderEntry entry) {
+            entries.add(entry);
             return this;
         }
 
@@ -58,8 +66,8 @@ public class ZipTools {
         }
     }
 
-    private static interface ZipBuilderEntry {
-        public void write(ZipOutputStream out) throws IOException;
+    public interface ZipBuilderEntry {
+        void write(ZipOutputStream out) throws IOException;
     }
 
     private static class BytesEntry implements ZipBuilderEntry {
@@ -77,6 +85,24 @@ public class ZipTools {
             entry.setMethod(ZipEntry.DEFLATED);
             out.putNextEntry(entry);
             out.write(bytes);
+        }
+    }
+
+    private static class StreamEntry implements ZipBuilderEntry {
+        private String name;
+        private InputStream stream;
+
+        private StreamEntry(String name, InputStream stream) {
+            this.name = name;
+            this.stream = stream;
+        }
+
+        @Override
+        public void write(ZipOutputStream out) throws IOException {
+            ZipEntry entry = new ZipEntry(name);
+            entry.setMethod(ZipEntry.DEFLATED);
+            out.putNextEntry(entry);
+            IOTools.copy(stream, out);
         }
     }
 
