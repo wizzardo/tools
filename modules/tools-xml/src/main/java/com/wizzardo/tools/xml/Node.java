@@ -362,10 +362,10 @@ public class Node {
         StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding='UTF-8' ?>");
         if (prettyPrint)
             sb.append("\n");
-        return toXML("", sb, prettyPrint);
+        return toXML("", sb, prettyPrint).toString();
     }
 
-    private String toXML(String offset, StringBuilder sb, boolean prettyPrint) {
+    protected StringBuilder toXML(String offset, StringBuilder sb, boolean prettyPrint) {
         if (prettyPrint)
             sb.append(offset);
 
@@ -387,7 +387,7 @@ public class Node {
                     sb.append("\n");
 
                 for (Node child : children)
-                    child.toXML(offset + "\t", sb, prettyPrint);
+                    child.toXML(prettyPrint ? offset + "\t" : "", sb, prettyPrint);
 
                 if (prettyPrint)
                     sb.append(offset);
@@ -398,7 +398,7 @@ public class Node {
             if (prettyPrint)
                 sb.append("\n");
         }
-        return sb.toString();
+        return sb;
     }
 
     private String escape(String s) {
