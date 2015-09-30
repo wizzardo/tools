@@ -52,6 +52,31 @@ public class Request extends RequestArguments<Request> {
         return execute(0);
     }
 
+    public Response put() throws IOException {
+        setMethod(ConnectionMethod.PUT);
+        return execute(0);
+    }
+
+    public Response head() throws IOException {
+        setMethod(ConnectionMethod.HEAD);
+        return execute(0);
+    }
+
+    public Response delete() throws IOException {
+        setMethod(ConnectionMethod.DELETE);
+        return execute(0);
+    }
+
+    public Response options() throws IOException {
+        setMethod(ConnectionMethod.OPTIONS);
+        return execute(0);
+    }
+
+    public Response trace() throws IOException {
+        setMethod(ConnectionMethod.TRACE);
+        return execute(0);
+    }
+
     protected Request setSession(HttpSession session) {
         this.session = session;
         return this;
