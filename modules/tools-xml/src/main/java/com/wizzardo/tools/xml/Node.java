@@ -124,6 +124,16 @@ public class Node {
         return this;
     }
 
+    public Node addAll(List<Node> nodes) {
+        if (children == null)
+            children = new ArrayList<Node>(nodes.size());
+        for (Node node : nodes) {
+            children.add(node);
+            node.parent = this;
+        }
+        return this;
+    }
+
     public Node addText(String text) {
         return add(new TextNode(text));
     }
@@ -145,7 +155,7 @@ public class Node {
         return toString("", new StringBuilder());
     }
 
-    private String toString(String offset, StringBuilder sb) {
+    protected String toString(String offset, StringBuilder sb) {
         sb.append(offset);
         sb.append(name);
         if (attributes != null) {
