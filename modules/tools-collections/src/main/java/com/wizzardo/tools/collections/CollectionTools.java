@@ -178,6 +178,12 @@ public class CollectionTools {
         return map;
     }
 
+    public static <T> void times(int times, Closure<Void, ? super Integer> closure) {
+        for (int i = 0; i < times; i++) {
+            closure.execute(i);
+        }
+    }
+
     public static interface Closure<R, T> {
         public abstract R execute(T it);
     }
