@@ -81,5 +81,17 @@ public class JsonParseBytesTest {
         data = "12345]".getBytes();
         JsonUtils.parseNumber(binder, data, 0, data.length, new NumberParsingContext());
         Assert.assertEquals(12345l, binder.value);
+
+        data = "123456\n".getBytes();
+        JsonUtils.parseNumber(binder, data, 0, data.length, new NumberParsingContext());
+        Assert.assertEquals(123456l, binder.value);
+
+        data = "1234567\r".getBytes();
+        JsonUtils.parseNumber(binder, data, 0, data.length, new NumberParsingContext());
+        Assert.assertEquals(1234567l, binder.value);
+
+        data = "12345678 ".getBytes();
+        JsonUtils.parseNumber(binder, data, 0, data.length, new NumberParsingContext());
+        Assert.assertEquals(12345678l, binder.value);
     }
 }
