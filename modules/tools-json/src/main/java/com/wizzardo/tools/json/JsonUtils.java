@@ -193,7 +193,7 @@ class JsonUtils {
             context.fractional = fractional;
             context.big = number;
 
-            context.done = ch == ',' || ch == ']' || ch == '}';
+            context.done = ch == ',' || ch == ']' || ch == '}' || ch == '\r' || ch == '\n' || ch == ' ';
 //            if (ch != '"' && ch != '\'' && ch != '}' && ch != ']' && ch != ',')
 //                throw new NumberFormatException("can't parse '" + new String(s, from, i - from + 1) + "' as number");
 
@@ -203,7 +203,7 @@ class JsonUtils {
             else
                 d = ((double) number) / fractionalShift[fractional];
         } else
-            context.done = ch == ',' || ch == ']' || ch == '}';
+            context.done = ch == ',' || ch == ']' || ch == '}' || ch == '\r' || ch == '\n' || ch == ' ';
 
         if (!context.done)
             return i;
