@@ -369,10 +369,16 @@ public class Node {
     }
 
     public String toXML(boolean prettyPrint) {
-        StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding='UTF-8' ?>");
+        StringBuilder sb = new StringBuilder();
+        toXML(prettyPrint, sb);
+        return sb.toString();
+    }
+
+    public void toXML(boolean prettyPrint, StringBuilder sb) {
+        sb.append("<?xml version=\"1.0\" encoding='UTF-8' ?>");
         if (prettyPrint)
             sb.append("\n");
-        return toXML("", sb, prettyPrint).toString();
+        toXML("", sb, prettyPrint);
     }
 
     protected StringBuilder toXML(String offset, StringBuilder sb, boolean prettyPrint) {
