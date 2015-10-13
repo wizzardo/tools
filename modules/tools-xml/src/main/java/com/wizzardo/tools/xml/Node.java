@@ -289,6 +289,9 @@ public class Node {
         if (children == null || children.isEmpty()) {
             return null;
         }
+        if (children.size() == 1)
+            return children.get(0).text(recursive);
+
         StringBuilder sb = new StringBuilder();
         for (Node node : children) {
             if (sb.length() > 0)
