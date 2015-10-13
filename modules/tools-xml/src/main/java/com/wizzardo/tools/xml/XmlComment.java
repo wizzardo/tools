@@ -13,10 +13,6 @@ public class XmlComment extends TextNode {
         return "comment: " + text;
     }
 
-    protected String text(boolean recursive) {
-        return "<!-- " + text + " -->";
-    }
-
     protected String ownText() {
         return "<!-- " + text + " -->";
     }

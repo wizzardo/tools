@@ -105,11 +105,6 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
         }
 
         @Override
-        protected String text(boolean recursive) {
-            return "%{--" + text + "--}%";
-        }
-
-        @Override
         protected String ownText() {
             return "%{--" + text + "--}%";
         }

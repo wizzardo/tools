@@ -15,7 +15,12 @@ public class TextNode extends Node {
     }
 
     protected String text(boolean recursive) {
-        return text;
+        return ownText();
+    }
+
+    @Override
+    protected void text(boolean recursive, StringBuilder sb) {
+        sb.append(ownText());
     }
 
     protected String ownText() {

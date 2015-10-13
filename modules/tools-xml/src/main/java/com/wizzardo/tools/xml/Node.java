@@ -289,22 +289,30 @@ public class Node {
         if (children == null || children.isEmpty()) {
             return null;
         }
-        if (children.size() == 1)
-            return children.get(0).text(recursive);
+        if (children.size() == 1) {
+            if (recursive)
+                return children.get(0).text(recursive);
+            else
+                return children.get(0).textOwn();
+        }
 
         StringBuilder sb = new StringBuilder();
+        text(recursive, sb);
+        return sb.toString();
+    }
+
+    protected void text(boolean recursive, StringBuilder sb) {
+        if (children == null || children.isEmpty())
+            return;
+
         for (Node node : children) {
             if (sb.length() > 0)
                 sb.append(' ');
-            String inner;
             if (recursive)
-                inner = node.text(recursive);
+                node.text(recursive, sb);
             else
-                inner = node.ownText();
-            if (inner != null)
-                sb.append(inner);
+                sb.append(node.ownText());
         }
-        return sb.toString();
     }
 
     protected String ownText() {
