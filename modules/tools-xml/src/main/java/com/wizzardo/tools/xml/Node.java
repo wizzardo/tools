@@ -310,8 +310,11 @@ public class Node {
                 sb.append(' ');
             if (recursive)
                 node.text(recursive, sb);
-            else
-                sb.append(node.ownText());
+            else {
+                String text = node.ownText();
+                if (text != null)
+                    sb.append(text);
+            }
         }
     }
 
