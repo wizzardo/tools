@@ -146,4 +146,13 @@ public class FileTools {
         return into;
     }
 
+    public static void deleteRecursive(File f) {
+        if (f.isDirectory()) {
+            for (File file : f.listFiles()) {
+                deleteRecursive(file);
+            }
+        }
+
+        f.delete();
+    }
 }
