@@ -12,4 +12,13 @@ class NumberParsingContext {
     long big;
     int fractional;
 
+    void reset() {
+        started = false;
+        done = false;
+        floatValue = false;
+        negative = false;
+        l = 0;
+        big = 0;
+        fractional = 0;
+    }
 }
