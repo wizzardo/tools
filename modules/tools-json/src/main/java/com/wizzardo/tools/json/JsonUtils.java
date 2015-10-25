@@ -30,12 +30,62 @@ class JsonUtils {
         return length == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l';
     }
 
+    static boolean isNull(byte[] s, int from, int length, StringParsingContext context) {
+        int cl = context.length;
+        if (cl == 0)
+            return length == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l';
+
+        byte[] buffer = context.buffer;
+        if (cl == 1)
+            return length == 3 && buffer[0] == 'n' && s[from] == 'u' && s[from + 1] == 'l' && s[from + 2] == 'l';
+        else if (cl == 2)
+            return length == 2 && buffer[0] == 'n' && buffer[1] == 'u' && s[from] == 'l' && s[from + 1] == 'l';
+        else if (cl == 3)
+            return length == 1 && buffer[0] == 'n' && buffer[1] == 'u' && buffer[2] == 'l' && s[from] == 'l';
+        else
+            return cl == 4 && buffer[0] == 'n' && buffer[1] == 'u' && buffer[2] == 'l' && buffer[3] == 'l';
+    }
+
     static boolean isTrue(char[] s, int from, int length) {
         return length == 4 && s[from] == 't' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e';
     }
 
+    static boolean isTrue(byte[] s, int from, int length, StringParsingContext context) {
+        int cl = context.length;
+        if (cl == 0)
+            return length == 4 && s[from] == 't' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e';
+
+        byte[] buffer = context.buffer;
+        if (cl == 1)
+            return length == 3 && buffer[0] == 't' && s[from] == 'r' && s[from + 1] == 'u' && s[from + 2] == 'e';
+        else if (cl == 2)
+            return length == 2 && buffer[0] == 't' && buffer[1] == 'r' && s[from] == 'u' && s[from + 1] == 'e';
+        else if (cl == 3)
+            return length == 1 && buffer[0] == 't' && buffer[1] == 'r' && buffer[2] == 'u' && s[from] == 'e';
+        else
+            return cl == 4 && buffer[0] == 't' && buffer[1] == 'r' && buffer[2] == 'u' && buffer[3] == 'e';
+    }
+
     static boolean isFalse(char[] s, int from, int length) {
         return length == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e';
+    }
+
+    static boolean isFalse(byte[] s, int from, int length, StringParsingContext context) {
+        int cl = context.length;
+        if (cl == 0)
+            return length == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e';
+
+        byte[] buffer = context.buffer;
+        if (cl == 1)
+            return length == 4 && buffer[0] == 'f' && s[from] == 'a' && s[from + 1] == 'l' && s[from + 2] == 's' && s[from + 3] == 'e';
+        else if (cl == 2)
+            return length == 3 && buffer[0] == 'f' && buffer[1] == 'a' && s[from] == 'l' && s[from + 1] == 's' && s[from + 2] == 'e';
+        else if (cl == 3)
+            return length == 2 && buffer[0] == 'f' && buffer[1] == 'a' && buffer[2] == 'l' && s[from] == 's' && s[from + 1] == 'e';
+        else if (cl == 4)
+            return length == 1 && buffer[0] == 'f' && buffer[1] == 'a' && buffer[2] == 'l' && buffer[3] == 's' && s[from] == 'e';
+        else
+            return cl == 5 && buffer[0] == 'f' && buffer[1] == 'a' && buffer[2] == 'l' && buffer[3] == 's' && buffer[4] == 'e';
     }
 
     static int skipSpaces(char[] s, int from, int to) {
