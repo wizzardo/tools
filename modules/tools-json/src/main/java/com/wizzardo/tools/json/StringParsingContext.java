@@ -16,6 +16,7 @@ class StringParsingContext {
         int length = to - from;
         try {
             System.arraycopy(bytes, from, buffer, this.length, length);
+            this.length += length;
         } catch (ArrayIndexOutOfBoundsException ex) {
             ensureCapacity(length + this.length);
             put(bytes, from, length);
@@ -34,6 +35,8 @@ class StringParsingContext {
     void reset() {
         started = false;
         done = false;
+        escape = false;
+        needDecoding = false;
         quote = 0;
         length = 0;
     }
