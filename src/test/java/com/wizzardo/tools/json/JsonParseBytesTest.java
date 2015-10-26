@@ -133,4 +133,56 @@ public class JsonParseBytesTest {
         Assert.assertEquals(0, context.l);
         Assert.assertEquals(0, context.fractional);
     }
+
+    @Test
+    public void reset_string_context() {
+        StringParsingContext context = new StringParsingContext();
+
+        Assert.assertEquals(false, context.done);
+        Assert.assertEquals(false, context.started);
+        Assert.assertEquals(false, context.escape);
+        Assert.assertEquals(false, context.needDecoding);
+        Assert.assertEquals(0, context.quote);
+        Assert.assertEquals(0, context.length);
+        Assert.assertEquals(16, context.buffer.length);
+
+        context.started = true;
+        context.done = true;
+        context.escape = true;
+        context.needDecoding = true;
+        context.quote = 1;
+        context.length = 2;
+
+        Assert.assertEquals(true, context.done);
+        Assert.assertEquals(true, context.started);
+        Assert.assertEquals(true, context.escape);
+        Assert.assertEquals(true, context.needDecoding);
+        Assert.assertEquals(1, context.quote);
+        Assert.assertEquals(2, context.length);
+
+        context.reset();
+
+        Assert.assertEquals(false, context.done);
+        Assert.assertEquals(false, context.started);
+        Assert.assertEquals(false, context.escape);
+        Assert.assertEquals(false, context.needDecoding);
+        Assert.assertEquals(0, context.quote);
+        Assert.assertEquals(0, context.length);
+        Assert.assertEquals(16, context.buffer.length);
+    }
+
+    @Test
+    public void populate_string_context_buffer() {
+        StringParsingContext context = new StringParsingContext();
+
+        Assert.assertEquals(0, context.length);
+        Assert.assertEquals(16, context.buffer.length);
+
+        for (int i = 0; i < 32; i++) {
+            context.put(new byte[]{(byte) i}, 0, 1);
+        }
+
+        Assert.assertEquals(32, context.length);
+        Assert.assertTrue(context.buffer.length >= context.length);
+    }
 }
