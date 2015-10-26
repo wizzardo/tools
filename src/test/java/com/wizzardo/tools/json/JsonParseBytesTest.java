@@ -185,4 +185,73 @@ public class JsonParseBytesTest {
         Assert.assertEquals(32, context.length);
         Assert.assertTrue(context.buffer.length >= context.length);
     }
+
+    @Test
+    public void test_isTrue() {
+        StringParsingContext context = new StringParsingContext();
+        byte[] bytes = new byte[]{'t', 'r', 'u', 'e'};
+
+        Assert.assertTrue(JsonUtils.isTrue(bytes, 0, 4, context));
+        Assert.assertFalse(JsonUtils.isTrue(bytes, 0, 3, context));
+        Assert.assertFalse(JsonUtils.isTrue(bytes, 1, 3, context));
+
+        context.put(bytes, 0, 1);
+        Assert.assertTrue(JsonUtils.isTrue(bytes, 1, 3, context));
+
+        context.put(bytes, 1, 2);
+        Assert.assertTrue(JsonUtils.isTrue(bytes, 2, 2, context));
+
+        context.put(bytes, 2, 3);
+        Assert.assertTrue(JsonUtils.isTrue(bytes, 3, 1, context));
+
+        context.put(bytes, 3, 4);
+        Assert.assertTrue(JsonUtils.isTrue(bytes, 4, 0, context));
+    }
+
+    @Test
+    public void test_isNull() {
+        StringParsingContext context = new StringParsingContext();
+        byte[] bytes = new byte[]{'n', 'u', 'l', 'l'};
+
+        Assert.assertTrue(JsonUtils.isNull(bytes, 0, 4, context));
+        Assert.assertFalse(JsonUtils.isNull(bytes, 0, 3, context));
+        Assert.assertFalse(JsonUtils.isNull(bytes, 1, 3, context));
+
+        context.put(bytes, 0, 1);
+        Assert.assertTrue(JsonUtils.isNull(bytes, 1, 3, context));
+
+        context.put(bytes, 1, 2);
+        Assert.assertTrue(JsonUtils.isNull(bytes, 2, 2, context));
+
+        context.put(bytes, 2, 3);
+        Assert.assertTrue(JsonUtils.isNull(bytes, 3, 1, context));
+
+        context.put(bytes, 3, 4);
+        Assert.assertTrue(JsonUtils.isNull(bytes, 4, 0, context));
+    }
+
+    @Test
+    public void test_isFalse() {
+        StringParsingContext context = new StringParsingContext();
+        byte[] bytes = new byte[]{'f', 'a', 'l', 's', 'e'};
+
+        Assert.assertTrue(JsonUtils.isFalse(bytes, 0, 5, context));
+        Assert.assertFalse(JsonUtils.isFalse(bytes, 0, 4, context));
+        Assert.assertFalse(JsonUtils.isFalse(bytes, 1, 4, context));
+
+        context.put(bytes, 0, 1);
+        Assert.assertTrue(JsonUtils.isFalse(bytes, 1, 4, context));
+
+        context.put(bytes, 1, 2);
+        Assert.assertTrue(JsonUtils.isFalse(bytes, 2, 3, context));
+
+        context.put(bytes, 2, 3);
+        Assert.assertTrue(JsonUtils.isFalse(bytes, 3, 2, context));
+
+        context.put(bytes, 3, 4);
+        Assert.assertTrue(JsonUtils.isFalse(bytes, 4, 1, context));
+
+        context.put(bytes, 4, 5);
+        Assert.assertTrue(JsonUtils.isFalse(bytes, 5, 0, context));
+    }
 }
