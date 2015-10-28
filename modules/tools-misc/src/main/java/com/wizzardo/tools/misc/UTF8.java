@@ -390,6 +390,134 @@ public class UTF8 {
         return offsets.update(i, offset);
     }
 
+    public static class DecodeContext {
+        int charsOffset;
+        byte[] buffer = new byte[4];
+        int length;
+
+        public DecodeContext() {
+        }
+
+        public DecodeContext(int charsDecoded) {
+            this.charsOffset = charsDecoded;
+        }
+
+        public DecodeContext update(int charsOffset, byte[] bytes, int from, int to) {
+            this.charsOffset = charsOffset;
+            length = to - from;
+            if (length == 0) {
+                return this;
+            } else if (length == 1) {
+                buffer[0] = bytes[from];
+            } else if (length == 2) {
+                buffer[0] = bytes[from];
+                buffer[1] = bytes[from + 1];
+            } else if (length == 3) {
+                buffer[0] = bytes[from];
+                buffer[1] = bytes[from + 1];
+                buffer[2] = bytes[from + 2];
+            } else {
+                length = 0;
+                throw new IllegalArgumentException("this context can store only 3 bytes");
+            }
+
+            return this;
+        }
+    }
+
+    public static DecodeContext decode(byte[] bytes, int offset, int length, char[] chars, DecodeContext context) {
+        int to = offset + length;
+        int i = context.charsOffset;
+        int l = Math.min(length, chars.length - i);
+
+        if (context.length != 0) {
+            context.buffer[context.length] = bytes[offset];
+            decode(context.buffer, 0, context.length + 1, chars);
+            offset++;
+            i++;
+        }
+
+        int temp;
+        while (i < l) {
+            if ((temp = bytes[offset++]) >= 0)
+                chars[i++] = (char) temp;
+            else {
+                offset--;
+                break;
+            }
+        }
+
+        while (offset < to) {
+            int b = bytes[offset++];
+            if (b < 0) {
+                int b1;
+                if (b >> 5 != -2 || (b & 0x1e) == 0) {
+                    int b2;
+                    if (b >> 4 == -2) {
+                        if (offset + 1 < to) {
+                            b1 = bytes[offset++];
+                            b2 = bytes[offset++];
+                            if (isMalformed3(b, b1, b2)) {
+                                chars[i++] = MALFORMED;
+                            } else {
+                                char ch = (char) (b << 12 ^ b1 << 6 ^ b2 ^ -123008);
+                                if (isSurrogate(ch)) {
+                                    chars[i++] = MALFORMED;
+                                } else {
+                                    chars[i++] = ch;
+                                }
+                            }
+                        } else {
+                            if (offset >= to || !isMalformed3_2(b, bytes[offset])) {
+                                return context.update(i, bytes, offset - 1, to);
+                            }
+                            chars[i++] = MALFORMED;
+                        }
+                    } else if (b >> 3 != -2) {
+                        chars[i++] = MALFORMED;
+                    } else if (offset + 2 < to) {
+                        b1 = bytes[offset++];
+                        b2 = bytes[offset++];
+                        int b3 = bytes[offset++];
+                        int value = b << 18 ^ b1 << 12 ^ b2 << 6 ^ b3 ^ 3678080;
+                        if (!isMalformed4(b1, b2, b3) && isSupplementaryCodePoint(value)) {
+                            chars[i++] = highSurrogate(value);
+                            chars[i++] = lowSurrogate(value);
+                        } else {
+                            chars[i++] = MALFORMED;
+                        }
+                    } else {
+                        int i1 = b & 0xff;
+                        if (i1 <= 244 && (offset >= to || !isMalformed4_2(i1, bytes[offset] & 0xff))) {
+                            offset++;
+                            if (offset >= to || !isMalformed4_3(bytes[offset]))
+                                return context.update(i, bytes, offset - 2, to);
+
+                            chars[i++] = MALFORMED;
+                        } else {
+                            chars[i++] = MALFORMED;
+                        }
+                    }
+                } else {
+                    if (offset >= to)
+                        return context.update(i, bytes, offset - 1, to);
+
+                    b1 = bytes[offset++];
+                    if (isNotContinuation(b1)) {
+                        chars[i++] = MALFORMED;
+                        --offset;
+                    } else {
+                        chars[i++] = (char) (b << 6 ^ b1 ^ 0xf80);
+                    }
+                }
+            } else {
+                chars[i++] = (char) b;
+            }
+        }
+
+        return context.update(i, bytes, offset, to);
+    }
+
     private static boolean isNotContinuation(int b) {
         return (b & 0xc0) != 0x80;
     }
