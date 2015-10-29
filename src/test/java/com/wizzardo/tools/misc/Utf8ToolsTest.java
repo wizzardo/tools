@@ -136,11 +136,9 @@ public class Utf8ToolsTest {
 
         Assert.assertEquals(3, bytes.length);
 
-        int read;
         UTF8.DecodeContext context = new UTF8.DecodeContext();
 
-        read = 2;
-        context = UTF8.decode(bytes, 0, read, chars, context);
+        context = UTF8.decode(bytes, 0, 2, chars, context);
         Assert.assertEquals(0, context.charsOffset);
         Assert.assertEquals(2, context.length);
         Assert.assertEquals(bytes[0], context.buffer[0]);
@@ -151,6 +149,136 @@ public class Utf8ToolsTest {
         Assert.assertEquals(0, context.length);
 
         Assert.assertEquals(s.charAt(0), chars[0]);
+    }
+
+    @Test
+    public void decode_continuous_3() throws UnsupportedEncodingException {
+        String s = "€";
+        char[] chars = new char[1];
+        byte[] bytes = s.getBytes("utf-8");
+
+        Assert.assertEquals(3, bytes.length);
+
+        UTF8.DecodeContext context = new UTF8.DecodeContext();
+
+        context = UTF8.decode(bytes, 0, 1, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(1, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+
+        context = UTF8.decode(bytes, 1, 1, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(2, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+        Assert.assertEquals(bytes[1], context.buffer[1]);
+
+        context = UTF8.decode(bytes, 2, 1, chars, context);
+        Assert.assertEquals(1, context.charsOffset);
+        Assert.assertEquals(0, context.length);
+
+        Assert.assertEquals(s.charAt(0), chars[0]);
+    }
+
+    @Test
+    public void decode_continuous_4() throws UnsupportedEncodingException {
+        String s = "\uD800\uDF48"; // 4 bytes char
+        char[] chars = new char[2];
+        byte[] bytes = s.getBytes("utf-8");
+
+        Assert.assertEquals(4, bytes.length);
+
+        UTF8.DecodeContext context = new UTF8.DecodeContext();
+
+        context = UTF8.decode(bytes, 0, 1, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(1, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+
+        context = UTF8.decode(bytes, 1, 1, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(2, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+        Assert.assertEquals(bytes[1], context.buffer[1]);
+
+        context = UTF8.decode(bytes, 2, 1, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(3, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+        Assert.assertEquals(bytes[1], context.buffer[1]);
+        Assert.assertEquals(bytes[2], context.buffer[2]);
+
+        context = UTF8.decode(bytes, 3, 1, chars, context);
+        Assert.assertEquals(2, context.charsOffset);
+        Assert.assertEquals(0, context.length);
+
+        Assert.assertEquals(s.charAt(0), chars[0]);
+        Assert.assertEquals(s.charAt(1), chars[1]);
+
+
+        context = new UTF8.DecodeContext();
+        context = UTF8.decode(bytes, 0, 1, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(1, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+
+        context = UTF8.decode(bytes, 1, 3, chars, context);
+        Assert.assertEquals(2, context.charsOffset);
+        Assert.assertEquals(0, context.length);
+
+        Assert.assertEquals(s.charAt(0), chars[0]);
+        Assert.assertEquals(s.charAt(1), chars[1]);
+
+
+        context = new UTF8.DecodeContext();
+        context = UTF8.decode(bytes, 0, 2, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(2, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+        Assert.assertEquals(bytes[1], context.buffer[1]);
+
+        context = UTF8.decode(bytes, 2, 2, chars, context);
+        Assert.assertEquals(2, context.charsOffset);
+        Assert.assertEquals(0, context.length);
+
+        Assert.assertEquals(s.charAt(0), chars[0]);
+        Assert.assertEquals(s.charAt(1), chars[1]);
+
+
+        context = new UTF8.DecodeContext();
+        context = UTF8.decode(bytes, 0, 3, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(3, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+        Assert.assertEquals(bytes[1], context.buffer[1]);
+        Assert.assertEquals(bytes[2], context.buffer[2]);
+
+        context = UTF8.decode(bytes, 3, 1, chars, context);
+        Assert.assertEquals(2, context.charsOffset);
+        Assert.assertEquals(0, context.length);
+
+        Assert.assertEquals(s.charAt(0), chars[0]);
+        Assert.assertEquals(s.charAt(1), chars[1]);
+
+
+        context = new UTF8.DecodeContext();
+        context = UTF8.decode(bytes, 0, 1, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(1, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+
+        context = UTF8.decode(bytes, 1, 2, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(3, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+        Assert.assertEquals(bytes[1], context.buffer[1]);
+        Assert.assertEquals(bytes[2], context.buffer[2]);
+
+        context = UTF8.decode(bytes, 3, 1, chars, context);
+        Assert.assertEquals(2, context.charsOffset);
+        Assert.assertEquals(0, context.length);
+
+        Assert.assertEquals(s.charAt(0), chars[0]);
+        Assert.assertEquals(s.charAt(1), chars[1]);
     }
 
     @Test
