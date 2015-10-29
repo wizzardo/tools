@@ -129,6 +129,31 @@ public class Utf8ToolsTest {
     }
 
     @Test
+    public void decode_continuous_2() throws UnsupportedEncodingException {
+        String s = "€";
+        char[] chars = new char[1];
+        byte[] bytes = s.getBytes("utf-8");
+
+        Assert.assertEquals(3, bytes.length);
+
+        int read;
+        UTF8.DecodeContext context = new UTF8.DecodeContext();
+
+        read = 2;
+        context = UTF8.decode(bytes, 0, read, chars, context);
+        Assert.assertEquals(0, context.charsOffset);
+        Assert.assertEquals(2, context.length);
+        Assert.assertEquals(bytes[0], context.buffer[0]);
+        Assert.assertEquals(bytes[1], context.buffer[1]);
+
+        context = UTF8.decode(bytes, 2, 1, chars, context);
+        Assert.assertEquals(1, context.charsOffset);
+        Assert.assertEquals(0, context.length);
+
+        Assert.assertEquals(s.charAt(0), chars[0]);
+    }
+
+    @Test
     public void test_supplier_consumer() throws UnsupportedEncodingException {
         String s = "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€";
         char[] chars = s.toCharArray();
