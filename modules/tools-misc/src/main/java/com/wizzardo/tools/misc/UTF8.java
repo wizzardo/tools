@@ -428,17 +428,36 @@ public class UTF8 {
     public static DecodeContext decode(byte[] bytes, int offset, int length, char[] chars, DecodeContext context) {
         int to = offset + length;
         int i = context.charsOffset;
-        int l = Math.min(length, chars.length - i);
 
-        if (context.length != 0) {
-            context.buffer[context.length] = bytes[offset];
-            decode(context.buffer, 0, context.length + 1, chars);
-            offset++;
-            i++;
+        int cl = context.length;
+        if (cl != 0) {
+            context.buffer[cl++] = bytes[offset++];
+            context.length = 0;
+            if (decode(context.buffer, 0, cl, chars, context).charsOffset == i) { // 2 bytes
+                if (offset < to) {
+                    context.buffer[cl++] = bytes[offset++];
+                    context.length = 0;
+                    if (decode(context.buffer, 0, cl, chars, context).charsOffset == i) {// 3 bytes
+                        if (offset < to) {
+                            context.buffer[cl++] = bytes[offset++];
+                            context.length = 0;
+                            i = decode(context.buffer, 0, cl, chars, context).charsOffset; // 4 bytes
+                        } else {
+                            context.length = cl;
+                            return context;
+                        }
+                    } else
+                        i = context.charsOffset;
+                } else {
+                    context.length = cl;
+                    return context;
+                }
+            } else
+                i = context.charsOffset;
         }
 
         int temp;
-        while (i < l) {
+        while (offset < to) {
             if ((temp = bytes[offset++]) >= 0)
                 chars[i++] = (char) temp;
             else {
