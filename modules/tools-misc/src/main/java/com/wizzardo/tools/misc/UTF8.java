@@ -194,11 +194,15 @@ public class UTF8 {
     }
 
     public static int decode(byte[] bytes, int offset, int length, char[] chars) {
+        return decode(bytes, offset, length, chars, 0);
+    }
+
+    public static int decode(byte[] bytes, int offset, int length, char[] chars, int charsOffset) {
         int to = offset + length;
-        int i = 0;
+        int i = charsOffset;
 
         int temp;
-        while (i < length) {
+        while (offset < to) {
             if ((temp = bytes[offset++]) >= 0)
                 chars[i++] = (char) temp;
             else {
