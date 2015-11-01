@@ -427,6 +427,10 @@ public class UTF8 {
 
             return this;
         }
+
+        public int charsDecoded() {
+            return charsOffset;
+        }
     }
 
     public static DecodeContext decode(byte[] bytes, int offset, int length, char[] chars, DecodeContext context) {
