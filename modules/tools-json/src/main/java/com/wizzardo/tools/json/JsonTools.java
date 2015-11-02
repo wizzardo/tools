@@ -16,7 +16,7 @@ import java.io.Writer;
  */
 public class JsonTools {
 
-    private static final char[] INT_VALUES = new char[128];
+    private static final int[] INT_VALUES = new int[128];
     private static final char[] UNESCAPES = new char[128];
     private static final char[] ESCAPES = new char[128];
 
@@ -225,6 +225,116 @@ public class JsonTools {
         return sb.toString();
     }
 
+    static String unescape(byte[] bytes, int from, int to, StringParsingContext context) {
+        int cl = context.length;
+        char[] chars = new char[(to - from + cl) * 4];
+        int i = 0;
+        int cfrom = 0;
+        byte ch;
+        char chr;
+        int offset = 0;
+        while (i < cl) {
+            ch = context.buffer[i];
+            if (ch == '\\') {
+                offset = UTF8.decode(context.buffer, cfrom, cl - i, chars, offset);
+                i++;
+                if (i >= cl)
+                    throw new IndexOutOfBoundsException("unexpected end");
+
+                chr = UNESCAPES[context.buffer[i]];
+                if (chr == 0) {
+                    throw new IllegalStateException("unexpected escaped char: " + context.buffer[i]);
+                } else if (chr == 128) {
+                    if (i + 5 > cl)
+                        throw new IndexOutOfBoundsException("can't decode unicode character");
+                    i += 4;
+                    chars[offset++] = decodeUtf(context.buffer, i);
+                } else {
+                    chars[offset++] = chr;
+                }
+                cfrom = i + 1;
+            }
+            i++;
+        }
+
+        if (cfrom < cl) {
+            UTF8.DecodeContext decodeContext = new UTF8.DecodeContext(offset);
+            UTF8.decode(context.buffer, cfrom, cl - cfrom, chars, decodeContext);
+
+            i = from;
+            while (i < to) {
+                ch = bytes[i];
+                if (ch == '\\') {
+                    if (decodeContext != null) {
+                        offset = UTF8.decode(bytes, from, i - from, chars, decodeContext).charsDecoded();
+                        decodeContext = null;
+                    } else
+                        offset = UTF8.decode(bytes, from, i - from, chars, offset);
+
+                    i++;
+                    if (i >= to)
+                        throw new IndexOutOfBoundsException("unexpected end");
+
+                    chr = UNESCAPES[bytes[i]];
+                    if (chr == 0) {
+                        throw new IllegalStateException("unexpected escaped char: " + bytes[i]);
+                    } else if (chr == 128) {
+                        if (i + 5 > to)
+                            throw new IndexOutOfBoundsException("can't decode unicode character");
+                        i += 4;
+                        chars[offset++] = decodeUtf(bytes, i);
+                    } else {
+                        chars[offset++] = chr;
+                    }
+                    from = i + 1;
+                }
+                i++;
+            }
+
+            if (from < to) {
+                if (decodeContext != null)
+                    offset = UTF8.decode(bytes, from, to - from, chars, decodeContext).charsDecoded();
+                else
+                    offset = UTF8.decode(bytes, from, to - from, chars, offset);
+            }
+
+            return new String(chars, 0, offset);
+        } else {
+
+            i = from;
+            while (i < to) {
+                ch = bytes[i];
+                if (ch == '\\') {
+                    offset = UTF8.decode(bytes, from, i - from, chars, offset);
+
+                    i++;
+                    if (i >= to)
+                        throw new IndexOutOfBoundsException("unexpected end");
+
+                    chr = UNESCAPES[bytes[i]];
+                    if (chr == 0) {
+                        throw new IllegalStateException("unexpected escaped char: " + bytes[i]);
+                    } else if (chr == 128) {
+                        if (i + 5 > to)
+                            throw new IndexOutOfBoundsException("can't decode unicode character");
+                        i += 4;
+                        chars[offset++] = decodeUtf(bytes, i);
+                    } else {
+                        chars[offset++] = chr;
+                    }
+                    from = i + 1;
+                }
+                i++;
+            }
+
+            if (from < to) {
+                offset = UTF8.decode(bytes, from, to - from, chars, offset);
+            }
+
+            return new String(chars, 0, offset);
+        }
+    }
+
 
     public static String escape(String s) {
         Appender sb = Appender.create();
@@ -300,15 +410,24 @@ public class JsonTools {
     }
 
     static char decodeUtf(char[] chars, int last) {
-        char value = 0;
+        int value = 0;
         value += getHexValue(chars[last]);
         value += getHexValue(chars[last - 1]) * 16;
         value += getHexValue(chars[last - 2]) * 256;
         value += getHexValue(chars[last - 3]) * 4096;
-        return value;
+        return (char) value;
     }
 
-    static char getHexValue(char c) {
+    static char decodeUtf(byte[] bytes, int last) {
+        int value = 0;
+        value += getHexValue(bytes[last] & 0XFF);
+        value += getHexValue(bytes[last - 1] & 0XFF) * 16;
+        value += getHexValue(bytes[last - 2] & 0XFF) * 256;
+        value += getHexValue(bytes[last - 3] & 0XFF) * 4096;
+        return (char) value;
+    }
+
+    static int getHexValue(int c) {
         if (c >= 128)
             throw new IllegalStateException("unexpected char for hex value: " + c);
 
