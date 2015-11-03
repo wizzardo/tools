@@ -3,6 +3,8 @@ package com.wizzardo.tools.json;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
+
 /**
  * Created by wizzardo on 14.09.15.
  */
@@ -253,5 +255,19 @@ public class JsonParseBytesTest {
 
         context.put(bytes, 4, 5);
         Assert.assertTrue(JsonUtils.isFalse(bytes, 5, 0, context));
+    }
+
+    @Test
+    public void test_unescape_1() throws UnsupportedEncodingException {
+        byte[] data = "foo".getBytes("utf-8");
+
+        Assert.assertEquals("foo", JsonTools.unescape(data, 0, data.length, new StringParsingContext()));
+    }
+
+    @Test
+    public void test_unescape_2() throws UnsupportedEncodingException {
+        byte[] data = "foo\\nbar".getBytes("utf-8");
+
+        Assert.assertEquals("foo\nbar", JsonTools.unescape(data, 0, data.length, new StringParsingContext()));
     }
 }
