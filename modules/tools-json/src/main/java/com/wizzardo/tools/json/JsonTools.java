@@ -429,7 +429,7 @@ public class JsonTools {
 
     static int getHexValue(int c) {
         if (c >= 128)
-            throw new IllegalStateException("unexpected char for hex value: " + c);
+            throw new IllegalStateException("unexpected char for hex value: " + (char) c);
 
         c = INT_VALUES[c];
         if (c == 128)
