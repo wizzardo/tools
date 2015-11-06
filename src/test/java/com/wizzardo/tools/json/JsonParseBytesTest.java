@@ -270,4 +270,31 @@ public class JsonParseBytesTest {
 
         Assert.assertEquals("foo\nbar", JsonTools.unescape(data, 0, data.length, new StringParsingContext()));
     }
+
+    @Test
+    public void test_unescape_3() throws UnsupportedEncodingException {
+        byte[] data = "foo\\nbar".getBytes("utf-8");
+
+        StringParsingContext context = new StringParsingContext();
+        context.put(data, 0, 3);
+        Assert.assertEquals("foo\nbar", JsonTools.unescape(data, 3, data.length, context));
+    }
+
+    @Test
+    public void test_unescape_4() throws UnsupportedEncodingException {
+        byte[] data = "foo\\nbar".getBytes("utf-8");
+
+        StringParsingContext context = new StringParsingContext();
+        context.put(data, 0, 5);
+        Assert.assertEquals("foo\nbar", JsonTools.unescape(data, 5, data.length, context));
+    }
+
+    @Test
+    public void test_unescape_5() throws UnsupportedEncodingException {
+        byte[] data = "foo\\nbar".getBytes("utf-8");
+
+        StringParsingContext context = new StringParsingContext();
+        context.put(data, 0, 4);
+        Assert.assertEquals("foo\nbar", JsonTools.unescape(data, 4, data.length, context));
+    }
 }
