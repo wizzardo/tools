@@ -236,10 +236,28 @@ public class JsonTools {
         while (i < cl) {
             ch = context.buffer[i];
             if (ch == '\\') {
-                offset = UTF8.decode(context.buffer, cfrom, cl - i, chars, offset);
+                offset = UTF8.decode(context.buffer, cfrom, i - cfrom, chars, offset);
                 i++;
-                if (i >= cl)
-                    throw new IndexOutOfBoundsException("unexpected end");
+                if (i >= cl) {
+                    cfrom = i;
+                    i = from;
+                    if (i >= to)
+                        throw new IndexOutOfBoundsException("unexpected end");
+
+                    chr = UNESCAPES[bytes[i]];
+                    if (chr == 0) {
+                        throw new IllegalStateException("unexpected escaped char: " + bytes[i]);
+                    } else if (chr == 128) {
+                        if (i + 5 > to)
+                            throw new IndexOutOfBoundsException("can't decode unicode character");
+                        i += 4;
+                        chars[offset++] = decodeUtf(bytes, i);
+                    } else {
+                        chars[offset++] = chr;
+                    }
+                    from = i + 1;
+                    break;
+                }
 
                 chr = UNESCAPES[context.buffer[i]];
                 if (chr == 0) {
