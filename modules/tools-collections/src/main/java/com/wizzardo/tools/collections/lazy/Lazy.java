@@ -1,6 +1,7 @@
 package com.wizzardo.tools.collections.lazy;
 
-import java.util.ArrayList;
+import com.wizzardo.tools.collections.lazy.Command.*;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,63 +97,6 @@ public class Lazy<A, B> {
         });
     }
 
-    public static class LazyGroup<K, A, B> extends Lazy<A, B> {
-        private K key;
-
-        LazyGroup(K key, Command<A, B> command) {
-            super(command);
-            this.key = key;
-        }
-
-        public K getKey() {
-            return key;
-        }
-    }
-
-    public static class LazyGrouping<K, A, B extends LazyGroup<K, A, A>> extends Lazy<A, B> {
-        LazyGrouping(Command<A, B> command) {
-            super(command);
-        }
-
-        public <V> Lazy<V, V> flatMap(final Mapper<B, V> mapper) {
-            final Command<V, V> main = new Command<V, V>() {
-                @Override
-                protected void start() {
-                    command.start();
-                }
-
-                @Override
-                protected void process(V v) {
-                    child.process(v);
-                }
-            };
-
-
-            new Command<B, B>(command) {
-                @Override
-                protected void process(B b) {
-                    mapper.map(b);
-                    new Command<V, V>(getLast(b.command)) {
-                        @Override
-                        protected void end() {
-                            main.process(parent.get());
-                        }
-                    };
-                }
-            };
-
-            return new Lazy<V, V>(main);
-        }
-    }
-
-    Command getLast(Command command) {
-        Command last = command;
-        while (last.child != null) {
-            last = last.child;
-        }
-        return last;
-    }
-
     public <T> Lazy<B, T> map(final Mapper<B, T> mapper) {
         return new Lazy<B, T>(new Command<B, T>(command) {
             @Override
@@ -180,6 +124,14 @@ public class Lazy<A, B> {
         return c.get();
     }
 
+    Command getLast(Command command) {
+        Command last = command;
+        while (last.child != null) {
+            last = last.child;
+        }
+        return last;
+    }
+
     interface Filter<T> {
         boolean allow(T t);
     }
@@ -190,124 +142,5 @@ public class Lazy<A, B> {
 
     interface Mapper<A, B> {
         B map(A a);
-    }
-
-    static abstract class Command<A, B> {
-        Command<?, A> parent;
-        Command<B, ?> child;
-
-        Command(Command<?, A> parent) {
-            this.parent = parent;
-            parent.child = this;
-        }
-
-        Command() {
-        }
-
-        protected void process(A a) {
-        }
-
-        protected void start() {
-            parent.start();
-        }
-
-        protected void end() {
-            if (child != null)
-                child.end();
-        }
-
-        public B get() {
-            return null;
-        }
-
-        public boolean isBlocking() {
-            return false;
-        }
-    }
-
-    static class CountCommand<A> extends Command<A, Integer> {
-        int count = 0;
-
-        CountCommand(Command<?, A> parent) {
-            super(parent);
-        }
-
-        @Override
-        protected void process(A a) {
-            count++;
-        }
-
-        @Override
-        public Integer get() {
-            return count;
-        }
-    }
-
-    static class CollectListCommand<A> extends Command<A, List<A>> {
-        List<A> list = new ArrayList<A>();
-
-        CollectListCommand(Command<?, A> parent) {
-            super(parent);
-        }
-
-        @Override
-        protected void process(A a) {
-            list.add(a);
-        }
-
-        @Override
-        public List<A> get() {
-            return list;
-        }
-
-        @Override
-        public boolean isBlocking() {
-            return true;
-        }
-    }
-
-    static class NoopCommand<A> extends Command<A, A> {
-
-        NoopCommand(Command<A, A> parent) {
-            super(parent);
-        }
-
-        NoopCommand() {
-        }
-
-
-        @Override
-        protected void process(A a) {
-            child.process(a);
-        }
-
-        @Override
-        public A get() {
-            return null;
-        }
-
-        @Override
-        protected void start() {
-        }
-    }
-
-    static class FirstCommand<A> extends Command<A, A> {
-        A first;
-
-        FirstCommand(Command<?, A> parent) {
-            super(parent);
-        }
-
-        @Override
-        protected void process(A a) {
-            if (first == null)
-                first = a;
-        }
-
-        @Override
-        public A get() {
-            return first;
-        }
-
     }
 }
