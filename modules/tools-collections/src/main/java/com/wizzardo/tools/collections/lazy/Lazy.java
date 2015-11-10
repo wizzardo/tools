@@ -2,9 +2,7 @@ package com.wizzardo.tools.collections.lazy;
 
 import com.wizzardo.tools.collections.lazy.Command.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by wizzardo on 08.11.15.
@@ -20,6 +18,22 @@ public class Lazy<A, B> {
                     return;
 
                 for (T t : iterable) {
+                    child.process(t);
+                }
+
+                child.end();
+            }
+        });
+    }
+
+    public static <T> Lazy<T, T> of(final T... array) {
+        return new Lazy<T, T>(new Command<T, T>() {
+            @Override
+            protected void start() {
+                if (child == null)
+                    return;
+
+                for (T t : array) {
                     child.process(t);
                 }
 
