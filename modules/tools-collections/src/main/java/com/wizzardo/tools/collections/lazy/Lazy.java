@@ -138,6 +138,14 @@ public class Lazy<A, B> {
         return c.get();
     }
 
+    public List<B> toSortedList(Comparator<B> comparator) {
+        CollectListCommand<B> c = new CollectListCommand<B>(command);
+        c.start();
+        List<B> list = c.get();
+        Collections.sort(list, comparator);
+        return list;
+    }
+
     Command getLast(Command command) {
         Command last = command;
         while (last.child != null) {
