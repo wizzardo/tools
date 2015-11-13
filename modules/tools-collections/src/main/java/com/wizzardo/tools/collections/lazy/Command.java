@@ -7,8 +7,8 @@ import java.util.List;
  * Created by wizzardo on 08.11.15.
  */
 abstract class Command<A, B> {
-    Command<?, A> parent;
-    Command<B, ?> child;
+    protected Command<?, A> parent;
+    protected Command<B, ?> child;
 
     Command(Command<?, A> parent) {
         this.parent = parent;
@@ -34,13 +34,23 @@ abstract class Command<A, B> {
         return null;
     }
 
-    public boolean isBlocking() {
-        return false;
+    static class FilterCommand<A> extends Command<A, A> {
+        private Lazy.Filter<A> filter;
+
+        public FilterCommand(Command<?, A> parent, Lazy.Filter<A> filter) {
+            super(parent);
+            this.filter = filter;
+        }
+
+        @Override
+        protected void process(A a) {
+            if (filter.allow(a))
+                child.process(a);
+        }
     }
 
-
     static class CountCommand<A> extends Command<A, Integer> {
-        int count = 0;
+        private int count = 0;
 
         CountCommand(Command<?, A> parent) {
             super(parent);
@@ -58,7 +68,7 @@ abstract class Command<A, B> {
     }
 
     static class CollectListCommand<A> extends Command<A, List<A>> {
-        List<A> list = new ArrayList<A>();
+        private List<A> list = new ArrayList<A>();
 
         CollectListCommand(Command<?, A> parent) {
             super(parent);
@@ -73,40 +83,10 @@ abstract class Command<A, B> {
         public List<A> get() {
             return list;
         }
-
-        @Override
-        public boolean isBlocking() {
-            return true;
-        }
-    }
-
-    static class NoopCommand<A> extends Command<A, A> {
-
-        NoopCommand(Command<A, A> parent) {
-            super(parent);
-        }
-
-        NoopCommand() {
-        }
-
-
-        @Override
-        protected void process(A a) {
-            child.process(a);
-        }
-
-        @Override
-        public A get() {
-            return null;
-        }
-
-        @Override
-        protected void start() {
-        }
     }
 
     static class FirstCommand<A> extends Command<A, A> {
-        A first;
+        private A first;
 
         FirstCommand(Command<?, A> parent) {
             super(parent);
