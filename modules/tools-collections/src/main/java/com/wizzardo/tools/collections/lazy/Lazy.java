@@ -47,13 +47,7 @@ public class Lazy<A, B> {
     }
 
     public Lazy<B, B> filter(final Filter<B> filter) {
-        return new Lazy<B, B>(new Command<B, B>(command) {
-            @Override
-            protected void process(B t) {
-                if (filter.allow(t))
-                    child.process(t);
-            }
-        });
+        return new Lazy<B, B>(new FilterCommand<B>(command, filter));
     }
 
     public Lazy<B, B> reduce(final Reducer<B> reducer) {
@@ -76,8 +70,8 @@ public class Lazy<A, B> {
         });
     }
 
-    public <K> LazyGrouping<K, B, LazyGroup<K, B, B>> groupBy(final Mapper<B, K> toKey) {
-        return new LazyGrouping<K, B, LazyGroup<K, B, B>>(new Command<B, LazyGroup<K, B, B>>(command) {
+    public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<B, K> toKey) {
+        return new LazyGrouping<K, B, B, LazyGroup<K, B, B>>(new Command<B, LazyGroup<K, B, B>>(command) {
             Map<K, LazyGroup<K, B, B>> groups = new HashMap<K, LazyGroup<K, B, B>>();
 
             @Override
@@ -123,13 +117,13 @@ public class Lazy<A, B> {
     public int count() {
         CountCommand<B> count = new CountCommand<B>(command);
         count.start();
-        return count.count;
+        return count.getCount();
     }
 
     public B first() {
         FirstCommand<B> c = new FirstCommand<B>(command);
         c.start();
-        return c.first;
+        return c.get();
     }
 
     public List<B> toList() {

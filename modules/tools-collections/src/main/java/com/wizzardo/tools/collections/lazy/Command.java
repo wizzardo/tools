@@ -65,6 +65,10 @@ abstract class Command<A, B> {
         public Integer get() {
             return count;
         }
+
+        public int getCount() {
+            return count;
+        }
     }
 
     static class CollectListCommand<A> extends Command<A, List<A>> {
