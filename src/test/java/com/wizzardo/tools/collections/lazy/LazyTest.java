@@ -14,13 +14,13 @@ public class LazyTest {
     @Test
     public void test_1() {
         List<List<Integer>> result = Lazy.of(1, 2, 3)
-                .groupBy(new Lazy.Mapper<Integer, Boolean>() {
+                .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Lazy.Mapper<LazyGroup<Boolean, Integer, Integer>, List<Integer>>() {
+                .flatMap(new Mapper<LazyGroup<Boolean, Integer, Integer>, List<Integer>>() {
                     @Override
                     public List<Integer> map(LazyGroup<Boolean, Integer, Integer> group) {
                         return group.toList();
@@ -46,19 +46,19 @@ public class LazyTest {
     @Test
     public void test_2() {
         List<List<Integer>> result = Lazy.of(1, 2, 3)
-                .groupBy(new Lazy.Mapper<Integer, Boolean>() {
+                .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
                         return it % 2 == 0;
                     }
                 })
-                .filter(new Lazy.Filter<LazyGroup<Boolean, Integer, Integer>>() {
+                .filter(new Filter<LazyGroup<Boolean, Integer, Integer>>() {
                     @Override
                     public boolean allow(LazyGroup<Boolean, Integer, Integer> group) {
                         return group.getKey();
                     }
                 })
-                .flatMap(new Lazy.Mapper<LazyGroup<Boolean, Integer, Integer>, List<Integer>>() {
+                .flatMap(new Mapper<LazyGroup<Boolean, Integer, Integer>, List<Integer>>() {
                     int counter = 0;
 
                     @Override

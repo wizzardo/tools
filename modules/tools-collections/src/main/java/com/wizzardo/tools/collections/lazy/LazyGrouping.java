@@ -3,7 +3,7 @@ package com.wizzardo.tools.collections.lazy;
 /**
  * Created by wizzardo on 08.11.15.
  */
-public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Lazy<A, B> {
+public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends AbstractLazy<A, B> {
     LazyGrouping(Command<A, B> command) {
         super(command);
     }

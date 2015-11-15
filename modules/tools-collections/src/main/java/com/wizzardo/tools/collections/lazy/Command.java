@@ -35,9 +35,9 @@ abstract class Command<A, B> {
     }
 
     static class FilterCommand<T> extends Command<T, T> {
-        private Lazy.Filter<T> filter;
+        private Filter<T> filter;
 
-        public FilterCommand(Command<?, T> parent, Lazy.Filter<T> filter) {
+        public FilterCommand(Command<?, T> parent, Filter<T> filter) {
             super(parent);
             this.filter = filter;
         }
@@ -50,10 +50,10 @@ abstract class Command<A, B> {
     }
 
     static class ReduceCommand<T> extends Command<T, T> {
-        private final Lazy.Reducer<T> reducer;
+        private final Reducer<T> reducer;
         private T prev;
 
-        public ReduceCommand(Command<?, T> command, Lazy.Reducer<T> reducer) {
+        public ReduceCommand(Command<?, T> command, Reducer<T> reducer) {
             super(command);
             this.reducer = reducer;
         }
