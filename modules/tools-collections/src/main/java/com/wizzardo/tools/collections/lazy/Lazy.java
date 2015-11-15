@@ -51,23 +51,7 @@ public class Lazy<A, B> {
     }
 
     public Lazy<B, B> reduce(final Reducer<B> reducer) {
-        return new Lazy<B, B>(new Command<B, B>(command) {
-            private B prev;
-
-            @Override
-            protected void process(B t) {
-                if (prev == null)
-                    prev = t;
-                else
-                    prev = reducer.reduce(prev, t);
-            }
-
-            @Override
-            protected void end() {
-                child.process(prev);
-                super.end();
-            }
-        });
+        return new Lazy<B, B>(new ReduceCommand<B>(command, reducer));
     }
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<B, K> toKey) {

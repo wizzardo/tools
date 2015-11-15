@@ -34,18 +34,42 @@ abstract class Command<A, B> {
         return null;
     }
 
-    static class FilterCommand<A> extends Command<A, A> {
-        private Lazy.Filter<A> filter;
+    static class FilterCommand<T> extends Command<T, T> {
+        private Lazy.Filter<T> filter;
 
-        public FilterCommand(Command<?, A> parent, Lazy.Filter<A> filter) {
+        public FilterCommand(Command<?, T> parent, Lazy.Filter<T> filter) {
             super(parent);
             this.filter = filter;
         }
 
         @Override
-        protected void process(A a) {
-            if (filter.allow(a))
-                child.process(a);
+        protected void process(T t) {
+            if (filter.allow(t))
+                child.process(t);
+        }
+    }
+
+    static class ReduceCommand<T> extends Command<T, T> {
+        private final Lazy.Reducer<T> reducer;
+        private T prev;
+
+        public ReduceCommand(Command<?, T> command, Lazy.Reducer<T> reducer) {
+            super(command);
+            this.reducer = reducer;
+        }
+
+        @Override
+        protected void process(T t) {
+            if (prev == null)
+                prev = t;
+            else
+                prev = reducer.reduce(prev, t);
+        }
+
+        @Override
+        protected void end() {
+            child.process(prev);
+            super.end();
         }
     }
 
