@@ -6,6 +6,7 @@ import java.util.*;
  * Created by wizzardo on 15.11.15.
  */
 public abstract class AbstractLazy<A, B> {
+    protected static final int INITIAL_LIST_SIZE = 10;
     protected Command<A, B> command;
 
     AbstractLazy(Command<A, B> command) {
@@ -62,16 +63,32 @@ public abstract class AbstractLazy<A, B> {
     }
 
     public List<B> toList() {
-        Command.CollectListCommand<B> c = new Command.CollectListCommand<B>(command);
+        return toList(INITIAL_LIST_SIZE);
+    }
+
+    public List<B> toList(int initialSize) {
+        Command.CollectListCommand<B> c = new Command.CollectListCommand<B>(command, initialSize);
         c.start();
         return c.get();
     }
 
     public List<B> toSortedList(Comparator<B> comparator) {
-        Command.CollectListCommand<B> c = new Command.CollectListCommand<B>(command);
-        c.start();
-        List<B> list = c.get();
+        return toSortedList(INITIAL_LIST_SIZE, comparator);
+    }
+
+    public List<B> toSortedList() {
+        return toSortedList(INITIAL_LIST_SIZE);
+    }
+
+    public List<B> toSortedList(int initialSize, Comparator<B> comparator) {
+        List<B> list = toList(initialSize);
         Collections.sort(list, comparator);
+        return list;
+    }
+
+    public List<B> toSortedList(int initialSize) {
+        List<B> list = toList(initialSize);
+        Collections.sort((List<Comparable>) list);
         return list;
     }
 

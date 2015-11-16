@@ -96,10 +96,16 @@ abstract class Command<A, B> {
     }
 
     static class CollectListCommand<A> extends Command<A, List<A>> {
-        private List<A> list = new ArrayList<A>();
+        private List<A> list;
 
         CollectListCommand(Command<?, A> parent) {
             super(parent);
+            list = new ArrayList<A>();
+        }
+
+        CollectListCommand(Command<?, A> parent, int initialSize) {
+            super(parent);
+            list = new ArrayList<A>(initialSize);
         }
 
         @Override
