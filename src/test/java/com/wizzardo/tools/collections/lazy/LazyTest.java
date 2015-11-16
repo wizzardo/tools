@@ -79,4 +79,14 @@ public class LazyTest {
         Assert.assertEquals(1, result.get(0).size());
         Assert.assertEquals(Integer.valueOf(2), result.get(0).get(0));
     }
+
+    @Test
+    public void test_sorted_list() {
+        List<Integer> result = Lazy.of(3, 2, 1).toSortedList();
+
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals(Integer.valueOf(1), result.get(0));
+        Assert.assertEquals(Integer.valueOf(2), result.get(1));
+        Assert.assertEquals(Integer.valueOf(3), result.get(2));
+    }
 }
