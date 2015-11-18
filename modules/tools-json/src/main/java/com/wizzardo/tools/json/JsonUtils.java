@@ -413,6 +413,92 @@ class JsonUtils {
         return i;
     }
 
+    static int parseValue(JsonBinder binder, byte[] bytes, int from, int to, char end, StringParsingContext context) {
+        if (context.done)
+            throw new IllegalArgumentException("already parsed");
+
+        byte ch;
+
+        byte quote;
+        if (!context.started) {
+            ch = bytes[from];
+            quote = 0;
+            if (ch == '"' || ch == '\'') {
+                quote = ch;
+                from++;
+            }
+            context.started = true;
+            context.quote = quote;
+        } else {
+            quote = context.quote;
+        }
+
+        int i = from;
+        boolean escape = context.escape;
+        boolean needDecoding = context.needDecoding;
+        if (quote == 0) {
+            for (; i < to; i++) {
+                ch = bytes[i];
+                if (ch <= ' ' || ch == ',' || ch == end) {
+                    context.done = true;
+                    break;
+                }
+
+                if (ch == '\\')
+                    needDecoding = true;
+            }
+        } else {
+            for (; i < to; i++) {
+                if (escape) {
+                    escape = false;
+                } else {
+                    ch = bytes[i];
+                    if (ch == quote) {
+                        context.done = true;
+                        break;
+                    }
+
+                    if (ch == '\\')
+                        escape = needDecoding = true;
+                }
+            }
+        }
+        context.escape = escape;
+        context.needDecoding = needDecoding;
+
+        i++;
+
+        if (binder == null)
+            return i;
+
+        JsonFieldSetter setter = binder.getFieldSetter();
+        String value;
+        int l = i - from;
+        if (!needDecoding) {
+            if (isNull(bytes, from, l, context)) {
+                setNull(setter, binder);
+                return i;
+            }
+            if (isTrue(bytes, from, l, context)) {
+                setBoolean(setter, binder, true);
+                return i;
+            }
+            if (isFalse(bytes, from, l, context)) {
+                setBoolean(setter, binder, false);
+                return i;
+            }
+
+            value = new String(bytes, from, l);
+        } else {
+            value = JsonTools.unescape(bytes, from, i, context);
+        }
+
+        setString(setter, binder, value);
+
+        return i;
+    }
+
+
     private static void setString(JsonFieldSetter setter, JsonBinder binder, String value) {
         if (setter != null)
             try {
