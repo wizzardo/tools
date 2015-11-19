@@ -49,6 +49,21 @@ abstract class Command<A, B> {
         }
     }
 
+    static class EachCommand<T> extends Command<T, T> {
+        private Consumer<T> consumer;
+
+        public EachCommand(Command<?, T> parent, Consumer<T> consumer) {
+            super(parent);
+            this.consumer = consumer;
+        }
+
+        @Override
+        protected void process(T t) {
+            consumer.consume(t);
+            child.process(t);
+        }
+    }
+
     static class ReduceCommand<T> extends Command<T, T> {
         private final Reducer<T> reducer;
         private T prev;

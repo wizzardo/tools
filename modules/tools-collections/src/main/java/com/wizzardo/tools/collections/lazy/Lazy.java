@@ -45,12 +45,16 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         super(command);
     }
 
-    public Lazy<B, B> reduce(final Reducer<B> reducer) {
+    public Lazy<B, B> reduce(Reducer<B> reducer) {
         return new Lazy<B, B>(new ReduceCommand<B>(command, reducer));
     }
 
-    public Lazy<B, B> filter(final Filter<B> filter) {
+    public Lazy<B, B> filter(Filter<B> filter) {
         return new Lazy<B, B>(new FilterCommand<B>(command, filter));
+    }
+
+    public Lazy<B, B> each(Consumer<B> consumer) {
+        return new Lazy<B, B>(new EachCommand<B>(command, consumer));
     }
 
     public <T> Lazy<B, T> map(final Mapper<B, T> mapper) {

@@ -38,7 +38,12 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
     }
 
     @Override
-    public LazyGrouping<K, T, B, B> filter(final Filter<B> filter) {
+    public LazyGrouping<K, T, B, B> filter(Filter<B> filter) {
         return new LazyGrouping<K, T, B, B>(new Command.FilterCommand<B>(command, filter));
+    }
+
+    @Override
+    public LazyGrouping<K, T, B, B> each(Consumer<B> consumer) {
+        return new LazyGrouping<K, T, B, B>(new Command.EachCommand<B>(command, consumer));
     }
 }

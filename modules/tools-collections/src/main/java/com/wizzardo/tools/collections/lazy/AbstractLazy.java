@@ -13,7 +13,9 @@ public abstract class AbstractLazy<A, B> {
         this.command = command;
     }
 
-    public abstract AbstractLazy<B, B> filter(final Filter<B> filter);
+    public abstract AbstractLazy<B, B> filter(Filter<B> filter);
+
+    public abstract AbstractLazy<B, B> each(Consumer<B> consumer);
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<B, K> toKey) {
         return new LazyGrouping<K, B, B, LazyGroup<K, B, B>>(new Command<B, LazyGroup<K, B, B>>(command) {
@@ -48,6 +50,10 @@ public abstract class AbstractLazy<A, B> {
                 super.end();
             }
         });
+    }
+
+    public void execute() {
+        command.start();
     }
 
     public int count() {
