@@ -60,7 +60,8 @@ abstract class Command<A, B> {
         @Override
         protected void process(T t) {
             consumer.consume(t);
-            child.process(t);
+            if (child != null)
+                child.process(t);
         }
     }
 

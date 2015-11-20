@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by wizzardo on 10.11.15.
@@ -88,5 +89,19 @@ public class LazyTest {
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
         Assert.assertEquals(Integer.valueOf(2), result.get(1));
         Assert.assertEquals(Integer.valueOf(3), result.get(2));
+    }
+
+    @Test
+    public void test_each() {
+        final AtomicInteger counter = new AtomicInteger();
+
+        Lazy.of(1, 2, 3).each(new Consumer<Integer>() {
+            @Override
+            public void consume(Integer integer) {
+                counter.incrementAndGet();
+            }
+        }).execute();
+
+        Assert.assertEquals(3, counter.get());
     }
 }
