@@ -68,6 +68,12 @@ public abstract class AbstractLazy<A, B> {
         return c.get();
     }
 
+    public B last() {
+        Command.LastCommand<B> c = new Command.LastCommand<B>(command);
+        c.start();
+        return c.get();
+    }
+
     public List<B> toList() {
         return toList(INITIAL_LIST_SIZE);
     }

@@ -154,4 +154,22 @@ abstract class Command<A, B> {
         }
     }
 
+    static class LastCommand<A> extends Command<A, A> {
+        private A last;
+
+        LastCommand(Command<?, A> parent) {
+            super(parent);
+        }
+
+        @Override
+        protected void process(A a) {
+            last = a;
+        }
+
+        @Override
+        public A get() {
+            return last;
+        }
+    }
+
 }
