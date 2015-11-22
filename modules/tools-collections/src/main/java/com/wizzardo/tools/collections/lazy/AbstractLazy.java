@@ -74,6 +74,30 @@ public abstract class AbstractLazy<A, B> {
         return c.get();
     }
 
+    public B min(Comparator<B> comparator) {
+        Command.MinWithComparatorCommand<B> c = new Command.MinWithComparatorCommand<B>(command, comparator);
+        c.start();
+        return c.get();
+    }
+
+    public B min() {
+        Command<?, B> c = new Command.MinCommand<B>(command);
+        c.start();
+        return c.get();
+    }
+
+    public B max(Comparator<B> comparator) {
+        Command.MaxWithComparatorCommand<B> c = new Command.MaxWithComparatorCommand<B>(command, comparator);
+        c.start();
+        return c.get();
+    }
+
+    public B max() {
+        Command<?, B> c = new Command.MaxCommand<B>(command);
+        c.start();
+        return c.get();
+    }
+
     public List<B> toList() {
         return toList(INITIAL_LIST_SIZE);
     }

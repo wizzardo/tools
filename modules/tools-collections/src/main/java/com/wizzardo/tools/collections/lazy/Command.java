@@ -1,6 +1,7 @@
 package com.wizzardo.tools.collections.lazy;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -169,6 +170,86 @@ abstract class Command<A, B> {
         @Override
         public A get() {
             return last;
+        }
+    }
+
+    static class MinCommand<A> extends Command<A, A> {
+        private A min;
+
+        MinCommand(Command<?, A> parent) {
+            super(parent);
+        }
+
+        @Override
+        protected void process(A a) {
+            if (min == null || ((Comparable<A>) min).compareTo(a) > 0)
+                min = a;
+        }
+
+        @Override
+        public A get() {
+            return min;
+        }
+    }
+
+    static class MaxCommand<A> extends Command<A, A> {
+        private A max;
+
+        MaxCommand(Command<?, A> parent) {
+            super(parent);
+        }
+
+        @Override
+        protected void process(A a) {
+            if (max == null || ((Comparable<A>) max).compareTo(a) < 0)
+                max = a;
+        }
+
+        @Override
+        public A get() {
+            return max;
+        }
+    }
+
+    static class MinWithComparatorCommand<A> extends Command<A, A> {
+        private A min;
+        private Comparator<A> comparator;
+
+        MinWithComparatorCommand(Command<?, A> parent, Comparator<A> comparator) {
+            super(parent);
+            this.comparator = comparator;
+        }
+
+        @Override
+        protected void process(A a) {
+            if (min == null || comparator.compare(min, a) > 0)
+                min = a;
+        }
+
+        @Override
+        public A get() {
+            return min;
+        }
+    }
+
+    static class MaxWithComparatorCommand<A> extends Command<A, A> {
+        private A max;
+        private Comparator<A> comparator;
+
+        MaxWithComparatorCommand(Command<?, A> parent, Comparator<A> comparator) {
+            super(parent);
+            this.comparator = comparator;
+        }
+
+        @Override
+        protected void process(A a) {
+            if (max == null || comparator.compare(max, a) < 0)
+                max = a;
+        }
+
+        @Override
+        public A get() {
+            return max;
         }
     }
 
