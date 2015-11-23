@@ -114,4 +114,16 @@ public class LazyTest {
     public void test_last() {
         Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).last());
     }
+
+    @Test
+    public void test_min() {
+        Assert.assertEquals(Integer.valueOf(1), Lazy.of(1, 2, 3).min());
+        Assert.assertEquals(Integer.valueOf(1), Lazy.of(3, 2, 1).min());
+    }
+
+    @Test
+    public void test_max() {
+        Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).max());
+        Assert.assertEquals(Integer.valueOf(3), Lazy.of(3, 2, 1).max());
+    }
 }
