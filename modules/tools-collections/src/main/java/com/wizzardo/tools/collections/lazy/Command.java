@@ -31,6 +31,11 @@ abstract class Command<A, B> {
             child.end();
     }
 
+    protected void stop() {
+        if (parent != null)
+            parent.stop();
+    }
+
     public B get() {
         return null;
     }
@@ -145,8 +150,10 @@ abstract class Command<A, B> {
 
         @Override
         protected void process(A a) {
-            if (first == null)
+            if (first == null) {
                 first = a;
+                parent.stop();
+            }
         }
 
         @Override

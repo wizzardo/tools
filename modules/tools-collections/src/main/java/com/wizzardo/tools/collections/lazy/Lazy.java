@@ -11,6 +11,8 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
 
     public static <T> Lazy<T, T> of(final Iterable<T> iterable) {
         return new Lazy<T, T>(new Command<T, T>() {
+            boolean stop = false;
+
             @Override
             protected void start() {
                 if (child == null)
@@ -18,15 +20,24 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
 
                 for (T t : iterable) {
                     child.process(t);
+                    if (stop)
+                        break;
                 }
 
                 child.end();
+            }
+
+            @Override
+            protected void stop() {
+                stop = true;
             }
         });
     }
 
     public static <T> Lazy<T, T> of(final T... array) {
         return new Lazy<T, T>(new Command<T, T>() {
+            boolean stop = false;
+
             @Override
             protected void start() {
                 if (child == null)
@@ -34,9 +45,16 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
 
                 for (T t : array) {
                     child.process(t);
+                    if (stop)
+                        break;
                 }
 
                 child.end();
+            }
+
+            @Override
+            protected void stop() {
+                stop = true;
             }
         });
     }
