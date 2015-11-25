@@ -111,6 +111,20 @@ public class LazyTest {
     }
 
     @Test
+    public void test_stop_after_first() {
+        final AtomicInteger counter = new AtomicInteger();
+
+        Assert.assertEquals(Integer.valueOf(1), Lazy.of(1, 2, 3).each(new Consumer<Integer>() {
+            @Override
+            public void consume(Integer integer) {
+                counter.incrementAndGet();
+            }
+        }).first());
+
+        Assert.assertEquals(1, counter.get());
+    }
+
+    @Test
     public void test_last() {
         Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).last());
     }
