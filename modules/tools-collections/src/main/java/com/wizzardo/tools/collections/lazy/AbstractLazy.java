@@ -36,6 +36,12 @@ public abstract class AbstractLazy<A, B> {
                         @Override
                         protected void start() {
                         }
+
+                        @Override
+                        protected void end() {
+                            if (child != null)
+                                child.end();
+                        }
                     }));
                     child.process(group);
                 }
@@ -53,7 +59,7 @@ public abstract class AbstractLazy<A, B> {
     }
 
     public void execute() {
-        command.start();
+        new Command.FinishCommand<B, B>(command).start();
     }
 
     public int count() {

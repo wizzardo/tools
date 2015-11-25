@@ -27,17 +27,28 @@ abstract class Command<A, B> {
     }
 
     protected void end() {
-        if (child != null)
-            child.end();
+        child.end();
     }
 
     protected void stop() {
-        if (parent != null)
-            parent.stop();
+        parent.stop();
     }
 
     public B get() {
         return null;
+    }
+
+    static class FinishCommand<A, B> extends Command<A, B> {
+
+        FinishCommand(Command<?, A> parent) {
+            super(parent);
+        }
+
+        @Override
+        protected void end() {
+            if (child != null)
+                child.end();
+        }
     }
 
     static class FilterCommand<T> extends Command<T, T> {
@@ -66,8 +77,7 @@ abstract class Command<A, B> {
         @Override
         protected void process(T t) {
             consumer.consume(t);
-            if (child != null)
-                child.process(t);
+            child.process(t);
         }
     }
 
@@ -95,7 +105,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class CountCommand<A> extends Command<A, Integer> {
+    static class CountCommand<A> extends FinishCommand<A, Integer> {
         private int count = 0;
 
         CountCommand(Command<?, A> parent) {
@@ -117,7 +127,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class CollectListCommand<A> extends Command<A, List<A>> {
+    static class CollectListCommand<A> extends FinishCommand<A, List<A>> {
         private List<A> list;
 
         CollectListCommand(Command<?, A> parent) {
@@ -141,7 +151,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class FirstCommand<A> extends Command<A, A> {
+    static class FirstCommand<A> extends FinishCommand<A, A> {
         private A first;
 
         FirstCommand(Command<?, A> parent) {
@@ -162,7 +172,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class LastCommand<A> extends Command<A, A> {
+    static class LastCommand<A> extends FinishCommand<A, A> {
         private A last;
 
         LastCommand(Command<?, A> parent) {
@@ -180,7 +190,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MinCommand<A> extends Command<A, A> {
+    static class MinCommand<A> extends FinishCommand<A, A> {
         private A min;
 
         MinCommand(Command<?, A> parent) {
@@ -199,7 +209,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MaxCommand<A> extends Command<A, A> {
+    static class MaxCommand<A> extends FinishCommand<A, A> {
         private A max;
 
         MaxCommand(Command<?, A> parent) {
@@ -218,7 +228,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MinWithComparatorCommand<A> extends Command<A, A> {
+    static class MinWithComparatorCommand<A> extends FinishCommand<A, A> {
         private A min;
         private Comparator<A> comparator;
 
@@ -239,7 +249,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MaxWithComparatorCommand<A> extends Command<A, A> {
+    static class MaxWithComparatorCommand<A> extends FinishCommand<A, A> {
         private A max;
         private Comparator<A> comparator;
 
