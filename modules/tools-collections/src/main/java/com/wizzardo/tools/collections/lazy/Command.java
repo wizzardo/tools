@@ -76,6 +76,19 @@ abstract class Command<A, B> {
         }
     }
 
+    static class MapCommand<A, B> extends Command<A, B> {
+        private Mapper<A, B> mapper;
+
+        public MapCommand(Mapper<A, B> mapper) {
+            this.mapper = mapper;
+        }
+
+        @Override
+        protected void process(A a) {
+            child.process(mapper.map(a));
+        }
+    }
+
     static class ReduceCommand<T> extends Command<T, T> {
         private final Reducer<T> reducer;
         private T prev;

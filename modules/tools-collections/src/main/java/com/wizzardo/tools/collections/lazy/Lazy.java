@@ -64,23 +64,22 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
     }
 
     public Lazy<B, B> reduce(Reducer<B> reducer) {
-        return new Lazy<B, B>(command.then(new ReduceCommand<B>(reducer)));
+        return lazy(new ReduceCommand<B>(reducer));
     }
 
     public Lazy<B, B> filter(Filter<B> filter) {
-        return new Lazy<B, B>(command.then(new FilterCommand<B>(filter)));
+        return lazy(new FilterCommand<B>(filter));
     }
 
     public Lazy<B, B> each(Consumer<B> consumer) {
-        return new Lazy<B, B>(command.then(new EachCommand<B>(consumer)));
+        return lazy(new EachCommand<B>(consumer));
     }
 
     public <T> Lazy<B, T> map(final Mapper<B, T> mapper) {
-        return new Lazy<B, T>(command.then(new Command<B, T>() {
-            @Override
-            protected void process(B b) {
-                child.process(mapper.map(b));
-            }
-        }));
+        return lazy(new MapCommand<B, T>(mapper));
+    }
+
+    private <C> Lazy<B, C> lazy(Command<B, C> next) {
+        return new Lazy<B, C>(command.then(next));
     }
 }
