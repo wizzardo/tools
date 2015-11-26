@@ -27,8 +27,13 @@ public abstract class AbstractLazy<A, B> {
                 LazyGroup<K, B, B> group = groups.get(key);
                 if (group == null) {
                     groups.put(key, group = new LazyGroup<K, B, B>(key, new Command<B, B>() {
+                        boolean stopped = false;
+
                         @Override
                         protected void process(B b) {
+                            if (stopped)
+                                return;
+                            
                             if (child != null)
                                 child.process(b);
                         }
@@ -41,6 +46,11 @@ public abstract class AbstractLazy<A, B> {
                         protected void end() {
                             if (child != null)
                                 child.end();
+                        }
+
+                        @Override
+                        protected void stop() {
+                            stopped = true;
                         }
                     }));
                     child.process(group);

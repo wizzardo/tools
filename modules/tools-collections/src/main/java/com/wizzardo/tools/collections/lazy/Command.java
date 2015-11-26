@@ -153,10 +153,8 @@ abstract class Command<A, B> {
 
         @Override
         protected void process(A a) {
-            if (first == null) {
-                first = a;
-                parent.stop();
-            }
+            first = a;
+            parent.stop();
         }
 
         @Override
