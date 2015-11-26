@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LazyTest {
 
     @Test
-    public void test_1() {
+    public void test_grouping_1() {
         List<List<Integer>> result = Lazy.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
@@ -45,7 +45,7 @@ public class LazyTest {
     }
 
     @Test
-    public void test_2() {
+    public void test_grouping_2() {
         List<List<Integer>> result = Lazy.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
@@ -79,6 +79,29 @@ public class LazyTest {
 
         Assert.assertEquals(1, result.get(0).size());
         Assert.assertEquals(Integer.valueOf(2), result.get(0).get(0));
+    }
+
+    @Test
+    public void test_grouping_3() {
+        List<Integer> result = Lazy.of(1, 2, 3)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer it) {
+                        return it % 2 == 0;
+                    }
+                })
+                .flatMap(new Mapper<LazyGroup<Boolean, Integer, Integer>, Integer>() {
+                    @Override
+                    public Integer map(LazyGroup<Boolean, Integer, Integer> group) {
+                        return group.first();
+                    }
+                })
+                .toSortedList();
+
+        Assert.assertEquals(2, result.size());
+
+        Assert.assertEquals(Integer.valueOf(1), result.get(0));
+        Assert.assertEquals(Integer.valueOf(2), result.get(1));
     }
 
     @Test
