@@ -18,7 +18,7 @@ public abstract class AbstractLazy<A, B> {
     public abstract AbstractLazy<B, B> each(Consumer<B> consumer);
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<B, K> toKey) {
-        return new LazyGrouping<K, B, B, LazyGroup<K, B, B>>(new Command<B, LazyGroup<K, B, B>>(command) {
+        return new LazyGrouping<K, B, B, LazyGroup<K, B, B>>(command.then(new Command<B, LazyGroup<K, B, B>>() {
             Map<K, LazyGroup<K, B, B>> groups = new HashMap<K, LazyGroup<K, B, B>>();
 
             @Override
@@ -55,51 +55,52 @@ public abstract class AbstractLazy<A, B> {
                 }
                 super.end();
             }
-        });
+        }));
     }
 
     public void execute() {
-        new Command.FinishCommand<B, B>(command).start();
+        command.then(new Command.FinishCommand<B, B>()).start();
     }
 
     public int count() {
-        Command.CountCommand<B> count = new Command.CountCommand<B>(command);
+        Command.CountCommand<B> count;
+        command.then(count = new Command.CountCommand<B>());
         count.start();
         return count.getCount();
     }
 
     public B first() {
-        Command.FirstCommand<B> c = new Command.FirstCommand<B>(command);
+        Command<B, B> c = command.then(new Command.FirstCommand<B>());
         c.start();
         return c.get();
     }
 
     public B last() {
-        Command.LastCommand<B> c = new Command.LastCommand<B>(command);
+        Command<B, B> c = command.then(new Command.LastCommand<B>());
         c.start();
         return c.get();
     }
 
     public B min(Comparator<B> comparator) {
-        Command.MinWithComparatorCommand<B> c = new Command.MinWithComparatorCommand<B>(command, comparator);
+        Command<B, B> c = command.then(new Command.MinWithComparatorCommand<B>(comparator));
         c.start();
         return c.get();
     }
 
     public B min() {
-        Command<?, B> c = new Command.MinCommand<B>(command);
+        Command<B, B> c = command.then(new Command.MinCommand<B>());
         c.start();
         return c.get();
     }
 
     public B max(Comparator<B> comparator) {
-        Command.MaxWithComparatorCommand<B> c = new Command.MaxWithComparatorCommand<B>(command, comparator);
+        Command<B, B> c = command.then(new Command.MaxWithComparatorCommand<B>(comparator));
         c.start();
         return c.get();
     }
 
     public B max() {
-        Command<?, B> c = new Command.MaxCommand<B>(command);
+        Command<B, B> c = command.then(new Command.MaxCommand<B>());
         c.start();
         return c.get();
     }
@@ -109,7 +110,8 @@ public abstract class AbstractLazy<A, B> {
     }
 
     public List<B> toList(int initialSize) {
-        Command.CollectListCommand<B> c = new Command.CollectListCommand<B>(command, initialSize);
+        Command.CollectListCommand<B> c;
+        command.then(c = new Command.CollectListCommand<B>(initialSize));
         c.start();
         return c.get();
     }

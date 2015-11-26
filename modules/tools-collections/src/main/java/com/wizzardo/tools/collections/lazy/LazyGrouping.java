@@ -11,27 +11,26 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
     public <V> Lazy<V, V> flatMap(final Mapper<B, V> mapper) {
         final Command<V, V> continueCommand = new ContinueCommand<V>(command);
 
-        new GroupCommand<B, V>(command, mapper, continueCommand);
+        command.then(new GroupCommand<B, V>(mapper, continueCommand));
 
         return new Lazy<V, V>(continueCommand);
     }
 
     @Override
     public LazyGrouping<K, T, B, B> filter(Filter<B> filter) {
-        return new LazyGrouping<K, T, B, B>(new Command.FilterCommand<B>(command, filter));
+        return new LazyGrouping<K, T, B, B>(command.then(new Command.FilterCommand<B>(filter)));
     }
 
     @Override
     public LazyGrouping<K, T, B, B> each(Consumer<B> consumer) {
-        return new LazyGrouping<K, T, B, B>(new Command.EachCommand<B>(command, consumer));
+        return new LazyGrouping<K, T, B, B>(command.then(new Command.EachCommand<B>(consumer)));
     }
 
     private class GroupCommand<B extends LazyGroup<K, T, T>, V> extends Command<B, B> {
         private final Mapper<B, V> mapper;
         private final Command<V, V> continueCommand;
 
-        public GroupCommand(Command<?, B> parent, Mapper<B, V> mapper, Command<V, V> continueCommand) {
-            super(parent);
+        public GroupCommand(Mapper<B, V> mapper, Command<V, V> continueCommand) {
             this.mapper = mapper;
             this.continueCommand = continueCommand;
         }
@@ -39,7 +38,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         @Override
         protected void process(B b) {
             mapper.map(b);
-            new ProcessOnEndCommand<V>(getLast(b.command), continueCommand);
+            getLast(b.command).then(new ProcessOnEndCommand<V>(continueCommand));
         }
 
         @Override
@@ -68,8 +67,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
     private static class ProcessOnEndCommand<T> extends Command<T, T> {
         private Command<T, ?> command;
 
-        private ProcessOnEndCommand(Command<?, T> parent, Command<T, ?> command) {
-            super(parent);
+        private ProcessOnEndCommand(Command<T, ?> command) {
             this.command = command;
         }
 

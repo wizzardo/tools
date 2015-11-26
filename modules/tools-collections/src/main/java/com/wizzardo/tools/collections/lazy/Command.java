@@ -11,15 +11,16 @@ abstract class Command<A, B> {
     protected Command<?, A> parent;
     protected Command<B, ?> child;
 
-    Command(Command<?, A> parent) {
-        this.parent = parent;
-        parent.child = this;
-    }
-
     Command() {
     }
 
     protected void process(A a) {
+    }
+
+    protected <T extends Command<B, C>, C> Command<B, C> then(T command) {
+        command.parent = this;
+        this.child = command;
+        return command;
     }
 
     protected void start() {
@@ -40,10 +41,6 @@ abstract class Command<A, B> {
 
     static class FinishCommand<A, B> extends Command<A, B> {
 
-        FinishCommand(Command<?, A> parent) {
-            super(parent);
-        }
-
         @Override
         protected void end() {
             if (child != null)
@@ -54,8 +51,7 @@ abstract class Command<A, B> {
     static class FilterCommand<T> extends Command<T, T> {
         private Filter<T> filter;
 
-        public FilterCommand(Command<?, T> parent, Filter<T> filter) {
-            super(parent);
+        public FilterCommand(Filter<T> filter) {
             this.filter = filter;
         }
 
@@ -69,8 +65,7 @@ abstract class Command<A, B> {
     static class EachCommand<T> extends Command<T, T> {
         private Consumer<T> consumer;
 
-        public EachCommand(Command<?, T> parent, Consumer<T> consumer) {
-            super(parent);
+        public EachCommand(Consumer<T> consumer) {
             this.consumer = consumer;
         }
 
@@ -85,8 +80,7 @@ abstract class Command<A, B> {
         private final Reducer<T> reducer;
         private T prev;
 
-        public ReduceCommand(Command<?, T> command, Reducer<T> reducer) {
-            super(command);
+        public ReduceCommand(Reducer<T> reducer) {
             this.reducer = reducer;
         }
 
@@ -108,10 +102,6 @@ abstract class Command<A, B> {
     static class CountCommand<A> extends FinishCommand<A, Integer> {
         private int count = 0;
 
-        CountCommand(Command<?, A> parent) {
-            super(parent);
-        }
-
         @Override
         protected void process(A a) {
             count++;
@@ -130,13 +120,7 @@ abstract class Command<A, B> {
     static class CollectListCommand<A> extends FinishCommand<A, List<A>> {
         private List<A> list;
 
-        CollectListCommand(Command<?, A> parent) {
-            super(parent);
-            list = new ArrayList<A>();
-        }
-
-        CollectListCommand(Command<?, A> parent, int initialSize) {
-            super(parent);
+        CollectListCommand(int initialSize) {
             list = new ArrayList<A>(initialSize);
         }
 
@@ -153,10 +137,6 @@ abstract class Command<A, B> {
 
     static class FirstCommand<A> extends FinishCommand<A, A> {
         private A first;
-
-        FirstCommand(Command<?, A> parent) {
-            super(parent);
-        }
 
         @Override
         protected void process(A a) {
@@ -175,10 +155,6 @@ abstract class Command<A, B> {
     static class LastCommand<A> extends FinishCommand<A, A> {
         private A last;
 
-        LastCommand(Command<?, A> parent) {
-            super(parent);
-        }
-
         @Override
         protected void process(A a) {
             last = a;
@@ -192,10 +168,6 @@ abstract class Command<A, B> {
 
     static class MinCommand<A> extends FinishCommand<A, A> {
         private A min;
-
-        MinCommand(Command<?, A> parent) {
-            super(parent);
-        }
 
         @Override
         protected void process(A a) {
@@ -211,10 +183,6 @@ abstract class Command<A, B> {
 
     static class MaxCommand<A> extends FinishCommand<A, A> {
         private A max;
-
-        MaxCommand(Command<?, A> parent) {
-            super(parent);
-        }
 
         @Override
         protected void process(A a) {
@@ -232,8 +200,7 @@ abstract class Command<A, B> {
         private A min;
         private Comparator<A> comparator;
 
-        MinWithComparatorCommand(Command<?, A> parent, Comparator<A> comparator) {
-            super(parent);
+        MinWithComparatorCommand(Comparator<A> comparator) {
             this.comparator = comparator;
         }
 
@@ -253,8 +220,7 @@ abstract class Command<A, B> {
         private A max;
         private Comparator<A> comparator;
 
-        MaxWithComparatorCommand(Command<?, A> parent, Comparator<A> comparator) {
-            super(parent);
+        MaxWithComparatorCommand(Comparator<A> comparator) {
             this.comparator = comparator;
         }
 
