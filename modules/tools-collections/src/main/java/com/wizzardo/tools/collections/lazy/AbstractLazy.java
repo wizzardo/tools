@@ -33,7 +33,7 @@ public abstract class AbstractLazy<A, B> {
                         protected void process(B b) {
                             if (stopped)
                                 return;
-                            
+
                             if (child != null)
                                 child.process(b);
                         }
@@ -80,13 +80,21 @@ public abstract class AbstractLazy<A, B> {
     }
 
     public B first() {
-        Command<B, B> c = command.then(new Command.FirstCommand<B>());
+        return first(null);
+    }
+
+    public B first(B def) {
+        Command<B, B> c = command.then(new Command.FirstCommand<B>(def));
         c.start();
         return c.get();
     }
 
     public B last() {
-        Command<B, B> c = command.then(new Command.LastCommand<B>());
+        return last(null);
+    }
+
+    public B last(B def) {
+        Command<B, B> c = command.then(new Command.LastCommand<B>(def));
         c.start();
         return c.get();
     }

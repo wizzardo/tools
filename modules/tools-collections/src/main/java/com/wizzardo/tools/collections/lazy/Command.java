@@ -151,6 +151,10 @@ abstract class Command<A, B> {
     static class FirstCommand<A> extends FinishCommand<A, A> {
         private A first;
 
+        public FirstCommand(A def) {
+            first = def;
+        }
+
         @Override
         protected void process(A a) {
             first = a;
@@ -165,6 +169,10 @@ abstract class Command<A, B> {
 
     static class LastCommand<A> extends FinishCommand<A, A> {
         private A last;
+
+        public LastCommand(A def) {
+            last = def;
+        }
 
         @Override
         protected void process(A a) {
