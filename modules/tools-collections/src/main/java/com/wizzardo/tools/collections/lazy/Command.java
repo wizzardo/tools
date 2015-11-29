@@ -32,7 +32,7 @@ class Command<A, B> {
         parent.stop();
     }
 
-    public B get() {
+    protected B get() {
         return null;
     }
 
