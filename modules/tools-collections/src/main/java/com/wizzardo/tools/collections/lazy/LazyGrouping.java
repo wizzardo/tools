@@ -4,26 +4,35 @@ package com.wizzardo.tools.collections.lazy;
  * Created by wizzardo on 08.11.15.
  */
 public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends AbstractLazy<A, B> {
-    LazyGrouping(Command<A, B> command) {
-        super(command);
-    }
 
     public <V> Lazy<V, V> flatMap(final Mapper<B, V> mapper) {
-        final Command<V, V> continueCommand = new ContinueCommand<V>(command);
+        final LazyContinue<V> continueCommand = new LazyContinue<V>(this);
 
-        command.then(new GroupCommand<B, V>(mapper, continueCommand));
+        then(new GroupCommand<B, V>(mapper, continueCommand));
 
-        return new Lazy<V, V>(continueCommand);
+        return continueCommand;
     }
 
     @Override
-    public LazyGrouping<K, T, B, B> filter(Filter<B> filter) {
-        return new LazyGrouping<K, T, B, B>(command.then(new Command.FilterCommand<B>(filter)));
+    public LazyGrouping<K, T, B, B> filter(final Filter<B> filter) {
+        return this.then(new LazyGrouping<K, T, B, B>() {
+            @Override
+            protected void process(B b) {
+                if (filter.allow(b))
+                    child.process(b);
+            }
+        });
     }
 
     @Override
-    public LazyGrouping<K, T, B, B> each(Consumer<B> consumer) {
-        return new LazyGrouping<K, T, B, B>(command.then(new Command.EachCommand<B>(consumer)));
+    public LazyGrouping<K, T, B, B> each(final Consumer<B> consumer) {
+        return this.then(new LazyGrouping<K, T, B, B>() {
+            @Override
+            protected void process(B b) {
+                consumer.consume(b);
+                child.process(b);
+            }
+        });
     }
 
     private class GroupCommand<B extends LazyGroup<K, T, T>, V> extends Command<B, B> {
@@ -38,7 +47,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         @Override
         protected void process(B b) {
             mapper.map(b);
-            getLast(b.command).then(new ProcessOnEndCommand<V>(continueCommand));
+            getLast(b).then(new ProcessOnEndCommand<V>(continueCommand));
         }
 
         @Override
@@ -46,10 +55,10 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         }
     }
 
-    private static class ContinueCommand<T> extends Command<T, T> {
+    private static class LazyContinue<T> extends Lazy<T, T> {
         private Command<?, ?> command;
 
-        ContinueCommand(Command<?, ?> command) {
+        LazyContinue(Command<?, ?> command) {
             this.command = command;
         }
 

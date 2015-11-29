@@ -6,8 +6,7 @@ package com.wizzardo.tools.collections.lazy;
 public class LazyGroup<K, A, B> extends Lazy<A, B> {
     private K key;
 
-    LazyGroup(K key, Command<A, B> command) {
-        super(command);
+    LazyGroup(K key) {
         this.key = key;
     }
 

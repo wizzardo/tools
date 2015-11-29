@@ -17,7 +17,7 @@ abstract class Command<A, B> {
     protected void process(A a) {
     }
 
-    protected <T extends Command<B, C>, C> Command<B, C> then(T command) {
+    protected <T extends Command<B, C>, C> T then(T command) {
         command.parent = this;
         this.child = command;
         return command;
@@ -48,10 +48,10 @@ abstract class Command<A, B> {
         }
     }
 
-    static class FilterCommand<T> extends Command<T, T> {
+    static class LazyFilter<T> extends Lazy<T, T> {
         private Filter<T> filter;
 
-        public FilterCommand(Filter<T> filter) {
+        public LazyFilter(Filter<T> filter) {
             this.filter = filter;
         }
 
@@ -62,10 +62,10 @@ abstract class Command<A, B> {
         }
     }
 
-    static class EachCommand<T> extends Command<T, T> {
+    static class LazyEach<T> extends Lazy<T, T> {
         private Consumer<T> consumer;
 
-        public EachCommand(Consumer<T> consumer) {
+        public LazyEach(Consumer<T> consumer) {
             this.consumer = consumer;
         }
 
@@ -76,10 +76,10 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MapCommand<A, B> extends Command<A, B> {
+    static class LazyMap<A, B> extends Lazy<A, B> {
         private Mapper<A, B> mapper;
 
-        public MapCommand(Mapper<A, B> mapper) {
+        public LazyMap(Mapper<A, B> mapper) {
             this.mapper = mapper;
         }
 
@@ -89,11 +89,11 @@ abstract class Command<A, B> {
         }
     }
 
-    static class ReduceCommand<T> extends Command<T, T> {
+    static class LazyReduce<T> extends Lazy<T, T> {
         private final Reducer<T> reducer;
         private T prev;
 
-        public ReduceCommand(Reducer<T> reducer) {
+        public LazyReduce(Reducer<T> reducer) {
             this.reducer = reducer;
         }
 

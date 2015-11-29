@@ -5,20 +5,15 @@ import java.util.*;
 /**
  * Created by wizzardo on 15.11.15.
  */
-public abstract class AbstractLazy<A, B> {
+public abstract class AbstractLazy<A, B> extends Command<A, B> {
     protected static final int INITIAL_LIST_SIZE = 10;
-    protected Command<A, B> command;
-
-    AbstractLazy(Command<A, B> command) {
-        this.command = command;
-    }
 
     public abstract AbstractLazy<B, B> filter(Filter<B> filter);
 
     public abstract AbstractLazy<B, B> each(Consumer<B> consumer);
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<B, K> toKey) {
-        return new LazyGrouping<K, B, B, LazyGroup<K, B, B>>(command.then(new Command<B, LazyGroup<K, B, B>>() {
+        return this.then(new LazyGrouping<K, B, B, LazyGroup<K, B, B>>() {
             Map<K, LazyGroup<K, B, B>> groups = new HashMap<K, LazyGroup<K, B, B>>();
 
             @Override
@@ -26,7 +21,7 @@ public abstract class AbstractLazy<A, B> {
                 K key = toKey.map(b);
                 LazyGroup<K, B, B> group = groups.get(key);
                 if (group == null) {
-                    groups.put(key, group = new LazyGroup<K, B, B>(key, new Command<B, B>() {
+                    groups.put(key, group = new LazyGroup<K, B, B>(key) {
                         boolean stopped = false;
 
                         @Override
@@ -52,29 +47,29 @@ public abstract class AbstractLazy<A, B> {
                         protected void stop() {
                             stopped = true;
                         }
-                    }));
+                    });
                     child.process(group);
                 }
-                group.command.process(b);
+                group.process(b);
             }
 
             @Override
             protected void end() {
                 for (LazyGroup<K, B, B> group : groups.values()) {
-                    group.command.end();
+                    group.end();
                 }
                 super.end();
             }
-        }));
+        });
     }
 
     public void execute() {
-        command.then(new Command.FinishCommand<B, B>()).start();
+        then(new Command.FinishCommand<B, B>()).start();
     }
 
     public int count() {
         Command.CountCommand<B> count;
-        command.then(count = new Command.CountCommand<B>());
+        then(count = new Command.CountCommand<B>());
         count.start();
         return count.getCount();
     }
@@ -84,7 +79,7 @@ public abstract class AbstractLazy<A, B> {
     }
 
     public B first(B def) {
-        Command<B, B> c = command.then(new Command.FirstCommand<B>(def));
+        Command<B, B> c = then(new Command.FirstCommand<B>(def));
         c.start();
         return c.get();
     }
@@ -94,31 +89,31 @@ public abstract class AbstractLazy<A, B> {
     }
 
     public B last(B def) {
-        Command<B, B> c = command.then(new Command.LastCommand<B>(def));
+        Command<B, B> c = then(new Command.LastCommand<B>(def));
         c.start();
         return c.get();
     }
 
     public B min(Comparator<B> comparator) {
-        Command<B, B> c = command.then(new Command.MinWithComparatorCommand<B>(comparator));
+        Command<B, B> c = then(new Command.MinWithComparatorCommand<B>(comparator));
         c.start();
         return c.get();
     }
 
     public B min() {
-        Command<B, B> c = command.then(new Command.MinCommand<B>());
+        Command<B, B> c = then(new Command.MinCommand<B>());
         c.start();
         return c.get();
     }
 
     public B max(Comparator<B> comparator) {
-        Command<B, B> c = command.then(new Command.MaxWithComparatorCommand<B>(comparator));
+        Command<B, B> c = then(new Command.MaxWithComparatorCommand<B>(comparator));
         c.start();
         return c.get();
     }
 
     public B max() {
-        Command<B, B> c = command.then(new Command.MaxCommand<B>());
+        Command<B, B> c = then(new Command.MaxCommand<B>());
         c.start();
         return c.get();
     }
@@ -129,7 +124,7 @@ public abstract class AbstractLazy<A, B> {
 
     public List<B> toList(int initialSize) {
         Command.CollectListCommand<B> c;
-        command.then(c = new Command.CollectListCommand<B>(initialSize));
+        then(c = new Command.CollectListCommand<B>(initialSize));
         c.start();
         return c.get();
     }
