@@ -47,7 +47,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         @Override
         protected void process(B b) {
             mapper.map(b);
-            getLast(b).then(new ProcessOnEndCommand<V>(continueCommand));
+            getLast(b).then(new LazyOnEnd<V>(continueCommand));
         }
 
         @Override
@@ -73,10 +73,10 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         }
     }
 
-    private static class ProcessOnEndCommand<T> extends Command<T, T> {
+    private static class LazyOnEnd<T> extends Command<T, T> {
         private Command<T, ?> command;
 
-        private ProcessOnEndCommand(Command<T, ?> command) {
+        private LazyOnEnd(Command<T, ?> command) {
             this.command = command;
         }
 

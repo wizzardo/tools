@@ -68,8 +68,8 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public int count() {
-        Command.CountCommand<B> count;
-        then(count = new Command.CountCommand<B>());
+        LazyCount<B> count;
+        then(count = new LazyCount<B>());
         count.start();
         return count.getCount();
     }
@@ -79,7 +79,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B first(B def) {
-        Command<B, B> c = then(new Command.FirstCommand<B>(def));
+        Command<B, B> c = then(new LazyFirst<B>(def));
         c.start();
         return c.get();
     }
@@ -89,31 +89,31 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B last(B def) {
-        Command<B, B> c = then(new Command.LastCommand<B>(def));
+        Command<B, B> c = then(new LazyLast<B>(def));
         c.start();
         return c.get();
     }
 
     public B min(Comparator<B> comparator) {
-        Command<B, B> c = then(new Command.MinWithComparatorCommand<B>(comparator));
+        Command<B, B> c = then(new LazyMinWithComparator<B>(comparator));
         c.start();
         return c.get();
     }
 
     public B min() {
-        Command<B, B> c = then(new Command.MinCommand<B>());
+        Command<B, B> c = then(new LazyMin<B>());
         c.start();
         return c.get();
     }
 
     public B max(Comparator<B> comparator) {
-        Command<B, B> c = then(new Command.MaxWithComparatorCommand<B>(comparator));
+        Command<B, B> c = then(new LazyMaxWithComparator<B>(comparator));
         c.start();
         return c.get();
     }
 
     public B max() {
-        Command<B, B> c = then(new Command.MaxCommand<B>());
+        Command<B, B> c = then(new LazyMax<B>());
         c.start();
         return c.get();
     }
@@ -123,8 +123,8 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public List<B> toList(int initialSize) {
-        Command.CollectListCommand<B> c;
-        then(c = new Command.CollectListCommand<B>(initialSize));
+        LazyCollectList<B> c;
+        then(c = new LazyCollectList<B>(initialSize));
         c.start();
         return c.get();
     }

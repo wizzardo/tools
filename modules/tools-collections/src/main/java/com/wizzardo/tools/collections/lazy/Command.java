@@ -7,12 +7,9 @@ import java.util.List;
 /**
  * Created by wizzardo on 08.11.15.
  */
-abstract class Command<A, B> {
+class Command<A, B> {
     protected Command<?, A> parent;
     protected Command<B, ?> child;
-
-    Command() {
-    }
 
     protected void process(A a) {
     }
@@ -112,7 +109,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class CountCommand<A> extends FinishCommand<A, Integer> {
+    static class LazyCount<A> extends FinishCommand<A, Integer> {
         private int count = 0;
 
         @Override
@@ -130,10 +127,10 @@ abstract class Command<A, B> {
         }
     }
 
-    static class CollectListCommand<A> extends FinishCommand<A, List<A>> {
+    static class LazyCollectList<A> extends FinishCommand<A, List<A>> {
         private List<A> list;
 
-        CollectListCommand(int initialSize) {
+        LazyCollectList(int initialSize) {
             list = new ArrayList<A>(initialSize);
         }
 
@@ -148,10 +145,10 @@ abstract class Command<A, B> {
         }
     }
 
-    static class FirstCommand<A> extends FinishCommand<A, A> {
+    static class LazyFirst<A> extends FinishCommand<A, A> {
         private A first;
 
-        public FirstCommand(A def) {
+        public LazyFirst(A def) {
             first = def;
         }
 
@@ -167,10 +164,10 @@ abstract class Command<A, B> {
         }
     }
 
-    static class LastCommand<A> extends FinishCommand<A, A> {
+    static class LazyLast<A> extends FinishCommand<A, A> {
         private A last;
 
-        public LastCommand(A def) {
+        public LazyLast(A def) {
             last = def;
         }
 
@@ -185,7 +182,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MinCommand<A> extends FinishCommand<A, A> {
+    static class LazyMin<A> extends FinishCommand<A, A> {
         private A min;
 
         @Override
@@ -200,7 +197,7 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MaxCommand<A> extends FinishCommand<A, A> {
+    static class LazyMax<A> extends FinishCommand<A, A> {
         private A max;
 
         @Override
@@ -215,11 +212,11 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MinWithComparatorCommand<A> extends FinishCommand<A, A> {
+    static class LazyMinWithComparator<A> extends FinishCommand<A, A> {
         private A min;
         private Comparator<A> comparator;
 
-        MinWithComparatorCommand(Comparator<A> comparator) {
+        LazyMinWithComparator(Comparator<A> comparator) {
             this.comparator = comparator;
         }
 
@@ -235,11 +232,11 @@ abstract class Command<A, B> {
         }
     }
 
-    static class MaxWithComparatorCommand<A> extends FinishCommand<A, A> {
+    static class LazyMaxWithComparator<A> extends FinishCommand<A, A> {
         private A max;
         private Comparator<A> comparator;
 
-        MaxWithComparatorCommand(Comparator<A> comparator) {
+        LazyMaxWithComparator(Comparator<A> comparator) {
             this.comparator = comparator;
         }
 
