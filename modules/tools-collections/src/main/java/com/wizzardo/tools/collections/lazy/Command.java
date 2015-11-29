@@ -185,6 +185,10 @@ class Command<A, B> {
     static class LazyMin<A> extends FinishCommand<A, A> {
         private A min;
 
+        public LazyMin(A def) {
+            min = def;
+        }
+
         @Override
         protected void process(A a) {
             if (min == null || ((Comparable<A>) min).compareTo(a) > 0)
@@ -199,6 +203,10 @@ class Command<A, B> {
 
     static class LazyMax<A> extends FinishCommand<A, A> {
         private A max;
+
+        public LazyMax(A def) {
+            max = def;
+        }
 
         @Override
         protected void process(A a) {
@@ -216,8 +224,9 @@ class Command<A, B> {
         private A min;
         private Comparator<A> comparator;
 
-        LazyMinWithComparator(Comparator<A> comparator) {
+        LazyMinWithComparator(A def, Comparator<A> comparator) {
             this.comparator = comparator;
+            min = def;
         }
 
         @Override
@@ -236,8 +245,9 @@ class Command<A, B> {
         private A max;
         private Comparator<A> comparator;
 
-        LazyMaxWithComparator(Comparator<A> comparator) {
+        LazyMaxWithComparator(A def, Comparator<A> comparator) {
             this.comparator = comparator;
+            max = def;
         }
 
         @Override

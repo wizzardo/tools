@@ -95,25 +95,41 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B min(Comparator<B> comparator) {
-        Command<B, B> c = then(new LazyMinWithComparator<B>(comparator));
+        return min(null, comparator);
+    }
+
+    public B min(B def, Comparator<B> comparator) {
+        Command<B, B> c = then(new LazyMinWithComparator<B>(def, comparator));
         c.start();
         return c.get();
     }
 
     public B min() {
-        Command<B, B> c = then(new LazyMin<B>());
+        return min((B) null);
+    }
+
+    public B min(B def) {
+        Command<B, B> c = then(new LazyMin<B>(def));
         c.start();
         return c.get();
     }
 
     public B max(Comparator<B> comparator) {
-        Command<B, B> c = then(new LazyMaxWithComparator<B>(comparator));
+        return max(null, comparator);
+    }
+
+    public B max(B def, Comparator<B> comparator) {
+        Command<B, B> c = then(new LazyMaxWithComparator<B>(def, comparator));
         c.start();
         return c.get();
     }
 
     public B max() {
-        Command<B, B> c = then(new LazyMax<B>());
+        return max((B) null);
+    }
+
+    public B max(B def) {
+        Command<B, B> c = then(new LazyMax<B>(def));
         c.start();
         return c.get();
     }
