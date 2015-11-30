@@ -161,6 +161,26 @@ public class NodeTest {
     }
 
     @Test
+    public void html_3() throws IOException {
+        String s = "<div><script>\n" +
+                "   var a\n" +
+                "   for(var i=0; i<10;i++) {\n" +
+                "       a+=i;" +
+                "   }\n" +
+                "</script></div>";
+        Node root = new HtmlParser().parse(s);
+        Node div = root.children().get(0);
+        Assert.assertEquals(1, div.children().size());
+
+        Node script = div.children.get(0);
+        Assert.assertEquals("var a\n" +
+                "   for(var i=0; i<10;i++) {\n" +
+                "       a+=i;" +
+                "   }\n", script.text());
+
+    }
+
+    @Test
     public void gsp_1() throws IOException {
         String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${[].collect({it})}\"/></div>";
         Node root = new GspParser().parse(s);
@@ -209,6 +229,26 @@ public class NodeTest {
 
         Node foo = div.children().get(1);
         Assert.assertEquals("${foo}", foo.text());
+    }
+
+    @Test
+    public void gsp_4() throws IOException {
+        String s = "<div><script>\n" +
+                "   var a\n" +
+                "   for(var i=0; i<10;i++) {\n" +
+                "       a+=i;" +
+                "   }\n" +
+                "</script></div>";
+        Node root = new GspParser().parse(s);
+        Node div = root.children().get(0);
+        Assert.assertEquals(1, div.children().size());
+
+        Node script = div.children.get(0);
+        Assert.assertEquals("var a\n" +
+                "   for(var i=0; i<10;i++) {\n" +
+                "       a+=i;" +
+                "   }\n", script.text());
+
     }
 
     @Test

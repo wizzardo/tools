@@ -76,7 +76,7 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
                 }
             }
 
-            return false;
+            return super.onChar(s, xml);
         }
 
         protected void onCurlyBracketOpen(char[] s, Node xml) {
