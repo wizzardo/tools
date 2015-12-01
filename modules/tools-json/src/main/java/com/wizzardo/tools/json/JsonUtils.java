@@ -2,6 +2,7 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.reflection.FieldReflection;
+import com.wizzardo.tools.reflection.StringReflection;
 
 /**
  * @author: wizzardo
@@ -413,7 +414,7 @@ class JsonUtils {
         return i;
     }
 
-    static int parseValue(JsonBinder binder, byte[] bytes, int from, int to, char end, StringParsingContext context) {
+    static int parseValue(JsonBinder binder, byte[] bytes, int from, int to, byte end, StringParsingContext context) {
         if (context.done)
             throw new IllegalArgumentException("already parsed");
 
@@ -466,14 +467,15 @@ class JsonUtils {
         context.escape = escape;
         context.needDecoding = needDecoding;
 
-        i++;
-
         if (binder == null)
-            return i;
+            return quote == 0 ? i : i + 1;
 
         JsonFieldSetter setter = binder.getFieldSetter();
         String value;
         int l = i - from;
+        if (quote != 0)
+            i++;
+
         if (!needDecoding) {
             if (isNull(bytes, from, l, context)) {
                 setNull(setter, binder);
@@ -488,7 +490,7 @@ class JsonUtils {
                 return i;
             }
 
-            value = new String(bytes, from, l);
+            value = getString(bytes, from, l, context);
         } else {
             value = JsonTools.unescape(bytes, from, i, context);
         }
@@ -498,6 +500,25 @@ class JsonUtils {
         return i;
     }
 
+    private static String getString(byte[] bytes, int from, int length, StringParsingContext context) {
+        int contextLength = context.length;
+        if (contextLength == 0)
+            return new String(bytes, from, length);
+
+        char[] chars = new char[length + contextLength];
+
+        byte[] buffer = context.buffer;
+        for (int i = 0; i < contextLength; i++) {
+            chars[i] = (char) buffer[i];
+        }
+
+        length += contextLength;
+        for (int i = contextLength; i < length; i++) {
+            chars[i] = (char) bytes[from++];
+        }
+
+        return StringReflection.createString(chars);
+    }
 
     private static void setString(JsonFieldSetter setter, JsonBinder binder, String value) {
         if (setter != null)
