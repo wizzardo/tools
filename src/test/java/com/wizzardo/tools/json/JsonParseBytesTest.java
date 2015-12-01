@@ -1,5 +1,6 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.Unchecked;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -296,5 +297,83 @@ public class JsonParseBytesTest {
         StringParsingContext context = new StringParsingContext();
         context.put(data, 0, 4);
         Assert.assertEquals("foo\nbar", JsonTools.unescape(data, 4, data.length, context));
+    }
+
+    @Test
+    public void test_parseValue_1() throws UnsupportedEncodingException {
+//        byte[] data = "'value'".getBytes("utf-8");
+//        StringParsingContext context = new StringParsingContext();
+//        context.started = true;
+//        context.quote = '\'';
+//        context.put(data, 1, 2);
+//        TestBinder binder = new TestBinder();
+//        Assert.assertEquals(7, JsonUtils.parseValue(binder, data, 2, data.length, (byte) '}', context));
+//        Assert.assertEquals("value", binder.value);
+
+
+        simpleTestParseValue("'value'", "value", 7);
+        complexTestParseValue("'value'", "value", 7, '}', '\'');
+
+        simpleTestParseValue("\"value\"", "value", 7);
+        complexTestParseValue("\"value\"", "value", 7, '}', '"');
+
+        simpleTestParseValue("value,", "value", 5);
+        complexTestParseValue("value,", "value", 5, '}', (char) 0);
+
+        simpleTestParseValue("value}", "value", 5);
+        complexTestParseValue("value}", "value", 5, '}', (char) 0);
+
+        simpleTestParseValue("value]", "value", 5, ']');
+        complexTestParseValue("value]", "value", 5, ']', (char) 0);
+
+        simpleTestParseValue("value ", "value", 5);
+        complexTestParseValue("value ", "value", 5, '}', (char) 0);
+
+        simpleTestParseValue("value\t", "value", 5);
+        complexTestParseValue("value\t", "value", 5, '}', (char) 0);
+
+        simpleTestParseValue("value\r", "value", 5);
+        complexTestParseValue("value\r", "value", 5, '}', (char) 0);
+
+        simpleTestParseValue("value\n", "value", 5);
+        complexTestParseValue("value\n", "value", 5, '}', (char) 0);
+    }
+
+    private void simpleTestParseValue(String src, String expected, int expectedParseReturn) throws UnsupportedEncodingException {
+        simpleTestParseValue(src, expected, expectedParseReturn, '}');
+    }
+
+    private void simpleTestParseValue(String src, String expected, int expectedParseReturn, char end) throws UnsupportedEncodingException {
+        byte[] data = src.getBytes("utf-8");
+
+        StringParsingContext context = new StringParsingContext();
+        TestBinder binder = new TestBinder();
+        Assert.assertEquals(expectedParseReturn, JsonUtils.parseValue(binder, data, 0, data.length, (byte) end, context));
+        Assert.assertEquals(expected, binder.value);
+    }
+
+    private void complexTestParseValue(String src, String expected, int expectedParseReturn, char end, char quote) throws UnsupportedEncodingException {
+        byte[] data = src.getBytes("utf-8");
+
+        StringParsingContext context;
+        TestBinder binder;
+
+        for (int i = 0; i < data.length; i++) {
+            binder = new TestBinder();
+            context = new StringParsingContext();
+            if (quote != 0 && i > 0) {
+                context.put(data, 1, i);
+                context.started = true;
+                context.quote = (byte) quote;
+            } else
+                context.put(data, 0, i);
+
+            try {
+                Assert.assertEquals(expectedParseReturn, JsonUtils.parseValue(binder, data, i, data.length, (byte) end, context));
+                Assert.assertEquals(expected, binder.value);
+            } catch (AssertionError error) {
+                throw new IllegalStateException("on " + i + "th from " + data.length + " bytes", error);
+            }
+        }
     }
 }
