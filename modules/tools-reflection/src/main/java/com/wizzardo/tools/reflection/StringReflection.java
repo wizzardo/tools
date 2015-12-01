@@ -13,10 +13,11 @@ public class StringReflection {
         FieldReflection offset = getFieldReflection(String.class, "offset", false);
         FieldReflection count = getFieldReflection(String.class, "count", false);
         FieldReflection hash = getFieldReflection(String.class, "hash", false);
+        FieldReflection coder = getFieldReflection(String.class, "coder", false);
         if (hash == null)
             hash = getFieldReflection(String.class, "hashCode", true);
 
-        if (value == null || hash == null)
+        if (value == null || hash == null || coder != null)
             reflections = new NoStringReflections();
         else if (offset != null && count != null)
             reflections = new StringReflectionsJava6(value, hash, count, offset);
