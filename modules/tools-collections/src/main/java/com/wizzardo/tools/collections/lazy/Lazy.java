@@ -55,8 +55,14 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         };
     }
 
-    public Lazy<B, B> reduce(Reducer<B> reducer) {
-        return then(new LazyReduce<B>(reducer));
+    public B reduce(Reducer<B> reducer) {
+        return reduce(null, reducer);
+    }
+
+    public B reduce(B def, Reducer<B> reducer) {
+        LazyReduce<B> reduce = then(new LazyReduce<B>(def, reducer));
+        reduce.start();
+        return reduce.get();
     }
 
     public Lazy<B, B> filter(Filter<B> filter) {

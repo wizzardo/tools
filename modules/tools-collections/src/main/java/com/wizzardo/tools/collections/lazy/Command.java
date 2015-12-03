@@ -86,12 +86,13 @@ class Command<A, B> {
         }
     }
 
-    static class LazyReduce<T> extends Lazy<T, T> {
+    static class LazyReduce<T> extends FinishCommand<T, T> {
         private final Reducer<T> reducer;
         private T prev;
 
-        public LazyReduce(Reducer<T> reducer) {
+        public LazyReduce(T def, Reducer<T> reducer) {
             this.reducer = reducer;
+            prev = def;
         }
 
         @Override
@@ -103,9 +104,8 @@ class Command<A, B> {
         }
 
         @Override
-        protected void end() {
-            child.process(prev);
-            super.end();
+        protected T get() {
+            return prev;
         }
     }
 
