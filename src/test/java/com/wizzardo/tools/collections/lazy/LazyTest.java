@@ -163,4 +163,20 @@ public class LazyTest {
         Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).max());
         Assert.assertEquals(Integer.valueOf(3), Lazy.of(3, 2, 1).max());
     }
+
+    @Test
+    public void test_reduce() {
+        Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).reduce(new Reducer<Integer>() {
+            @Override
+            public Integer reduce(Integer a, Integer b) {
+                return a > b ? a : b;
+            }
+        }));
+        Assert.assertEquals(Integer.valueOf(3), Lazy.of(3, 2, 1).reduce(new Reducer<Integer>() {
+            @Override
+            public Integer reduce(Integer a, Integer b) {
+                return a > b ? a : b;
+            }
+        }));
+    }
 }
