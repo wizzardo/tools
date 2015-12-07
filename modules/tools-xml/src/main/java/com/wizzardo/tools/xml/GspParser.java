@@ -94,7 +94,7 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
         return (T) new GspParserContext();
     }
 
-    private class GspComment extends TextNode {
+    public static class GspComment extends TextNode {
         public GspComment(String text) {
             super(text);
         }
