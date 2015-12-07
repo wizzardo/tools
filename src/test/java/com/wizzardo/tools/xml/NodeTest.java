@@ -291,4 +291,20 @@ public class NodeTest {
         Assert.assertEquals(1, div.attributes().size());
         Assert.assertEquals("bar_0", div.attr("foo"));
     }
+
+    @Test
+    public void gsp_comment_4() throws IOException {
+        String s = "<div>\n" +
+                "    before\n" +
+                "    %{--<p>text</p>--}%\n" +
+                "    after\n" +
+                "</div>";
+        Node root = new GspParser().parse(s);
+        Node div = root.children().get(0);
+        Assert.assertEquals("div", div.name());
+        Assert.assertEquals(3, div.children().size());
+        Assert.assertEquals("before", div.get(0).text());
+        Assert.assertEquals("%{--<p>text</p>--}%", div.get(1).text());
+        Assert.assertEquals("after", div.get(2).text());
+    }
 }
