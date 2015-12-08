@@ -3,6 +3,7 @@ package com.wizzardo.tools.collections.lazy;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -178,5 +179,23 @@ public class LazyTest {
                 return a > b ? a : b;
             }
         }));
+    }
+
+    @Test
+    public void test_collect() {
+        List<Integer> list = new ArrayList<Integer>();
+        List<Integer> result = Lazy.of(1, 2, 3)
+                .collect(list, new BiConsumer<List<Integer>, Integer>() {
+                    @Override
+                    public void consume(List<Integer> integers, Integer integer) {
+                        integers.add(integer * 2);
+                    }
+                });
+
+        Assert.assertSame(list, result);
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals(Integer.valueOf(2), result.get(0));
+        Assert.assertEquals(Integer.valueOf(4), result.get(1));
+        Assert.assertEquals(Integer.valueOf(6), result.get(2));
     }
 }
