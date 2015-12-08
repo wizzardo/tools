@@ -63,6 +63,13 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         });
     }
 
+    public <C> C collect(C collector, BiConsumer<C, B> accumulator) {
+        LazyCollect<C, B> collect;
+        then(collect = new LazyCollect<C, B>(collector, accumulator));
+        collect.start();
+        return collector;
+    }
+
     public void execute() {
         then(new Command.FinishCommand<B, B>()).start();
     }

@@ -59,6 +59,26 @@ class Command<A, B> {
         }
     }
 
+    static class LazyCollect<C, T> extends FinishCommand<T, C> {
+        private BiConsumer<C, T> accumulator;
+        private C collector;
+
+        public LazyCollect(C collector, BiConsumer<C, T> accumulator) {
+            this.accumulator = accumulator;
+            this.collector = collector;
+        }
+
+        @Override
+        protected void process(T t) {
+            accumulator.consume(collector, t);
+        }
+
+        @Override
+        protected C get() {
+            return collector;
+        }
+    }
+
     static class LazyEach<T> extends Lazy<T, T> {
         private Consumer<T> consumer;
 
