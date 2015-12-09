@@ -1,8 +1,7 @@
 package com.wizzardo.tools.collections.lazy;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Created by wizzardo on 08.11.15.
@@ -59,11 +58,11 @@ class Command<A, B> {
         }
     }
 
-    static class LazyCollect<C, T> extends FinishCommand<T, C> {
+    static class LazyCollectWithAccumulator<C, T> extends FinishCommand<T, C> {
         private BiConsumer<C, T> accumulator;
         private C collector;
 
-        public LazyCollect(C collector, BiConsumer<C, T> accumulator) {
+        public LazyCollectWithAccumulator(C collector, BiConsumer<C, T> accumulator) {
             this.accumulator = accumulator;
             this.collector = collector;
         }
@@ -147,21 +146,21 @@ class Command<A, B> {
         }
     }
 
-    static class LazyCollectList<A> extends FinishCommand<A, List<A>> {
-        private List<A> list;
+    static class LazyCollect<A> extends FinishCommand<A, Collection<A>> {
+        private Collection<A> collection;
 
-        LazyCollectList(int initialSize) {
-            list = new ArrayList<A>(initialSize);
+        LazyCollect(Collection<A> collection) {
+            this.collection = collection;
         }
 
         @Override
         protected void process(A a) {
-            list.add(a);
+            collection.add(a);
         }
 
         @Override
-        public List<A> get() {
-            return list;
+        public Collection<A> get() {
+            return collection;
         }
     }
 

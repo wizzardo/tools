@@ -64,8 +64,8 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public <C> C collect(C collector, BiConsumer<C, B> accumulator) {
-        LazyCollect<C, B> collect;
-        then(collect = new LazyCollect<C, B>(collector, accumulator));
+        LazyCollectWithAccumulator<C, B> collect;
+        then(collect = new LazyCollectWithAccumulator<C, B>(collector, accumulator));
         collect.start();
         return collector;
     }
@@ -142,33 +142,31 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public List<B> toList() {
-        return toList(INITIAL_LIST_SIZE);
+        return collect(new ArrayList<B>());
     }
 
-    public List<B> toList(int initialSize) {
-        LazyCollectList<B> c;
-        then(c = new LazyCollectList<B>(initialSize));
+    public <C extends Collection<B>> C collect(C collection) {
+        LazyCollect<B> c;
+        then(c = new LazyCollect<B>(collection));
         c.start();
-        return c.get();
+        return collection;
     }
 
     public List<B> toSortedList(Comparator<B> comparator) {
-        return toSortedList(INITIAL_LIST_SIZE, comparator);
+        return toSortedList(new ArrayList<B>(), comparator);
     }
 
     public List<B> toSortedList() {
-        return toSortedList(INITIAL_LIST_SIZE);
+        return toSortedList(new ArrayList<B>());
     }
 
-    public List<B> toSortedList(int initialSize, Comparator<B> comparator) {
-        List<B> list = toList(initialSize);
-        Collections.sort(list, comparator);
+    public List<B> toSortedList(List<B> list, Comparator<B> comparator) {
+        Collections.sort(collect(list), comparator);
         return list;
     }
 
-    public List<B> toSortedList(int initialSize) {
-        List<B> list = toList(initialSize);
-        Collections.sort((List<Comparable>) list);
+    public List<B> toSortedList(List<B> list) {
+        Collections.sort((List<Comparable>) collect(list));
         return list;
     }
 
