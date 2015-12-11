@@ -4,6 +4,7 @@ package com.wizzardo.tools.json;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.pool.Holder;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -34,9 +35,6 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
             current = s[i];
 
-//            if (current > 256)
-//                i = parseValue2(json, s, i, s.length);
-//            else
             switch (current) {
                 case '0':
                 case '1':
@@ -217,6 +215,18 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
             put(key, (JsonItem) ob);
         } else
             put(key, new JsonItem(ob));
+        return this;
+    }
+
+    public JsonObject append(String key, Collection ob) {
+        if (ob instanceof JsonArray) {
+            return append(key, ((JsonArray) ob));
+        } else
+            return append(key, new JsonArray().appendAll(ob));
+    }
+
+    public JsonObject append(String key, JsonArray ob) {
+        put(key, new JsonItem(ob));
         return this;
     }
 
