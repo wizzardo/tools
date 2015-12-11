@@ -11,6 +11,47 @@ import java.util.zip.ZipOutputStream;
 
 public class ZipTools {
 
+    public static class ZipWriter implements Closeable {
+        protected ZipOutputStream out;
+
+        public ZipWriter(String file) throws IOException {
+            this(new FileOutputStream(file));
+        }
+
+        public ZipWriter(File file) throws IOException {
+            this(new FileOutputStream(file));
+        }
+
+        public ZipWriter(OutputStream outputStream) throws IOException {
+            out = new ZipOutputStream(outputStream);
+        }
+
+        public ZipWriter setLevel(int level) {
+            out.setLevel(level);
+            return this;
+        }
+
+        public ZipWriter setMethod(int method) {
+            out.setMethod(method);
+            return this;
+        }
+
+        public ZipWriter write(ZipBuilderEntry entry) throws IOException {
+            out.closeEntry();
+            entry.write(out);
+            return this;
+        }
+
+        public ZipWriter flush() throws IOException {
+            out.flush();
+            return this;
+        }
+
+        public void close() throws IOException {
+            out.close();
+        }
+    }
+
     public static class ZipBuilder {
         private List<ZipBuilderEntry> entries = new ArrayList<ZipBuilderEntry>();
         private int level = -1;
@@ -53,15 +94,15 @@ public class ZipTools {
         }
 
         public void zip(OutputStream out) throws IOException {
-            ZipOutputStream zipout = new ZipOutputStream(out);
-            zipout.setMethod(method);
-            zipout.setLevel(level);
+            ZipWriter writer = new ZipWriter(out)
+                    .setLevel(level)
+                    .setMethod(method);
             try {
                 for (ZipBuilderEntry entry : entries) {
-                    entry.write(zipout);
+                    writer.write(entry);
                 }
             } finally {
-                IOTools.close(zipout);
+                IOTools.close(writer);
             }
         }
     }
@@ -70,13 +111,21 @@ public class ZipTools {
         void write(ZipOutputStream out) throws IOException;
     }
 
-    private static class BytesEntry implements ZipBuilderEntry {
+    public static class BytesEntry implements ZipBuilderEntry {
         private String name;
         private byte[] bytes;
+        private int offset;
+        private int length;
 
-        private BytesEntry(String name, byte[] bytes) {
+        public BytesEntry(String name, byte[] bytes) {
+            this(name, bytes, 0, bytes.length);
+        }
+
+        public BytesEntry(String name, byte[] bytes, int offset, int length) {
             this.name = name;
             this.bytes = bytes;
+            this.offset = offset;
+            this.length = length;
         }
 
         @Override
@@ -84,15 +133,15 @@ public class ZipTools {
             ZipEntry entry = new ZipEntry(name);
             entry.setMethod(ZipEntry.DEFLATED);
             out.putNextEntry(entry);
-            out.write(bytes);
+            out.write(bytes, offset, length);
         }
     }
 
-    private static class StreamEntry implements ZipBuilderEntry {
+    public static class StreamEntry implements ZipBuilderEntry {
         private String name;
         private InputStream stream;
 
-        private StreamEntry(String name, InputStream stream) {
+        public StreamEntry(String name, InputStream stream) {
             this.name = name;
             this.stream = stream;
         }
@@ -106,10 +155,14 @@ public class ZipTools {
         }
     }
 
-    private static class FileEntry implements ZipBuilderEntry {
+    public static class FileEntry implements ZipBuilderEntry {
         private File file;
 
-        private FileEntry(File file) {
+        public FileEntry(String file) {
+            this(new File(file));
+        }
+
+        public FileEntry(File file) {
             this.file = file;
         }
 
@@ -132,7 +185,7 @@ public class ZipTools {
         }
     }
 
-    public static interface ZipEntryFilter {
+    public interface ZipEntryFilter {
 
         boolean accept(ZipEntry entry);
     }
