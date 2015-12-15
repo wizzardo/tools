@@ -1487,4 +1487,15 @@ public class JsonTest {
         }
         assert exception;
     }
+
+    static class GenericHolder<T> {
+        T value;
+    }
+
+    @Test
+    public void test_serialize_generic() {
+        GenericHolder<String> holder = new GenericHolder<String>();
+        holder.value = "value";
+        Assert.assertEquals("{\"value\":\"value\"}", JsonTools.serialize(holder));
+    }
 }

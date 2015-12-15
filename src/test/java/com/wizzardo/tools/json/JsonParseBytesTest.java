@@ -376,4 +376,15 @@ public class JsonParseBytesTest {
             }
         }
     }
+
+//    public void test_json_1() throws UnsupportedEncodingException {
+//        byte[] data = "{\"key\":\"value\"}".getBytes("utf-8");
+//
+//        JsonBinder binder = new JsonObjectBinder();
+//        JsonObject.parse(data, 0, data.length, binder);
+//    }
+
+    @Test
+    public void test_parseKey_1() {
+    }
 }

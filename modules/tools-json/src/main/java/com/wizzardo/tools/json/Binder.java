@@ -356,6 +356,12 @@ class Binder {
             sb.append('}');
         }
     };
+    private static Serializer genericSerializer = new Serializer(SerializerType.OBJECT) {
+        @Override
+        public void serialize(Object src, Appender sb, Generic generic) {
+            classToSerializer(src.getClass()).serialize(src, sb, null);
+        }
+    };
     private static Serializer simpleBoxedSerializer = new ArrayBoxedSerializer(simpleSerializer);
     private static Serializer stringArraySerializer = new ArrayBoxedSerializer(stringSerializer);
     private static Serializer charArraySerializer = new ArrayBoxedSerializer(characterSerializer);
@@ -412,7 +418,10 @@ class Binder {
                             ) {
 //                        System.out.println("add field " + field);
                         field.setAccessible(true);
-                        fields.put(field.getName(), new FieldInfo(field, getReturnType(field)));
+                        if (!field.getGenericType().getTypeName().equals(field.getType().getCanonicalName()))
+                            fields.put(field.getName(), new FieldInfo(field, genericSerializer));
+                        else
+                            fields.put(field.getName(), new FieldInfo(field, getReturnType(field)));
                     }
                 }
                 cl = cl.getSuperclass();
