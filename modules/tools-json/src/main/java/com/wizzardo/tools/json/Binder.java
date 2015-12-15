@@ -418,7 +418,7 @@ class Binder {
                             ) {
 //                        System.out.println("add field " + field);
                         field.setAccessible(true);
-                        if (!field.getGenericType().getTypeName().equals(field.getType().getCanonicalName()))
+                        if (field.getGenericType() != field.getType())
                             fields.put(field.getName(), new FieldInfo(field, genericSerializer));
                         else
                             fields.put(field.getName(), new FieldInfo(field, getReturnType(field)));
