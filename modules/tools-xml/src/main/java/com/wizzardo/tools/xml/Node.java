@@ -37,6 +37,10 @@ public class Node {
         return this;
     }
 
+    public Node attr(String attributeName, Object value) {
+        return attr(attributeName, String.valueOf(value));
+    }
+
     public Node attr(String attributeName, String value) {
         if (attributes == null)
             attributes = new LinkedHashMap<String, String>();
