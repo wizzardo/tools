@@ -1,8 +1,5 @@
 package com.wizzardo.tools.collections;
 
-import com.wizzardo.tools.collections.Range;
-
-import javax.swing.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -11,6 +8,114 @@ import java.util.regex.Pattern;
  * Date: 12/17/12
  */
 public class CollectionTools {
+
+    public static class MapBuilder<K, V> {
+        private Map<K, V> map;
+
+        public MapBuilder() {
+            map = new HashMap<K, V>();
+        }
+
+        public MapBuilder(Map<K, V> map) {
+            this.map = map;
+        }
+
+        public MapBuilder<K, V> add(K key, V value) {
+            map.put(key, value);
+            return this;
+        }
+
+        public <T> MapBuilder<K, V> add(K key, CollectionBuilder<T> value) {
+            map.put(key, (V) value.get());
+            return this;
+        }
+
+        public <A, B> MapBuilder<K, V> add(K key, MapBuilder<A, B> value) {
+            map.put(key, (V) value.get());
+            return this;
+        }
+
+        /**
+         * creates and adds new MapBuilder, and calls consumer with it
+         */
+        public <A, B> MapBuilder<K, V> map(K key, Consumer<MapBuilder<A, B>> consumer) {
+            MapBuilder<A, B> builder = new MapBuilder<A, B>();
+            consumer.consume(builder);
+            return add(key, builder);
+        }
+
+        /**
+         * creates and adds new CollectionBuilder, and calls consumer with it
+         */
+        public <T> MapBuilder<K, V> list(K key, Consumer<CollectionBuilder<T>> consumer) {
+            CollectionBuilder<T> builder = new CollectionBuilder<T>();
+            consumer.consume(builder);
+            return add(key, builder);
+        }
+
+        public Map<K, V> get() {
+            return map;
+        }
+
+        public MapBuilder<K, V> with(Consumer<MapBuilder<K, V>> consumer) {
+            consumer.consume(this);
+            return this;
+        }
+    }
+
+    public static class CollectionBuilder<T> {
+        private Collection<T> c;
+
+        public CollectionBuilder() {
+            c = new ArrayList<T>();
+        }
+
+        public CollectionBuilder(Collection<T> c) {
+            this.c = c;
+        }
+
+        public CollectionBuilder<T> add(T value) {
+            c.add(value);
+            return this;
+        }
+
+        public <V> CollectionBuilder<T> add(CollectionBuilder<V> value) {
+            c.add((T) value.get());
+            return this;
+        }
+
+        public <K, V> CollectionBuilder<T> add(MapBuilder<K, V> value) {
+            c.add((T) value.get());
+            return this;
+        }
+
+        /**
+         * creates and adds new MapBuilder, and calls consumer with it
+         */
+        public <A, B> CollectionBuilder<T> map(Consumer<MapBuilder<A, B>> consumer) {
+            MapBuilder<A, B> builder = new MapBuilder<A, B>();
+            consumer.consume(builder);
+            return add(builder);
+        }
+
+        /**
+         * creates and adds new CollectionBuilder, and calls consumer with it
+         */
+        public <V> CollectionBuilder<T> list(Consumer<CollectionBuilder<V>> consumer) {
+            CollectionBuilder<V> builder = new CollectionBuilder<V>();
+            consumer.consume(builder);
+            return add(builder);
+        }
+
+        public Collection<T> get() {
+            return c;
+        }
+
+        public CollectionBuilder<T> with(Consumer<CollectionBuilder<T>> consumer) {
+            consumer.consume(this);
+            return this;
+        }
+    }
 
     public static <T> void each(Iterable<T> c, Closure<Void, ? super T> closure) {
         for (T t : c) {
@@ -182,6 +287,10 @@ public class CollectionTools {
         for (int i = 0; i < times; i++) {
             closure.execute(i);
         }
+    }
+
+    public interface Consumer<T> {
+        void consume(T t);
     }
 
     public static interface Closure<R, T> {
