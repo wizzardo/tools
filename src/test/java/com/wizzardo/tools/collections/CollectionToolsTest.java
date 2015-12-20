@@ -20,11 +20,10 @@ public class CollectionToolsTest {
             add(3);
         }};
         final AtomicInteger counter = new AtomicInteger();
-        CollectionTools.each(list, new CollectionTools.Closure<Void, Integer>() {
+        CollectionTools.each(list, new CollectionTools.VoidClosure<Integer>() {
             @Override
-            public Void execute(Integer it) {
+            public void execute(Integer it) {
                 counter.addAndGet(it);
-                return null;
             }
         });
         Assert.assertEquals(6, counter.get());
@@ -34,11 +33,10 @@ public class CollectionToolsTest {
             put(2, 3);
         }};
         counter.set(0);
-        CollectionTools.each(map, new CollectionTools.Closure2<Void, Integer, Integer>() {
+        CollectionTools.each(map, new CollectionTools.VoidClosure2<Integer, Integer>() {
             @Override
-            public Void execute(Integer key, Integer value) {
+            public void execute(Integer key, Integer value) {
                 counter.addAndGet(key * value);
-                return null;
             }
         });
         Assert.assertEquals(8, counter.get());
@@ -52,11 +50,10 @@ public class CollectionToolsTest {
             add(3);
         }};
         final AtomicInteger counter = new AtomicInteger();
-        CollectionTools.eachWithIndex(list, new CollectionTools.Closure2<Void, Integer, Integer>() {
+        CollectionTools.eachWithIndex(list, new CollectionTools.VoidClosure2<Integer, Integer>() {
             @Override
-            public Void execute(Integer i, Integer value) {
+            public void execute(Integer i, Integer value) {
                 counter.addAndGet(value * i);
-                return null;
             }
         });
         Assert.assertEquals(8, counter.get());

@@ -38,18 +38,18 @@ public class CollectionTools {
         /**
          * creates and adds new MapBuilder, and calls consumer with it
          */
-        public <A, B> MapBuilder<K, V> map(K key, Consumer<MapBuilder<A, B>> consumer) {
+        public <A, B> MapBuilder<K, V> map(K key, VoidClosure<MapBuilder<A, B>> consumer) {
             MapBuilder<A, B> builder = new MapBuilder<A, B>();
-            consumer.consume(builder);
+            consumer.execute(builder);
             return add(key, builder);
         }
 
         /**
          * creates and adds new CollectionBuilder, and calls consumer with it
          */
-        public <T> MapBuilder<K, V> list(K key, Consumer<CollectionBuilder<T>> consumer) {
+        public <T> MapBuilder<K, V> list(K key, VoidClosure<CollectionBuilder<T>> consumer) {
             CollectionBuilder<T> builder = new CollectionBuilder<T>();
-            consumer.consume(builder);
+            consumer.execute(builder);
             return add(key, builder);
         }
 
@@ -57,8 +57,8 @@ public class CollectionTools {
             return map;
         }
 
-        public MapBuilder<K, V> with(Consumer<MapBuilder<K, V>> consumer) {
-            consumer.consume(this);
+        public MapBuilder<K, V> with(VoidClosure<MapBuilder<K, V>> consumer) {
+            consumer.execute(this);
             return this;
         }
     }
@@ -92,18 +92,18 @@ public class CollectionTools {
         /**
          * creates and adds new MapBuilder, and calls consumer with it
          */
-        public <A, B> CollectionBuilder<T> map(Consumer<MapBuilder<A, B>> consumer) {
+        public <A, B> CollectionBuilder<T> map(VoidClosure<MapBuilder<A, B>> consumer) {
             MapBuilder<A, B> builder = new MapBuilder<A, B>();
-            consumer.consume(builder);
+            consumer.execute(builder);
             return add(builder);
         }
 
         /**
          * creates and adds new CollectionBuilder, and calls consumer with it
          */
-        public <V> CollectionBuilder<T> list(Consumer<CollectionBuilder<V>> consumer) {
+        public <V> CollectionBuilder<T> list(VoidClosure<CollectionBuilder<V>> consumer) {
             CollectionBuilder<V> builder = new CollectionBuilder<V>();
-            consumer.consume(builder);
+            consumer.execute(builder);
             return add(builder);
         }
 
@@ -111,25 +111,25 @@ public class CollectionTools {
             return c;
         }
 
-        public CollectionBuilder<T> with(Consumer<CollectionBuilder<T>> consumer) {
-            consumer.consume(this);
+        public CollectionBuilder<T> with(VoidClosure<CollectionBuilder<T>> consumer) {
+            consumer.execute(this);
             return this;
         }
     }
 
-    public static <T> void each(Iterable<T> c, Closure<Void, ? super T> closure) {
+    public static <T> void each(Iterable<T> c, VoidClosure<? super T> closure) {
         for (T t : c) {
             closure.execute(t);
         }
     }
 
-    public static <K, V> void each(Map<K, V> c, Closure2<Void, ? super K, ? super V> closure) {
+    public static <K, V> void each(Map<K, V> c, VoidClosure2<? super K, ? super V> closure) {
         for (Map.Entry<K, V> e : c.entrySet()) {
             closure.execute(e.getKey(), e.getValue());
         }
     }
 
-    public static <T> void eachWithIndex(Iterable<T> c, Closure2<Void, Integer, ? super T> closure) {
+    public static <T> void eachWithIndex(Iterable<T> c, VoidClosure2<Integer, ? super T> closure) {
         int i = 0;
         for (T t : c) {
             closure.execute(i, t);
@@ -283,54 +283,90 @@ public class CollectionTools {
         return map;
     }
 
-    public static <T> void times(int times, Closure<Void, ? super Integer> closure) {
+    public static void times(int times, VoidClosure<? super Integer> closure) {
         for (int i = 0; i < times; i++) {
             closure.execute(i);
         }
     }
 
-    public interface Consumer<T> {
-        void consume(T t);
+    public interface Closure<R, T> {
+        R execute(T it);
     }
 
-    public static interface Closure<R, T> {
-        public abstract R execute(T it);
+    public interface Closure2<R, T1, T2> {
+        R execute(T1 it, T2 it2);
     }
 
-    public static interface Closure2<R, T1, T2> {
-        public abstract R execute(T1 it, T2 it2);
+    public interface Closure3<R, T1, T2, T3> {
+        R execute(T1 it, T2 it2, T3 it3);
     }
 
-    public static interface Closure3<R, T1, T2, T3> {
-        public abstract R execute(T1 it, T2 it2, T3 it3);
+    public interface Closure4<R, T1, T2, T3, T4> {
+        R execute(T1 it, T2 it2, T3 it3, T4 it4);
     }
 
-    public static interface Closure4<R, T1, T2, T3, T4> {
-        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4);
+    public interface Closure5<R, T1, T2, T3, T4, T5> {
+        R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5);
     }
 
-    public static interface Closure5<R, T1, T2, T3, T4, T5> {
-        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5);
+    public interface Closure6<R, T1, T2, T3, T4, T5, T6> {
+        R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6);
     }
 
-    public static interface Closure6<R, T1, T2, T3, T4, T5, T6> {
-        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6);
+    public interface Closure7<R, T1, T2, T3, T4, T5, T6, T7> {
+        R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7);
     }
 
-    public static interface Closure7<R, T1, T2, T3, T4, T5, T6, T7> {
-        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7);
+    public interface Closure8<R, T1, T2, T3, T4, T5, T6, T7, T8> {
+        R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8);
     }
 
-    public static interface Closure8<R, T1, T2, T3, T4, T5, T6, T7, T8> {
-        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8);
+    public interface Closure9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
+        R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9);
     }
 
-    public static interface Closure9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
-        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9);
+    public interface Closure10<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> {
+        R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9, T10 it10);
     }
 
-    public static interface Closure10<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> {
-        public abstract R execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9, T10 it10);
+    public interface VoidClosure<T> {
+        void execute(T t);
+    }
+
+    public interface VoidClosure2<T1, T2> {
+        void execute(T1 it, T2 it2);
+    }
+
+    public interface VoidClosure3<T1, T2, T3> {
+        void execute(T1 it, T2 it2, T3 it3);
+    }
+
+    public interface VoidClosure4<T1, T2, T3, T4> {
+        void execute(T1 it, T2 it2, T3 it3, T4 it4);
+    }
+
+    public interface VoidClosure5<T1, T2, T3, T4, T5> {
+        void execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5);
+    }
+
+    public interface VoidClosure6<T1, T2, T3, T4, T5, T6> {
+        void execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6);
+    }
+
+    public interface VoidClosure7<T1, T2, T3, T4, T5, T6, T7> {
+        void execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7);
+    }
+
+    public interface VoidClosure8<T1, T2, T3, T4, T5, T6, T7, T8> {
+        void execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8);
+    }
+
+    public interface VoidClosure9<T1, T2, T3, T4, T5, T6, T7, T8, T9> {
+        void execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9);
+    }
+
+    public interface VoidClosure10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> {
+        void execute(T1 it, T2 it2, T3 it3, T4 it4, T5 it5, T6 it6, T7 it7, T8 it8, T9 it9, T10 it10);
     }
 
 }
