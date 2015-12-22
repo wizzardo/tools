@@ -545,8 +545,27 @@ public class EvalTools {
         return prepare(exp, model, null);
     }
 
-    public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions) {
-        return prepare(exp, model, functions, null, false);
+    public static Expression prepare(String script, Map<String, Object> model, Map<String, UserFunction> functions) {
+        List<String> imports = new ArrayList<String>();
+        script = script.trim();
+        int s, n;
+        if (script.startsWith("package")) {
+            n = script.indexOf("\n");
+            s = script.indexOf(";");
+            int to = Math.min(n == -1 ? script.length() : n, s == -1 ? script.length() : s);
+            imports.add(script.substring(8, to).trim() + ".*");
+
+            script = script.substring(to + 1).trim();
+        }
+        while (script.startsWith("import")) {
+            n = script.indexOf("\n");
+            s = script.indexOf(";");
+            int to = Math.min(n == -1 ? script.length() : n, s == -1 ? script.length() : s);
+            imports.add(script.substring(7, to).trim());
+
+            script = script.substring(to + 1).trim();
+        }
+        return prepare(script, model, functions, imports, false);
     }
 
     public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
