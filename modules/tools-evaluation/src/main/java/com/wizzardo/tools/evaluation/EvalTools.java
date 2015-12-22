@@ -1004,6 +1004,19 @@ public class EvalTools {
                 String argsRaw = parts.remove(0);
                 argsRaw = argsRaw.substring(1, argsRaw.length() - 1);
                 thatObject = new Operation(thatObject, prepare(argsRaw, model, functions, imports, isTemplate), Operator.GET);
+
+                //execute closure
+            } else if (parts.size() == 1) {
+                Expression[] args = null;
+                String argsRaw = trimBrackets(parts.remove(0));
+                if (argsRaw.length() > 0) {
+                    List<String> arr = parseArgs(argsRaw);
+                    args = new Expression[arr.size()];
+                    for (int i = 0; i < arr.size(); i++) {
+                        args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
+                    }
+                }
+                thatObject = new Function(thatObject, "execute", args);
             }
         }
 
