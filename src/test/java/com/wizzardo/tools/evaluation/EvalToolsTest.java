@@ -977,7 +977,7 @@ public class EvalToolsTest {
     }
 
     @Test
-    public void testImports() {
+    public void test_imports_1() {
         Map<String, Object> model = new HashMap<String, Object>();
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
         List<String> imports = new ArrayList<String>();
@@ -1005,6 +1005,20 @@ public class EvalToolsTest {
         imports.add("com.wizzardo.tools.evaluation.EvalToolsTest");
         exp = EvalTools.prepare("new EvalToolsTest.Foo()", model, functions, imports, false);
         Assert.assertEquals(Foo.class, exp.get(model).getClass());
+    }
+
+    @Test
+    public void test_imports_2() {
+        String s = "import " + AtomicInteger.class.getCanonicalName() + ";\n" +
+                "i = new AtomicInteger(1)";
+        System.out.println(s);
+        Expression expression = EvalTools.prepare(s);
+
+        Map model = new HashMap();
+        expression.get(model);
+
+        Assert.assertEquals(1, model.size());
+        Assert.assertEquals(1, ((AtomicInteger) model.get("i")).get());
     }
 
     @Test
