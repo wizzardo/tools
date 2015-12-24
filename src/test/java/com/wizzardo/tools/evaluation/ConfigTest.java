@@ -82,4 +82,22 @@ public class ConfigTest {
         Assert.assertEquals("value", ((Map) config.get("a")).get("b"));
         Assert.assertEquals("value 2", ((Map) config.get("a")).get("c"));
     }
+
+    @Test
+    public void test_6() {
+        String s = "a { ['user', 'password'].each {\n" +
+//                "this.\"${it}\" = 'secret'\n" + // not implemented dynamic filed name yet
+                "this[\"${it}\"] = 'secret'\n" +
+                "} }";
+
+        Expression expression = EvalTools.prepare(s);
+
+        Config config = new Config();
+
+        expression.get(config);
+
+        Assert.assertEquals(1, config.size());
+        Assert.assertEquals("secret", ((Map) config.get("a")).get("user"));
+        Assert.assertEquals("secret", ((Map) config.get("a")).get("password"));
+    }
 }
