@@ -27,7 +27,7 @@ public class EvalTools {
     private static final Pattern COMMA = Pattern.compile(",");
     private static final Pattern MAP_KEY_VALUE = Pattern.compile("[a-zA-Z\\d]+ *: *.+");
     private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
-    private static final Pattern LIST = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
+    private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$\\{([^\\{\\}]+)\\}|\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
     private static final Pattern DEF = Pattern.compile("def +([a-z]+[a-zA-Z_\\d]*)$");
@@ -116,7 +116,7 @@ public class EvalTools {
                     }
                     case '(': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(new String(chars, from, i - from));
+                            l.add(trim(chars, from, i));
                             from = i;
                         }
                         brackets++;
@@ -124,7 +124,7 @@ public class EvalTools {
                     }
                     case '{': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(new String(chars, from, i - from));
+                            l.add(trim(chars, from, i));
                             from = i;
                         }
                         curlyBraces++;
@@ -132,7 +132,7 @@ public class EvalTools {
                     }
                     case '[': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(new String(chars, from, i - from));
+                            l.add(trim(chars, from, i));
                             from = i;
                         }
                         squareBrackets++;
@@ -141,7 +141,7 @@ public class EvalTools {
                     case ')': {
                         brackets--;
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
-                            l.add(new String(chars, from, i + 1 - from));
+                            l.add(trim(chars, from, i + 1));
                             from = i + 1;
                         }
                         break;
@@ -149,7 +149,7 @@ public class EvalTools {
                     case '}': {
                         curlyBraces--;
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
-                            l.add(new String(chars, from, i + 1 - from));
+                            l.add(trim(chars, from, i + 1));
                             from = i + 1;
                         }
                         break;
@@ -157,7 +157,7 @@ public class EvalTools {
                     case ']': {
                         squareBrackets--;
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
-                            l.add(new String(chars, from, i + 1 - from));
+                            l.add(trim(chars, from, i + 1));
                             from = i + 1;
                         }
                         break;
@@ -170,7 +170,7 @@ public class EvalTools {
                                 else
                                     i--;
 
-                            l.add(new String(chars, from, i - from));
+                            l.add(trim(chars, from, i));
                             from = i;
                         }
                         break;
@@ -181,9 +181,16 @@ public class EvalTools {
             }
         }
         if (from != chars.length) {
-            l.add(new String(chars, from, chars.length - from));
+            l.add(trim(chars, from, chars.length));
         }
         return l;
+    }
+
+    private static String trim(char[] chars, int from, int to) {
+        while (to > 0 && chars[to - 1] <= ' ') {
+            to--;
+        }
+        return new String(chars, from, to - from);
     }
 
     public static enum EvaluatingStrategy {
