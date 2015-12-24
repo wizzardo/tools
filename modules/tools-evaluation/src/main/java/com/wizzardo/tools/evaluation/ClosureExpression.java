@@ -39,6 +39,7 @@ public class ClosureExpression extends Expression {
 
     public Object get(Map<String, Object> model, Object... arg) {
         HashMap<String, Object> local = new HashMap<String, Object>(model);
+        local.put("this", model);
         if (args != null) {
             if (args.length != arg.length)
                 throw new IllegalArgumentException("wrong number of arguments! there were " + arg.length + ", but must be " + args.length);
