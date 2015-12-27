@@ -22,4 +22,15 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
         it.get(this);
         return this;
     }
+
+    public <T> T get(String key, T def) {
+        Object value = super.get(key);
+        if (value == null)
+            return def;
+
+        if (value instanceof Config && ((Config) value).isEmpty() && !(def instanceof Config))
+            return def;
+
+        return (T) value;
+    }
 }
