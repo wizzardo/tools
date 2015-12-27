@@ -1011,7 +1011,6 @@ public class EvalToolsTest {
     public void test_imports_2() {
         String s = "import " + AtomicInteger.class.getCanonicalName() + ";\n" +
                 "i = new AtomicInteger(1)";
-        System.out.println(s);
         Expression expression = EvalTools.prepare(s);
 
         Map model = new HashMap();
@@ -1175,5 +1174,12 @@ public class EvalToolsTest {
 
         assertEquals(HashMap.class, EvalTools.evaluate("(Map<Integer, String>) [:]", model).getClass());
         assertEquals(ArrayList.class, EvalTools.evaluate("(List<Integer>) []", model).getClass());
+    }
+
+    @Test
+    public void testComment() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        String s = "a = 1\n//a=2";
+        Assert.assertEquals(1, EvalTools.prepare(s).get(model));
     }
 }
