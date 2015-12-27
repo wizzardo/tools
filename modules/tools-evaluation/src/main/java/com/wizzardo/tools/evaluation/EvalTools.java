@@ -584,6 +584,9 @@ public class EvalTools {
         if (exp == null) {
             return null;
         }
+        //remove comments
+        exp = exp.replaceAll("/\\*.*\\*/", "\n");
+
         if (!isTemplate) {
             exp = exp.trim();
             String trimmed = trimBrackets(exp);
