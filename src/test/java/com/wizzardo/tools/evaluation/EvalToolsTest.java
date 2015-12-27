@@ -1177,9 +1177,16 @@ public class EvalToolsTest {
     }
 
     @Test
-    public void testComment() {
+    public void testComment_1() {
         Map<String, Object> model = new HashMap<String, Object>();
         String s = "a = 1\n//a=2";
+        Assert.assertEquals(1, EvalTools.prepare(s).get(model));
+    }
+
+    @Test
+    public void testComment_2() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        String s = "a = 1/*a=2*/";
         Assert.assertEquals(1, EvalTools.prepare(s).get(model));
     }
 }
