@@ -535,7 +535,7 @@ public class EvalTools {
         }
         String value = sb.toString().trim();
         if (value.length() > 0)
-            list.add(sb.toString().trim());
+            list.add(value);
 
         return list;
     }
@@ -646,6 +646,8 @@ public class EvalTools {
                 lines.set(0, firstLine);
 
             for (String s : lines) {
+                if (isLineCommented(s))
+                    continue;
                 closure.add(prepare(s, model, functions, imports, isTemplate));
             }
             return closure;
@@ -667,6 +669,8 @@ public class EvalTools {
                         if (lines.size() > 1) {
                             ClosureExpression inner = new ClosureExpression();
                             for (String line : lines) {
+                                if (isLineCommented(line))
+                                    continue;
                                 inner.add(prepare(line, model, functions, imports, isTemplate));
                             }
                             closure.add(inner);
@@ -1028,6 +1032,10 @@ public class EvalTools {
         }
 
         return thatObject;
+    }
+
+    protected static boolean isLineCommented(String s) {
+        return s.startsWith("//");
     }
 
 
