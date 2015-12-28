@@ -100,4 +100,54 @@ public class ConfigTest {
         Assert.assertEquals("secret", ((Map) config.get("a")).get("user"));
         Assert.assertEquals("secret", ((Map) config.get("a")).get("password"));
     }
+
+    @Test
+    public void test_merge_1() {
+        Config configA = new Config();
+        Config configB = new Config();
+        EvalTools.prepare("a { b = 1 }").get(configA);
+        EvalTools.prepare("a { c = 2 }").get(configB);
+
+        Assert.assertEquals(1, configA.size());
+        Assert.assertEquals(1, ((Map) configA.get("a")).size());
+        Assert.assertEquals(1, ((Map) configA.get("a")).get("b"));
+
+        configA.merge(configB);
+        Assert.assertEquals(1, configA.size());
+        Assert.assertEquals(2, ((Map) configA.get("a")).size());
+        Assert.assertEquals(1, ((Map) configA.get("a")).get("b"));
+        Assert.assertEquals(2, ((Map) configA.get("a")).get("c"));
+    }
+
+    @Test
+    public void test_merge_2() {
+        Config configA = new Config();
+        Config configB = new Config();
+        EvalTools.prepare("a { b = 1 }").get(configA);
+        EvalTools.prepare("a = 1").get(configB);
+
+        Assert.assertEquals(1, configA.size());
+        Assert.assertEquals(1, ((Map) configA.get("a")).size());
+        Assert.assertEquals(1, ((Map) configA.get("a")).get("b"));
+
+        configA.merge(configB);
+        Assert.assertEquals(1, configA.size());
+        Assert.assertEquals(1, configA.get("a"));
+    }
+
+    @Test
+    public void test_merge_3() {
+        Config configA = new Config();
+        Config configB = new Config();
+        EvalTools.prepare("a = 1").get(configA);
+        EvalTools.prepare("a { c = 2 }").get(configB);
+
+        Assert.assertEquals(1, configA.size());
+        Assert.assertEquals(1, configA.get("a"));
+
+        configA.merge(configB);
+        Assert.assertEquals(1, configA.size());
+        Assert.assertEquals(1, ((Map) configA.get("a")).size());
+        Assert.assertEquals(2, ((Map) configA.get("a")).get("c"));
+    }
 }
