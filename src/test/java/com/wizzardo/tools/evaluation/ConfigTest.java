@@ -102,6 +102,22 @@ public class ConfigTest {
     }
 
     @Test
+    public void test_7() {
+        Config config = new Config();
+        EvalTools.prepare("a { b = 1 }").get(config);
+
+        Assert.assertEquals(1, config.size());
+        Assert.assertEquals(1, ((Map) config.get("a")).size());
+        Assert.assertEquals(1, ((Map) config.get("a")).get("b"));
+
+        EvalTools.prepare("a { c = 2 }").get(config);
+        Assert.assertEquals(1, config.size());
+        Assert.assertEquals(2, ((Map) config.get("a")).size());
+        Assert.assertEquals(1, ((Map) config.get("a")).get("b"));
+        Assert.assertEquals(2, ((Map) config.get("a")).get("c"));
+    }
+
+    @Test
     public void test_merge_1() {
         Config configA = new Config();
         Config configB = new Config();
