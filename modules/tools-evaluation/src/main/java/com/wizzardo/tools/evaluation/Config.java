@@ -3,6 +3,7 @@ package com.wizzardo.tools.evaluation;
 import com.wizzardo.tools.collections.CollectionTools;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by wizzardo on 22.12.15.
@@ -32,5 +33,24 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
             return def;
 
         return (T) value;
+    }
+
+    public void merge(Map<String, Object> scr) {
+        merge(this, scr);
+    }
+
+    private void merge(Map into, Map<?, ?> from) {
+        for (Map.Entry<?, ?> entry : from.entrySet()) {
+            if (entry.getValue() instanceof Map) {
+                Object in = into.get(entry.getKey());
+                if (in instanceof Map) {
+                    merge(((Map) in), ((Map) entry.getValue()));
+                } else {
+                    into.put(entry.getKey(), entry.getValue());
+                }
+            } else {
+                into.put(entry.getKey(), entry.getValue());
+            }
+        }
     }
 }
