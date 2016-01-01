@@ -1,6 +1,7 @@
 package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.collections.CollectionTools;
+import com.wizzardo.tools.misc.Supplier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +32,17 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
 
         if (value instanceof Config && ((Config) value).isEmpty() && !(def instanceof Config))
             return def;
+
+        return (T) value;
+    }
+
+    public <T> T get(String key, Supplier<T> def) {
+        Object value = super.get(key);
+        if (value == null)
+            return def.supply();
+
+        if (value instanceof Config && ((Config) value).isEmpty() && !(def instanceof Config))
+            return def.supply();
 
         return (T) value;
     }
