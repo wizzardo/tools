@@ -9,12 +9,14 @@ import com.wizzardo.tools.reflection.StringReflection;
 
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.charset.Charset;
 
 /**
  * @author: wizzardo
  * Date: 8/11/14
  */
 public class JsonTools {
+    public static final Charset UTF_8 = Charset.forName("utf-8");
 
     private static final int[] INT_VALUES = new int[128];
     private static final char[] UNESCAPES = new char[128];
@@ -100,6 +102,38 @@ public class JsonTools {
 
     public static <T> T parse(String s, Class<T> clazz, Generic... generic) {
         return parse(s, new Generic<T>(clazz, generic));
+    }
+
+    public static JsonItem parse(byte[] bytes) {
+        return parse(bytes, 0, bytes.length);
+    }
+
+    public static JsonItem parse(byte[] bytes, int from, int length) {
+        return parse(new String(bytes, from, length, UTF_8));
+    }
+
+    public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz) {
+        return parse(new String(bytes, from, length, UTF_8), new Generic<T>(clazz));
+    }
+
+    public static <T> T parse(byte[] bytes, Class<T> clazz) {
+        return parse(new String(bytes, UTF_8), new Generic<T>(clazz));
+    }
+
+    public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, Class... generic) {
+        return parse(new String(bytes, from, length, UTF_8), new Generic<T>(clazz, generic));
+    }
+
+    public static <T> T parse(byte[] bytes, Class<T> clazz, Class... generic) {
+        return parse(new String(bytes, UTF_8), new Generic<T>(clazz, generic));
+    }
+
+    public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, Generic... generic) {
+        return parse(new String(bytes, from, length, UTF_8), new Generic<T>(clazz, generic));
+    }
+
+    public static <T> T parse(byte[] bytes, Class<T> clazz, Generic... generic) {
+        return parse(new String(bytes, UTF_8), new Generic<T>(clazz, generic));
     }
 
     public static <T> T parse(String s, Generic<T> generic) {
@@ -304,15 +338,6 @@ public class JsonTools {
         value += getHexValue(chars[last - 1]) * 16;
         value += getHexValue(chars[last - 2]) * 256;
         value += getHexValue(chars[last - 3]) * 4096;
-        return (char) value;
-    }
-
-    static char decodeUtf(byte[] bytes, int last) {
-        int value = 0;
-        value += getHexValue(bytes[last] & 0XFF);
-        value += getHexValue(bytes[last - 1] & 0XFF) * 16;
-        value += getHexValue(bytes[last - 2] & 0XFF) * 256;
-        value += getHexValue(bytes[last - 3] & 0XFF) * 4096;
         return (char) value;
     }
 
