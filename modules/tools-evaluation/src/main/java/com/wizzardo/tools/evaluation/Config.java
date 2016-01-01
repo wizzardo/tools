@@ -25,6 +25,10 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
         return this;
     }
 
+    public Config config(String key) {
+        return (Config) get(key);
+    }
+
     public <T> T get(String key, T def) {
         Object value = super.get(key);
         if (value == null)
