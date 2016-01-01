@@ -12,14 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: moxa
  * Date: 3/23/13
  */
-class Binder {
+public class Binder {
 
     private static final int SYNTHETIC = 0x00001000;
     private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
     private static Map<Class, Serializer> serializers = new ConcurrentHashMap<Class, Serializer>();
 
-    static abstract class Serializer {
+    public static abstract class Serializer {
         static char[] nullArray = new char[]{'n', 'u', 'l', 'l'};
         final SerializerType type;
 
@@ -42,7 +42,7 @@ class Binder {
         abstract public void serialize(Object object, Appender appender, Generic generic);
     }
 
-    private static abstract class PrimitiveSerializer extends Serializer {
+    public static abstract class PrimitiveSerializer extends Serializer {
         protected PrimitiveSerializer() {
             super(SerializerType.NUMBER_BOOLEAN);
         }
@@ -55,7 +55,7 @@ class Binder {
         public abstract void serialize(Object parent, FieldReflection field, Appender appender, Generic generic);
     }
 
-    private static class ArrayBoxedSerializer extends Serializer {
+    public static class ArrayBoxedSerializer extends Serializer {
         Serializer serializer;
 
         protected ArrayBoxedSerializer(Serializer serializer) {
@@ -81,31 +81,31 @@ class Binder {
         }
     }
 
-    private static PrimitiveSerializer intSerializer = new PrimitiveSerializer() {
+    public final static PrimitiveSerializer intSerializer = new PrimitiveSerializer() {
         @Override
         public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
             appender.append(field.getInteger(parent));
         }
     };
-    private static PrimitiveSerializer longSerializer = new PrimitiveSerializer() {
+    public final static PrimitiveSerializer longSerializer = new PrimitiveSerializer() {
         @Override
         public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
             appender.append(field.getLong(parent));
         }
     };
-    private static PrimitiveSerializer shortSerializer = new PrimitiveSerializer() {
+    public final static PrimitiveSerializer shortSerializer = new PrimitiveSerializer() {
         @Override
         public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
             appender.append(field.getShort(parent));
         }
     };
-    private static PrimitiveSerializer byteSerializer = new PrimitiveSerializer() {
+    public final static PrimitiveSerializer byteSerializer = new PrimitiveSerializer() {
         @Override
         public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
             appender.append(field.getByte(parent));
         }
     };
-    private static PrimitiveSerializer charSerializer = new PrimitiveSerializer() {
+    public final static PrimitiveSerializer charSerializer = new PrimitiveSerializer() {
         @Override
         public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
             appender.append('"');
@@ -113,32 +113,32 @@ class Binder {
             appender.append('"');
         }
     };
-    private static PrimitiveSerializer booleanSerializer = new PrimitiveSerializer() {
+    public final static PrimitiveSerializer booleanSerializer = new PrimitiveSerializer() {
         @Override
         public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
             appender.append(field.getBoolean(parent));
         }
     };
-    private static PrimitiveSerializer floatSerializer = new PrimitiveSerializer() {
+    public final static PrimitiveSerializer floatSerializer = new PrimitiveSerializer() {
         @Override
         public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
             appender.append(field.getFloat(parent));
         }
     };
-    private static PrimitiveSerializer doubleSerializer = new PrimitiveSerializer() {
+    public final static PrimitiveSerializer doubleSerializer = new PrimitiveSerializer() {
         @Override
         public void serialize(Object parent, FieldReflection field, Appender appender, Generic generic) {
             appender.append(field.getDouble(parent));
         }
     };
 
-    private static Serializer stringSerializer = new Serializer(SerializerType.STRING) {
+    public final static Serializer stringSerializer = new Serializer(SerializerType.STRING) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appendString(object, appender);
         }
     };
-    private static Serializer characterSerializer = new Serializer(SerializerType.STRING) {
+    public final static Serializer characterSerializer = new Serializer(SerializerType.STRING) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append('"');
@@ -146,49 +146,49 @@ class Binder {
             appender.append('"');
         }
     };
-    private static Serializer simpleSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+    public final static Serializer simpleSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append(String.valueOf(object));
         }
     };
-    private static Serializer intNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+    public final static Serializer intNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append(((Number) object).intValue());
         }
     };
-    private static Serializer longNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+    public final static Serializer longNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append(((Number) object).longValue());
         }
     };
-    private static Serializer floatNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+    public final static Serializer floatNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append(((Number) object).floatValue());
         }
     };
-    private static Serializer doubleNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
+    public final static Serializer doubleNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append(((Number) object).doubleValue());
         }
     };
-    private static Serializer collectionSerializer = new Serializer(SerializerType.COLLECTION) {
+    public final static Serializer collectionSerializer = new Serializer(SerializerType.COLLECTION) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appendCollection(object, appender, generic);
         }
     };
-    private static Serializer arraySerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arraySerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appendArray(object, appender, generic);
         }
     };
-    private static Serializer arrayIntSerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arrayIntSerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             int[] arr = (int[]) object;
@@ -202,7 +202,7 @@ class Binder {
             appender.append(']');
         }
     };
-    private static Serializer arrayLongSerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arrayLongSerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             long[] arr = (long[]) object;
@@ -216,7 +216,7 @@ class Binder {
             appender.append(']');
         }
     };
-    private static Serializer arrayByteSerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arrayByteSerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             byte[] arr = (byte[]) object;
@@ -230,7 +230,7 @@ class Binder {
             appender.append(']');
         }
     };
-    private static Serializer arrayShortSerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arrayShortSerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             short[] arr = (short[]) object;
@@ -244,7 +244,7 @@ class Binder {
             appender.append(']');
         }
     };
-    private static Serializer arrayBooleanSerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arrayBooleanSerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             boolean[] arr = (boolean[]) object;
@@ -258,7 +258,7 @@ class Binder {
             appender.append(']');
         }
     };
-    private static Serializer arrayFloatSerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arrayFloatSerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             float[] arr = (float[]) object;
@@ -272,7 +272,7 @@ class Binder {
             appender.append(']');
         }
     };
-    private static Serializer arrayDoubleSerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arrayDoubleSerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             double[] arr = (double[]) object;
@@ -286,7 +286,7 @@ class Binder {
             appender.append(']');
         }
     };
-    private static Serializer arrayCharSerializer = new Serializer(SerializerType.ARRAY) {
+    public final static Serializer arrayCharSerializer = new Serializer(SerializerType.ARRAY) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             char[] chars = (char[]) object;
@@ -303,13 +303,13 @@ class Binder {
             appender.append(']');
         }
     };
-    private static Serializer mapSerializer = new Serializer(SerializerType.MAP) {
+    public final static Serializer mapSerializer = new Serializer(SerializerType.MAP) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appendMap(object, appender, generic);
         }
     };
-    private static Serializer dateSerializer = new Serializer(SerializerType.DATE) {
+    public final static Serializer dateSerializer = new Serializer(SerializerType.DATE) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append('"');
@@ -317,7 +317,7 @@ class Binder {
             appender.append('"');
         }
     };
-    private static Serializer enumSerializer = new Serializer(SerializerType.ENUM) {
+    public final static Serializer enumSerializer = new Serializer(SerializerType.ENUM) {
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append('"');
@@ -325,14 +325,14 @@ class Binder {
             appender.append('"');
         }
     };
-    private static Serializer nullSerializer = new Serializer(SerializerType.NULL) {
+    public final static Serializer nullSerializer = new Serializer(SerializerType.NULL) {
 
         @Override
         public void serialize(Object object, Appender appender, Generic generic) {
             appender.append(nullArray);
         }
     };
-    private static Serializer objectSerializer = new Serializer(SerializerType.OBJECT) {
+    public final static Serializer objectSerializer = new Serializer(SerializerType.OBJECT) {
         @Override
         public void serialize(Object src, Appender sb, Generic generic) {
             sb.append('{');
@@ -356,22 +356,22 @@ class Binder {
             sb.append('}');
         }
     };
-    private static Serializer genericSerializer = new Serializer(SerializerType.OBJECT) {
+    public final static Serializer genericSerializer = new Serializer(SerializerType.OBJECT) {
         @Override
         public void serialize(Object src, Appender sb, Generic generic) {
             classToSerializer(src.getClass()).serialize(src, sb, null);
         }
     };
-    private static Serializer simpleBoxedSerializer = new ArrayBoxedSerializer(simpleSerializer);
-    private static Serializer stringArraySerializer = new ArrayBoxedSerializer(stringSerializer);
-    private static Serializer charArraySerializer = new ArrayBoxedSerializer(characterSerializer);
-    private static Serializer dateArraySerializer = new ArrayBoxedSerializer(dateSerializer);
-    private static Serializer enumArraySerializer = new ArrayBoxedSerializer(enumSerializer);
-    private static Serializer collectionArraySerializer = new ArrayBoxedSerializer(collectionSerializer);
-    private static Serializer mapArraySerializer = new ArrayBoxedSerializer(mapSerializer);
-    private static Serializer arrayArraySerializer = new ArrayBoxedSerializer(arraySerializer);
+    public final static Serializer simpleBoxedSerializer = new ArrayBoxedSerializer(simpleSerializer);
+    public final static Serializer stringArraySerializer = new ArrayBoxedSerializer(stringSerializer);
+    public final static Serializer charArraySerializer = new ArrayBoxedSerializer(characterSerializer);
+    public final static Serializer dateArraySerializer = new ArrayBoxedSerializer(dateSerializer);
+    public final static Serializer enumArraySerializer = new ArrayBoxedSerializer(enumSerializer);
+    public final static Serializer collectionArraySerializer = new ArrayBoxedSerializer(collectionSerializer);
+    public final static Serializer mapArraySerializer = new ArrayBoxedSerializer(mapSerializer);
+    public final static Serializer arrayArraySerializer = new ArrayBoxedSerializer(arraySerializer);
 
-    static enum SerializerType {
+    enum SerializerType {
         STRING,
         NUMBER_BOOLEAN,
         COLLECTION,
