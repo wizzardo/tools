@@ -2,7 +2,6 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.reflection.FieldReflection;
-import com.wizzardo.tools.reflection.StringReflection;
 
 /**
  * @author: wizzardo
@@ -31,62 +30,12 @@ class JsonUtils {
         return length == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l';
     }
 
-    static boolean isNull(byte[] s, int from, int length, StringParsingContext context) {
-        int cl = context.length;
-        if (cl == 0)
-            return length == 4 && s[from] == 'n' && s[from + 1] == 'u' && s[from + 2] == 'l' && s[from + 3] == 'l';
-
-        byte[] buffer = context.buffer;
-        if (cl == 1)
-            return length == 3 && buffer[0] == 'n' && s[from] == 'u' && s[from + 1] == 'l' && s[from + 2] == 'l';
-        else if (cl == 2)
-            return length == 2 && buffer[0] == 'n' && buffer[1] == 'u' && s[from] == 'l' && s[from + 1] == 'l';
-        else if (cl == 3)
-            return length == 1 && buffer[0] == 'n' && buffer[1] == 'u' && buffer[2] == 'l' && s[from] == 'l';
-        else
-            return cl == 4 && buffer[0] == 'n' && buffer[1] == 'u' && buffer[2] == 'l' && buffer[3] == 'l';
-    }
-
     static boolean isTrue(char[] s, int from, int length) {
         return length == 4 && s[from] == 't' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e';
     }
 
-    static boolean isTrue(byte[] s, int from, int length, StringParsingContext context) {
-        int cl = context.length;
-        if (cl == 0)
-            return length == 4 && s[from] == 't' && s[from + 1] == 'r' && s[from + 2] == 'u' && s[from + 3] == 'e';
-
-        byte[] buffer = context.buffer;
-        if (cl == 1)
-            return length == 3 && buffer[0] == 't' && s[from] == 'r' && s[from + 1] == 'u' && s[from + 2] == 'e';
-        else if (cl == 2)
-            return length == 2 && buffer[0] == 't' && buffer[1] == 'r' && s[from] == 'u' && s[from + 1] == 'e';
-        else if (cl == 3)
-            return length == 1 && buffer[0] == 't' && buffer[1] == 'r' && buffer[2] == 'u' && s[from] == 'e';
-        else
-            return cl == 4 && buffer[0] == 't' && buffer[1] == 'r' && buffer[2] == 'u' && buffer[3] == 'e';
-    }
-
     static boolean isFalse(char[] s, int from, int length) {
         return length == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e';
-    }
-
-    static boolean isFalse(byte[] s, int from, int length, StringParsingContext context) {
-        int cl = context.length;
-        if (cl == 0)
-            return length == 5 && s[from] == 'f' && s[from + 1] == 'a' && s[from + 2] == 'l' && s[from + 3] == 's' && s[from + 4] == 'e';
-
-        byte[] buffer = context.buffer;
-        if (cl == 1)
-            return length == 4 && buffer[0] == 'f' && s[from] == 'a' && s[from + 1] == 'l' && s[from + 2] == 's' && s[from + 3] == 'e';
-        else if (cl == 2)
-            return length == 3 && buffer[0] == 'f' && buffer[1] == 'a' && s[from] == 'l' && s[from + 1] == 's' && s[from + 2] == 'e';
-        else if (cl == 3)
-            return length == 2 && buffer[0] == 'f' && buffer[1] == 'a' && buffer[2] == 'l' && s[from] == 's' && s[from + 1] == 'e';
-        else if (cl == 4)
-            return length == 1 && buffer[0] == 'f' && buffer[1] == 'a' && buffer[2] == 'l' && buffer[3] == 's' && s[from] == 'e';
-        else
-            return cl == 5 && buffer[0] == 'f' && buffer[1] == 'a' && buffer[2] == 'l' && buffer[3] == 's' && buffer[4] == 'e';
     }
 
     static int skipSpaces(char[] s, int from, int to) {
@@ -147,117 +96,6 @@ class JsonUtils {
             else
                 d = ((double) number) / fractionalShift[i - fractionalPartStart];
         }
-
-        if (minus)
-            l = -l;
-
-        if (ch == 'e' || ch == 'E') {
-            if (!floatValue) {
-                d = l;
-                floatValue = true;
-            }
-
-            i++;
-            int degree = 0;
-            minus = s[i] == '-';
-            if (minus)
-                i++;
-
-            while (i < to) {
-                ch = s[i];
-                if (ch >= '0' && ch <= '9')
-                    degree = degree * 10 + (ch - '0');
-                else
-                    break;
-                i++;
-            }
-
-            d = (minus) ? d / Math.pow(10, degree) : d * Math.pow(10, degree);
-        }
-
-        JsonFieldSetter setter = binder.getFieldSetter();
-        if (setter != null) {
-            setNumber(setter, binder.getObject(), l, d, floatValue);
-            return i;
-        }
-
-        if (!floatValue)
-            binder.add(l);
-        else
-            binder.add(d);
-
-        return i;
-    }
-
-    static int parseNumber(JsonBinder binder, byte[] s, int from, int to, NumberParsingContext context) {
-        if (context.done)
-            throw new IllegalArgumentException("already parsed");
-
-        boolean minus = s[from] == '-' || context.negative;
-        int i = from;
-        if (minus) {
-            if (context.started)
-                throw new NumberFormatException();
-
-            context.negative = true;
-            i++;
-        }
-        context.started = true;
-
-
-        boolean floatValue = context.floatValue;
-        long l = context.l;
-        int ch = 0;
-        if (!floatValue)
-            while (i < to) {
-                ch = s[i];
-                if (ch >= '0' && ch <= '9') {
-                    l = l * 10 + (ch - '0');
-                } else if (ch == '.') {
-                    context.floatValue = floatValue = true;
-                    context.big = l;
-                    context.l = l;
-                    break;
-                } else
-                    break;
-                i++;
-            }
-
-        if (binder == null)
-            return i;
-
-        double d = 0;
-        if (floatValue) {
-            long number = context.big;
-            i++;
-            int fractional = context.fractional;
-
-            while (i < to) {
-                ch = s[i];
-                if (ch >= '0' && ch <= '9')
-                    number = number * 10 + (ch - '0');
-                else
-                    break;
-                i++;
-                fractional++;
-            }
-            context.fractional = fractional;
-            context.big = number;
-
-            context.done = ch == ',' || ch == ']' || ch == '}' || ch == '\r' || ch == '\n' || ch == ' ';
-//            if (ch != '"' && ch != '\'' && ch != '}' && ch != ']' && ch != ',')
-//                throw new NumberFormatException("can't parse '" + new String(s, from, i - from + 1) + "' as number");
-
-
-            if (minus)
-                d = -((double) number) / fractionalShift[fractional];
-            else
-                d = ((double) number) / fractionalShift[fractional];
-        } else
-            context.done = ch == ',' || ch == ']' || ch == '}' || ch == '\r' || ch == '\n' || ch == ' ';
-
-        if (!context.done)
-            return i;
 
         if (minus)
             l = -l;
@@ -412,112 +250,6 @@ class JsonUtils {
         setString(setter, binder, value);
 
         return i;
-    }
-
-    static int parseValue(JsonBinder binder, byte[] bytes, int from, int to, byte end, StringParsingContext context) {
-        if (context.done)
-            throw new IllegalArgumentException("already parsed");
-
-        byte ch;
-
-        byte quote;
-        if (!context.started) {
-            ch = bytes[from];
-            quote = 0;
-            if (ch == '"' || ch == '\'') {
-                quote = ch;
-                from++;
-            }
-            context.started = true;
-            context.quote = quote;
-        } else {
-            quote = context.quote;
-        }
-
-        int i = from;
-        boolean escape = context.escape;
-        boolean needDecoding = context.needDecoding;
-        if (quote == 0) {
-            for (; i < to; i++) {
-                ch = bytes[i];
-                if (ch <= ' ' || ch == ',' || ch == end) {
-                    context.done = true;
-                    break;
-                }
-
-                if (ch == '\\')
-                    needDecoding = true;
-            }
-        } else {
-            for (; i < to; i++) {
-                if (escape) {
-                    escape = false;
-                } else {
-                    ch = bytes[i];
-                    if (ch == quote) {
-                        context.done = true;
-                        break;
-                    }
-
-                    if (ch == '\\')
-                        escape = needDecoding = true;
-                }
-            }
-        }
-        context.escape = escape;
-        context.needDecoding = needDecoding;
-
-        if (binder == null)
-            return quote == 0 ? i : i + 1;
-
-        JsonFieldSetter setter = binder.getFieldSetter();
-        String value;
-        int l = i - from;
-        if (quote != 0)
-            i++;
-
-        if (!needDecoding) {
-            if (isNull(bytes, from, l, context)) {
-                setNull(setter, binder);
-                return i;
-            }
-            if (isTrue(bytes, from, l, context)) {
-                setBoolean(setter, binder, true);
-                return i;
-            }
-            if (isFalse(bytes, from, l, context)) {
-                setBoolean(setter, binder, false);
-                return i;
-            }
-
-            value = getString(bytes, from, l, context);
-        } else {
-            value = JsonTools.unescape(bytes, from, i, context);
-        }
-
-        setString(setter, binder, value);
-
-        return i;
-    }
-
-    private static String getString(byte[] bytes, int from, int length, StringParsingContext context) {
-        int contextLength = context.length;
-        if (contextLength == 0)
-            return new String(bytes, from, length);
-
-        char[] chars = new char[length + contextLength];
-
-        byte[] buffer = context.buffer;
-        for (int i = 0; i < contextLength; i++) {
-            chars[i] = (char) buffer[i];
-        }
-
-        length += contextLength;
-        for (int i = contextLength; i < length; i++) {
-            chars[i] = (char) bytes[from++];
-        }
-
-        return StringReflection.createString(chars);
     }
 
     private static void setString(JsonFieldSetter setter, JsonBinder binder, String value) {
