@@ -28,7 +28,7 @@ public class EvalTools {
     private static final Pattern MAP_KEY_VALUE = Pattern.compile("[a-zA-Z\\d]+ *: *.+");
     private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
-    private static final Pattern VARIABLE = Pattern.compile("\\$\\{([^\\{\\}]+)\\}|\\$([\\.a-z]+[\\.a-zA-Z]*)");
+    private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
     private static final Pattern DEF = Pattern.compile("def +([a-z]+[a-zA-Z_\\d]*)$");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
@@ -616,23 +616,33 @@ public class EvalTools {
             }
 
             if (isTemplate) {
-                Matcher m = VARIABLE.matcher(exp);
                 TemplateBuilder tb = new TemplateBuilder();
-                int last = 0;
-                while (m.find()) {
-                    if (m.start() != last) {
-                        tb.append(exp.substring(last, m.start()));
+                Matcher m = VARIABLE.matcher(exp);
+                int start = 0;
+                int end = 0;
+                while ((start = exp.indexOf("$", start)) != -1) {
+                    if (start >= 0 && exp.charAt(start + 1) == '{') {
+                        if (end != start)
+                            tb.append(exp.substring(end, start));
+
+                        end = findCloseBracket(exp, start + 2);
+                        String sub = exp.substring(start + 2, end);
+                        tb.append(prepare(sub, model, functions, imports, false));
+                        end++;
+                    } else {
+                        if (m.find(start)) {
+                            if (m.start() != end)
+                                tb.append(exp.substring(end, m.start()));
+                            String sub = m.group(1);
+                            tb.append(prepare(sub, model, functions, imports, false));
+                            end = m.end();
+                        }
                     }
-                    String sub = m.group(1);
-                    if (sub == null) {
-                        sub = m.group(2);
-                    }
-                    tb.append(prepare(sub, model, functions, imports, false));
-                    last = m.end();
+                    start = end;
                 }
-                if (last != exp.length()) {
-                    tb.append(exp.substring(last, exp.length()));
-                }
+                if (end != exp.length())
+                    tb.append(exp.substring(end, exp.length()));
+
                 return tb;
             }
         }
