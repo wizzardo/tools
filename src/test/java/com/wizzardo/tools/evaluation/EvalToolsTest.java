@@ -642,6 +642,16 @@ public class EvalToolsTest {
     public void testStringTemplates() {
         Map<String, Object> model = new HashMap<String, Object>();
 
+        model.put("a", "a");
+        model.put("b", "b");
+        model.put("c", "c");
+        model.put("d", "d");
+        assertEquals("abcd", EvalTools.evaluate("\"$a$b$c$d\"", model));
+        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+c}\"+d}\"", model));
+        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+c}\"}$d\"", model));
+        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+\"${c}\"}\"}$d\"", model));
+        assertEquals("abcd", EvalTools.evaluate("\"${\"${\"${\"${a}\"+b}\"+c}\"+d}\"", model));
+
         assertEquals("hello world", EvalTools.evaluate("\"hello world\""));
 
         model.put("world", "world?");
