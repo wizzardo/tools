@@ -1,248 +1,117 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.wizzardo.tools.io;
+
+import java.nio.charset.Charset;
+import java.util.Arrays;
 
 public class BoyerMoore {
 
-    /**
-     * Byte array, beginning at index 1 (for algorithmic convenience),
-     * that contains the intended search pattern data.
-     */
-    private byte[] P;
-    /**
-     * The length of the search pattern.
-     */
-    private int m;
-    /**
-     * Table of jump distances for each mismatched character in the
-     * alphabet for a given search pattern.  Must be recomputed for
-     * each new pattern.
-     */
-    private int[] charJump;
-    /**
-     * Table of partial suffix match jump distances for a given pattern.
-     * Must be recomputed for each new pattern.
-     */
-    private int[] matchJump;
+    protected static final Charset UTF8 = Charset.forName("utf-8");
+    protected static final int ALPHABET_SIZE = 256;
+    private final int[] charTable;
+    private final int[] offsetTable;
+    private final byte[] needle;
 
-    /**
-     * Creates a precomputed Boyer-Moore byte string search object
-     * from the given pattern.  The unicode characters in <code>pattern</code>
-     * are truncated if greater than 255, and converted in twos-complement
-     * fashion, to appropriate negative byte values, if necessary.
-     * This method is provided as a convenience for searching for patterns
-     * within 8 bit byte strings composed of character data.
-     *
-     * @param pattern The pattern create this object for.
-     */
-    public BoyerMoore(String pattern) {
-        genPatternFromCharArray(pattern.toCharArray());
-        computeJumps();
-        computeMatchJumps();
+    public BoyerMoore(String s) {
+        this(s.getBytes(UTF8));
+    }
+
+    public BoyerMoore(byte[] needle) {
+        this(needle, 0, needle.length);
+    }
+
+    public BoyerMoore(byte[] needle, int offset, int length) {
+        if (needle == null || length == 0)
+            throw new IllegalArgumentException();
+
+        this.needle = Arrays.copyOfRange(needle, offset, offset + length);
+        charTable = makeCharTable(needle);
+        offsetTable = makeOffsetTable(needle);
     }
 
     /**
-     * Creates a precomputed Boyer-Moore byte string search object
-     * from the given pattern.
+     * Returns the index within this string of the first occurrence of the
+     * specified substring. If it is not a substring, return -1.
      *
-     * @param pattern Binary pattern to search for.
+     * @param haystack The string to be scanned
+     * @return The start index of the substring
      */
-    public BoyerMoore(byte[] pattern) {
-        genPatternFromByteArray(pattern, 0, pattern.length);
-        computeJumps();
-        computeMatchJumps();
+    public int search(byte[] haystack) {
+        return search(haystack, 0, haystack.length);
     }
 
-    /**
-     * Creates a precomputed Boyer-Moore byte string search object
-     * from a portion of the given pattern array.
-     *
-     * @param pattern Byte array containing a pattern to search for.
-     * @param offset  Offset to beginning of search pattern.
-     * @param length  Length of the search pattern.
-     */
-    public BoyerMoore(byte[] pattern, int offset, int length) {
-        genPatternFromByteArray(pattern, offset, length);
-        computeJumps();
-        computeMatchJumps();
-    }
-
-    /**
-     * Compares two integers and returns the lesser value.
-     *
-     * @param i1 First integer to compare.
-     * @param i2 Second integer to compare.
-     * @return The lesser of <code>i1</code> or <code>i2</code>.
-     */
-    private static final int min(int i1, int i2) {
-        return (i1 < i2) ? i1 : i2;
-    }
-
-    /**
-     * Compares two integers and returns the greater value.
-     *
-     * @param i1 First integer to compare.
-     * @param i2 Second integer to compare.
-     * @return The greater of <code>i1</code> or <code>i2</code>.
-     */
-    private static final int max(int i1, int i2) {
-        return (i1 > i2) ? i1 : i2;
-    }
-
-    /**
-     * Generates the pattern byte string <code>P</code> from a portion
-     * of another byte string.
-     *
-     * @param bytes  The byte string from which to extract the pattern.
-     * @param off    The array index within <code>bytes</code> from
-     *               which to extract the pattern.
-     * @param length The number of characters to extract from
-     *               <code>bytes</code> into the pattern.
-     */
-    private final void genPatternFromByteArray(byte[] bytes, int off, int length) {
-        int i, j;
-        m = length;
-// 31.03.2003. patch
-//	P = new byte[length];
-        P = new byte[length + 1];
-        for (i = 1, j = off; i <= length; i++, j++) {
-            P[i] = bytes[j];
+    public int search(byte[] haystack, int offset, int length) {
+        byte[] needle = this.needle;
+        int needleLength = needle.length - 1;
+        int limit = offset + length;
+        for (int i = needleLength + offset, j; i < limit; ) {
+            for (j = needleLength; needle[j] == haystack[i]; --i, --j) {
+                if (j == 0) {
+                    return i;
+                }
+            }
+            i += Math.max(offsetTable[needleLength - j], charTable[haystack[i] & 0xff]);
         }
+        return -1;
     }
 
     /**
-     * Generates the pattern byte string <code>P</code> from a character
-     * array.  The signed unicode characters are truncated to 8 bits, and
-     * converted into signed byte values.  Characters between 128 and 255
-     * are converted to their signed negative counterpart in
-     * twos-complement fashion by subtracting 256.
-     *
-     * @param chars Unsigned unicode character array to turn into
-     *              a signed byte array.
+     * Makes the jump table based on the mismatched character information.
      */
-    private final void genPatternFromCharArray(char[] chars) {
-        m = chars.length;
-        P = new byte[m + 1];
-        for (int i = 1; i <= m; i++) {
-            if (chars[i - 1] > 127) {
-                P[i] = (byte) ((chars[i - 1] - 256) & 0xff);
-            } else {
-                P[i] = (byte) (chars[i - 1] & 0xff);
+    private static int[] makeCharTable(byte[] needle) {
+        int[] table = new int[ALPHABET_SIZE];
+        int l = needle.length;
+        for (int i = 0; i < ALPHABET_SIZE; ++i) {
+            table[i] = l;
+        }
+
+        l--;
+        for (int i = 0; i < l; ++i) {
+            table[needle[i]] = l - i;
+        }
+        return table;
+    }
+
+    /**
+     * Makes the jump table based on the scan offset which mismatch occurs.
+     */
+    private static int[] makeOffsetTable(byte[] needle) {
+        int l = needle.length;
+        int[] table = new int[l];
+        int lastPrefixPosition = l;
+        for (int i = l - 1; i >= 0; --i) {
+            if (isPrefix(needle, i + 1)) {
+                lastPrefixPosition = i + 1;
+            }
+            table[l - 1 - i] = lastPrefixPosition - i + l - 1;
+        }
+        for (int i = 0; i < l - 1; ++i) {
+            int slen = suffixLength(needle, i);
+            table[slen] = l - 1 - i + slen;
+        }
+        return table;
+    }
+
+    /**
+     * Is needle[p:end] a prefix of needle?
+     */
+    private static boolean isPrefix(byte[] needle, int p) {
+        int l = needle.length;
+        for (int i = p, j = 0; i < l; ++i, ++j) {
+            if (needle[i] != needle[j]) {
+                return false;
             }
         }
+        return true;
     }
 
     /**
-     * Initializes the per-character jump table <code>charJump</code>
-     * as specified by the Boyer-Moore algorithm.
+     * Returns the maximum length of the substring ends at p and is a suffix.
      */
-    private final void computeJumps() {
-        charJump = new int[256];
-        for (int i = 0; i < 255; i++) {
-            charJump[i] = m;
+    private static int suffixLength(byte[] needle, int p) {
+        int len = 0;
+        for (int i = p, j = needle.length - 1; i >= 0 && needle[i] == needle[j]; --i, --j) {
+            len++;
         }
-        for (int k = 1; k <= m; k++) {
-            charJump[P[k] + 128] = m - k;
-        }
-    }
-
-    /**
-     * Computes a partial-match jump table that skips over
-     * partially matching suffixes.
-     */
-    private void computeMatchJumps() {
-        int k, q, qq, mm;
-        int[] back = new int[m + 2];
-
-        matchJump = new int[m + 2];
-        mm = 2 * m;
-
-        for (k = 1; k <= m; k++) {
-            matchJump[k] = mm - k;
-        }
-        k = m;
-        q = m + 1;
-        while (k > 0) {
-            back[k] = q;
-            while ((q <= m) && (P[k] != P[q])) {
-                matchJump[q] = min(matchJump[q], m - k);
-                q = back[q];
-            }
-            k = k - 1;
-            q = q - 1;
-        }
-        for (k = 1; k <= q; k++) {
-            matchJump[k] = min(matchJump[k], m + q - k);
-        }
-        qq = back[q];
-        while (q <= m) {
-            while (q <= qq) {
-                matchJump[q] = min(matchJump[q], qq - q + m);
-                q = q + 1;
-            }
-            qq = back[qq];
-        }
-    }
-
-    /**
-     * Returns the length of the pattern for this searcher.
-     *
-     * @return The search pattern length.
-     */
-    public int getPatternLength() {
-        return (m);
-    }
-
-    /**
-     * Search for the previously pre-compiled pattern string in an
-     * array of bytes.  This method uses the Boyer-Moore pattern
-     * search algorithm.
-     *
-     * @param byteString Array of bytes in which to search
-     *                   for the pattern.
-     * @return The array index where the pattern
-     * begins in the string, or <code>-1</code>
-     * if the pattern was not found.
-     */
-    public int search(byte[] byteString) {
-        return (search(byteString, 0, byteString.length));
-    }
-
-    /**
-     * Search for the previously pre-compiled pattern string in an
-     * array of bytes.  This method uses the Boyer-Moore pattern
-     * search algorithm.
-     *
-     * @param byteString Array of bytes in which to search
-     *                   for the pattern.
-     * @param offset     The the index in <code>byteString</code>
-     *                   where the search is to begin.
-     * @param length     The number of bytes to search in
-     *                   <code>byteString</code>.
-     * @return The array index where the pattern
-     * begins in the string, or <code>-1</code>
-     * if the pattern was not found.
-     */
-    public int search(byte[] byteString, int offset, int length) {
-        int j, k, len;
-        j = m + offset;
-        k = m;
-        byte b;
-        len = min(byteString.length, offset + length);
-        while ((j <= len) && (k > 0)) {
-            if ((b = byteString[j - 1]) == P[k]) {
-                j = j - 1;
-                k = k - 1;
-            } else {
-                j = j + max(charJump[b + 128], matchJump[k]);
-                k = m;
-            }
-        }
-        if (k == 0) {
-            return (j);
-        }
-        return (-1); // No match.
+        return len;
     }
 }
