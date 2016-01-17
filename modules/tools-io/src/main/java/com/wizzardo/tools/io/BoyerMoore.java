@@ -66,7 +66,7 @@ public class BoyerMoore {
 
         l--;
         for (int i = 0; i < l; ++i) {
-            table[needle[i]] = l - i;
+            table[needle[i] & 0xff] = l - i;
         }
         return table;
     }
