@@ -5,7 +5,7 @@ package com.wizzardo.tools.collections.lazy;
  */
 public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends AbstractLazy<A, B> {
 
-    public <V> Lazy<V, V> flatMap(final Mapper<B, V> mapper) {
+    public <V> Lazy<V, V> flatMap(Mapper<? super B, V> mapper) {
         final LazyContinue<V> continueCommand = new LazyContinue<V>(this);
 
         then(new GroupCommand<B, V>(mapper, continueCommand));
@@ -14,7 +14,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
     }
 
     @Override
-    public LazyGrouping<K, T, B, B> filter(final Filter<B> filter) {
+    public LazyGrouping<K, T, B, B> filter(final Filter<? super B> filter) {
         return this.then(new LazyGrouping<K, T, B, B>() {
             @Override
             protected void process(B b) {
@@ -25,7 +25,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
     }
 
     @Override
-    public LazyGrouping<K, T, B, B> each(final Consumer<B> consumer) {
+    public LazyGrouping<K, T, B, B> each(final Consumer<? super B> consumer) {
         return this.then(new LazyGrouping<K, T, B, B>() {
             @Override
             protected void process(B b) {
@@ -36,10 +36,10 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
     }
 
     private class GroupCommand<B extends LazyGroup<K, T, T>, V> extends Command<B, B> {
-        private final Mapper<B, V> mapper;
+        private final Mapper<? super B, V> mapper;
         private final Command<V, V> continueCommand;
 
-        public GroupCommand(Mapper<B, V> mapper, Command<V, V> continueCommand) {
+        public GroupCommand(Mapper<? super B, V> mapper, Command<V, V> continueCommand) {
             this.mapper = mapper;
             this.continueCommand = continueCommand;
         }

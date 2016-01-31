@@ -45,9 +45,9 @@ class Command<A, B> {
     }
 
     static class LazyFilter<T> extends Lazy<T, T> {
-        private Filter<T> filter;
+        private Filter<? super T> filter;
 
-        public LazyFilter(Filter<T> filter) {
+        public LazyFilter(Filter<? super T> filter) {
             this.filter = filter;
         }
 
@@ -59,10 +59,10 @@ class Command<A, B> {
     }
 
     static class LazyCollectWithAccumulator<C, T> extends FinishCommand<T, C> {
-        private BiConsumer<C, T> accumulator;
+        private BiConsumer<? super C, ? super T> accumulator;
         private C collector;
 
-        public LazyCollectWithAccumulator(C collector, BiConsumer<C, T> accumulator) {
+        public LazyCollectWithAccumulator(C collector, BiConsumer<? super C, ? super T> accumulator) {
             this.accumulator = accumulator;
             this.collector = collector;
         }
@@ -79,9 +79,9 @@ class Command<A, B> {
     }
 
     static class LazyEach<T> extends Lazy<T, T> {
-        private Consumer<T> consumer;
+        private Consumer<? super T> consumer;
 
-        public LazyEach(Consumer<T> consumer) {
+        public LazyEach(Consumer<? super T> consumer) {
             this.consumer = consumer;
         }
 
@@ -93,9 +93,9 @@ class Command<A, B> {
     }
 
     static class LazyMap<A, B> extends Lazy<A, B> {
-        private Mapper<A, B> mapper;
+        private Mapper<? super A, B> mapper;
 
-        public LazyMap(Mapper<A, B> mapper) {
+        public LazyMap(Mapper<? super A, B> mapper) {
             this.mapper = mapper;
         }
 
@@ -241,9 +241,9 @@ class Command<A, B> {
 
     static class LazyMinWithComparator<A> extends FinishCommand<A, A> {
         private A min;
-        private Comparator<A> comparator;
+        private Comparator<? super A> comparator;
 
-        LazyMinWithComparator(A def, Comparator<A> comparator) {
+        LazyMinWithComparator(A def, Comparator<? super A> comparator) {
             this.comparator = comparator;
             min = def;
         }
@@ -262,9 +262,9 @@ class Command<A, B> {
 
     static class LazyMaxWithComparator<A> extends FinishCommand<A, A> {
         private A max;
-        private Comparator<A> comparator;
+        private Comparator<? super A> comparator;
 
-        LazyMaxWithComparator(A def, Comparator<A> comparator) {
+        LazyMaxWithComparator(A def, Comparator<? super A> comparator) {
             this.comparator = comparator;
             max = def;
         }

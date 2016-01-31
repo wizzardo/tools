@@ -65,15 +65,15 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return reduce.get();
     }
 
-    public Lazy<B, B> filter(Filter<B> filter) {
+    public Lazy<B, B> filter(Filter<? super B> filter) {
         return then(new LazyFilter<B>(filter));
     }
 
-    public Lazy<B, B> each(Consumer<B> consumer) {
+    public Lazy<B, B> each(Consumer<? super B> consumer) {
         return then(new LazyEach<B>(consumer));
     }
 
-    public <T> Lazy<B, T> map(final Mapper<B, T> mapper) {
+    public <T> Lazy<B, T> map(final Mapper<? super B, T> mapper) {
         return then(new LazyMap<B, T>(mapper));
     }
 }

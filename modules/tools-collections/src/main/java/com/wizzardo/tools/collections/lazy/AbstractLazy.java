@@ -8,11 +8,11 @@ import java.util.*;
 public abstract class AbstractLazy<A, B> extends Command<A, B> {
     protected static final int INITIAL_LIST_SIZE = 10;
 
-    public abstract AbstractLazy<B, B> filter(Filter<B> filter);
+    public abstract AbstractLazy<B, B> filter(Filter<? super B> filter);
 
-    public abstract AbstractLazy<B, B> each(Consumer<B> consumer);
+    public abstract AbstractLazy<B, B> each(Consumer<? super B> consumer);
 
-    public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<B, K> toKey) {
+    public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<? super B, K> toKey) {
         return this.then(new LazyGrouping<K, B, B, LazyGroup<K, B, B>>() {
             Map<K, LazyGroup<K, B, B>> groups = new HashMap<K, LazyGroup<K, B, B>>();
 
@@ -63,7 +63,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         });
     }
 
-    public <C> C collect(C collector, BiConsumer<C, B> accumulator) {
+    public <C> C collect(C collector, BiConsumer<? super C, ? super B> accumulator) {
         LazyCollectWithAccumulator<C, B> collect;
         then(collect = new LazyCollectWithAccumulator<C, B>(collector, accumulator));
         collect.start();
@@ -101,11 +101,11 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         return c.get();
     }
 
-    public B min(Comparator<B> comparator) {
+    public B min(Comparator<? super B> comparator) {
         return min(null, comparator);
     }
 
-    public B min(B def, Comparator<B> comparator) {
+    public B min(B def, Comparator<? super B> comparator) {
         Command<B, B> c = then(new LazyMinWithComparator<B>(def, comparator));
         c.start();
         return c.get();
@@ -121,11 +121,11 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         return c.get();
     }
 
-    public B max(Comparator<B> comparator) {
+    public B max(Comparator<? super B> comparator) {
         return max(null, comparator);
     }
 
-    public B max(B def, Comparator<B> comparator) {
+    public B max(B def, Comparator<? super B> comparator) {
         Command<B, B> c = then(new LazyMaxWithComparator<B>(def, comparator));
         c.start();
         return c.get();
@@ -152,7 +152,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         return collection;
     }
 
-    public List<B> toSortedList(Comparator<B> comparator) {
+    public List<B> toSortedList(Comparator<? super B> comparator) {
         return toSortedList(new ArrayList<B>(), comparator);
     }
 
@@ -160,7 +160,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         return toSortedList(new ArrayList<B>());
     }
 
-    public List<B> toSortedList(List<B> list, Comparator<B> comparator) {
+    public List<B> toSortedList(List<B> list, Comparator<? super B> comparator) {
         Collections.sort(collect(list), comparator);
         return list;
     }
