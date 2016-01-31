@@ -1,9 +1,6 @@
 package com.wizzardo.tools.http;
 
-import com.wizzardo.tools.io.IOTools;
-
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -58,7 +55,19 @@ public class Response {
     }
 
     public byte[] asBytes() throws IOException {
-        return IOTools.bytes(asStream());
+        ByteArrayOutputStream out = new ByteArrayOutputStream(headerInt("Content-Length", 1024));
+        writeTo(out);
+        return out.toByteArray();
+    }
+
+    public void writeTo(OutputStream out) throws IOException {
+        byte[] buffer = new byte[10240];
+        InputStream in = asStream();
+        int r;
+        while ((r = in.read(buffer)) != -1) {
+            out.write(buffer, 0, r);
+        }
+        out.flush();
     }
 
     public InputStream asStream() throws IOException {
@@ -137,11 +146,39 @@ public class Response {
         return getHeader(key);
     }
 
+    public int headerInt(String key, int def) {
+        try {
+            return headerInt(key);
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    public long headerLong(String key, long def) {
+        try {
+            return headerLong(key);
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    public int headerInt(String key) {
+        return Integer.parseInt(getHeader(key));
+    }
+
+    public Long headerLong(String key) {
+        return Long.parseLong(getHeader(key));
+    }
+
     public Map<String, List<String>> headers() {
         return getHeaders();
     }
 
     public int getResponseCode() throws IOException {
         return connection.getResponseCode();
+    }
+
+    public int getContentLength() throws IOException {
+        return connection.getContentLength();
     }
 }
