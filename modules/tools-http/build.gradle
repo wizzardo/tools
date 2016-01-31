@@ -1,6 +1,5 @@
 dependencies {
     compile project(':modules:tools-exception')
-    compile project(':modules:tools-io')
     compile project(':modules:tools-security')
 }
 
