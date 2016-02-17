@@ -15,6 +15,7 @@ allprojects {
             events "failed"
             exceptionFormat "full"
         }
+        maxHeapSize = "1g"
     }
 }
 
