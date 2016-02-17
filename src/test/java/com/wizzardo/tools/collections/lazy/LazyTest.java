@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -222,6 +223,21 @@ public class LazyTest {
                         }
                     }
                 }).toList();
+        Assert.assertEquals(6, result.size());
+        Assert.assertEquals(Integer.valueOf(1), result.get(0));
+        Assert.assertEquals(Integer.valueOf(2), result.get(1));
+        Assert.assertEquals(Integer.valueOf(3), result.get(2));
+        Assert.assertEquals(Integer.valueOf(4), result.get(3));
+        Assert.assertEquals(Integer.valueOf(5), result.get(4));
+        Assert.assertEquals(Integer.valueOf(6), result.get(5));
+    }
+
+    @Test
+    public void test_iterate_2() {
+        List<Integer> result = Lazy.of(Arrays.asList(1), Arrays.asList(2, 3), Arrays.asList(4, 5, 6))
+                .<Integer>iterate()
+                .toList();
+
         Assert.assertEquals(6, result.size());
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
         Assert.assertEquals(Integer.valueOf(2), result.get(1));

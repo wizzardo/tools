@@ -1,9 +1,20 @@
 package com.wizzardo.tools.collections.lazy;
 
+import java.util.Collection;
+
 /**
  * Created by wizzardo on 08.11.15.
  */
 public class Lazy<A, B> extends AbstractLazy<A, B> {
+
+    private static final Iterater<Collection, Object> COLLECTION_ITERATOR = new Iterater<Collection, Object>() {
+        @Override
+        public void iterate(Collection collection, Consumer<Object> consumer) {
+            for (Object o : collection) {
+                consumer.consume(o);
+            }
+        }
+    };
 
     public static <T> Lazy<T, T> of(final Iterable<T> iterable) {
         return new Lazy<T, T>() {
@@ -75,6 +86,10 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
 
     public <T> Lazy<B, T> iterate(Iterater<? super B, T> iterater) {
         return then(new LazyIterate<B, T>(iterater));
+    }
+
+    public <T> Lazy<B, T> iterate() {
+        return then(new LazyIterate<B, T>((Iterater<? super B, T>) COLLECTION_ITERATOR));
     }
 
     public <T> Lazy<B, T> map(Mapper<? super B, T> mapper) {
