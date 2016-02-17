@@ -92,6 +92,26 @@ class Command<A, B> {
         }
     }
 
+    static class LazyIterate<A, B> extends Lazy<A, B> {
+        private Iterater<? super A, B> iterater;
+        private Consumer<B> consumer;
+
+        public LazyIterate(Iterater<? super A, B> iterater) {
+            this.iterater = iterater;
+            consumer = new Consumer<B>() {
+                @Override
+                public void consume(B b) {
+                    child.process(b);
+                }
+            };
+        }
+
+        @Override
+        protected void process(A a) {
+            iterater.iterate(a, consumer);
+        }
+    }
+
     static class LazyMap<A, B> extends Lazy<A, B> {
         private Mapper<? super A, B> mapper;
 

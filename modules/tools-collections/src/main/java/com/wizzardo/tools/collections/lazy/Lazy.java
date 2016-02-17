@@ -73,7 +73,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return then(new LazyEach<B>(consumer));
     }
 
-    public <T> Lazy<B, T> map(final Mapper<? super B, T> mapper) {
+    public <T> Lazy<B, T> iterate(Iterater<? super B, T> iterater) {
+        return then(new LazyIterate<B, T>(iterater));
+    }
+
+    public <T> Lazy<B, T> map(Mapper<? super B, T> mapper) {
         return then(new LazyMap<B, T>(mapper));
     }
 }
