@@ -210,4 +210,24 @@ public class LazyTest {
         Assert.assertEquals(Integer.valueOf(4), result.get(1));
         Assert.assertEquals(Integer.valueOf(6), result.get(2));
     }
+
+    @Test
+    public void test_iterate() {
+        List<Integer> result = Lazy.of(new int[]{1}, new int[]{2, 3}, new int[]{4, 5, 6})
+                .iterate(new Iterater<int[], Integer>() {
+                    @Override
+                    public void iterate(int[] ints, Consumer<Integer> consumer) {
+                        for (int i : ints) {
+                            consumer.consume(i);
+                        }
+                    }
+                }).toList();
+        Assert.assertEquals(6, result.size());
+        Assert.assertEquals(Integer.valueOf(1), result.get(0));
+        Assert.assertEquals(Integer.valueOf(2), result.get(1));
+        Assert.assertEquals(Integer.valueOf(3), result.get(2));
+        Assert.assertEquals(Integer.valueOf(4), result.get(3));
+        Assert.assertEquals(Integer.valueOf(5), result.get(4));
+        Assert.assertEquals(Integer.valueOf(6), result.get(5));
+    }
 }
