@@ -35,6 +35,10 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         });
     }
 
+    public Lazy<B, T> merge() {
+        return then(new LazyMerge<B, T>());
+    }
+
     private class GroupCommand<B extends LazyGroup<K, T, T>, V> extends Command<B, B> {
         private final Mapper<? super B, V> mapper;
         private final Command<V, V> continueCommand;
