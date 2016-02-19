@@ -267,4 +267,29 @@ public class LazyTest {
         Assert.assertEquals(Integer.valueOf(5), result.get(4));
         Assert.assertEquals(Integer.valueOf(6), result.get(5));
     }
+
+    @Test
+    public void test_merge_2() {
+        List<Integer> result = Lazy.of(1, 2, 3, 4, 5, 6)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                })
+                .filter(new Filter<LazyGroup<Boolean, Integer, Integer>>() {
+                    @Override
+                    public boolean allow(LazyGroup<Boolean, Integer, Integer> group) {
+                        return group.getKey();
+                    }
+                })
+                .merge()
+                .toList();
+
+        Assert.assertEquals(3, result.size());
+        System.out.println(result);
+        Assert.assertEquals(Integer.valueOf(2), result.get(0));
+        Assert.assertEquals(Integer.valueOf(4), result.get(1));
+        Assert.assertEquals(Integer.valueOf(6), result.get(2));
+    }
 }
