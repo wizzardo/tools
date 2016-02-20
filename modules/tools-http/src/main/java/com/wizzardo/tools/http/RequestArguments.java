@@ -70,6 +70,10 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
+    public Proxy getProxy() {
+        return proxy;
+    }
+
     public T maxRetryCount(int n) {
         maxRetryCount = n;
         return self();
