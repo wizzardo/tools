@@ -107,6 +107,29 @@ public class LazyTest {
     }
 
     @Test
+    public void test_grouping_4() {
+        final AtomicInteger counter = new AtomicInteger();
+        Integer result = Lazy.of(1, 2, 3)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer it) {
+                        counter.incrementAndGet();
+                        return it % 2 == 0;
+                    }
+                })
+                .flatMap(new Mapper<LazyGroup<Boolean, Integer, Integer>, Integer>() {
+                    @Override
+                    public Integer map(LazyGroup<Boolean, Integer, Integer> group) {
+                        return group.first();
+                    }
+                })
+                .first();
+
+        Assert.assertEquals(Integer.valueOf(1), result);
+        Assert.assertEquals(1, counter.get());
+    }
+
+    @Test
     public void test_sorted_list() {
         List<Integer> result = Lazy.of(3, 2, 1).toSortedList();
 
@@ -287,7 +310,6 @@ public class LazyTest {
                 .toList();
 
         Assert.assertEquals(3, result.size());
-        System.out.println(result);
         Assert.assertEquals(Integer.valueOf(2), result.get(0));
         Assert.assertEquals(Integer.valueOf(4), result.get(1));
         Assert.assertEquals(Integer.valueOf(6), result.get(2));
