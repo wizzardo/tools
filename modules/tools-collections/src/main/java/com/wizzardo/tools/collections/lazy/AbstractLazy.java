@@ -39,7 +39,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
 
                         @Override
                         protected void end() {
-                            if (child != null)
+                            if (!stopped && child != null)
                                 child.end();
                         }
 
