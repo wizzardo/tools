@@ -72,6 +72,11 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         }
 
         @Override
+        protected void stop() {
+            command.stop();
+        }
+
+        @Override
         protected void process(T t) {
             child.process(t);
         }
