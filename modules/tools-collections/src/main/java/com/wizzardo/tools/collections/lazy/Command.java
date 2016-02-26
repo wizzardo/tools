@@ -213,6 +213,7 @@ class Command<A, B> {
         protected void process(A a) {
             first = a;
             parent.stop();
+            end();
         }
 
         @Override
