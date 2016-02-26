@@ -6,7 +6,6 @@ import java.util.*;
  * Created by wizzardo on 15.11.15.
  */
 public abstract class AbstractLazy<A, B> extends Command<A, B> {
-    protected static final int INITIAL_LIST_SIZE = 10;
 
     public abstract AbstractLazy<B, B> filter(Filter<? super B> filter);
 
