@@ -6,14 +6,24 @@ import java.util.*;
  * Created by wizzardo on 15.11.15.
  */
 public abstract class AbstractLazy<A, B> extends Command<A, B> {
+    public static final Supplier SUPPLIER_HASH_MAP = new Supplier<Map>() {
+        @Override
+        public Map supply() {
+            return new HashMap();
+        }
+    };
 
     public abstract AbstractLazy<B, B> filter(Filter<? super B> filter);
 
     public abstract AbstractLazy<B, B> each(Consumer<? super B> consumer);
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<? super B, K> toKey) {
+        return groupBy(toKey, SUPPLIER_HASH_MAP);
+    }
+
+    public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<? super B, K> toKey, final Supplier<Map<K, LazyGroup<K, B, B>>> groupMapSupplier) {
         return this.then(new LazyGrouping<K, B, B, LazyGroup<K, B, B>>() {
-            Map<K, LazyGroup<K, B, B>> groups = new HashMap<K, LazyGroup<K, B, B>>();
+            Map<K, LazyGroup<K, B, B>> groups = groupMapSupplier.supply();
 
             @Override
             protected void process(B b) {
