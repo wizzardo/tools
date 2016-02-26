@@ -13,6 +13,10 @@ class Command<A, B> {
     protected void process(A a) {
     }
 
+    protected void processToChild(B b) {
+        child.process(b);
+    }
+
     protected <T extends Command<B, C>, C> T then(T command) {
         command.parent = this;
         this.child = command;
