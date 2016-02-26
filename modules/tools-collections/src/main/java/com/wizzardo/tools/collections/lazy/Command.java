@@ -27,8 +27,8 @@ class Command<A, B> {
         parent.start();
     }
 
-    protected void end() {
-        child.end();
+    protected void onEnd() {
+        child.onEnd();
     }
 
     protected void stop() {
@@ -42,9 +42,9 @@ class Command<A, B> {
     static class FinishCommand<A, B> extends Command<A, B> {
 
         @Override
-        protected void end() {
+        protected void onEnd() {
             if (child != null)
-                child.end();
+                child.onEnd();
         }
     }
 
@@ -124,7 +124,7 @@ class Command<A, B> {
             }
 
             @Override
-            protected void end() {
+            protected void onEnd() {
             }
         };
 
@@ -217,7 +217,7 @@ class Command<A, B> {
         protected void process(A a) {
             first = a;
             parent.stop();
-            end();
+            onEnd();
         }
 
         @Override

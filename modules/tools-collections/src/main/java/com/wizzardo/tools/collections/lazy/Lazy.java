@@ -29,7 +29,7 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
                         break;
                 }
 
-                child.end();
+                child.onEnd();
             }
 
             @Override
@@ -54,7 +54,7 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
                         break;
                 }
 
-                child.end();
+                child.onEnd();
             }
 
             @Override

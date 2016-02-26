@@ -38,9 +38,9 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
                         }
 
                         @Override
-                        protected void end() {
+                        protected void onEnd() {
                             if (!stopped && child != null)
-                                child.end();
+                                child.onEnd();
                         }
 
                         @Override
@@ -54,11 +54,11 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
             }
 
             @Override
-            protected void end() {
+            protected void onEnd() {
                 for (LazyGroup<K, B, B> group : groups.values()) {
-                    group.end();
+                    group.onEnd();
                 }
-                super.end();
+                super.onEnd();
             }
         });
     }
