@@ -385,4 +385,26 @@ public class LazyTest {
         Assert.assertEquals(Integer.valueOf(2), result.get(0));
         Assert.assertEquals(Integer.valueOf(4), result.get(1));
     }
+
+    @Test
+    public void test_of_iterable() {
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        int result = Lazy.of(list).count();
+
+        Assert.assertEquals(3, result);
+    }
+
+    @Test
+    public void test_of_iterable_2() {
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        int result = Lazy.of(list).first();
+
+        Assert.assertEquals(1, result);
+    }
 }
