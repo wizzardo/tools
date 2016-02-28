@@ -370,4 +370,19 @@ public class LazyTest {
         Assert.assertEquals("2", result.get(1));
         Assert.assertEquals("3", result.get(2));
     }
+
+    @Test
+    public void test_filter() {
+        List<Integer> result = Lazy.of(1, 2, 3, 4)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                }).toList();
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals(Integer.valueOf(2), result.get(0));
+        Assert.assertEquals(Integer.valueOf(4), result.get(1));
+    }
 }
