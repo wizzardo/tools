@@ -154,6 +154,27 @@ public class LazyTest {
     }
 
     @Test
+    public void test_each_2() {
+        final AtomicInteger counter = new AtomicInteger();
+
+        Lazy.of(1, 2, 3)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                })
+                .each(new Consumer<LazyGroup<Boolean, Integer, Integer>>() {
+                    @Override
+                    public void consume(LazyGroup<Boolean, Integer, Integer> group) {
+                        counter.incrementAndGet();
+                    }
+                }).execute();
+
+        Assert.assertEquals(2, counter.get());
+    }
+
+    @Test
     public void test_first() {
         Assert.assertEquals(Integer.valueOf(1), Lazy.of(1, 2, 3).first());
     }
