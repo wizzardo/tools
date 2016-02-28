@@ -184,6 +184,18 @@ public class LazyTest {
     }
 
     @Test
+    public void test_min_2() {
+        Comparator<Number> comparator = new Comparator<Number>() {
+            @Override
+            public int compare(Number o1, Number o2) {
+                return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
+            }
+        };
+        Assert.assertEquals(Integer.valueOf(1), Lazy.of(1, 2, 3).min(comparator));
+        Assert.assertEquals(Integer.valueOf(1), Lazy.of(3, 2, 1).min(comparator));
+    }
+
+    @Test
     public void test_max() {
         Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).max());
         Assert.assertEquals(Integer.valueOf(3), Lazy.of(3, 2, 1).max());
