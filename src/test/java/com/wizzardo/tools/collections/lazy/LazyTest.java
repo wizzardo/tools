@@ -314,4 +314,11 @@ public class LazyTest {
         Assert.assertEquals(Integer.valueOf(4), result.get(1));
         Assert.assertEquals(Integer.valueOf(6), result.get(2));
     }
+
+    @Test
+    public void test_count() {
+        int result = Lazy.of(1, 2, 3, 4, 5, 6).count();
+
+        Assert.assertEquals(6, result);
+    }
 }
