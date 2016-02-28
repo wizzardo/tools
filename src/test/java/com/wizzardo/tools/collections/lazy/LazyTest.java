@@ -333,4 +333,20 @@ public class LazyTest {
 
         Assert.assertEquals(6, result);
     }
+
+    @Test
+    public void test_map() {
+        List<String> result = Lazy.of(1, 2, 3)
+                .map(new Mapper<Integer, String>() {
+                    @Override
+                    public String map(Integer integer) {
+                        return integer.toString();
+                    }
+                }).toList();
+
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals("1", result.get(0));
+        Assert.assertEquals("2", result.get(1));
+        Assert.assertEquals("3", result.get(2));
+    }
 }
