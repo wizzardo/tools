@@ -3,10 +3,7 @@ package com.wizzardo.tools.collections.lazy;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -406,5 +403,36 @@ public class LazyTest {
         int result = Lazy.of(list).first();
 
         Assert.assertEquals(1, result);
+    }
+
+    @Test
+    public void test_of_iterator() {
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        int result = Lazy.of(list.iterator()).first();
+
+        Assert.assertEquals(1, result);
+    }
+
+    @Test
+    public void test_do_nothing() {
+        Lazy.of(new Iterator() {
+            @Override
+            public boolean hasNext() {
+                throw new IllegalStateException("should not be called");
+            }
+
+            @Override
+            public Object next() {
+                throw new IllegalStateException("should not be called");
+            }
+
+            @Override
+            public void remove() {
+                throw new IllegalStateException("should not be called");
+            }
+        }).start();
     }
 }
