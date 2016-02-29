@@ -1,5 +1,7 @@
 package com.wizzardo.tools.collections.lazy;
 
+import java.util.Iterator;
+
 /**
  * Created by wizzardo on 08.11.15.
  */
@@ -15,53 +17,61 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
     };
 
     public static <T> Lazy<T, T> of(final Iterable<T> iterable) {
-        return new Lazy<T, T>() {
-            boolean stop = false;
-
+        return new StartLazy<T>() {
             @Override
-            protected void start() {
-                if (child == null)
-                    return;
-
+            protected void process() {
                 for (T t : iterable) {
                     child.process(t);
                     if (stop)
                         break;
                 }
-
-                child.onEnd();
             }
+        };
+    }
 
+    public static <T> Lazy<T, T> of(final Iterator<T> iterator) {
+        return new StartLazy<T>() {
             @Override
-            protected void stop() {
-                stop = true;
+            protected void process() {
+                while (!stop && iterator.hasNext()) {
+                    child.process(iterator.next());
+                }
             }
         };
     }
 
     public static <T> Lazy<T, T> of(final T... array) {
-        return new Lazy<T, T>() {
-            boolean stop = false;
-
+        return new StartLazy<T>() {
             @Override
-            protected void start() {
-                if (child == null)
-                    return;
-
+            protected void process() {
                 for (T t : array) {
                     child.process(t);
                     if (stop)
                         break;
                 }
-
-                child.onEnd();
-            }
-
-            @Override
-            protected void stop() {
-                stop = true;
             }
         };
+    }
+
+    private static abstract class StartLazy<T> extends Lazy<T, T> {
+        boolean stop = false;
+
+        @Override
+        protected void start() {
+            if (child == null)
+                return;
+
+            process();
+
+            child.onEnd();
+        }
+
+        protected abstract void process();
+
+        @Override
+        protected void stop() {
+            stop = true;
+        }
     }
 
     public B reduce(Reducer<B> reducer) {
