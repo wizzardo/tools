@@ -126,6 +126,63 @@ public class LazyTest {
         Assert.assertEquals(1, counter.get());
     }
 
+    static class Person {
+        final String name;
+        final int age;
+        final long salary;
+
+        Person(String name, int age, long salary) {
+            this.name = name;
+            this.age = age;
+            this.salary = salary;
+        }
+    }
+
+    @Test
+    public void test_grouping_5() {
+        Map<Integer, Map<Long, List<Person>>> result = Lazy.of(new Person("Paul", 24, 20000),
+                new Person("Mark", 24, 30000),
+                new Person("Will", 28, 28000),
+                new Person("William", 28, 28000)
+        ).groupBy(new Mapper<Person, Integer>() {
+            @Override
+            public Integer map(Person person) {
+                return person.age;
+            }
+        }).toMap(new Mapper<LazyGroup<Integer, Person, Person>, Map<Long, List<Person>>>() {
+            @Override
+            public Map<Long, List<Person>> map(LazyGroup<Integer, Person, Person> ageGroup) {
+                return ageGroup.groupBy(new Mapper<Person, Long>() {
+                    @Override
+                    public Long map(Person person) {
+                        return person.salary;
+                    }
+                }).toMap(new Mapper<LazyGroup<Long, Person, Person>, List<Person>>() {
+                    @Override
+                    public List<Person> map(LazyGroup<Long, Person, Person> salaryGroup) {
+                        return salaryGroup.toList();
+                    }
+                });
+            }
+        });
+
+        Assert.assertEquals(2, result.size());
+
+        Assert.assertEquals(2, result.get(24).size());
+        Assert.assertEquals(1, result.get(24).get(20000l).size());
+        Assert.assertEquals("Paul", result.get(24).get(20000l).get(0).name);
+
+        Assert.assertEquals(2, result.get(24).size());
+        Assert.assertEquals(1, result.get(24).get(30000l).size());
+        Assert.assertEquals("Mark", result.get(24).get(30000l).get(0).name);
+
+        Assert.assertEquals(1, result.get(28).size());
+        Assert.assertEquals(2, result.get(28).get(28000l).size());
+        Assert.assertEquals("Will", result.get(28).get(28000l).get(0).name);
+        Assert.assertEquals("William", result.get(28).get(28000l).get(1).name);
+
+    }
+
     @Test
     public void test_sorted_list() {
         List<Integer> result = Lazy.of(3, 2, 1).toSortedList();
