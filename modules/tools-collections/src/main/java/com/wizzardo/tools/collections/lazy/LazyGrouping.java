@@ -1,21 +1,34 @@
 package com.wizzardo.tools.collections.lazy;
 
+import java.util.Map;
+
 /**
  * Created by wizzardo on 08.11.15.
  */
 public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends AbstractLazy<A, B> {
 
+    protected final Map<K, LazyGroup<K, T, T>> groups;
+
+    LazyGrouping(Map<K, LazyGroup<K, T, T>> groups) {
+        this.groups = groups;
+    }
+
     public <V> Lazy<V, V> flatMap(Mapper<? super B, V> mapper) {
-        final LazyContinue<V> continueCommand = new LazyContinue<V>(this);
-
+        LazyContinue<V> continueCommand = new LazyContinue<V>(this);
         then(new GroupCommand<B, V>(mapper, continueCommand));
-
         return continueCommand;
+    }
+
+    public <V> Map<K, V> toMap(Mapper<? super B, V> mapper) {
+        ToMapCommand<V> toMap;
+        then(toMap = new ToMapCommand<V>((Map<K, V>) groups, mapper));
+        toMap.start();
+        return toMap.get();
     }
 
     @Override
     public LazyGrouping<K, T, B, B> filter(final Filter<? super B> filter) {
-        return this.then(new LazyGrouping<K, T, B, B>() {
+        return this.then(new LazyGrouping<K, T, B, B>(groups) {
             @Override
             protected void process(B b) {
                 if (filter.allow(b))
@@ -26,7 +39,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
 
     @Override
     public LazyGrouping<K, T, B, B> each(final Consumer<? super B> consumer) {
-        return this.then(new LazyGrouping<K, T, B, B>() {
+        return this.then(new LazyGrouping<K, T, B, B>(groups) {
             @Override
             protected void process(B b) {
                 consumer.consume(b);
@@ -56,6 +69,32 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
 
         @Override
         protected void onEnd() {
+        }
+    }
+
+    private class ToMapCommand<V> extends FinishCommand<B, Map<K, V>> {
+        private Map<K, V> groups;
+        private final Mapper<? super B, V> mapper;
+
+        public ToMapCommand(Map<K, V> groups, Mapper<? super B, V> mapper) {
+            this.groups = groups;
+            this.mapper = mapper;
+        }
+
+        @Override
+        protected void process(final B b) {
+            mapper.map(b);
+            getLast(b).then(new LazyOnEnd<V>(new Command<V, V>() {
+                @Override
+                protected void process(V v) {
+                    groups.put(b.getKey(), v);
+                }
+            }));
+        }
+
+        @Override
+        protected Map<K, V> get() {
+            return groups;
         }
     }
 

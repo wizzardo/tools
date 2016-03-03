@@ -22,8 +22,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<? super B, K> toKey, final Supplier<Map<K, LazyGroup<K, B, B>>> groupMapSupplier) {
-        return this.then(new LazyGrouping<K, B, B, LazyGroup<K, B, B>>() {
-            Map<K, LazyGroup<K, B, B>> groups = groupMapSupplier.supply();
+        return this.then(new LazyGrouping<K, B, B, LazyGroup<K, B, B>>(groupMapSupplier.supply()) {
 
             @Override
             protected void process(B b) {
