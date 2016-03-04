@@ -1,5 +1,6 @@
 package com.wizzardo.tools.collections.lazy;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,6 +18,10 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         LazyContinue<V> continueCommand = new LazyContinue<V>(this);
         then(new GroupCommand<K, V, B>(mapper, continueCommand));
         return continueCommand;
+    }
+
+    public Map<K, List<T>> toMap() {
+        return toMap(new LazyGroupToListMapper<K, T>());
     }
 
     public <V> Map<K, V> toMap(Mapper<? super B, V> mapper) {

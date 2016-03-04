@@ -13,12 +13,16 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         }
     };
 
+    public static <K, V> Supplier<Map<K, V>> hashMapSupplier() {
+        return SUPPLIER_HASH_MAP;
+    }
+
     public abstract AbstractLazy<B, B> filter(Filter<? super B> filter);
 
     public abstract AbstractLazy<B, B> each(Consumer<? super B> consumer);
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<? super B, K> toKey) {
-        return groupBy(toKey, SUPPLIER_HASH_MAP);
+        return groupBy(toKey, AbstractLazy.<K, LazyGroup<K, B, B>>hashMapSupplier());
     }
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<? super B, K> toKey, final Supplier<Map<K, LazyGroup<K, B, B>>> groupMapSupplier) {
@@ -178,4 +182,15 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         return list;
     }
 
+    public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<LazyGroup<K, B, B>, V> toValue) {
+        return toMap(AbstractLazy.<K, LazyGroup<K, B, B>>hashMapSupplier(), toKey, toValue);
+    }
+
+    public <K> Map<K, List<B>> toMap(Supplier<Map<K, LazyGroup<K, B, B>>> groupMapSupplier, Mapper<B, K> toKey) {
+        return toMap(groupMapSupplier, toKey, new LazyGroupToListMapper<K, B>());
+    }
+
+    public <K, V> Map<K, V> toMap(Supplier<Map<K, LazyGroup<K, B, B>>> groupMapSupplier, Mapper<B, K> toKey, Mapper<LazyGroup<K, B, B>, V> toValue) {
+        return groupBy(toKey, groupMapSupplier).toMap(toValue);
+    }
 }

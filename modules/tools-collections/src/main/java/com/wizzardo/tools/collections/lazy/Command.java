@@ -2,6 +2,7 @@ package com.wizzardo.tools.collections.lazy;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created by wizzardo on 08.11.15.
@@ -332,4 +333,10 @@ class Command<A, B> {
         }
     }
 
+    static class LazyGroupToListMapper<K, B> implements Mapper<LazyGroup<K, B, B>, List<B>> {
+        @Override
+        public List<B> map(LazyGroup<K, B, B> group) {
+            return group.toList();
+        }
+    }
 }

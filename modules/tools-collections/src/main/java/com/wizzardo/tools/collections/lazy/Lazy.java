@@ -1,6 +1,8 @@
 package com.wizzardo.tools.collections.lazy;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by wizzardo on 08.11.15.
@@ -102,5 +104,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
 
     public <T> Lazy<B, T> map(Mapper<? super B, T> mapper) {
         return then(new LazyMap<B, T>(mapper));
+    }
+
+    public <K> Map<K, List<B>> toMap(Mapper<B, K> toKey) {
+        return toMap(Lazy.<K, LazyGroup<K, B, B>>hashMapSupplier(), toKey, new LazyGroupToListMapper<K, B>());
     }
 }
