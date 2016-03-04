@@ -492,4 +492,123 @@ public class LazyTest {
             }
         }).start();
     }
+
+    @Test
+    public void test_toMap() {
+        Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
+                .toMap(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                });
+
+        Assert.assertEquals(2, map.size());
+
+        Assert.assertEquals(1, map.get(true).size());
+        Assert.assertEquals(Integer.valueOf(2), map.get(true).get(0));
+
+        Assert.assertEquals(2, map.get(false).size());
+        Assert.assertEquals(Integer.valueOf(1), map.get(false).get(0));
+        Assert.assertEquals(Integer.valueOf(3), map.get(false).get(1));
+    }
+
+    @Test
+    public void test_toMap_2() {
+        Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                })
+                .toMap();
+
+        Assert.assertEquals(2, map.size());
+
+        Assert.assertEquals(1, map.get(true).size());
+        Assert.assertEquals(Integer.valueOf(2), map.get(true).get(0));
+
+        Assert.assertEquals(2, map.get(false).size());
+        Assert.assertEquals(Integer.valueOf(1), map.get(false).get(0));
+        Assert.assertEquals(Integer.valueOf(3), map.get(false).get(1));
+    }
+
+    @Test
+    public void test_toMap_3() {
+        Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                })
+                .filter(new Filter<LazyGroup<Boolean, Integer, Integer>>() {
+                    @Override
+                    public boolean allow(LazyGroup<Boolean, Integer, Integer> group) {
+                        return group.getKey();
+                    }
+                })
+                .toMap();
+
+        Assert.assertEquals(1, map.size());
+
+        Assert.assertEquals(1, map.get(true).size());
+        Assert.assertEquals(Integer.valueOf(2), map.get(true).get(0));
+    }
+
+    @Test
+    public void test_toMap_4() {
+        Map<Boolean, List<String>> map = Lazy.of(1, 2, 3)
+                .toMap(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                }, new Mapper<LazyGroup<Boolean, Integer, Integer>, List<String>>() {
+                    @Override
+                    public List<String> map(LazyGroup<Boolean, Integer, Integer> group) {
+                        return group.map(new Mapper<Integer, String>() {
+                            @Override
+                            public String map(Integer integer) {
+                                return integer.toString();
+                            }
+                        }).toList();
+                    }
+                });
+
+        Assert.assertEquals(2, map.size());
+
+        Assert.assertEquals(1, map.get(true).size());
+        Assert.assertEquals("2", map.get(true).get(0));
+
+        Assert.assertEquals(2, map.get(false).size());
+        Assert.assertEquals("1", map.get(false).get(0));
+        Assert.assertEquals("3", map.get(false).get(1));
+    }
+
+    @Test
+    public void test_toMap_6() {
+        Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
+                .toMap(new Supplier<Map<Boolean, LazyGroup<Boolean, Integer, Integer>>>() {
+                    @Override
+                    public Map<Boolean, LazyGroup<Boolean, Integer, Integer>> supply() {
+                        return new TreeMap<Boolean, LazyGroup<Boolean, Integer, Integer>>();
+                    }
+                }, new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                });
+
+        Assert.assertEquals(2, map.size());
+
+        Assert.assertEquals(1, map.get(true).size());
+        Assert.assertEquals(Integer.valueOf(2), map.get(true).get(0));
+
+        Assert.assertEquals(2, map.get(false).size());
+        Assert.assertEquals(Integer.valueOf(1), map.get(false).get(0));
+        Assert.assertEquals(Integer.valueOf(3), map.get(false).get(1));
+    }
 }
