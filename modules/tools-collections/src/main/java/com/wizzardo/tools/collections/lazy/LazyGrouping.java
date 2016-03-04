@@ -1,5 +1,6 @@
 package com.wizzardo.tools.collections.lazy;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,11 +34,13 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
 
     @Override
     public LazyGrouping<K, T, B, B> filter(final Filter<? super B> filter) {
-        return this.then(new LazyGrouping<K, T, B, B>(groups) {
+        return this.then(new LazyGrouping<K, T, B, B>(new LinkedHashMap<K, LazyGroup<K, T, T>>()) {
             @Override
             protected void process(B b) {
-                if (filter.allow(b))
+                if (filter.allow(b)) {
+                    groups.put(b.getKey(), b);
                     child.process(b);
+                }
             }
         });
     }
