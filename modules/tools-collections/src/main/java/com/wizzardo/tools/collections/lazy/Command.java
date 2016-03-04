@@ -39,6 +39,14 @@ class Command<A, B> {
         return null;
     }
 
+    protected Command getLast(Command command) {
+        Command last = command;
+        while (last.child != null) {
+            last = last.child;
+        }
+        return last;
+    }
+
     static class FinishCommand<A, B> extends Command<A, B> {
 
         @Override

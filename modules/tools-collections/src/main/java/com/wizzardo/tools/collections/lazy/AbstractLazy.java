@@ -178,12 +178,4 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         return list;
     }
 
-    Command getLast(Command command) {
-        Command last = command;
-        while (last.child != null) {
-            last = last.child;
-        }
-        return last;
-    }
-
 }

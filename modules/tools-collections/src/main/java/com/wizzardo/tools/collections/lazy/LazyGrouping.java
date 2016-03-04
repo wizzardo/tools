@@ -15,13 +15,13 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
 
     public <V> Lazy<V, V> flatMap(Mapper<? super B, V> mapper) {
         LazyContinue<V> continueCommand = new LazyContinue<V>(this);
-        then(new GroupCommand<B, V>(mapper, continueCommand));
+        then(new GroupCommand<K, V, B>(mapper, continueCommand));
         return continueCommand;
     }
 
     public <V> Map<K, V> toMap(Mapper<? super B, V> mapper) {
-        ToMapCommand<V> toMap;
-        then(toMap = new ToMapCommand<V>((Map<K, V>) groups, mapper));
+        ToMapCommand<K, V, B> toMap;
+        then(toMap = new ToMapCommand<K, V, B>((Map<K, V>) groups, mapper));
         toMap.start();
         return toMap.get();
     }
@@ -52,7 +52,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         return then(new LazyMerge<B, T>());
     }
 
-    private class GroupCommand<B extends LazyGroup<K, T, T>, V> extends Command<B, B> {
+    private static class GroupCommand<K, V, B extends LazyGroup<K, ?, ?>> extends Command<B, B> {
         private final Mapper<? super B, V> mapper;
         private final Command<V, V> continueCommand;
 
@@ -72,7 +72,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         }
     }
 
-    private class ToMapCommand<V> extends FinishCommand<B, Map<K, V>> {
+    private static class ToMapCommand<K, V, B extends LazyGroup<K, ?, ?>> extends FinishCommand<B, Map<K, V>> {
         private Map<K, V> groups;
         private final Mapper<? super B, V> mapper;
 
