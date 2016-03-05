@@ -39,7 +39,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
             protected void process(B b) {
                 if (filter.allow(b)) {
                     groups.put(b.getKey(), b);
-                    child.process(b);
+                    processToChild(b);
                 }
             }
         });
@@ -51,7 +51,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
             @Override
             protected void process(B b) {
                 consumer.consume(b);
-                child.process(b);
+                processToChild(b);
             }
         });
     }
@@ -125,7 +125,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
 
         @Override
         protected void process(T t) {
-            child.process(t);
+            processToChild(t);
         }
     }
 

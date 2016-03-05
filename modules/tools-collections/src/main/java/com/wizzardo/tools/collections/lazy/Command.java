@@ -67,7 +67,7 @@ class Command<A, B> {
         @Override
         protected void process(T t) {
             if (filter.allow(t))
-                child.process(t);
+                processToChild(t);
         }
     }
 
@@ -101,7 +101,7 @@ class Command<A, B> {
         @Override
         protected void process(T t) {
             consumer.consume(t);
-            child.process(t);
+            processToChild(t);
         }
     }
 
@@ -114,7 +114,7 @@ class Command<A, B> {
             consumer = new Consumer<B>() {
                 @Override
                 public void consume(B b) {
-                    child.process(b);
+                    processToChild(b);
                 }
             };
         }
@@ -129,7 +129,7 @@ class Command<A, B> {
         Lazy<T, T> proxy = new Lazy<T, T>() {
             @Override
             protected void process(T t) {
-                LazyMerge.this.child.process(t);
+                LazyMerge.this.processToChild(t);
             }
 
             @Override
@@ -152,7 +152,7 @@ class Command<A, B> {
 
         @Override
         protected void process(A a) {
-            child.process(mapper.map(a));
+            processToChild(mapper.map(a));
         }
     }
 

@@ -42,7 +42,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
                                 return;
 
                             if (child != null)
-                                child.process(b);
+                                processToChild(b);
                         }
 
                         @Override
@@ -60,7 +60,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
                             stopped = true;
                         }
                     });
-                    child.process(group);
+                    processToChild(group);
                 }
                 group.process(b);
             }

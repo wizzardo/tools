@@ -23,7 +23,7 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (T t : iterable) {
-                    child.process(t);
+                    processToChild(t);
                     if (stop)
                         break;
                 }
@@ -36,7 +36,7 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 while (!stop && iterator.hasNext()) {
-                    child.process(iterator.next());
+                    processToChild(iterator.next());
                 }
             }
         };
@@ -47,7 +47,7 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (T t : array) {
-                    child.process(t);
+                    processToChild(t);
                     if (stop)
                         break;
                 }
