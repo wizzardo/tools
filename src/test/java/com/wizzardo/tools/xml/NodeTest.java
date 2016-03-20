@@ -71,6 +71,24 @@ public class NodeTest {
     }
 
     @Test
+    public void escape() {
+        Assert.assertEquals("&quot;", Node.escape("\""));
+        Assert.assertEquals("&apos;", Node.escape("'"));
+        Assert.assertEquals("&lt;", Node.escape("<"));
+        Assert.assertEquals("&gt;", Node.escape(">"));
+        Assert.assertEquals("&amp;", Node.escape("&"));
+    }
+
+    @Test
+    public void unescape() {
+        Assert.assertEquals("\"", Node.unescape("&quot;"));
+        Assert.assertEquals("'", Node.unescape("&apos;"));
+        Assert.assertEquals("<", Node.unescape("&lt;"));
+        Assert.assertEquals(">", Node.unescape("&gt;"));
+        Assert.assertEquals("&", Node.unescape("&amp;"));
+    }
+
+    @Test
     public void xml_comment_1() throws IOException {
         String s = "<div><!--   <comment>   --></div>";
         Node div = new XmlParser().parse(s);
