@@ -434,13 +434,19 @@ public class Node {
         return sb;
     }
 
-    private String escape(String s) {
-        return s
-                .replace("&", "&amp;")
+    public static String escape(String s) {
+        return s.replace("&", "&amp;")
                 .replace("\"", "&quot;")
-                .replace("'", "&apos")
+                .replace("'", "&apos;")
                 .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                ;
+                .replace(">", "&gt;");
+    }
+
+    public static String unescape(String s) {
+        return s.replace("&amp;", "&")
+                .replace("&quot;", "\"")
+                .replace("&apos;", "'")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">");
     }
 }
