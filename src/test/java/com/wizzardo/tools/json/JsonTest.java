@@ -1498,4 +1498,19 @@ public class JsonTest {
         holder.value = "value";
         Assert.assertEquals("{\"value\":\"value\"}", JsonTools.serialize(holder));
     }
+
+    static class DateHolder {
+        Date value;
+    }
+
+    @Test
+    public void test_date() {
+        DateHolder dateHolder = new DateHolder();
+        dateHolder.value = new Date();
+
+        String json = JsonTools.serialize(dateHolder);
+
+        DateHolder dateHolder2 = JsonTools.parse(json, DateHolder.class);
+        Assert.assertEquals(dateHolder.value, dateHolder2.value);
+    }
 }

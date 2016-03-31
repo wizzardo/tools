@@ -6,6 +6,7 @@ import com.wizzardo.tools.reflection.field.*;
 import com.wizzardo.tools.reflection.field.Type;
 
 import java.lang.reflect.Field;
+import java.util.Date;
 
 /**
  * @author: wizzardo
@@ -59,6 +60,9 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
             if (cl == Double.class)
                 return new UnsafeBoxedSetter(f, StringConverter.TO_DOUBLE);
+
+            if (cl == Date.class)
+                return new UnsafeBoxedSetter(f, StringConverter.TO_DATE);
         } else {
             if (cl.isEnum())
                 return new ReflectionEnumSetter(f);
@@ -86,6 +90,9 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
             if (cl == Double.class)
                 return new ReflectionBoxedSetter(f, StringConverter.TO_DOUBLE);
+
+            if (cl == Date.class)
+                return new ReflectionBoxedSetter(f, StringConverter.TO_DATE);
         }
         return (JsonFieldSetter) super.create(f);
     }
