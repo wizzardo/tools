@@ -1,6 +1,7 @@
 package com.wizzardo.tools.misc;
 
 import java.lang.ref.SoftReference;
+import java.util.concurrent.Callable;
 
 /**
  * @author: wizzardo
@@ -8,13 +9,14 @@ import java.lang.ref.SoftReference;
  */
 public class SoftThreadLocal<T> extends ThreadLocal<SoftReference<T>> {
 
-    @Override
-    protected SoftReference<T> initialValue() {
-        return new SoftReference<T>(init());
+    protected final Callable<T> supplier;
+
+    public SoftThreadLocal(Callable<T> supplier) {
+        this.supplier = supplier;
     }
 
     protected T init() {
-        return null;
+        return Unchecked.call(supplier);
     }
 
     public T getValue() {
@@ -27,8 +29,12 @@ public class SoftThreadLocal<T> extends ThreadLocal<SoftReference<T>> {
         return t;
     }
 
-    public void setValue(T t) {
+    public final void setValue(T t) {
         set(new SoftReference<T>(t));
     }
 
+    @Override
+    protected final SoftReference<T> initialValue() {
+        return new SoftReference<T>(init());
+    }
 }
