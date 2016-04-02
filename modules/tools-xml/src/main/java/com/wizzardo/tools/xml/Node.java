@@ -390,10 +390,20 @@ public class Node {
         return toXML(prettyPrint, new StringBuilder()).toString();
     }
 
+    public String toXML(boolean prettyPrint, boolean header) {
+        return toXML(prettyPrint, header, new StringBuilder()).toString();
+    }
+
     public StringBuilder toXML(boolean prettyPrint, StringBuilder sb) {
-        sb.append("<?xml version=\"1.0\" encoding='UTF-8' ?>");
-        if (prettyPrint)
-            sb.append("\n");
+        return toXML(prettyPrint, true, sb);
+    }
+
+    public StringBuilder toXML(boolean prettyPrint, boolean header, StringBuilder sb) {
+        if (header) {
+            sb.append("<?xml version=\"1.0\" encoding='UTF-8' ?>");
+            if (prettyPrint)
+                sb.append("\n");
+        }
         toXML("", sb, prettyPrint);
         return sb;
     }
