@@ -97,6 +97,11 @@ public class ExceptionDrivenStringBuilder implements Appendable {
         this.length = length;
     }
 
+    public ExceptionDrivenStringBuilder clear() {
+        setLength(0);
+        return this;
+    }
+
     public ExceptionDrivenStringBuilder append(Object ob) {
         return append(String.valueOf(ob));
     }
