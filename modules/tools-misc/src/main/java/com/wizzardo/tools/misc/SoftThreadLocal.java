@@ -10,9 +10,15 @@ import java.util.concurrent.Callable;
 public class SoftThreadLocal<T> extends ThreadLocal<SoftReference<T>> {
 
     protected final Callable<T> supplier;
+    protected final Mapper<T, T> onGet;
 
     public SoftThreadLocal(Callable<T> supplier) {
+        this(supplier, null);
+    }
+
+    public SoftThreadLocal(Callable<T> supplier, Mapper<T, T> onGet) {
         this.supplier = supplier;
+        this.onGet = onGet;
     }
 
     protected T init() {
@@ -26,6 +32,9 @@ public class SoftThreadLocal<T> extends ThreadLocal<SoftReference<T>> {
             t = init();
             setValue(t);
         }
+        if (onGet != null)
+            t = onGet.map(t);
+
         return t;
     }
 
