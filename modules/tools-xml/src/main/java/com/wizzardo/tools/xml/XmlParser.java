@@ -90,7 +90,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 i++;
             }
             if (attributeName != null && attributeName.length() > 0) {
-                xml.attribute(attributeName, null);
+                xml.attribute(attributeName, "");
             }
             String t;
             if (sb.length() > 0 && !(t = trimRight(sb).toString()).equals(xml.name)) {
@@ -152,7 +152,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             } else if (attribute) {
                 attributeName = sb.toString().trim();
                 if (attributeName.length() > 0) {
-                    xml.attribute(attributeName, null);
+                    xml.attribute(attributeName, "");
                 }
                 sb.setLength(0);
                 attribute = false;
