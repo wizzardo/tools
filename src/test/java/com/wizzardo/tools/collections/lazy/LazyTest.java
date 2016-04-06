@@ -403,6 +403,26 @@ public class LazyTest {
     }
 
     @Test
+    public void test_merge_3() {
+        List<Integer> result = Lazy.of(new int[]{1, 2}, new int[]{3, 4}, new int[]{5, 6})
+                .merge(new Mapper<int[], Lazy<Integer, Integer>>() {
+                    @Override
+                    public Lazy<Integer, Integer> map(int[] ints) {
+                        return Lazy.of(ints);
+                    }
+                })
+                .toList();
+
+        Assert.assertEquals(6, result.size());
+        Assert.assertEquals(Integer.valueOf(1), result.get(0));
+        Assert.assertEquals(Integer.valueOf(2), result.get(1));
+        Assert.assertEquals(Integer.valueOf(3), result.get(2));
+        Assert.assertEquals(Integer.valueOf(4), result.get(3));
+        Assert.assertEquals(Integer.valueOf(5), result.get(4));
+        Assert.assertEquals(Integer.valueOf(6), result.get(5));
+    }
+
+    @Test
     public void test_count() {
         int result = Lazy.of(1, 2, 3, 4, 5, 6).count();
 
