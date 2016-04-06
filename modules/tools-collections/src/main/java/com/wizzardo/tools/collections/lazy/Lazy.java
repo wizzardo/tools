@@ -55,6 +55,110 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         };
     }
 
+    public static Lazy<Integer, Integer> of(final int[] array) {
+        return new StartLazy<Integer>() {
+            @Override
+            protected void process() {
+                for (int t : array) {
+                    processToChild(t);
+                    if (stop)
+                        break;
+                }
+            }
+        };
+    }
+
+    public static Lazy<Long, Long> of(final long[] array) {
+        return new StartLazy<Long>() {
+            @Override
+            protected void process() {
+                for (long t : array) {
+                    processToChild(t);
+                    if (stop)
+                        break;
+                }
+            }
+        };
+    }
+
+    public static Lazy<Double, Double> of(final double[] array) {
+        return new StartLazy<Double>() {
+            @Override
+            protected void process() {
+                for (double t : array) {
+                    processToChild(t);
+                    if (stop)
+                        break;
+                }
+            }
+        };
+    }
+
+    public static Lazy<Float, Float> of(final float[] array) {
+        return new StartLazy<Float>() {
+            @Override
+            protected void process() {
+                for (float t : array) {
+                    processToChild(t);
+                    if (stop)
+                        break;
+                }
+            }
+        };
+    }
+
+    public static Lazy<Byte, Byte> of(final byte[] array) {
+        return new StartLazy<Byte>() {
+            @Override
+            protected void process() {
+                for (byte t : array) {
+                    processToChild(t);
+                    if (stop)
+                        break;
+                }
+            }
+        };
+    }
+
+    public static Lazy<Boolean, Boolean> of(final boolean[] array) {
+        return new StartLazy<Boolean>() {
+            @Override
+            protected void process() {
+                for (boolean t : array) {
+                    processToChild(t);
+                    if (stop)
+                        break;
+                }
+            }
+        };
+    }
+
+    public static Lazy<Short, Short> of(final short[] array) {
+        return new StartLazy<Short>() {
+            @Override
+            protected void process() {
+                for (short t : array) {
+                    processToChild(t);
+                    if (stop)
+                        break;
+                }
+            }
+        };
+    }
+
+    public static Lazy<Character, Character> of(final char[] array) {
+        return new StartLazy<Character>() {
+            @Override
+            protected void process() {
+                for (char t : array) {
+                    processToChild(t);
+                    if (stop)
+                        break;
+                }
+            }
+        };
+    }
+
     private static abstract class StartLazy<T> extends Lazy<T, T> {
         boolean stop = false;
 
