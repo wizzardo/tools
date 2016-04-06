@@ -126,7 +126,7 @@ class Command<A, B> {
     }
 
     static class LazyMerge<B extends Lazy<T, T>, T> extends Lazy<B, T> {
-        Lazy<T, T> proxy = new Lazy<T, T>() {
+        final Lazy<T, T> proxy = new Lazy<T, T>() {
             @Override
             protected void process(T t) {
                 LazyMerge.this.processToChild(t);
@@ -140,6 +140,32 @@ class Command<A, B> {
         @Override
         protected void process(B b) {
             b.child = proxy;
+        }
+    }
+
+    static class LazyMapMerge<A, B> extends Lazy<A, B> {
+        final Lazy<B, B> proxy = new Lazy<B, B>() {
+            @Override
+            protected void process(B b) {
+                LazyMapMerge.this.processToChild(b);
+            }
+
+            @Override
+            protected void onEnd() {
+            }
+        };
+        final Mapper<A, Lazy<B, B>> mapper;
+
+        LazyMapMerge(Mapper<A, Lazy<B, B>> mapper) {
+            this.mapper = mapper;
+        }
+
+
+        @Override
+        protected void process(A a) {
+            Lazy<B, B> l = mapper.map(a);
+            l.child = proxy;
+            l.start();
         }
     }
 
