@@ -33,6 +33,10 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         };
     }
 
+    public static <K, V> Lazy<Map.Entry<K, V>, Map.Entry<K, V>> of(Map<K, V> map) {
+        return of(map.entrySet());
+    }
+
     public static <T> Lazy<T, T> of(final T... array) {
         return new StartLazy<T>() {
             @Override
