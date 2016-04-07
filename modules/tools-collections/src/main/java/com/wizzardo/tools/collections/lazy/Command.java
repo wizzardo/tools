@@ -105,26 +105,6 @@ class Command<A, B> {
         }
     }
 
-    static class LazyIterate<A, B> extends Lazy<A, B> {
-        private Iterater<? super A, B> iterater;
-        private Consumer<B> consumer;
-
-        public LazyIterate(Iterater<? super A, B> iterater) {
-            this.iterater = iterater;
-            consumer = new Consumer<B>() {
-                @Override
-                public void consume(B b) {
-                    processToChild(b);
-                }
-            };
-        }
-
-        @Override
-        protected void process(A a) {
-            iterater.iterate(a, consumer);
-        }
-    }
-
     static class LazyMerge<B extends Lazy<T, T>, T> extends Lazy<B, T> {
         final Lazy<T, T> proxy = new Lazy<T, T>() {
             @Override
