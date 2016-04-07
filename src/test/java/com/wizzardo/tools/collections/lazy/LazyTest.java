@@ -20,9 +20,9 @@ public class LazyTest {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<LazyGroup<Boolean, Integer, Integer>, List<Integer>>() {
+                .flatMap(new Mapper<LazyGroup<Boolean, Integer>, List<Integer>>() {
                     @Override
-                    public List<Integer> map(LazyGroup<Boolean, Integer, Integer> group) {
+                    public List<Integer> map(LazyGroup<Boolean, Integer> group) {
                         return group.toList();
                     }
                 })
@@ -52,17 +52,17 @@ public class LazyTest {
                         return it % 2 == 0;
                     }
                 })
-                .filter(new Filter<LazyGroup<Boolean, Integer, Integer>>() {
+                .filter(new Filter<LazyGroup<Boolean, Integer>>() {
                     @Override
-                    public boolean allow(LazyGroup<Boolean, Integer, Integer> group) {
+                    public boolean allow(LazyGroup<Boolean, Integer> group) {
                         return group.getKey();
                     }
                 })
-                .flatMap(new Mapper<LazyGroup<Boolean, Integer, Integer>, List<Integer>>() {
+                .flatMap(new Mapper<LazyGroup<Boolean, Integer>, List<Integer>>() {
                     int counter = 0;
 
                     @Override
-                    public List<Integer> map(LazyGroup<Boolean, Integer, Integer> group) {
+                    public List<Integer> map(LazyGroup<Boolean, Integer> group) {
                         Assert.assertEquals("should be executed only once", 1, ++counter);
                         return group.toList();
                     }
@@ -89,9 +89,9 @@ public class LazyTest {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<LazyGroup<Boolean, Integer, Integer>, Integer>() {
+                .flatMap(new Mapper<LazyGroup<Boolean, Integer>, Integer>() {
                     @Override
-                    public Integer map(LazyGroup<Boolean, Integer, Integer> group) {
+                    public Integer map(LazyGroup<Boolean, Integer> group) {
                         return group.first();
                     }
                 })
@@ -114,9 +114,9 @@ public class LazyTest {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<LazyGroup<Boolean, Integer, Integer>, Integer>() {
+                .flatMap(new Mapper<LazyGroup<Boolean, Integer>, Integer>() {
                     @Override
-                    public Integer map(LazyGroup<Boolean, Integer, Integer> group) {
+                    public Integer map(LazyGroup<Boolean, Integer> group) {
                         return group.first();
                     }
                 })
@@ -149,17 +149,17 @@ public class LazyTest {
             public Integer map(Person person) {
                 return person.age;
             }
-        }).toMap(new Mapper<LazyGroup<Integer, Person, Person>, Map<Long, List<Person>>>() {
+        }).toMap(new Mapper<LazyGroup<Integer, Person>, Map<Long, List<Person>>>() {
             @Override
-            public Map<Long, List<Person>> map(LazyGroup<Integer, Person, Person> ageGroup) {
+            public Map<Long, List<Person>> map(LazyGroup<Integer, Person> ageGroup) {
                 return ageGroup.groupBy(new Mapper<Person, Long>() {
                     @Override
                     public Long map(Person person) {
                         return person.salary;
                     }
-                }).toMap(new Mapper<LazyGroup<Long, Person, Person>, List<Person>>() {
+                }).toMap(new Mapper<LazyGroup<Long, Person>, List<Person>>() {
                     @Override
-                    public List<Person> map(LazyGroup<Long, Person, Person> salaryGroup) {
+                    public List<Person> map(LazyGroup<Long, Person> salaryGroup) {
                         return salaryGroup.toList();
                     }
                 });
@@ -218,9 +218,9 @@ public class LazyTest {
                         return integer % 2 == 0;
                     }
                 })
-                .each(new Consumer<LazyGroup<Boolean, Integer, Integer>>() {
+                .each(new Consumer<LazyGroup<Boolean, Integer>>() {
                     @Override
-                    public void consume(LazyGroup<Boolean, Integer, Integer> group) {
+                    public void consume(LazyGroup<Boolean, Integer> group) {
                         counter.incrementAndGet();
                     }
                 }).execute();
@@ -352,9 +352,9 @@ public class LazyTest {
                         return integer % 2 == 0;
                     }
                 })
-                .filter(new Filter<LazyGroup<Boolean, Integer, Integer>>() {
+                .filter(new Filter<LazyGroup<Boolean, Integer>>() {
                     @Override
-                    public boolean allow(LazyGroup<Boolean, Integer, Integer> group) {
+                    public boolean allow(LazyGroup<Boolean, Integer> group) {
                         return group.getKey();
                     }
                 })
@@ -528,9 +528,9 @@ public class LazyTest {
                         return integer % 2 == 0;
                     }
                 })
-                .filter(new Filter<LazyGroup<Boolean, Integer, Integer>>() {
+                .filter(new Filter<LazyGroup<Boolean, Integer>>() {
                     @Override
-                    public boolean allow(LazyGroup<Boolean, Integer, Integer> group) {
+                    public boolean allow(LazyGroup<Boolean, Integer> group) {
                         return group.getKey();
                     }
                 })
@@ -550,9 +550,9 @@ public class LazyTest {
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
-                }, new Mapper<LazyGroup<Boolean, Integer, Integer>, List<String>>() {
+                }, new Mapper<LazyGroup<Boolean, Integer>, List<String>>() {
                     @Override
-                    public List<String> map(LazyGroup<Boolean, Integer, Integer> group) {
+                    public List<String> map(LazyGroup<Boolean, Integer> group) {
                         return group.map(new Mapper<Integer, String>() {
                             @Override
                             public String map(Integer integer) {
@@ -575,10 +575,10 @@ public class LazyTest {
     @Test
     public void test_toMap_6() {
         Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
-                .toMap(new Supplier<Map<Boolean, LazyGroup<Boolean, Integer, Integer>>>() {
+                .toMap(new Supplier<Map<Boolean, LazyGroup<Boolean, Integer>>>() {
                     @Override
-                    public Map<Boolean, LazyGroup<Boolean, Integer, Integer>> supply() {
-                        return new TreeMap<Boolean, LazyGroup<Boolean, Integer, Integer>>();
+                    public Map<Boolean, LazyGroup<Boolean, Integer>> supply() {
+                        return new TreeMap<Boolean, LazyGroup<Boolean, Integer>>();
                     }
                 }, new Mapper<Integer, Boolean>() {
                     @Override

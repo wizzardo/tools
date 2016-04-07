@@ -202,6 +202,6 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
     }
 
     public <K> Map<K, List<B>> toMap(Mapper<B, K> toKey) {
-        return toMap(Lazy.<K, LazyGroup<K, B, B>>hashMapSupplier(), toKey, new LazyGroupToListMapper<K, B>());
+        return toMap(Lazy.<K, LazyGroup<K, B>>hashMapSupplier(), toKey, new LazyGroupToListMapper<K, B>());
     }
 }

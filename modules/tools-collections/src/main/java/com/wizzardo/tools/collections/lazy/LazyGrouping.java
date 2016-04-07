@@ -7,11 +7,11 @@ import java.util.Map;
 /**
  * Created by wizzardo on 08.11.15.
  */
-public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends AbstractLazy<A, B> {
+public class LazyGrouping<K, T, A, B extends LazyGroup<K, T>> extends AbstractLazy<A, B> {
 
-    protected final Map<K, LazyGroup<K, T, T>> groups;
+    protected final Map<K, LazyGroup<K, T>> groups;
 
-    LazyGrouping(Map<K, LazyGroup<K, T, T>> groups) {
+    LazyGrouping(Map<K, LazyGroup<K, T>> groups) {
         this.groups = groups;
     }
 
@@ -34,7 +34,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
 
     @Override
     public LazyGrouping<K, T, B, B> filter(final Filter<? super B> filter) {
-        return this.then(new LazyGrouping<K, T, B, B>(new LinkedHashMap<K, LazyGroup<K, T, T>>()) {
+        return this.then(new LazyGrouping<K, T, B, B>(new LinkedHashMap<K, LazyGroup<K, T>>()) {
             @Override
             protected void process(B b) {
                 if (filter.allow(b)) {
@@ -64,7 +64,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         return then(new LazyMapMerge<B , V>(mapper));
     }
 
-    private static class GroupCommand<K, V, B extends LazyGroup<K, ?, ?>> extends Command<B, B> {
+    private static class GroupCommand<K, V, B extends LazyGroup<K, ?>> extends Command<B, B> {
         private final Mapper<? super B, V> mapper;
         private final Command<V, V> continueCommand;
 
@@ -84,7 +84,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T, T>> extends Abstrac
         }
     }
 
-    private static class ToMapCommand<K, V, B extends LazyGroup<K, ?, ?>> extends FinishCommand<B, Map<K, V>> {
+    private static class ToMapCommand<K, V, B extends LazyGroup<K, ?>> extends FinishCommand<B, Map<K, V>> {
         private Map<K, V> groups;
         private final Mapper<? super B, V> mapper;
 

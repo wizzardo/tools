@@ -23,45 +23,19 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
 
     public abstract <T> AbstractLazy<B, T> merge(Mapper<B, Lazy<T, T>> mapper);
 
-    public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<? super B, K> toKey) {
-        return groupBy(toKey, AbstractLazy.<K, LazyGroup<K, B, B>>hashMapSupplier());
+    public <K> LazyGrouping<K, B, B, LazyGroup<K, B>> groupBy(final Mapper<? super B, K> toKey) {
+        return groupBy(toKey, AbstractLazy.<K, LazyGroup<K, B>>hashMapSupplier());
     }
 
-    public <K> LazyGrouping<K, B, B, LazyGroup<K, B, B>> groupBy(final Mapper<? super B, K> toKey, final Supplier<Map<K, LazyGroup<K, B, B>>> groupMapSupplier) {
-        return this.then(new LazyGrouping<K, B, B, LazyGroup<K, B, B>>(groupMapSupplier.supply()) {
+    public <K> LazyGrouping<K, B, B, LazyGroup<K, B>> groupBy(final Mapper<? super B, K> toKey, final Supplier<Map<K, LazyGroup<K, B>>> groupMapSupplier) {
+        return this.then(new LazyGrouping<K, B, B, LazyGroup<K, B>>(groupMapSupplier.supply()) {
 
             @Override
             protected void process(B b) {
                 K key = toKey.map(b);
-                LazyGroup<K, B, B> group = groups.get(key);
+                LazyGroup<K, B> group = groups.get(key);
                 if (group == null) {
-                    groups.put(key, group = new LazyGroup<K, B, B>(key) {
-                        boolean stopped = false;
-
-                        @Override
-                        protected void process(B b) {
-                            if (stopped)
-                                return;
-
-                            if (child != null)
-                                processToChild(b);
-                        }
-
-                        @Override
-                        protected void start() {
-                        }
-
-                        @Override
-                        protected void onEnd() {
-                            if (!stopped && child != null)
-                                child.onEnd();
-                        }
-
-                        @Override
-                        protected void stop() {
-                            stopped = true;
-                        }
-                    });
+                    groups.put(key, group = new LazyGroup<K, B>(key));
                     processToChild(group);
                 }
                 group.process(b);
@@ -69,7 +43,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
 
             @Override
             protected void onEnd() {
-                for (LazyGroup<K, B, B> group : groups.values()) {
+                for (LazyGroup<K, B> group : groups.values()) {
                     group.onEnd();
                 }
                 super.onEnd();
@@ -184,15 +158,15 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         return list;
     }
 
-    public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<LazyGroup<K, B, B>, V> toValue) {
-        return toMap(AbstractLazy.<K, LazyGroup<K, B, B>>hashMapSupplier(), toKey, toValue);
+    public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<LazyGroup<K, B>, V> toValue) {
+        return toMap(AbstractLazy.<K, LazyGroup<K, B>>hashMapSupplier(), toKey, toValue);
     }
 
-    public <K> Map<K, List<B>> toMap(Supplier<Map<K, LazyGroup<K, B, B>>> groupMapSupplier, Mapper<B, K> toKey) {
+    public <K> Map<K, List<B>> toMap(Supplier<Map<K, LazyGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey) {
         return toMap(groupMapSupplier, toKey, new LazyGroupToListMapper<K, B>());
     }
 
-    public <K, V> Map<K, V> toMap(Supplier<Map<K, LazyGroup<K, B, B>>> groupMapSupplier, Mapper<B, K> toKey, Mapper<LazyGroup<K, B, B>, V> toValue) {
+    public <K, V> Map<K, V> toMap(Supplier<Map<K, LazyGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey, Mapper<LazyGroup<K, B>, V> toValue) {
         return groupBy(toKey, groupMapSupplier).toMap(toValue);
     }
 }

@@ -339,9 +339,9 @@ class Command<A, B> {
         }
     }
 
-    static class LazyGroupToListMapper<K, B> implements Mapper<LazyGroup<K, B, B>, List<B>> {
+    static class LazyGroupToListMapper<K, B> implements Mapper<LazyGroup<K, B>, List<B>> {
         @Override
-        public List<B> map(LazyGroup<K, B, B> group) {
+        public List<B> map(LazyGroup<K, B> group) {
             return group.toList();
         }
     }
