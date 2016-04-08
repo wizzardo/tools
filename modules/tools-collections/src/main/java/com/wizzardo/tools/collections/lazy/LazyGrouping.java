@@ -60,8 +60,8 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T>> extends AbstractLa
         return then(new LazyMerge<B, T>());
     }
 
-    public <V> Lazy<B, V> merge(Mapper<B, Lazy<V, V>> mapper) {
-        return then(new LazyMapMerge<B , V>(mapper));
+    public <V> Lazy<B, V> merge(Mapper<? super B, ? extends Lazy<V, V>> mapper) {
+        return then(new LazyMapMerge<B, V>(mapper));
     }
 
     private static class GroupCommand<K, V, B extends LazyGroup<K, ?>> extends Command<B, B> {

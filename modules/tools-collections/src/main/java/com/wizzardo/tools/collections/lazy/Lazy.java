@@ -185,7 +185,7 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return reduce.get();
     }
 
-    public <T> Lazy<B, T> merge(Mapper<B, Lazy<T, T>> mapper) {
+    public <T> Lazy<B, T> merge(Mapper<? super B, ? extends Lazy<T, T>> mapper) {
         return then(new LazyMapMerge<B, T>(mapper));
     }
 

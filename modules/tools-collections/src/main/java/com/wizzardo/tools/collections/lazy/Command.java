@@ -140,9 +140,9 @@ class Command<A, B> {
             protected void onEnd() {
             }
         };
-        final Mapper<A, Lazy<B, B>> mapper;
+        final Mapper<? super A, ? extends Lazy<B, B>> mapper;
 
-        LazyMapMerge(Mapper<A, Lazy<B, B>> mapper) {
+        LazyMapMerge(Mapper<? super A, ? extends Lazy<B, B>> mapper) {
             this.mapper = mapper;
         }
 
