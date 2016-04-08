@@ -14,9 +14,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (T t : iterable) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -186,7 +186,7 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
     }
 
     public <T> Lazy<B, T> merge(Mapper<B, Lazy<T, T>> mapper) {
-        return then(new LazyMapMerge<B ,T>(mapper));
+        return then(new LazyMapMerge<B, T>(mapper));
     }
 
     public Lazy<B, B> filter(Filter<? super B> filter) {
