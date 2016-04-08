@@ -388,6 +388,40 @@ public class LazyTest {
     }
 
     @Test
+    public void test_merge_4() {
+        List<Integer> result = Lazy.of(1, 2, 3, 4, 5, 6)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                })
+                .filter(new Filter<LazyGroup<Boolean, Integer>>() {
+                    @Override
+                    public boolean allow(LazyGroup<Boolean, Integer> group) {
+                        return group.getKey();
+                    }
+                })
+                .merge(new Mapper<LazyGroup<Boolean, Integer>, Lazy<Integer, Integer>>() {
+                    @Override
+                    public Lazy<Integer, Integer> map(LazyGroup<Boolean, Integer> lazyGroup) {
+                        return lazyGroup.map(new Mapper<Integer, Integer>() {
+                            @Override
+                            public Integer map(Integer integer) {
+                                return integer / 2;
+                            }
+                        });
+                    }
+                })
+                .toList();
+
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals(Integer.valueOf(1), result.get(0));
+        Assert.assertEquals(Integer.valueOf(2), result.get(1));
+        Assert.assertEquals(Integer.valueOf(3), result.get(2));
+    }
+
+    @Test
     public void test_count() {
         int result = Lazy.of(1, 2, 3, 4, 5, 6).count();
 
