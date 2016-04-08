@@ -48,6 +48,12 @@ class Command<A, B> {
         return last;
     }
 
+    static class NoopCommand<T> extends Command<T, Object> {
+        @Override
+        protected void onEnd() {
+        }
+    }
+
     static class FinishCommand<A, B> extends Command<A, B> {
 
         @Override

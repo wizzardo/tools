@@ -10,6 +10,7 @@ public class LazyGroup<K, T> extends Lazy<T, T> {
 
     LazyGroup(K key) {
         this.key = key;
+        child = new NoopCommand<T>();
     }
 
     public K getKey() {
@@ -18,7 +19,7 @@ public class LazyGroup<K, T> extends Lazy<T, T> {
 
     @Override
     protected void process(T t) {
-        if (stopped || child == null)
+        if (stopped)
             return;
 
         processToChild(t);
@@ -30,7 +31,7 @@ public class LazyGroup<K, T> extends Lazy<T, T> {
 
     @Override
     protected void onEnd() {
-        if (!stopped && child != null)
+        if (!stopped)
             child.onEnd();
     }
 
