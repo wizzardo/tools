@@ -630,4 +630,9 @@ public class LazyTest {
         Assert.assertEquals(Integer.valueOf(1), map.get(false).get(0));
         Assert.assertEquals(Integer.valueOf(3), map.get(false).get(1));
     }
+
+    @Test
+    public void test_join() {
+        Assert.assertEquals("1,2,3", Lazy.of(1, 2, 3).join(","));
+    }
 }
