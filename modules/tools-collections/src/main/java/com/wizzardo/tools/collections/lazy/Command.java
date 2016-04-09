@@ -303,6 +303,25 @@ class Command<A, B> {
         }
     }
 
+    static class LazyJoin extends FinishCommand {
+        private StringBuilder sb;
+        private String separator;
+
+        public LazyJoin(StringBuilder sb, String separator) {
+            this.sb = sb;
+            this.separator = separator;
+        }
+
+        @Override
+        protected void process(Object ob) {
+            StringBuilder sb = this.sb;
+            if (sb.length() > 0)
+                sb.append(separator);
+
+            sb.append(ob);
+        }
+    }
+
     static class LazyMinWithComparator<A> extends FinishCommand<A, A> {
         private A min;
         private Comparator<? super A> comparator;

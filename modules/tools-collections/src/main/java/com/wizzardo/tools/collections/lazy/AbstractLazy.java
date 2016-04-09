@@ -158,6 +158,15 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
         return list;
     }
 
+    public String join(String separator) {
+        return join(separator, new StringBuilder());
+    }
+
+    public String join(String separator, StringBuilder sb) {
+        then(new LazyJoin(sb, separator)).start();
+        return sb.toString();
+    }
+
     public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<LazyGroup<K, B>, V> toValue) {
         return toMap(AbstractLazy.<K, LazyGroup<K, B>>hashMapSupplier(), toKey, toValue);
     }
