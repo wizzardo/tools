@@ -52,10 +52,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public <C> C collect(C collector, BiConsumer<? super C, ? super B> accumulator) {
-        LazyCollectWithAccumulator<C, B> collect;
-        then(collect = new LazyCollectWithAccumulator<C, B>(collector, accumulator));
-        collect.start();
-        return collector;
+        return then(new LazyCollectWithAccumulator<C, B>(collector, accumulator)).startAndGet();
     }
 
     public void execute() {
@@ -63,8 +60,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public int count() {
-        LazyCount<B> count;
-        then(count = new LazyCount<B>());
+        LazyCount<B> count = then(new LazyCount<B>());
         count.start();
         return count.getCount();
     }
@@ -74,9 +70,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B first(B def) {
-        Command<B, B> c = then(new LazyFirst<B>(def));
-        c.start();
-        return c.get();
+        return then(new LazyFirst<B>(def)).startAndGet();
     }
 
     public B last() {
@@ -84,9 +78,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B last(B def) {
-        Command<B, B> c = then(new LazyLast<B>(def));
-        c.start();
-        return c.get();
+        return then(new LazyLast<B>(def)).startAndGet();
     }
 
     public B min(Comparator<? super B> comparator) {
@@ -94,9 +86,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B min(B def, Comparator<? super B> comparator) {
-        Command<B, B> c = then(new LazyMinWithComparator<B>(def, comparator));
-        c.start();
-        return c.get();
+        return then(new LazyMinWithComparator<B>(def, comparator)).startAndGet();
     }
 
     public B min() {
@@ -104,9 +94,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B min(B def) {
-        Command<B, B> c = then(new LazyMin<B>(def));
-        c.start();
-        return c.get();
+        return then(new LazyMin<B>(def)).startAndGet();
     }
 
     public B max(Comparator<? super B> comparator) {
@@ -114,9 +102,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B max(B def, Comparator<? super B> comparator) {
-        Command<B, B> c = then(new LazyMaxWithComparator<B>(def, comparator));
-        c.start();
-        return c.get();
+        return then(new LazyMaxWithComparator<B>(def, comparator)).startAndGet();
     }
 
     public B max() {
@@ -124,9 +110,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public B max(B def) {
-        Command<B, B> c = then(new LazyMax<B>(def));
-        c.start();
-        return c.get();
+        return then(new LazyMax<B>(def)).startAndGet();
     }
 
     public List<B> toList() {
@@ -134,10 +118,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public <C extends Collection<B>> C collect(C collection) {
-        LazyCollect<B> c;
-        then(c = new LazyCollect<B>(collection));
-        c.start();
-        return collection;
+        return then(new LazyCollect<B, C>(collection)).startAndGet();
     }
 
     public List<B> toSortedList(Comparator<? super B> comparator) {
@@ -163,8 +144,7 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
     }
 
     public String join(String separator, StringBuilder sb) {
-        then(new LazyJoin(sb, separator)).start();
-        return sb.toString();
+        return then(new LazyJoin<B>(sb, separator)).startAndGet();
     }
 
     public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<LazyGroup<K, B>, V> toValue) {

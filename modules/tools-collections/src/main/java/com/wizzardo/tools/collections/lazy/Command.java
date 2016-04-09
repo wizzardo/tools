@@ -61,6 +61,11 @@ class Command<A, B> {
             if (child != null)
                 child.onEnd();
         }
+
+        public B startAndGet() {
+            start();
+            return get();
+        }
     }
 
     static class LazyFilter<T> extends Lazy<T, T> {
@@ -209,10 +214,10 @@ class Command<A, B> {
         }
     }
 
-    static class LazyCollect<A> extends FinishCommand<A, Collection<A>> {
-        private Collection<A> collection;
+    static class LazyCollect<A, C extends Collection<A>> extends FinishCommand<A, C> {
+        private C collection;
 
-        LazyCollect(Collection<A> collection) {
+        LazyCollect(C collection) {
             this.collection = collection;
         }
 
@@ -222,7 +227,7 @@ class Command<A, B> {
         }
 
         @Override
-        public Collection<A> get() {
+        public C get() {
             return collection;
         }
     }
@@ -303,7 +308,7 @@ class Command<A, B> {
         }
     }
 
-    static class LazyJoin extends FinishCommand {
+    static class LazyJoin<A> extends FinishCommand<A, String> {
         private StringBuilder sb;
         private String separator;
 
@@ -313,12 +318,17 @@ class Command<A, B> {
         }
 
         @Override
-        protected void process(Object ob) {
+        protected void process(A a) {
             StringBuilder sb = this.sb;
             if (sb.length() > 0)
                 sb.append(separator);
 
-            sb.append(ob);
+            sb.append(a);
+        }
+
+        @Override
+        protected String get() {
+            return sb.toString();
         }
     }
 
