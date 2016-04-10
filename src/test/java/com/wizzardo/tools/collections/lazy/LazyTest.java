@@ -728,4 +728,21 @@ public class LazyTest {
             throw new IllegalStateException();
         }
     }
+
+    @Test
+    public void test_of_map() {
+        Map<Integer, String> map = new HashMap<Integer, String>();
+        map.put(1, "1");
+        map.put(2, "2");
+        map.put(3, "3");
+
+        String result = Lazy.of(map).map(new Mapper<Map.Entry<Integer, String>, Integer>() {
+            @Override
+            public Integer map(Map.Entry<Integer, String> entry) {
+                return entry.getKey();
+            }
+        }).join(", ");
+
+        Assert.assertEquals("1, 2, 3", result);
+    }
 }
