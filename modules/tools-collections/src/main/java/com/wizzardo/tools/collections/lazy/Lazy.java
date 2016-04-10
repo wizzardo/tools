@@ -42,9 +42,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (T t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -55,9 +55,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (int t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -68,9 +68,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (long t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -81,9 +81,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (double t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -94,9 +94,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (float t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -107,9 +107,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (byte t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -120,9 +120,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (boolean t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -133,9 +133,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (short t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
@@ -146,9 +146,9 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
             @Override
             protected void process() {
                 for (char t : array) {
-                    processToChild(t);
                     if (stop)
                         break;
+                    processToChild(t);
                 }
             }
         };
