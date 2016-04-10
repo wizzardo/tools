@@ -635,4 +635,10 @@ public class LazyTest {
     public void test_join() {
         Assert.assertEquals("1,2,3", Lazy.of(1, 2, 3).join(","));
     }
+
+    @Test
+    public void improveCoverage(){
+        Assert.assertEquals(null, new Command().get());
+        Assert.assertEquals(Integer.valueOf(0), new Command.LazyCount().get());
+    }
 }
