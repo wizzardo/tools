@@ -637,8 +637,95 @@ public class LazyTest {
     }
 
     @Test
-    public void improveCoverage(){
+    public void improveCoverage() {
         Assert.assertEquals(null, new Command().get());
         Assert.assertEquals(Integer.valueOf(0), new Command.LazyCount().get());
+    }
+
+    @Test
+    public void test_of_ints() {
+        Assert.assertEquals("1,2,3", Lazy.of(new int[]{1, 2, 3}).join(","));
+
+        IllegalState lazy = Lazy.of(new int[]{1, 2, 3}).then(new IllegalState());
+        lazy.stop();
+        lazy.execute();
+        Assert.assertEquals(null, lazy.get());
+    }
+
+    @Test
+    public void test_of_longs() {
+        Assert.assertEquals("1,2,3", Lazy.of(new long[]{1, 2, 3}).join(","));
+
+        IllegalState lazy = Lazy.of(new long[]{1, 2, 3}).then(new IllegalState());
+        lazy.stop();
+        lazy.execute();
+        Assert.assertEquals(null, lazy.get());
+    }
+
+    @Test
+    public void test_of_shorts() {
+        Assert.assertEquals("1,2,3", Lazy.of(new short[]{1, 2, 3}).join(","));
+
+        IllegalState lazy = Lazy.of(new short[]{1, 2, 3}).then(new IllegalState());
+        lazy.stop();
+        lazy.execute();
+        Assert.assertEquals(null, lazy.get());
+    }
+
+    @Test
+    public void test_of_bytes() {
+        Assert.assertEquals("1,2,3", Lazy.of(new byte[]{1, 2, 3}).join(","));
+
+        IllegalState lazy = Lazy.of(new byte[]{1, 2, 3}).then(new IllegalState());
+        lazy.stop();
+        lazy.execute();
+        Assert.assertEquals(null, lazy.get());
+    }
+
+    @Test
+    public void test_of_floats() {
+        Assert.assertEquals("1.0,2.0,3.0", Lazy.of(new float[]{1, 2, 3}).join(","));
+
+        IllegalState lazy = Lazy.of(new float[]{1, 2, 3}).then(new IllegalState());
+        lazy.stop();
+        lazy.execute();
+        Assert.assertEquals(null, lazy.get());
+    }
+
+    @Test
+    public void test_of_doubles() {
+        Assert.assertEquals("1.0,2.0,3.0", Lazy.of(new double[]{1, 2, 3}).join(","));
+
+        IllegalState lazy = Lazy.of(new double[]{1, 2, 3}).then(new IllegalState());
+        lazy.stop();
+        lazy.execute();
+        Assert.assertEquals(null, lazy.get());
+    }
+
+    @Test
+    public void test_of_booleans() {
+        Assert.assertEquals("true,false", Lazy.of(new boolean[]{true, false}).join(","));
+
+        IllegalState lazy = Lazy.of(new boolean[]{true, false}).then(new IllegalState());
+        lazy.stop();
+        lazy.execute();
+        Assert.assertEquals(null, lazy.get());
+    }
+
+    @Test
+    public void test_of_chars() {
+        Assert.assertEquals("a,b,c", Lazy.of(new char[]{'a', 'b', 'c'}).join(","));
+
+        IllegalState lazy = Lazy.of(new char[]{'a', 'b', 'c'}).then(new IllegalState());
+        lazy.stop();
+        lazy.execute();
+        Assert.assertEquals(null, lazy.get());
+    }
+
+    static class IllegalState extends Lazy {
+        @Override
+        protected void process(Object o) {
+            throw new IllegalStateException();
+        }
     }
 }
