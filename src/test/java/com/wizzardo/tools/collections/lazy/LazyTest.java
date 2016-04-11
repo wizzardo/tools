@@ -745,4 +745,42 @@ public class LazyTest {
 
         Assert.assertEquals("1, 2, 3", result);
     }
+
+    @Test
+    public void test_each_with_index() {
+        final StringBuilder sb = new StringBuilder();
+        Lazy.of(2, 4, 6).each(new ConsumerWithInt<Integer>() {
+            @Override
+            public void consume(int i, Integer integer) {
+                if (sb.length() != 0)
+                    sb.append(", ");
+                sb.append(i);
+            }
+        }).execute();
+
+        Assert.assertEquals("0, 1, 2", sb.toString());
+    }
+
+    @Test
+    public void test_each_with_index_2() {
+        final StringBuilder sb = new StringBuilder();
+        Lazy.of(2, 4, 6)
+                .groupBy(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer;
+                    }
+                })
+                .each(new ConsumerWithInt<LazyGroup<Integer, Integer>>() {
+                    @Override
+                    public void consume(int i, LazyGroup<Integer, Integer> integerIntegerLazyGroup) {
+                        if (sb.length() != 0)
+                            sb.append(", ");
+                        sb.append(i);
+                    }
+                })
+                .execute();
+
+        Assert.assertEquals("0, 1, 2", sb.toString());
+    }
 }
