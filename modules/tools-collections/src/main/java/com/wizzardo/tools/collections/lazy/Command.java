@@ -116,6 +116,22 @@ class Command<A, B> {
         }
     }
 
+
+    static class LazyEachWithIndex<T> extends Lazy<T, T> {
+        private ConsumerWithInt<? super T> consumer;
+        private int index = 0;
+
+        public LazyEachWithIndex(ConsumerWithInt<? super T> consumer) {
+            this.consumer = consumer;
+        }
+
+        @Override
+        protected void process(T t) {
+            consumer.consume(index++, t);
+            processToChild(t);
+        }
+    }
+
     static class LazyMerge<B extends Lazy<T, T>, T> extends Lazy<B, T> {
         final Lazy<T, T> proxy = new Lazy<T, T>() {
             @Override

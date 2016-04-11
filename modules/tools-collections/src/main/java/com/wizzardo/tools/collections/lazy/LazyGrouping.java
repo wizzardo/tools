@@ -56,6 +56,18 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T>> extends AbstractLa
         });
     }
 
+    public LazyGrouping<K, T, B, B> each(final ConsumerWithInt<? super B> consumer) {
+        return then(new LazyGrouping<K, T, B, B>(groups) {
+            int index = 0;
+
+            @Override
+            protected void process(B b) {
+                consumer.consume(index++, b);
+                processToChild(b);
+            }
+        });
+    }
+
     public Lazy<B, T> merge() {
         return then(new LazyMerge<B, T>());
     }

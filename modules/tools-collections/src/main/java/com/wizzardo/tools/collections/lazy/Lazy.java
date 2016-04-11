@@ -197,6 +197,10 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return then(new LazyEach<B>(consumer));
     }
 
+    public Lazy<B, B> each(ConsumerWithInt<? super B> consumer) {
+        return then(new LazyEachWithIndex<B>(consumer));
+    }
+
     public <T> Lazy<B, T> map(Mapper<? super B, T> mapper) {
         return then(new LazyMap<B, T>(mapper));
     }

@@ -21,6 +21,8 @@ public abstract class AbstractLazy<A, B> extends Command<A, B> {
 
     public abstract AbstractLazy<B, B> each(Consumer<? super B> consumer);
 
+    public abstract AbstractLazy<B, B> each(ConsumerWithInt<? super B> consumer);
+
     public abstract <T> AbstractLazy<B, T> merge(Mapper<? super B, ? extends Lazy<T, T>> mapper);
 
     public <K> LazyGrouping<K, B, B, LazyGroup<K, B>> groupBy(final Mapper<? super B, K> toKey) {
