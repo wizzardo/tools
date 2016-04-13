@@ -26,8 +26,10 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<T>() {
             @Override
             protected void process() {
-                while (!stop && iterator.hasNext()) {
-                    processToChild(iterator.next());
+                Iterator<T> i = iterator;
+                Command<T, ?> child = this.child;
+                while (!stop && i.hasNext()) {
+                    child.process(i.next());
                 }
             }
         };
@@ -41,10 +43,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<T>() {
             @Override
             protected void process() {
+                Command<T, ?> child = this.child;
                 for (T t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -54,10 +57,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<Integer>() {
             @Override
             protected void process() {
+                Command<Integer, ?> child = this.child;
                 for (int t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -67,10 +71,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<Long>() {
             @Override
             protected void process() {
+                Command<Long, ?> child = this.child;
                 for (long t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -80,10 +85,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<Double>() {
             @Override
             protected void process() {
+                Command<Double, ?> child = this.child;
                 for (double t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -93,10 +99,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<Float>() {
             @Override
             protected void process() {
+                Command<Float, ?> child = this.child;
                 for (float t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -106,10 +113,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<Byte>() {
             @Override
             protected void process() {
+                Command<Byte, ?> child = this.child;
                 for (byte t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -119,10 +127,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<Boolean>() {
             @Override
             protected void process() {
+                Command<Boolean, ?> child = this.child;
                 for (boolean t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -132,10 +141,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<Short>() {
             @Override
             protected void process() {
+                Command<Short, ?> child = this.child;
                 for (short t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -145,10 +155,11 @@ public class Lazy<A, B> extends AbstractLazy<A, B> {
         return new StartLazy<Character>() {
             @Override
             protected void process() {
+                Command<Character, ?> child = this.child;
                 for (char t : array) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
