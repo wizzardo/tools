@@ -1,4 +1,4 @@
-package com.wizzardo.tools.collections.lazy;
+package com.wizzardo.tools.collections.flow;
 
 import java.util.*;
 

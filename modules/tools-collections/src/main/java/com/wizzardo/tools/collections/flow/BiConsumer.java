@@ -1,4 +1,4 @@
-package com.wizzardo.tools.collections.lazy;
+package com.wizzardo.tools.collections.flow;
 
 /**
  * Created by wizzardo on 15.11.15.
