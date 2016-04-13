@@ -22,7 +22,7 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
     }
 
     public Map<K, List<T>> toMap() {
-        return toMap(new FlowGroupToListMapper<K, T>());
+        return toMap(Flow.<K, T>flowGroupListMapper());
     }
 
     public <V> Map<K, V> toMap(Mapper<? super B, V> mapper) {

@@ -515,12 +515,12 @@ public class FlowTest {
     @Test
     public void test_toMap() {
         Map<Boolean, List<Integer>> map = Flow.of(1, 2, 3)
-                .toMapOfLists(new Mapper<Integer, Boolean>() {
+                .toMap(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
-                });
+                }, Flow.<Boolean, Integer>flowGroupListMapper());
 
         Assert.assertEquals(2, map.size());
 

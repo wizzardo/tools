@@ -49,6 +49,17 @@ class Flow<A, B> {
         return SUPPLIER_HASH_MAP;
     }
 
+    public static final Mapper FLOW_GROUP_LIST_MAPPER = new Mapper<FlowGroup, List>() {
+        @Override
+        public List map(FlowGroup flowGroup) {
+            return flowGroup.toList();
+        }
+    };
+
+    public static <K, V> Mapper<FlowGroup<K, V>, List<V>> flowGroupListMapper() {
+        return FLOW_GROUP_LIST_MAPPER;
+    }
+
 
     public B reduce(Reducer<B> reducer) {
         return reduce(null, reducer);
@@ -209,11 +220,7 @@ class Flow<A, B> {
     }
 
     public <K> Map<K, List<B>> toMap(Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey) {
-        return toMap(groupMapSupplier, toKey, new FlowGroupToListMapper<K, B>());
-    }
-
-    public <K> Map<K, List<B>> toMapOfLists(Mapper<B, K> toKey) {
-        return toMap(Flow.<K, FlowGroup<K, B>>hashMapSupplier(), toKey, new FlowGroupToListMapper<K, B>());
+        return toMap(groupMapSupplier, toKey, Flow.<K, B>flowGroupListMapper());
     }
 
     public <K, V> Map<K, V> toMap(Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey, Mapper<FlowGroup<K, B>, V> toValue) {
@@ -745,13 +752,6 @@ class Flow<A, B> {
         @Override
         public A get() {
             return max;
-        }
-    }
-
-    static class FlowGroupToListMapper<K, B> implements Mapper<FlowGroup<K, B>, List<B>> {
-        @Override
-        public List<B> map(FlowGroup<K, B> group) {
-            return group.toList();
         }
     }
 }
