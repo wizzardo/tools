@@ -13,7 +13,7 @@ public class LazyTest {
 
     @Test
     public void test_grouping_1() {
-        List<List<Integer>> result = Lazy.of(1, 2, 3)
+        List<List<Integer>> result = Command.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
@@ -45,7 +45,7 @@ public class LazyTest {
 
     @Test
     public void test_grouping_2() {
-        List<List<Integer>> result = Lazy.of(1, 2, 3)
+        List<List<Integer>> result = Command.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
@@ -82,7 +82,7 @@ public class LazyTest {
 
     @Test
     public void test_grouping_3() {
-        List<Integer> result = Lazy.of(1, 2, 3)
+        List<Integer> result = Command.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
@@ -106,7 +106,7 @@ public class LazyTest {
     @Test
     public void test_grouping_4() {
         final AtomicInteger counter = new AtomicInteger();
-        Integer result = Lazy.of(1, 2, 3)
+        Integer result = Command.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
@@ -140,7 +140,7 @@ public class LazyTest {
 
     @Test
     public void test_grouping_5() {
-        Map<Integer, Map<Long, List<Person>>> result = Lazy.of(new Person("Paul", 24, 20000),
+        Map<Integer, Map<Long, List<Person>>> result = Command.of(new Person("Paul", 24, 20000),
                 new Person("Mark", 24, 30000),
                 new Person("Will", 28, 28000),
                 new Person("William", 28, 28000)
@@ -185,7 +185,7 @@ public class LazyTest {
 
     @Test
     public void test_sorted_list() {
-        List<Integer> result = Lazy.of(3, 2, 1).toSortedList();
+        List<Integer> result = Command.of(3, 2, 1).toSortedList();
 
         Assert.assertEquals(3, result.size());
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
@@ -197,7 +197,7 @@ public class LazyTest {
     public void test_each() {
         final AtomicInteger counter = new AtomicInteger();
 
-        Lazy.of(1, 2, 3).each(new Consumer<Integer>() {
+        Command.of(1, 2, 3).each(new Consumer<Integer>() {
             @Override
             public void consume(Integer integer) {
                 counter.incrementAndGet();
@@ -211,7 +211,7 @@ public class LazyTest {
     public void test_each_2() {
         final AtomicInteger counter = new AtomicInteger();
 
-        Lazy.of(1, 2, 3)
+        Command.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -230,14 +230,14 @@ public class LazyTest {
 
     @Test
     public void test_first() {
-        Assert.assertEquals(Integer.valueOf(1), Lazy.of(1, 2, 3).first());
+        Assert.assertEquals(Integer.valueOf(1), Command.of(1, 2, 3).first());
     }
 
     @Test
     public void test_stop_after_first() {
         final AtomicInteger counter = new AtomicInteger();
 
-        Assert.assertEquals(Integer.valueOf(1), Lazy.of(1, 2, 3).each(new Consumer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(1), Command.of(1, 2, 3).each(new Consumer<Integer>() {
             @Override
             public void consume(Integer integer) {
                 counter.incrementAndGet();
@@ -249,13 +249,13 @@ public class LazyTest {
 
     @Test
     public void test_last() {
-        Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).last());
+        Assert.assertEquals(Integer.valueOf(3), Command.of(1, 2, 3).last());
     }
 
     @Test
     public void test_min() {
-        Assert.assertEquals(Integer.valueOf(1), Lazy.of(1, 2, 3).min());
-        Assert.assertEquals(Integer.valueOf(1), Lazy.of(3, 2, 1).min());
+        Assert.assertEquals(Integer.valueOf(1), Command.of(1, 2, 3).min());
+        Assert.assertEquals(Integer.valueOf(1), Command.of(3, 2, 1).min());
     }
 
     @Test
@@ -266,14 +266,14 @@ public class LazyTest {
                 return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
             }
         };
-        Assert.assertEquals(Integer.valueOf(1), Lazy.of(1, 2, 3).min(comparator));
-        Assert.assertEquals(Integer.valueOf(1), Lazy.of(3, 2, 1).min(comparator));
+        Assert.assertEquals(Integer.valueOf(1), Command.of(1, 2, 3).min(comparator));
+        Assert.assertEquals(Integer.valueOf(1), Command.of(3, 2, 1).min(comparator));
     }
 
     @Test
     public void test_max() {
-        Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).max());
-        Assert.assertEquals(Integer.valueOf(3), Lazy.of(3, 2, 1).max());
+        Assert.assertEquals(Integer.valueOf(3), Command.of(1, 2, 3).max());
+        Assert.assertEquals(Integer.valueOf(3), Command.of(3, 2, 1).max());
     }
 
     @Test
@@ -284,19 +284,19 @@ public class LazyTest {
                 return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
             }
         };
-        Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).max(comparator));
-        Assert.assertEquals(Integer.valueOf(3), Lazy.of(3, 2, 1).max(comparator));
+        Assert.assertEquals(Integer.valueOf(3), Command.of(1, 2, 3).max(comparator));
+        Assert.assertEquals(Integer.valueOf(3), Command.of(3, 2, 1).max(comparator));
     }
 
     @Test
     public void test_reduce() {
-        Assert.assertEquals(Integer.valueOf(3), Lazy.of(1, 2, 3).reduce(new Reducer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(3), Command.of(1, 2, 3).reduce(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
             }
         }));
-        Assert.assertEquals(Integer.valueOf(3), Lazy.of(3, 2, 1).reduce(new Reducer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(3), Command.of(3, 2, 1).reduce(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
@@ -307,7 +307,7 @@ public class LazyTest {
     @Test
     public void test_collect() {
         List<Integer> list = new ArrayList<Integer>();
-        List<Integer> result = Lazy.of(1, 2, 3)
+        List<Integer> result = Command.of(1, 2, 3)
                 .collect(list, new BiConsumer<List<Integer>, Integer>() {
                     @Override
                     public void consume(List<Integer> integers, Integer integer) {
@@ -324,7 +324,7 @@ public class LazyTest {
 
     @Test
     public void test_merge() {
-        List<Integer> result = Lazy.of(1, 2, 3, 4, 5, 6)
+        List<Integer> result = Command.of(1, 2, 3, 4, 5, 6)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -345,7 +345,7 @@ public class LazyTest {
 
     @Test
     public void test_merge_2() {
-        List<Integer> result = Lazy.of(1, 2, 3, 4, 5, 6)
+        List<Integer> result = Command.of(1, 2, 3, 4, 5, 6)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -369,11 +369,11 @@ public class LazyTest {
 
     @Test
     public void test_merge_3() {
-        List<Integer> result = Lazy.of(new int[]{1, 2}, new int[]{3, 4}, new int[]{5, 6})
-                .merge(new Mapper<int[], Lazy<Integer, Integer>>() {
+        List<Integer> result = Command.of(new int[]{1, 2}, new int[]{3, 4}, new int[]{5, 6})
+                .merge(new Mapper<int[], Command<Integer, Integer>>() {
                     @Override
-                    public Lazy<Integer, Integer> map(int[] ints) {
-                        return Lazy.of(ints);
+                    public Command<Integer, Integer> map(int[] ints) {
+                        return Command.of(ints);
                     }
                 })
                 .toList();
@@ -389,7 +389,7 @@ public class LazyTest {
 
     @Test
     public void test_merge_4() {
-        List<Integer> result = Lazy.of(1, 2, 3, 4, 5, 6)
+        List<Integer> result = Command.of(1, 2, 3, 4, 5, 6)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -402,10 +402,10 @@ public class LazyTest {
                         return group.getKey();
                     }
                 })
-                .merge(new Mapper<LazyGroup<Boolean, Integer>, Lazy<Integer, Integer>>() {
+                .merge(new Mapper<LazyGroup<Boolean, Integer>, Command<Integer, Integer>>() {
                     @Override
-                    public Lazy<Integer, Integer> map(LazyGroup<Boolean, Integer> lazyGroup) {
-                        return lazyGroup.map(new Mapper<Integer, Integer>() {
+                    public Command<Integer, Integer> map(LazyGroup<Boolean, Integer> LazyGroup) {
+                        return LazyGroup.map(new Mapper<Integer, Integer>() {
                             @Override
                             public Integer map(Integer integer) {
                                 return integer / 2;
@@ -423,14 +423,14 @@ public class LazyTest {
 
     @Test
     public void test_count() {
-        int result = Lazy.of(1, 2, 3, 4, 5, 6).count();
+        int result = Command.of(1, 2, 3, 4, 5, 6).count();
 
         Assert.assertEquals(6, result);
     }
 
     @Test
     public void test_map() {
-        List<String> result = Lazy.of(1, 2, 3)
+        List<String> result = Command.of(1, 2, 3)
                 .map(new Mapper<Integer, String>() {
                     @Override
                     public String map(Integer integer) {
@@ -446,7 +446,7 @@ public class LazyTest {
 
     @Test
     public void test_filter() {
-        List<Integer> result = Lazy.of(1, 2, 3, 4)
+        List<Integer> result = Command.of(1, 2, 3, 4)
                 .filter(new Filter<Integer>() {
                     @Override
                     public boolean allow(Integer integer) {
@@ -465,7 +465,7 @@ public class LazyTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Lazy.of(list).count();
+        int result = Command.of(list).count();
 
         Assert.assertEquals(3, result);
     }
@@ -476,7 +476,7 @@ public class LazyTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Lazy.of(list).first();
+        int result = Command.of(list).first();
 
         Assert.assertEquals(1, result);
     }
@@ -487,14 +487,14 @@ public class LazyTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Lazy.of(list.iterator()).first();
+        int result = Command.of(list.iterator()).first();
 
         Assert.assertEquals(1, result);
     }
 
     @Test
     public void test_do_nothing() {
-        Lazy.of(new Iterator() {
+        Command.of(new Iterator() {
             @Override
             public boolean hasNext() {
                 throw new IllegalStateException("should not be called");
@@ -514,8 +514,8 @@ public class LazyTest {
 
     @Test
     public void test_toMap() {
-        Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
-                .toMap(new Mapper<Integer, Boolean>() {
+        Map<Boolean, List<Integer>> map = Command.of(1, 2, 3)
+                .toMapOfLists(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
@@ -534,7 +534,7 @@ public class LazyTest {
 
     @Test
     public void test_toMap_2() {
-        Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
+        Map<Boolean, List<Integer>> map = Command.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -555,7 +555,7 @@ public class LazyTest {
 
     @Test
     public void test_toMap_3() {
-        Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
+        Map<Boolean, List<Integer>> map = Command.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -578,7 +578,7 @@ public class LazyTest {
 
     @Test
     public void test_toMap_4() {
-        Map<Boolean, List<String>> map = Lazy.of(1, 2, 3)
+        Map<Boolean, List<String>> map = Command.of(1, 2, 3)
                 .toMap(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -608,7 +608,7 @@ public class LazyTest {
 
     @Test
     public void test_toMap_6() {
-        Map<Boolean, List<Integer>> map = Lazy.of(1, 2, 3)
+        Map<Boolean, List<Integer>> map = Command.of(1, 2, 3)
                 .toMap(new Supplier<Map<Boolean, LazyGroup<Boolean, Integer>>>() {
                     @Override
                     public Map<Boolean, LazyGroup<Boolean, Integer>> supply() {
@@ -633,7 +633,7 @@ public class LazyTest {
 
     @Test
     public void test_join() {
-        Assert.assertEquals("1,2,3", Lazy.of(1, 2, 3).join(","));
+        Assert.assertEquals("1,2,3", Command.of(1, 2, 3).join(","));
     }
 
     @Test
@@ -644,9 +644,9 @@ public class LazyTest {
 
     @Test
     public void test_of_ints() {
-        Assert.assertEquals("1,2,3", Lazy.of(new int[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Command.of(new int[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Lazy.of(new int[]{1, 2, 3}).then(new IllegalState());
+        IllegalState lazy = Command.of(new int[]{1, 2, 3}).then(new IllegalState());
         lazy.stop();
         lazy.execute();
         Assert.assertEquals(null, lazy.get());
@@ -654,9 +654,9 @@ public class LazyTest {
 
     @Test
     public void test_of_longs() {
-        Assert.assertEquals("1,2,3", Lazy.of(new long[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Command.of(new long[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Lazy.of(new long[]{1, 2, 3}).then(new IllegalState());
+        IllegalState lazy = Command.of(new long[]{1, 2, 3}).then(new IllegalState());
         lazy.stop();
         lazy.execute();
         Assert.assertEquals(null, lazy.get());
@@ -664,9 +664,9 @@ public class LazyTest {
 
     @Test
     public void test_of_shorts() {
-        Assert.assertEquals("1,2,3", Lazy.of(new short[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Command.of(new short[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Lazy.of(new short[]{1, 2, 3}).then(new IllegalState());
+        IllegalState lazy = Command.of(new short[]{1, 2, 3}).then(new IllegalState());
         lazy.stop();
         lazy.execute();
         Assert.assertEquals(null, lazy.get());
@@ -674,9 +674,9 @@ public class LazyTest {
 
     @Test
     public void test_of_bytes() {
-        Assert.assertEquals("1,2,3", Lazy.of(new byte[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Command.of(new byte[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Lazy.of(new byte[]{1, 2, 3}).then(new IllegalState());
+        IllegalState lazy = Command.of(new byte[]{1, 2, 3}).then(new IllegalState());
         lazy.stop();
         lazy.execute();
         Assert.assertEquals(null, lazy.get());
@@ -684,9 +684,9 @@ public class LazyTest {
 
     @Test
     public void test_of_floats() {
-        Assert.assertEquals("1.0,2.0,3.0", Lazy.of(new float[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1.0,2.0,3.0", Command.of(new float[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Lazy.of(new float[]{1, 2, 3}).then(new IllegalState());
+        IllegalState lazy = Command.of(new float[]{1, 2, 3}).then(new IllegalState());
         lazy.stop();
         lazy.execute();
         Assert.assertEquals(null, lazy.get());
@@ -694,9 +694,9 @@ public class LazyTest {
 
     @Test
     public void test_of_doubles() {
-        Assert.assertEquals("1.0,2.0,3.0", Lazy.of(new double[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1.0,2.0,3.0", Command.of(new double[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Lazy.of(new double[]{1, 2, 3}).then(new IllegalState());
+        IllegalState lazy = Command.of(new double[]{1, 2, 3}).then(new IllegalState());
         lazy.stop();
         lazy.execute();
         Assert.assertEquals(null, lazy.get());
@@ -704,9 +704,9 @@ public class LazyTest {
 
     @Test
     public void test_of_booleans() {
-        Assert.assertEquals("true,false", Lazy.of(new boolean[]{true, false}).join(","));
+        Assert.assertEquals("true,false", Command.of(new boolean[]{true, false}).join(","));
 
-        IllegalState lazy = Lazy.of(new boolean[]{true, false}).then(new IllegalState());
+        IllegalState lazy = Command.of(new boolean[]{true, false}).then(new IllegalState());
         lazy.stop();
         lazy.execute();
         Assert.assertEquals(null, lazy.get());
@@ -714,15 +714,15 @@ public class LazyTest {
 
     @Test
     public void test_of_chars() {
-        Assert.assertEquals("a,b,c", Lazy.of(new char[]{'a', 'b', 'c'}).join(","));
+        Assert.assertEquals("a,b,c", Command.of(new char[]{'a', 'b', 'c'}).join(","));
 
-        IllegalState lazy = Lazy.of(new char[]{'a', 'b', 'c'}).then(new IllegalState());
+        IllegalState lazy = Command.of(new char[]{'a', 'b', 'c'}).then(new IllegalState());
         lazy.stop();
         lazy.execute();
         Assert.assertEquals(null, lazy.get());
     }
 
-    static class IllegalState extends Lazy {
+    static class IllegalState extends Command {
         @Override
         protected void process(Object o) {
             throw new IllegalStateException();
@@ -736,7 +736,7 @@ public class LazyTest {
         map.put(2, "2");
         map.put(3, "3");
 
-        String result = Lazy.of(map).map(new Mapper<Map.Entry<Integer, String>, Integer>() {
+        String result = Command.of(map).map(new Mapper<Map.Entry<Integer, String>, Integer>() {
             @Override
             public Integer map(Map.Entry<Integer, String> entry) {
                 return entry.getKey();
@@ -749,7 +749,7 @@ public class LazyTest {
     @Test
     public void test_each_with_index() {
         final StringBuilder sb = new StringBuilder();
-        Lazy.of(2, 4, 6).each(new ConsumerWithInt<Integer>() {
+        Command.of(2, 4, 6).each(new ConsumerWithInt<Integer>() {
             @Override
             public void consume(int i, Integer integer) {
                 if (sb.length() != 0)
@@ -764,7 +764,7 @@ public class LazyTest {
     @Test
     public void test_each_with_index_2() {
         final StringBuilder sb = new StringBuilder();
-        Lazy.of(2, 4, 6)
+        Command.of(2, 4, 6)
                 .groupBy(new Mapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer) {

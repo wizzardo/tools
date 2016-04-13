@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Created by wizzardo on 08.11.15.
  */
-public class LazyGrouping<K, T, A, B extends LazyGroup<K, T>> extends AbstractLazy<A, B> {
+public class LazyGrouping<K, T, A, B extends LazyGroup<K, T>> extends Command<A, B> {
 
     protected final Map<K, LazyGroup<K, T>> groups;
 
@@ -15,7 +15,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T>> extends AbstractLa
         this.groups = groups;
     }
 
-    public <V> Lazy<V, V> flatMap(Mapper<? super B, V> mapper) {
+    public <V> Command<V, V> flatMap(Mapper<? super B, V> mapper) {
         LazyContinue<V> continueCommand = new LazyContinue<V>(this);
         then(new GroupCommand<K, V, B>(mapper, continueCommand));
         return continueCommand;
@@ -68,11 +68,11 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T>> extends AbstractLa
         });
     }
 
-    public Lazy<B, T> merge() {
+    public Command<B, T> merge() {
         return then(new LazyMerge<B, T>());
     }
 
-    public <V> Lazy<B, V> merge(Mapper<? super B, ? extends Lazy<V, V>> mapper) {
+    public <V> Command<B, V> merge(Mapper<? super B, ? extends Command<V, V>> mapper) {
         return then(new LazyMapMerge<B, V>(mapper));
     }
 
@@ -122,7 +122,7 @@ public class LazyGrouping<K, T, A, B extends LazyGroup<K, T>> extends AbstractLa
         }
     }
 
-    private static class LazyContinue<T> extends Lazy<T, T> {
+    private static class LazyContinue<T> extends Command<T, T> {
         private Command<?, ?> command;
 
         LazyContinue(Command<?, ?> command) {

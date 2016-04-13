@@ -3,7 +3,7 @@ package com.wizzardo.tools.collections.lazy;
 /**
  * Created by wizzardo on 08.11.15.
  */
-public class LazyGroup<K, T> extends Lazy<T, T> {
+public class LazyGroup<K, T> extends Command<T, T> {
     public final K key;
 
     private boolean stopped;
