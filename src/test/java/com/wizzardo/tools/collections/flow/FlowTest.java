@@ -9,20 +9,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by wizzardo on 10.11.15.
  */
-public class LazyTest {
+public class FlowTest {
 
     @Test
     public void test_grouping_1() {
-        List<List<Integer>> result = Command.of(1, 2, 3)
+        List<List<Integer>> result = Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<LazyGroup<Boolean, Integer>, List<Integer>>() {
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, List<Integer>>() {
                     @Override
-                    public List<Integer> map(LazyGroup<Boolean, Integer> group) {
+                    public List<Integer> map(FlowGroup<Boolean, Integer> group) {
                         return group.toList();
                     }
                 })
@@ -45,24 +45,24 @@ public class LazyTest {
 
     @Test
     public void test_grouping_2() {
-        List<List<Integer>> result = Command.of(1, 2, 3)
+        List<List<Integer>> result = Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
                         return it % 2 == 0;
                     }
                 })
-                .filter(new Filter<LazyGroup<Boolean, Integer>>() {
+                .filter(new Filter<FlowGroup<Boolean, Integer>>() {
                     @Override
-                    public boolean allow(LazyGroup<Boolean, Integer> group) {
+                    public boolean allow(FlowGroup<Boolean, Integer> group) {
                         return group.getKey();
                     }
                 })
-                .flatMap(new Mapper<LazyGroup<Boolean, Integer>, List<Integer>>() {
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, List<Integer>>() {
                     int counter = 0;
 
                     @Override
-                    public List<Integer> map(LazyGroup<Boolean, Integer> group) {
+                    public List<Integer> map(FlowGroup<Boolean, Integer> group) {
                         Assert.assertEquals("should be executed only once", 1, ++counter);
                         return group.toList();
                     }
@@ -82,16 +82,16 @@ public class LazyTest {
 
     @Test
     public void test_grouping_3() {
-        List<Integer> result = Command.of(1, 2, 3)
+        List<Integer> result = Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<LazyGroup<Boolean, Integer>, Integer>() {
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, Integer>() {
                     @Override
-                    public Integer map(LazyGroup<Boolean, Integer> group) {
+                    public Integer map(FlowGroup<Boolean, Integer> group) {
                         return group.first();
                     }
                 })
@@ -106,7 +106,7 @@ public class LazyTest {
     @Test
     public void test_grouping_4() {
         final AtomicInteger counter = new AtomicInteger();
-        Integer result = Command.of(1, 2, 3)
+        Integer result = Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
@@ -114,9 +114,9 @@ public class LazyTest {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<LazyGroup<Boolean, Integer>, Integer>() {
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, Integer>() {
                     @Override
-                    public Integer map(LazyGroup<Boolean, Integer> group) {
+                    public Integer map(FlowGroup<Boolean, Integer> group) {
                         return group.first();
                     }
                 })
@@ -140,7 +140,7 @@ public class LazyTest {
 
     @Test
     public void test_grouping_5() {
-        Map<Integer, Map<Long, List<Person>>> result = Command.of(new Person("Paul", 24, 20000),
+        Map<Integer, Map<Long, List<Person>>> result = Flow.of(new Person("Paul", 24, 20000),
                 new Person("Mark", 24, 30000),
                 new Person("Will", 28, 28000),
                 new Person("William", 28, 28000)
@@ -149,17 +149,17 @@ public class LazyTest {
             public Integer map(Person person) {
                 return person.age;
             }
-        }).toMap(new Mapper<LazyGroup<Integer, Person>, Map<Long, List<Person>>>() {
+        }).toMap(new Mapper<FlowGroup<Integer, Person>, Map<Long, List<Person>>>() {
             @Override
-            public Map<Long, List<Person>> map(LazyGroup<Integer, Person> ageGroup) {
+            public Map<Long, List<Person>> map(FlowGroup<Integer, Person> ageGroup) {
                 return ageGroup.groupBy(new Mapper<Person, Long>() {
                     @Override
                     public Long map(Person person) {
                         return person.salary;
                     }
-                }).toMap(new Mapper<LazyGroup<Long, Person>, List<Person>>() {
+                }).toMap(new Mapper<FlowGroup<Long, Person>, List<Person>>() {
                     @Override
-                    public List<Person> map(LazyGroup<Long, Person> salaryGroup) {
+                    public List<Person> map(FlowGroup<Long, Person> salaryGroup) {
                         return salaryGroup.toList();
                     }
                 });
@@ -185,7 +185,7 @@ public class LazyTest {
 
     @Test
     public void test_sorted_list() {
-        List<Integer> result = Command.of(3, 2, 1).toSortedList();
+        List<Integer> result = Flow.of(3, 2, 1).toSortedList();
 
         Assert.assertEquals(3, result.size());
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
@@ -197,7 +197,7 @@ public class LazyTest {
     public void test_each() {
         final AtomicInteger counter = new AtomicInteger();
 
-        Command.of(1, 2, 3).each(new Consumer<Integer>() {
+        Flow.of(1, 2, 3).each(new Consumer<Integer>() {
             @Override
             public void consume(Integer integer) {
                 counter.incrementAndGet();
@@ -211,16 +211,16 @@ public class LazyTest {
     public void test_each_2() {
         final AtomicInteger counter = new AtomicInteger();
 
-        Command.of(1, 2, 3)
+        Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
                 })
-                .each(new Consumer<LazyGroup<Boolean, Integer>>() {
+                .each(new Consumer<FlowGroup<Boolean, Integer>>() {
                     @Override
-                    public void consume(LazyGroup<Boolean, Integer> group) {
+                    public void consume(FlowGroup<Boolean, Integer> group) {
                         counter.incrementAndGet();
                     }
                 }).execute();
@@ -230,14 +230,14 @@ public class LazyTest {
 
     @Test
     public void test_first() {
-        Assert.assertEquals(Integer.valueOf(1), Command.of(1, 2, 3).first());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).first());
     }
 
     @Test
     public void test_stop_after_first() {
         final AtomicInteger counter = new AtomicInteger();
 
-        Assert.assertEquals(Integer.valueOf(1), Command.of(1, 2, 3).each(new Consumer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).each(new Consumer<Integer>() {
             @Override
             public void consume(Integer integer) {
                 counter.incrementAndGet();
@@ -249,13 +249,13 @@ public class LazyTest {
 
     @Test
     public void test_last() {
-        Assert.assertEquals(Integer.valueOf(3), Command.of(1, 2, 3).last());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).last());
     }
 
     @Test
     public void test_min() {
-        Assert.assertEquals(Integer.valueOf(1), Command.of(1, 2, 3).min());
-        Assert.assertEquals(Integer.valueOf(1), Command.of(3, 2, 1).min());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min());
     }
 
     @Test
@@ -266,14 +266,14 @@ public class LazyTest {
                 return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
             }
         };
-        Assert.assertEquals(Integer.valueOf(1), Command.of(1, 2, 3).min(comparator));
-        Assert.assertEquals(Integer.valueOf(1), Command.of(3, 2, 1).min(comparator));
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min(comparator));
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min(comparator));
     }
 
     @Test
     public void test_max() {
-        Assert.assertEquals(Integer.valueOf(3), Command.of(1, 2, 3).max());
-        Assert.assertEquals(Integer.valueOf(3), Command.of(3, 2, 1).max());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max());
     }
 
     @Test
@@ -284,19 +284,19 @@ public class LazyTest {
                 return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
             }
         };
-        Assert.assertEquals(Integer.valueOf(3), Command.of(1, 2, 3).max(comparator));
-        Assert.assertEquals(Integer.valueOf(3), Command.of(3, 2, 1).max(comparator));
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max(comparator));
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max(comparator));
     }
 
     @Test
     public void test_reduce() {
-        Assert.assertEquals(Integer.valueOf(3), Command.of(1, 2, 3).reduce(new Reducer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).reduce(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
             }
         }));
-        Assert.assertEquals(Integer.valueOf(3), Command.of(3, 2, 1).reduce(new Reducer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).reduce(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
@@ -307,7 +307,7 @@ public class LazyTest {
     @Test
     public void test_collect() {
         List<Integer> list = new ArrayList<Integer>();
-        List<Integer> result = Command.of(1, 2, 3)
+        List<Integer> result = Flow.of(1, 2, 3)
                 .collect(list, new BiConsumer<List<Integer>, Integer>() {
                     @Override
                     public void consume(List<Integer> integers, Integer integer) {
@@ -324,7 +324,7 @@ public class LazyTest {
 
     @Test
     public void test_merge() {
-        List<Integer> result = Command.of(1, 2, 3, 4, 5, 6)
+        List<Integer> result = Flow.of(1, 2, 3, 4, 5, 6)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -345,16 +345,16 @@ public class LazyTest {
 
     @Test
     public void test_merge_2() {
-        List<Integer> result = Command.of(1, 2, 3, 4, 5, 6)
+        List<Integer> result = Flow.of(1, 2, 3, 4, 5, 6)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
                 })
-                .filter(new Filter<LazyGroup<Boolean, Integer>>() {
+                .filter(new Filter<FlowGroup<Boolean, Integer>>() {
                     @Override
-                    public boolean allow(LazyGroup<Boolean, Integer> group) {
+                    public boolean allow(FlowGroup<Boolean, Integer> group) {
                         return group.getKey();
                     }
                 })
@@ -369,11 +369,11 @@ public class LazyTest {
 
     @Test
     public void test_merge_3() {
-        List<Integer> result = Command.of(new int[]{1, 2}, new int[]{3, 4}, new int[]{5, 6})
-                .merge(new Mapper<int[], Command<Integer, Integer>>() {
+        List<Integer> result = Flow.of(new int[]{1, 2}, new int[]{3, 4}, new int[]{5, 6})
+                .merge(new Mapper<int[], Flow<Integer, Integer>>() {
                     @Override
-                    public Command<Integer, Integer> map(int[] ints) {
-                        return Command.of(ints);
+                    public Flow<Integer, Integer> map(int[] ints) {
+                        return Flow.of(ints);
                     }
                 })
                 .toList();
@@ -389,23 +389,23 @@ public class LazyTest {
 
     @Test
     public void test_merge_4() {
-        List<Integer> result = Command.of(1, 2, 3, 4, 5, 6)
+        List<Integer> result = Flow.of(1, 2, 3, 4, 5, 6)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
                 })
-                .filter(new Filter<LazyGroup<Boolean, Integer>>() {
+                .filter(new Filter<FlowGroup<Boolean, Integer>>() {
                     @Override
-                    public boolean allow(LazyGroup<Boolean, Integer> group) {
+                    public boolean allow(FlowGroup<Boolean, Integer> group) {
                         return group.getKey();
                     }
                 })
-                .merge(new Mapper<LazyGroup<Boolean, Integer>, Command<Integer, Integer>>() {
+                .merge(new Mapper<FlowGroup<Boolean, Integer>, Flow<Integer, Integer>>() {
                     @Override
-                    public Command<Integer, Integer> map(LazyGroup<Boolean, Integer> LazyGroup) {
-                        return LazyGroup.map(new Mapper<Integer, Integer>() {
+                    public Flow<Integer, Integer> map(FlowGroup<Boolean, Integer> group) {
+                        return group.map(new Mapper<Integer, Integer>() {
                             @Override
                             public Integer map(Integer integer) {
                                 return integer / 2;
@@ -423,14 +423,14 @@ public class LazyTest {
 
     @Test
     public void test_count() {
-        int result = Command.of(1, 2, 3, 4, 5, 6).count();
+        int result = Flow.of(1, 2, 3, 4, 5, 6).count();
 
         Assert.assertEquals(6, result);
     }
 
     @Test
     public void test_map() {
-        List<String> result = Command.of(1, 2, 3)
+        List<String> result = Flow.of(1, 2, 3)
                 .map(new Mapper<Integer, String>() {
                     @Override
                     public String map(Integer integer) {
@@ -446,7 +446,7 @@ public class LazyTest {
 
     @Test
     public void test_filter() {
-        List<Integer> result = Command.of(1, 2, 3, 4)
+        List<Integer> result = Flow.of(1, 2, 3, 4)
                 .filter(new Filter<Integer>() {
                     @Override
                     public boolean allow(Integer integer) {
@@ -465,7 +465,7 @@ public class LazyTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Command.of(list).count();
+        int result = Flow.of(list).count();
 
         Assert.assertEquals(3, result);
     }
@@ -476,7 +476,7 @@ public class LazyTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Command.of(list).first();
+        int result = Flow.of(list).first();
 
         Assert.assertEquals(1, result);
     }
@@ -487,14 +487,14 @@ public class LazyTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Command.of(list.iterator()).first();
+        int result = Flow.of(list.iterator()).first();
 
         Assert.assertEquals(1, result);
     }
 
     @Test
     public void test_do_nothing() {
-        Command.of(new Iterator() {
+        Flow.of(new Iterator() {
             @Override
             public boolean hasNext() {
                 throw new IllegalStateException("should not be called");
@@ -514,7 +514,7 @@ public class LazyTest {
 
     @Test
     public void test_toMap() {
-        Map<Boolean, List<Integer>> map = Command.of(1, 2, 3)
+        Map<Boolean, List<Integer>> map = Flow.of(1, 2, 3)
                 .toMapOfLists(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -534,7 +534,7 @@ public class LazyTest {
 
     @Test
     public void test_toMap_2() {
-        Map<Boolean, List<Integer>> map = Command.of(1, 2, 3)
+        Map<Boolean, List<Integer>> map = Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
@@ -555,16 +555,16 @@ public class LazyTest {
 
     @Test
     public void test_toMap_3() {
-        Map<Boolean, List<Integer>> map = Command.of(1, 2, 3)
+        Map<Boolean, List<Integer>> map = Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
                 })
-                .filter(new Filter<LazyGroup<Boolean, Integer>>() {
+                .filter(new Filter<FlowGroup<Boolean, Integer>>() {
                     @Override
-                    public boolean allow(LazyGroup<Boolean, Integer> group) {
+                    public boolean allow(FlowGroup<Boolean, Integer> group) {
                         return group.getKey();
                     }
                 })
@@ -578,15 +578,15 @@ public class LazyTest {
 
     @Test
     public void test_toMap_4() {
-        Map<Boolean, List<String>> map = Command.of(1, 2, 3)
+        Map<Boolean, List<String>> map = Flow.of(1, 2, 3)
                 .toMap(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
-                }, new Mapper<LazyGroup<Boolean, Integer>, List<String>>() {
+                }, new Mapper<FlowGroup<Boolean, Integer>, List<String>>() {
                     @Override
-                    public List<String> map(LazyGroup<Boolean, Integer> group) {
+                    public List<String> map(FlowGroup<Boolean, Integer> group) {
                         return group.map(new Mapper<Integer, String>() {
                             @Override
                             public String map(Integer integer) {
@@ -608,11 +608,11 @@ public class LazyTest {
 
     @Test
     public void test_toMap_6() {
-        Map<Boolean, List<Integer>> map = Command.of(1, 2, 3)
-                .toMap(new Supplier<Map<Boolean, LazyGroup<Boolean, Integer>>>() {
+        Map<Boolean, List<Integer>> map = Flow.of(1, 2, 3)
+                .toMap(new Supplier<Map<Boolean, FlowGroup<Boolean, Integer>>>() {
                     @Override
-                    public Map<Boolean, LazyGroup<Boolean, Integer>> supply() {
-                        return new TreeMap<Boolean, LazyGroup<Boolean, Integer>>();
+                    public Map<Boolean, FlowGroup<Boolean, Integer>> supply() {
+                        return new TreeMap<Boolean, FlowGroup<Boolean, Integer>>();
                     }
                 }, new Mapper<Integer, Boolean>() {
                     @Override
@@ -633,96 +633,96 @@ public class LazyTest {
 
     @Test
     public void test_join() {
-        Assert.assertEquals("1,2,3", Command.of(1, 2, 3).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3).join(","));
     }
 
     @Test
     public void improveCoverage() {
-        Assert.assertEquals(null, new Command().get());
-        Assert.assertEquals(Integer.valueOf(0), new Command.LazyCount().get());
+        Assert.assertEquals(null, new Flow().get());
+        Assert.assertEquals(Integer.valueOf(0), new Flow.FlowCount().get());
     }
 
     @Test
     public void test_of_ints() {
-        Assert.assertEquals("1,2,3", Command.of(new int[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(new int[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Command.of(new int[]{1, 2, 3}).then(new IllegalState());
-        lazy.stop();
-        lazy.execute();
-        Assert.assertEquals(null, lazy.get());
+        IllegalState flow = Flow.of(new int[]{1, 2, 3}).then(new IllegalState());
+        flow.stop();
+        flow.execute();
+        Assert.assertEquals(null, flow.get());
     }
 
     @Test
     public void test_of_longs() {
-        Assert.assertEquals("1,2,3", Command.of(new long[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(new long[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Command.of(new long[]{1, 2, 3}).then(new IllegalState());
-        lazy.stop();
-        lazy.execute();
-        Assert.assertEquals(null, lazy.get());
+        IllegalState flow = Flow.of(new long[]{1, 2, 3}).then(new IllegalState());
+        flow.stop();
+        flow.execute();
+        Assert.assertEquals(null, flow.get());
     }
 
     @Test
     public void test_of_shorts() {
-        Assert.assertEquals("1,2,3", Command.of(new short[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(new short[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Command.of(new short[]{1, 2, 3}).then(new IllegalState());
-        lazy.stop();
-        lazy.execute();
-        Assert.assertEquals(null, lazy.get());
+        IllegalState flow = Flow.of(new short[]{1, 2, 3}).then(new IllegalState());
+        flow.stop();
+        flow.execute();
+        Assert.assertEquals(null, flow.get());
     }
 
     @Test
     public void test_of_bytes() {
-        Assert.assertEquals("1,2,3", Command.of(new byte[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(new byte[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Command.of(new byte[]{1, 2, 3}).then(new IllegalState());
-        lazy.stop();
-        lazy.execute();
-        Assert.assertEquals(null, lazy.get());
+        IllegalState flow = Flow.of(new byte[]{1, 2, 3}).then(new IllegalState());
+        flow.stop();
+        flow.execute();
+        Assert.assertEquals(null, flow.get());
     }
 
     @Test
     public void test_of_floats() {
-        Assert.assertEquals("1.0,2.0,3.0", Command.of(new float[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1.0,2.0,3.0", Flow.of(new float[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Command.of(new float[]{1, 2, 3}).then(new IllegalState());
-        lazy.stop();
-        lazy.execute();
-        Assert.assertEquals(null, lazy.get());
+        IllegalState flow = Flow.of(new float[]{1, 2, 3}).then(new IllegalState());
+        flow.stop();
+        flow.execute();
+        Assert.assertEquals(null, flow.get());
     }
 
     @Test
     public void test_of_doubles() {
-        Assert.assertEquals("1.0,2.0,3.0", Command.of(new double[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1.0,2.0,3.0", Flow.of(new double[]{1, 2, 3}).join(","));
 
-        IllegalState lazy = Command.of(new double[]{1, 2, 3}).then(new IllegalState());
-        lazy.stop();
-        lazy.execute();
-        Assert.assertEquals(null, lazy.get());
+        IllegalState flow = Flow.of(new double[]{1, 2, 3}).then(new IllegalState());
+        flow.stop();
+        flow.execute();
+        Assert.assertEquals(null, flow.get());
     }
 
     @Test
     public void test_of_booleans() {
-        Assert.assertEquals("true,false", Command.of(new boolean[]{true, false}).join(","));
+        Assert.assertEquals("true,false", Flow.of(new boolean[]{true, false}).join(","));
 
-        IllegalState lazy = Command.of(new boolean[]{true, false}).then(new IllegalState());
-        lazy.stop();
-        lazy.execute();
-        Assert.assertEquals(null, lazy.get());
+        IllegalState flow = Flow.of(new boolean[]{true, false}).then(new IllegalState());
+        flow.stop();
+        flow.execute();
+        Assert.assertEquals(null, flow.get());
     }
 
     @Test
     public void test_of_chars() {
-        Assert.assertEquals("a,b,c", Command.of(new char[]{'a', 'b', 'c'}).join(","));
+        Assert.assertEquals("a,b,c", Flow.of(new char[]{'a', 'b', 'c'}).join(","));
 
-        IllegalState lazy = Command.of(new char[]{'a', 'b', 'c'}).then(new IllegalState());
-        lazy.stop();
-        lazy.execute();
-        Assert.assertEquals(null, lazy.get());
+        IllegalState flow = Flow.of(new char[]{'a', 'b', 'c'}).then(new IllegalState());
+        flow.stop();
+        flow.execute();
+        Assert.assertEquals(null, flow.get());
     }
 
-    static class IllegalState extends Command {
+    static class IllegalState extends Flow {
         @Override
         protected void process(Object o) {
             throw new IllegalStateException();
@@ -736,7 +736,7 @@ public class LazyTest {
         map.put(2, "2");
         map.put(3, "3");
 
-        String result = Command.of(map).map(new Mapper<Map.Entry<Integer, String>, Integer>() {
+        String result = Flow.of(map).map(new Mapper<Map.Entry<Integer, String>, Integer>() {
             @Override
             public Integer map(Map.Entry<Integer, String> entry) {
                 return entry.getKey();
@@ -749,7 +749,7 @@ public class LazyTest {
     @Test
     public void test_each_with_index() {
         final StringBuilder sb = new StringBuilder();
-        Command.of(2, 4, 6).each(new ConsumerWithInt<Integer>() {
+        Flow.of(2, 4, 6).each(new ConsumerWithInt<Integer>() {
             @Override
             public void consume(int i, Integer integer) {
                 if (sb.length() != 0)
@@ -764,16 +764,16 @@ public class LazyTest {
     @Test
     public void test_each_with_index_2() {
         final StringBuilder sb = new StringBuilder();
-        Command.of(2, 4, 6)
+        Flow.of(2, 4, 6)
                 .groupBy(new Mapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer) {
                         return integer;
                     }
                 })
-                .each(new ConsumerWithInt<LazyGroup<Integer, Integer>>() {
+                .each(new ConsumerWithInt<FlowGroup<Integer, Integer>>() {
                     @Override
-                    public void consume(int i, LazyGroup<Integer, Integer> integerIntegerLazyGroup) {
+                    public void consume(int i, FlowGroup<Integer, Integer> integerIntegerFlowGroup) {
                         if (sb.length() != 0)
                             sb.append(", ");
                         sb.append(i);

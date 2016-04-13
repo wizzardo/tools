@@ -3,14 +3,14 @@ package com.wizzardo.tools.collections.flow;
 /**
  * Created by wizzardo on 08.11.15.
  */
-public class LazyGroup<K, T> extends Command<T, T> {
+public class FlowGroup<K, T> extends Flow<T, T> {
     public final K key;
 
     private boolean stopped;
 
-    LazyGroup(K key) {
+    FlowGroup(K key) {
         this.key = key;
-        child = new NoopCommand<T>();
+        child = new NoopFlow<T>();
     }
 
     public K getKey() {

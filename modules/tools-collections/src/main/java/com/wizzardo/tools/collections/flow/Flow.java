@@ -5,9 +5,9 @@ import java.util.*;
 /**
  * Created by wizzardo on 08.11.15.
  */
-class Command<A, B> {
-    protected Command<?, A> parent;
-    protected Command<B, ?> child;
+class Flow<A, B> {
+    protected Flow<?, A> parent;
+    protected Flow<B, ?> child;
 
     protected void process(A a) {
     }
@@ -16,7 +16,7 @@ class Command<A, B> {
         child.process(b);
     }
 
-    protected <T extends Command<B, C>, C> T then(T command) {
+    protected <T extends Flow<B, C>, C> T then(T command) {
         command.parent = this;
         this.child = command;
         return command;
@@ -55,44 +55,44 @@ class Command<A, B> {
     }
 
     public B reduce(B def, Reducer<B> reducer) {
-        LazyReduce<B> reduce = then(new LazyReduce<B>(def, reducer));
+        FlowReduce<B> reduce = then(new FlowReduce<B>(def, reducer));
         reduce.start();
         return reduce.get();
     }
 
-    public <T> Command<B, T> merge(Mapper<? super B, ? extends Command<T, T>> mapper) {
-        return then(new LazyMapMerge<B, T>(mapper));
+    public <T> Flow<B, T> merge(Mapper<? super B, ? extends Flow<T, T>> mapper) {
+        return then(new FlowMapMerge<B, T>(mapper));
     }
 
-    public Command<B, B> filter(Filter<? super B> filter) {
-        return then(new LazyFilter<B>(filter));
+    public Flow<B, B> filter(Filter<? super B> filter) {
+        return then(new FlowFilter<B>(filter));
     }
 
-    public Command<B, B> each(Consumer<? super B> consumer) {
-        return then(new LazyEach<B>(consumer));
+    public Flow<B, B> each(Consumer<? super B> consumer) {
+        return then(new FlowEach<B>(consumer));
     }
 
-    public Command<B, B> each(ConsumerWithInt<? super B> consumer) {
-        return then(new LazyEachWithIndex<B>(consumer));
+    public Flow<B, B> each(ConsumerWithInt<? super B> consumer) {
+        return then(new FlowEachWithIndex<B>(consumer));
     }
 
-    public <T> Command<B, T> map(Mapper<? super B, T> mapper) {
-        return then(new LazyMap<B, T>(mapper));
+    public <T> Flow<B, T> map(Mapper<? super B, T> mapper) {
+        return then(new FlowMap<B, T>(mapper));
     }
 
-    public <K> LazyGrouping<K, B, B, LazyGroup<K, B>> groupBy(final Mapper<? super B, K> toKey) {
-        return groupBy(toKey, Command.<K, LazyGroup<K, B>>hashMapSupplier());
+    public <K> FlowGrouping<K, B, B, FlowGroup<K, B>> groupBy(final Mapper<? super B, K> toKey) {
+        return groupBy(toKey, Flow.<K, FlowGroup<K, B>>hashMapSupplier());
     }
 
-    public <K> LazyGrouping<K, B, B, LazyGroup<K, B>> groupBy(final Mapper<? super B, K> toKey, final Supplier<Map<K, LazyGroup<K, B>>> groupMapSupplier) {
-        return this.then(new LazyGrouping<K, B, B, LazyGroup<K, B>>(groupMapSupplier.supply()) {
+    public <K> FlowGrouping<K, B, B, FlowGroup<K, B>> groupBy(final Mapper<? super B, K> toKey, final Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier) {
+        return this.then(new FlowGrouping<K, B, B, FlowGroup<K, B>>(groupMapSupplier.supply()) {
 
             @Override
             protected void process(B b) {
                 K key = toKey.map(b);
-                LazyGroup<K, B> group = groups.get(key);
+                FlowGroup<K, B> group = groups.get(key);
                 if (group == null) {
-                    groups.put(key, group = new LazyGroup<K, B>(key));
+                    groups.put(key, group = new FlowGroup<K, B>(key));
                     processToChild(group);
                 }
                 group.process(b);
@@ -100,7 +100,7 @@ class Command<A, B> {
 
             @Override
             protected void onEnd() {
-                for (LazyGroup<K, B> group : groups.values()) {
+                for (FlowGroup<K, B> group : groups.values()) {
                     group.onEnd();
                 }
                 super.onEnd();
@@ -109,15 +109,15 @@ class Command<A, B> {
     }
 
     public <C> C collect(C collector, BiConsumer<? super C, ? super B> accumulator) {
-        return then(new LazyCollectWithAccumulator<C, B>(collector, accumulator)).startAndGet();
+        return then(new FlowCollectWithAccumulator<C, B>(collector, accumulator)).startAndGet();
     }
 
     public void execute() {
-        then(new Command.FinishCommand<B, B>()).start();
+        then(new FinishFlow<B, B>()).start();
     }
 
     public int count() {
-        LazyCount<B> count = then(new LazyCount<B>());
+        FlowCount<B> count = then(new FlowCount<B>());
         count.start();
         return count.getCount();
     }
@@ -127,7 +127,7 @@ class Command<A, B> {
     }
 
     public B first(B def) {
-        return then(new LazyFirst<B>(def)).startAndGet();
+        return then(new FlowFirst<B>(def)).startAndGet();
     }
 
     public B last() {
@@ -135,7 +135,7 @@ class Command<A, B> {
     }
 
     public B last(B def) {
-        return then(new LazyLast<B>(def)).startAndGet();
+        return then(new FlowLast<B>(def)).startAndGet();
     }
 
     public B min(Comparator<? super B> comparator) {
@@ -143,7 +143,7 @@ class Command<A, B> {
     }
 
     public B min(B def, Comparator<? super B> comparator) {
-        return then(new LazyMinWithComparator<B>(def, comparator)).startAndGet();
+        return then(new FlowMinWithComparator<B>(def, comparator)).startAndGet();
     }
 
     public B min() {
@@ -151,7 +151,7 @@ class Command<A, B> {
     }
 
     public B min(B def) {
-        return then(new LazyMin<B>(def)).startAndGet();
+        return then(new FlowMin<B>(def)).startAndGet();
     }
 
     public B max(Comparator<? super B> comparator) {
@@ -159,7 +159,7 @@ class Command<A, B> {
     }
 
     public B max(B def, Comparator<? super B> comparator) {
-        return then(new LazyMaxWithComparator<B>(def, comparator)).startAndGet();
+        return then(new FlowMaxWithComparator<B>(def, comparator)).startAndGet();
     }
 
     public B max() {
@@ -167,7 +167,7 @@ class Command<A, B> {
     }
 
     public B max(B def) {
-        return then(new LazyMax<B>(def)).startAndGet();
+        return then(new FlowMax<B>(def)).startAndGet();
     }
 
     public List<B> toList() {
@@ -175,7 +175,7 @@ class Command<A, B> {
     }
 
     public <C extends Collection<B>> C collect(C collection) {
-        return then(new LazyCollect<B, C>(collection)).startAndGet();
+        return then(new FlowCollect<B, C>(collection)).startAndGet();
     }
 
     public List<B> toSortedList(Comparator<? super B> comparator) {
@@ -201,28 +201,28 @@ class Command<A, B> {
     }
 
     public String join(String separator, StringBuilder sb) {
-        return then(new LazyJoin<B>(sb, separator)).startAndGet();
+        return then(new FlowJoin<B>(sb, separator)).startAndGet();
     }
 
-    public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<LazyGroup<K, B>, V> toValue) {
-        return toMap(Command.<K, LazyGroup<K, B>>hashMapSupplier(), toKey, toValue);
+    public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<FlowGroup<K, B>, V> toValue) {
+        return toMap(Flow.<K, FlowGroup<K, B>>hashMapSupplier(), toKey, toValue);
     }
 
-    public <K> Map<K, List<B>> toMap(Supplier<Map<K, LazyGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey) {
-        return toMap(groupMapSupplier, toKey, new LazyGroupToListMapper<K, B>());
+    public <K> Map<K, List<B>> toMap(Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey) {
+        return toMap(groupMapSupplier, toKey, new FlowGroupToListMapper<K, B>());
     }
 
     public <K> Map<K, List<B>> toMapOfLists(Mapper<B, K> toKey) {
-        return toMap(Command.<K, LazyGroup<K, B>>hashMapSupplier(), toKey, new LazyGroupToListMapper<K, B>());
+        return toMap(Flow.<K, FlowGroup<K, B>>hashMapSupplier(), toKey, new FlowGroupToListMapper<K, B>());
     }
 
-    public <K, V> Map<K, V> toMap(Supplier<Map<K, LazyGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey, Mapper<LazyGroup<K, B>, V> toValue) {
+    public <K, V> Map<K, V> toMap(Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey, Mapper<FlowGroup<K, B>, V> toValue) {
         return groupBy(toKey, groupMapSupplier).toMap(toValue);
     }
 
 
-    public static <T> Command<T, T> of(final Iterable<T> iterable) {
-        return new StartLazy<T>() {
+    public static <T> Flow<T, T> of(final Iterable<T> iterable) {
+        return new FlowStart<T>() {
             @Override
             protected void process() {
                 for (T t : iterable) {
@@ -234,12 +234,12 @@ class Command<A, B> {
         };
     }
 
-    public static <T> Command<T, T> of(final Iterator<T> iterator) {
-        return new StartLazy<T>() {
+    public static <T> Flow<T, T> of(final Iterator<T> iterator) {
+        return new FlowStart<T>() {
             @Override
             protected void process() {
                 Iterator<T> i = iterator;
-                Command<T, ?> child = this.child;
+                Flow<T, ?> child = this.child;
                 while (!stop && i.hasNext()) {
                     child.process(i.next());
                 }
@@ -247,15 +247,15 @@ class Command<A, B> {
         };
     }
 
-    public static <K, V> Command<Map.Entry<K, V>, Map.Entry<K, V>> of(Map<K, V> map) {
+    public static <K, V> Flow<Map.Entry<K, V>, Map.Entry<K, V>> of(Map<K, V> map) {
         return of(map.entrySet());
     }
 
-    public static <T> Command<T, T> of(final T... array) {
-        return new StartLazy<T>() {
+    public static <T> Flow<T, T> of(final T... array) {
+        return new FlowStart<T>() {
             @Override
             protected void process() {
-                Command<T, ?> child = this.child;
+                Flow<T, ?> child = this.child;
                 for (T t : array) {
                     if (stop)
                         break;
@@ -265,11 +265,11 @@ class Command<A, B> {
         };
     }
 
-    public static Command<Integer, Integer> of(final int[] array) {
-        return new StartLazy<Integer>() {
+    public static Flow<Integer, Integer> of(final int[] array) {
+        return new FlowStart<Integer>() {
             @Override
             protected void process() {
-                Command<Integer, ?> child = this.child;
+                Flow<Integer, ?> child = this.child;
                 for (int t : array) {
                     if (stop)
                         break;
@@ -279,11 +279,11 @@ class Command<A, B> {
         };
     }
 
-    public static Command<Long, Long> of(final long[] array) {
-        return new StartLazy<Long>() {
+    public static Flow<Long, Long> of(final long[] array) {
+        return new FlowStart<Long>() {
             @Override
             protected void process() {
-                Command<Long, ?> child = this.child;
+                Flow<Long, ?> child = this.child;
                 for (long t : array) {
                     if (stop)
                         break;
@@ -293,11 +293,11 @@ class Command<A, B> {
         };
     }
 
-    public static Command<Double, Double> of(final double[] array) {
-        return new StartLazy<Double>() {
+    public static Flow<Double, Double> of(final double[] array) {
+        return new FlowStart<Double>() {
             @Override
             protected void process() {
-                Command<Double, ?> child = this.child;
+                Flow<Double, ?> child = this.child;
                 for (double t : array) {
                     if (stop)
                         break;
@@ -307,11 +307,11 @@ class Command<A, B> {
         };
     }
 
-    public static Command<Float, Float> of(final float[] array) {
-        return new StartLazy<Float>() {
+    public static Flow<Float, Float> of(final float[] array) {
+        return new FlowStart<Float>() {
             @Override
             protected void process() {
-                Command<Float, ?> child = this.child;
+                Flow<Float, ?> child = this.child;
                 for (float t : array) {
                     if (stop)
                         break;
@@ -321,11 +321,11 @@ class Command<A, B> {
         };
     }
 
-    public static Command<Byte, Byte> of(final byte[] array) {
-        return new StartLazy<Byte>() {
+    public static Flow<Byte, Byte> of(final byte[] array) {
+        return new FlowStart<Byte>() {
             @Override
             protected void process() {
-                Command<Byte, ?> child = this.child;
+                Flow<Byte, ?> child = this.child;
                 for (byte t : array) {
                     if (stop)
                         break;
@@ -335,11 +335,11 @@ class Command<A, B> {
         };
     }
 
-    public static Command<Boolean, Boolean> of(final boolean[] array) {
-        return new StartLazy<Boolean>() {
+    public static Flow<Boolean, Boolean> of(final boolean[] array) {
+        return new FlowStart<Boolean>() {
             @Override
             protected void process() {
-                Command<Boolean, ?> child = this.child;
+                Flow<Boolean, ?> child = this.child;
                 for (boolean t : array) {
                     if (stop)
                         break;
@@ -349,11 +349,11 @@ class Command<A, B> {
         };
     }
 
-    public static Command<Short, Short> of(final short[] array) {
-        return new StartLazy<Short>() {
+    public static Flow<Short, Short> of(final short[] array) {
+        return new FlowStart<Short>() {
             @Override
             protected void process() {
-                Command<Short, ?> child = this.child;
+                Flow<Short, ?> child = this.child;
                 for (short t : array) {
                     if (stop)
                         break;
@@ -363,11 +363,11 @@ class Command<A, B> {
         };
     }
 
-    public static Command<Character, Character> of(final char[] array) {
-        return new StartLazy<Character>() {
+    public static Flow<Character, Character> of(final char[] array) {
+        return new FlowStart<Character>() {
             @Override
             protected void process() {
-                Command<Character, ?> child = this.child;
+                Flow<Character, ?> child = this.child;
                 for (char t : array) {
                     if (stop)
                         break;
@@ -377,7 +377,7 @@ class Command<A, B> {
         };
     }
 
-    private static abstract class StartLazy<T> extends Command<T, T> {
+    private static abstract class FlowStart<T> extends Flow<T, T> {
         boolean stop = false;
 
         @Override
@@ -398,21 +398,21 @@ class Command<A, B> {
         }
     }
 
-    protected Command getLast(Command command) {
-        Command last = command;
+    protected Flow getLast(Flow flow) {
+        Flow last = flow;
         while (last.child != null) {
             last = last.child;
         }
         return last;
     }
 
-    static class NoopCommand<T> extends Command<T, Object> {
+    static class NoopFlow<T> extends Flow<T, Object> {
         @Override
         protected void onEnd() {
         }
     }
 
-    static class FinishCommand<A, B> extends Command<A, B> {
+    static class FinishFlow<A, B> extends Flow<A, B> {
 
         @Override
         protected void onEnd() {
@@ -426,10 +426,10 @@ class Command<A, B> {
         }
     }
 
-    static class LazyFilter<T> extends Command<T, T> {
+    static class FlowFilter<T> extends Flow<T, T> {
         private Filter<? super T> filter;
 
-        public LazyFilter(Filter<? super T> filter) {
+        public FlowFilter(Filter<? super T> filter) {
             this.filter = filter;
         }
 
@@ -440,11 +440,11 @@ class Command<A, B> {
         }
     }
 
-    static class LazyCollectWithAccumulator<C, T> extends FinishCommand<T, C> {
+    static class FlowCollectWithAccumulator<C, T> extends FinishFlow<T, C> {
         private BiConsumer<? super C, ? super T> accumulator;
         private C collector;
 
-        public LazyCollectWithAccumulator(C collector, BiConsumer<? super C, ? super T> accumulator) {
+        public FlowCollectWithAccumulator(C collector, BiConsumer<? super C, ? super T> accumulator) {
             this.accumulator = accumulator;
             this.collector = collector;
         }
@@ -460,10 +460,10 @@ class Command<A, B> {
         }
     }
 
-    static class LazyEach<T> extends Command<T, T> {
+    static class FlowEach<T> extends Flow<T, T> {
         private Consumer<? super T> consumer;
 
-        public LazyEach(Consumer<? super T> consumer) {
+        public FlowEach(Consumer<? super T> consumer) {
             this.consumer = consumer;
         }
 
@@ -475,11 +475,11 @@ class Command<A, B> {
     }
 
 
-    static class LazyEachWithIndex<T> extends Command<T, T> {
+    static class FlowEachWithIndex<T> extends Flow<T, T> {
         private ConsumerWithInt<? super T> consumer;
         private int index = 0;
 
-        public LazyEachWithIndex(ConsumerWithInt<? super T> consumer) {
+        public FlowEachWithIndex(ConsumerWithInt<? super T> consumer) {
             this.consumer = consumer;
         }
 
@@ -490,11 +490,11 @@ class Command<A, B> {
         }
     }
 
-    static class LazyMerge<B extends Command<T, T>, T> extends Command<B, T> {
-        final Command<T, T> proxy = new Command<T, T>() {
+    static class FlowMerge<B extends Flow<T, T>, T> extends Flow<B, T> {
+        final Flow<T, T> proxy = new Flow<T, T>() {
             @Override
             protected void process(T t) {
-                LazyMerge.this.processToChild(t);
+                FlowMerge.this.processToChild(t);
             }
 
             @Override
@@ -508,36 +508,36 @@ class Command<A, B> {
         }
     }
 
-    static class LazyMapMerge<A, B> extends Command<A, B> {
-        final Command<B, B> proxy = new Command<B, B>() {
+    static class FlowMapMerge<A, B> extends Flow<A, B> {
+        final Flow<B, B> proxy = new Flow<B, B>() {
             @Override
             protected void process(B b) {
-                LazyMapMerge.this.processToChild(b);
+                FlowMapMerge.this.processToChild(b);
             }
 
             @Override
             protected void onEnd() {
             }
         };
-        final Mapper<? super A, ? extends Command<B, B>> mapper;
+        final Mapper<? super A, ? extends Flow<B, B>> mapper;
 
-        LazyMapMerge(Mapper<? super A, ? extends Command<B, B>> mapper) {
+        FlowMapMerge(Mapper<? super A, ? extends Flow<B, B>> mapper) {
             this.mapper = mapper;
         }
 
 
         @Override
         protected void process(A a) {
-            Command<B, B> l = mapper.map(a);
+            Flow<B, B> l = mapper.map(a);
             l.child = proxy;
             l.start();
         }
     }
 
-    static class LazyMap<A, B> extends Command<A, B> {
+    static class FlowMap<A, B> extends Flow<A, B> {
         private Mapper<? super A, B> mapper;
 
-        public LazyMap(Mapper<? super A, B> mapper) {
+        public FlowMap(Mapper<? super A, B> mapper) {
             this.mapper = mapper;
         }
 
@@ -547,11 +547,11 @@ class Command<A, B> {
         }
     }
 
-    static class LazyReduce<T> extends FinishCommand<T, T> {
+    static class FlowReduce<T> extends FinishFlow<T, T> {
         private final Reducer<T> reducer;
         private T prev;
 
-        public LazyReduce(T def, Reducer<T> reducer) {
+        public FlowReduce(T def, Reducer<T> reducer) {
             this.reducer = reducer;
             prev = def;
         }
@@ -570,7 +570,7 @@ class Command<A, B> {
         }
     }
 
-    static class LazyCount<A> extends FinishCommand<A, Integer> {
+    static class FlowCount<A> extends FinishFlow<A, Integer> {
         private int count = 0;
 
         @Override
@@ -588,10 +588,10 @@ class Command<A, B> {
         }
     }
 
-    static class LazyCollect<A, C extends Collection<A>> extends FinishCommand<A, C> {
+    static class FlowCollect<A, C extends Collection<A>> extends FinishFlow<A, C> {
         private C collection;
 
-        LazyCollect(C collection) {
+        FlowCollect(C collection) {
             this.collection = collection;
         }
 
@@ -606,10 +606,10 @@ class Command<A, B> {
         }
     }
 
-    static class LazyFirst<A> extends FinishCommand<A, A> {
+    static class FlowFirst<A> extends FinishFlow<A, A> {
         private A first;
 
-        public LazyFirst(A def) {
+        public FlowFirst(A def) {
             first = def;
         }
 
@@ -626,10 +626,10 @@ class Command<A, B> {
         }
     }
 
-    static class LazyLast<A> extends FinishCommand<A, A> {
+    static class FlowLast<A> extends FinishFlow<A, A> {
         private A last;
 
-        public LazyLast(A def) {
+        public FlowLast(A def) {
             last = def;
         }
 
@@ -644,10 +644,10 @@ class Command<A, B> {
         }
     }
 
-    static class LazyMin<A> extends FinishCommand<A, A> {
+    static class FlowMin<A> extends FinishFlow<A, A> {
         private A min;
 
-        public LazyMin(A def) {
+        public FlowMin(A def) {
             min = def;
         }
 
@@ -663,10 +663,10 @@ class Command<A, B> {
         }
     }
 
-    static class LazyMax<A> extends FinishCommand<A, A> {
+    static class FlowMax<A> extends FinishFlow<A, A> {
         private A max;
 
-        public LazyMax(A def) {
+        public FlowMax(A def) {
             max = def;
         }
 
@@ -682,11 +682,11 @@ class Command<A, B> {
         }
     }
 
-    static class LazyJoin<A> extends FinishCommand<A, String> {
+    static class FlowJoin<A> extends FinishFlow<A, String> {
         private StringBuilder sb;
         private String separator;
 
-        public LazyJoin(StringBuilder sb, String separator) {
+        public FlowJoin(StringBuilder sb, String separator) {
             this.sb = sb;
             this.separator = separator;
         }
@@ -706,11 +706,11 @@ class Command<A, B> {
         }
     }
 
-    static class LazyMinWithComparator<A> extends FinishCommand<A, A> {
+    static class FlowMinWithComparator<A> extends FinishFlow<A, A> {
         private A min;
         private Comparator<? super A> comparator;
 
-        LazyMinWithComparator(A def, Comparator<? super A> comparator) {
+        FlowMinWithComparator(A def, Comparator<? super A> comparator) {
             this.comparator = comparator;
             min = def;
         }
@@ -727,11 +727,11 @@ class Command<A, B> {
         }
     }
 
-    static class LazyMaxWithComparator<A> extends FinishCommand<A, A> {
+    static class FlowMaxWithComparator<A> extends FinishFlow<A, A> {
         private A max;
         private Comparator<? super A> comparator;
 
-        LazyMaxWithComparator(A def, Comparator<? super A> comparator) {
+        FlowMaxWithComparator(A def, Comparator<? super A> comparator) {
             this.comparator = comparator;
             max = def;
         }
@@ -748,9 +748,9 @@ class Command<A, B> {
         }
     }
 
-    static class LazyGroupToListMapper<K, B> implements Mapper<LazyGroup<K, B>, List<B>> {
+    static class FlowGroupToListMapper<K, B> implements Mapper<FlowGroup<K, B>, List<B>> {
         @Override
-        public List<B> map(LazyGroup<K, B> group) {
+        public List<B> map(FlowGroup<K, B> group) {
             return group.toList();
         }
     }
