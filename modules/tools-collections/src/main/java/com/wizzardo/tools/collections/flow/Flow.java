@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * Created by wizzardo on 08.11.15.
  */
-class Flow<A, B> {
+public class Flow<A, B> {
     protected Flow<?, A> parent;
     protected Flow<B, ?> child;
 
