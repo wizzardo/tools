@@ -75,7 +75,7 @@ public class JsonTools {
         UNESCAPES['u'] = 128;
     }
 
-    static Pool<ExceptionDrivenStringBuilder> builderPool = new PoolBuilder<ExceptionDrivenStringBuilder>()
+    public static final Pool<ExceptionDrivenStringBuilder> builderPool = new PoolBuilder<ExceptionDrivenStringBuilder>()
             .supplier(new Supplier<ExceptionDrivenStringBuilder>() {
                 @Override
                 public ExceptionDrivenStringBuilder supply() {
@@ -84,7 +84,7 @@ public class JsonTools {
             }).resetter(new Consumer<ExceptionDrivenStringBuilder>() {
                 @Override
                 public void consume(ExceptionDrivenStringBuilder sb) {
-                    sb.setLength(0);
+                    sb.clear();
                 }
             }).build();
 
@@ -179,7 +179,7 @@ public class JsonTools {
         Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
         try {
             ExceptionDrivenStringBuilder builder = holder.get();
-            Binder.toJSON(src, Appender.create(builder));
+            serialize(src, builder);
             return builder.toBytes();
         } finally {
             holder.close();
@@ -190,7 +190,7 @@ public class JsonTools {
         Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
         try {
             ExceptionDrivenStringBuilder builder = holder.get();
-            Binder.toJSON(src, Appender.create(builder));
+            serialize(src, builder);
             builder.toBytes(bytesSupplier, bytesConsumer);
         } finally {
             holder.close();
@@ -201,12 +201,15 @@ public class JsonTools {
         Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
         try {
             ExceptionDrivenStringBuilder builder = holder.get();
-            Appender sb = Appender.create(builder);
-            Binder.toJSON(src, sb);
-            return sb.toString();
+            serialize(src, builder);
+            return builder.toString();
         } finally {
             holder.close();
         }
+    }
+
+    public static void serialize(Object src, ExceptionDrivenStringBuilder out) {
+        Binder.toJSON(src, Appender.create(out));
     }
 
     public static void serialize(Object src, OutputStream out) {
