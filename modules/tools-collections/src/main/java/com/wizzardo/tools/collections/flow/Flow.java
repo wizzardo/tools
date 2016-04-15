@@ -23,7 +23,8 @@ public class Flow<A, B> {
     }
 
     protected void onEnd() {
-        child.onEnd();
+        if (child != null)
+            child.onEnd();
     }
 
     protected void stop() {
@@ -120,7 +121,7 @@ public class Flow<A, B> {
     }
 
     public void execute() {
-        then(new FinishFlow<B, B>()).start();
+        start();
     }
 
     public int count() {
@@ -418,12 +419,6 @@ public class Flow<A, B> {
 
     static class FinishFlow<A, B> extends Flow<A, B> {
 
-        @Override
-        protected void onEnd() {
-            if (child != null)
-                child.onEnd();
-        }
-
         public B startAndGet() {
             start();
             return get();
@@ -474,7 +469,10 @@ public class Flow<A, B> {
         @Override
         protected void process(T t) {
             consumer.consume(t);
-            child.process(t);
+
+            Flow<T, ?> child = this.child;
+            if (child != null)
+                child.process(t);
         }
     }
 
@@ -490,7 +488,10 @@ public class Flow<A, B> {
         @Override
         protected void process(T t) {
             consumer.consume(index++, t);
-            child.process(t);
+
+            Flow<T, ?> child = this.child;
+            if (child != null)
+                child.process(t);
         }
     }
 

@@ -51,7 +51,10 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
             @Override
             protected void process(B b) {
                 consumer.consume(b);
-                child.process(b);
+
+                Flow<B, ?> child = this.child;
+                if (child != null)
+                    child.process(b);
             }
         });
     }
@@ -63,7 +66,10 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
             @Override
             protected void process(B b) {
                 consumer.consume(index++, b);
-                child.process(b);
+
+                Flow<B, ?> child = this.child;
+                if (child != null)
+                    child.process(b);
             }
         });
     }
