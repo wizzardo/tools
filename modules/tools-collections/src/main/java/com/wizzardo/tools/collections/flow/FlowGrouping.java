@@ -39,7 +39,7 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
             protected void process(B b) {
                 if (filter.allow(b)) {
                     groups.put(b.getKey(), b);
-                    processToChild(b);
+                    child.process(b);
                 }
             }
         });
@@ -51,7 +51,7 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
             @Override
             protected void process(B b) {
                 consumer.consume(b);
-                processToChild(b);
+                child.process(b);
             }
         });
     }
@@ -63,7 +63,7 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
             @Override
             protected void process(B b) {
                 consumer.consume(index++, b);
-                processToChild(b);
+                child.process(b);
             }
         });
     }
@@ -141,7 +141,7 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
 
         @Override
         protected void process(T t) {
-            processToChild(t);
+            child.process(t);
         }
     }
 

@@ -22,7 +22,7 @@ public class FlowGroup<K, T> extends Flow<T, T> {
         if (stopped)
             return;
 
-        processToChild(t);
+        child.process(t);
     }
 
     @Override

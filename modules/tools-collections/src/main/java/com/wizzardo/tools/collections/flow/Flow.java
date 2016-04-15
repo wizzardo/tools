@@ -12,10 +12,6 @@ public class Flow<A, B> {
     protected void process(A a) {
     }
 
-    protected void processToChild(B b) {
-        child.process(b);
-    }
-
     protected <T extends Flow<B, C>, C> T then(T command) {
         command.parent = this;
         this.child = command;
@@ -104,7 +100,7 @@ public class Flow<A, B> {
                 FlowGroup<K, B> group = groups.get(key);
                 if (group == null) {
                     groups.put(key, group = new FlowGroup<K, B>(key));
-                    processToChild(group);
+                    child.process(group);
                 }
                 group.process(b);
             }
@@ -232,10 +228,11 @@ public class Flow<A, B> {
         return new FlowStart<T>() {
             @Override
             protected void process() {
+                Flow<T, ?> child = this.child;
                 for (T t : iterable) {
                     if (stop)
                         break;
-                    processToChild(t);
+                    child.process(t);
                 }
             }
         };
@@ -443,7 +440,7 @@ public class Flow<A, B> {
         @Override
         protected void process(T t) {
             if (filter.allow(t))
-                processToChild(t);
+                child.process(t);
         }
     }
 
@@ -477,7 +474,7 @@ public class Flow<A, B> {
         @Override
         protected void process(T t) {
             consumer.consume(t);
-            processToChild(t);
+            child.process(t);
         }
     }
 
@@ -493,7 +490,7 @@ public class Flow<A, B> {
         @Override
         protected void process(T t) {
             consumer.consume(index++, t);
-            processToChild(t);
+            child.process(t);
         }
     }
 
@@ -501,7 +498,7 @@ public class Flow<A, B> {
         final Flow<T, T> proxy = new Flow<T, T>() {
             @Override
             protected void process(T t) {
-                FlowMerge.this.processToChild(t);
+                FlowMerge.this.child.process(t);
             }
 
             @Override
@@ -519,7 +516,7 @@ public class Flow<A, B> {
         final Flow<B, B> proxy = new Flow<B, B>() {
             @Override
             protected void process(B b) {
-                FlowMapMerge.this.processToChild(b);
+                FlowMapMerge.this.child.process(b);
             }
 
             @Override
@@ -550,7 +547,7 @@ public class Flow<A, B> {
 
         @Override
         protected void process(A a) {
-            processToChild(mapper.map(a));
+            child.process(mapper.map(a));
         }
     }
 
