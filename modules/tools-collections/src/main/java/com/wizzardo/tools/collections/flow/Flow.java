@@ -178,6 +178,18 @@ public class Flow<A, B> {
         return then(new FlowMax<B>(def)).startAndGet();
     }
 
+    public boolean anyMatch(Filter<B> filter) {
+        return then(new FlowAnyMatch<B>(filter)).startAndGet();
+    }
+
+    public boolean allMatch(Filter<B> filter) {
+        return then(new FlowAllMatch<B>(filter)).startAndGet();
+    }
+
+    public boolean noneMatch(Filter<B> filter) {
+        return then(new FlowNoneMatch<B>(filter)).startAndGet();
+    }
+
     public List<B> toList() {
         return collect(new ArrayList<B>());
     }
@@ -750,6 +762,72 @@ public class Flow<A, B> {
         @Override
         public A get() {
             return max;
+        }
+    }
+
+    static class FlowAnyMatch<T> extends FinishFlow<T, Boolean> {
+        final Filter<T> filter;
+        boolean result;
+
+        FlowAnyMatch(Filter<T> filter) {
+            this.filter = filter;
+        }
+
+        @Override
+        protected void process(T t) {
+            if (filter.allow(t)) {
+                result = true;
+                parent.stop();
+            }
+        }
+
+        @Override
+        protected Boolean get() {
+            return result;
+        }
+    }
+
+    static class FlowAllMatch<T> extends FinishFlow<T, Boolean> {
+        final Filter<T> filter;
+        boolean result = true;
+
+        FlowAllMatch(Filter<T> filter) {
+            this.filter = filter;
+        }
+
+        @Override
+        protected void process(T t) {
+            if (!filter.allow(t)) {
+                result = false;
+                parent.stop();
+            }
+        }
+
+        @Override
+        protected Boolean get() {
+            return result;
+        }
+    }
+
+    static class FlowNoneMatch<T> extends FinishFlow<T, Boolean> {
+        final Filter<T> filter;
+        boolean result = true;
+
+        FlowNoneMatch(Filter<T> filter) {
+            this.filter = filter;
+        }
+
+        @Override
+        protected void process(T t) {
+            if (filter.allow(t)) {
+                result = false;
+                parent.stop();
+            }
+        }
+
+        @Override
+        protected Boolean get() {
+            return result;
         }
     }
 }
