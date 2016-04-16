@@ -783,4 +783,52 @@ public class FlowTest {
 
         Assert.assertEquals("0, 1, 2", sb.toString());
     }
+
+    @Test
+    public void test_anyMatch() {
+        Assert.assertTrue(Flow.of(1, 2, 3).anyMatch(new Filter<Integer>() {
+            @Override
+            public boolean allow(Integer integer) {
+                return integer % 2 == 0;
+            }
+        }));
+        Assert.assertFalse(Flow.of(1, 3, 5).anyMatch(new Filter<Integer>() {
+            @Override
+            public boolean allow(Integer integer) {
+                return integer % 2 == 0;
+            }
+        }));
+    }
+
+    @Test
+    public void test_allMatch() {
+        Assert.assertTrue(Flow.of(1, 3, 5).allMatch(new Filter<Integer>() {
+            @Override
+            public boolean allow(Integer integer) {
+                return integer % 2 != 0;
+            }
+        }));
+        Assert.assertFalse(Flow.of(1, 2, 3).allMatch(new Filter<Integer>() {
+            @Override
+            public boolean allow(Integer integer) {
+                return integer % 2 != 0;
+            }
+        }));
+    }
+
+    @Test
+    public void test_noneMatch() {
+        Assert.assertTrue(Flow.of(1, 3, 5).noneMatch(new Filter<Integer>() {
+            @Override
+            public boolean allow(Integer integer) {
+                return integer % 2 == 0;
+            }
+        }));
+        Assert.assertFalse(Flow.of(1, 2, 3).noneMatch(new Filter<Integer>() {
+            @Override
+            public boolean allow(Integer integer) {
+                return integer % 2 != 0;
+            }
+        }));
+    }
 }
