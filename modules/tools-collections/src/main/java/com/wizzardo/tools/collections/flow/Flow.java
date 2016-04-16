@@ -1,5 +1,7 @@
 package com.wizzardo.tools.collections.flow;
 
+import com.wizzardo.tools.collections.flow.flows.*;
+
 import java.util.*;
 
 /**
@@ -9,10 +11,10 @@ public class Flow<A, B> {
     protected Flow<?, A> parent;
     protected Flow<B, ?> child;
 
-    protected void process(A a) {
+    public void process(A a) {
     }
 
-    protected <T extends Flow<B, C>, C> T then(T command) {
+    public <T extends Flow<B, C>, C> T then(T command) {
         command.parent = this;
         this.child = command;
         return command;
@@ -22,18 +24,43 @@ public class Flow<A, B> {
         parent.start();
     }
 
+    protected void start(Flow flow) {
+        flow.start();
+    }
+
+    protected void setChildTo(Flow parent, Flow child) {
+        parent.child = child;
+    }
+
     protected void onEnd() {
         if (child != null)
             child.onEnd();
+    }
+
+    protected void onEnd(Flow group) {
+        group.onEnd();
     }
 
     protected void stop() {
         parent.stop();
     }
 
-    protected B get() {
+    protected void stop(Flow flow) {
+        flow.stop();
+    }
+
+    public B get() {
         return null;
     }
+
+    protected Flow getLast(Flow flow) {
+        Flow last = flow;
+        while (last.child != null) {
+            last = last.child;
+        }
+        return last;
+    }
+
 
     public static final Supplier SUPPLIER_HASH_MAP = new Supplier<Map>() {
         @Override
@@ -63,9 +90,7 @@ public class Flow<A, B> {
     }
 
     public B reduce(B def, Reducer<B> reducer) {
-        FlowReduce<B> reduce = then(new FlowReduce<B>(def, reducer));
-        reduce.start();
-        return reduce.get();
+        return then(new FlowReduce<B>(def, reducer)).startAndGet();
     }
 
     public <T> Flow<B, T> merge(Mapper<? super B, ? extends Flow<T, T>> mapper) {
@@ -93,27 +118,7 @@ public class Flow<A, B> {
     }
 
     public <K> FlowGrouping<K, B, B, FlowGroup<K, B>> groupBy(final Mapper<? super B, K> toKey, final Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier) {
-        return this.then(new FlowGrouping<K, B, B, FlowGroup<K, B>>(groupMapSupplier.supply()) {
-
-            @Override
-            protected void process(B b) {
-                K key = toKey.map(b);
-                FlowGroup<K, B> group = groups.get(key);
-                if (group == null) {
-                    groups.put(key, group = new FlowGroup<K, B>(key));
-                    child.process(group);
-                }
-                group.process(b);
-            }
-
-            @Override
-            protected void onEnd() {
-                for (FlowGroup<K, B> group : groups.values()) {
-                    group.onEnd();
-                }
-                super.onEnd();
-            }
-        });
+        return this.then(new FlowGroupBy<K, B>(groupMapSupplier, toKey));
     }
 
     public <C> C collect(C collector, BiConsumer<? super C, ? super B> accumulator) {
@@ -238,596 +243,51 @@ public class Flow<A, B> {
 
 
     public static <T> Flow<T, T> of(final Iterable<T> iterable) {
-        return new FlowStart<T>() {
-            @Override
-            protected void process() {
-                Flow<T, ?> child = this.child;
-                for (T t : iterable) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(iterable);
     }
 
     public static <T> Flow<T, T> of(final Iterator<T> iterator) {
-        return new FlowStart<T>() {
-            @Override
-            protected void process() {
-                Iterator<T> i = iterator;
-                Flow<T, ?> child = this.child;
-                while (!stop && i.hasNext()) {
-                    child.process(i.next());
-                }
-            }
-        };
+        return FlowStart.of(iterator);
     }
 
     public static <K, V> Flow<Map.Entry<K, V>, Map.Entry<K, V>> of(Map<K, V> map) {
-        return of(map.entrySet());
+        return FlowStart.of(map.entrySet());
     }
 
     public static <T> Flow<T, T> of(final T... array) {
-        return new FlowStart<T>() {
-            @Override
-            protected void process() {
-                Flow<T, ?> child = this.child;
-                for (T t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
     public static Flow<Integer, Integer> of(final int[] array) {
-        return new FlowStart<Integer>() {
-            @Override
-            protected void process() {
-                Flow<Integer, ?> child = this.child;
-                for (int t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
     public static Flow<Long, Long> of(final long[] array) {
-        return new FlowStart<Long>() {
-            @Override
-            protected void process() {
-                Flow<Long, ?> child = this.child;
-                for (long t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
     public static Flow<Double, Double> of(final double[] array) {
-        return new FlowStart<Double>() {
-            @Override
-            protected void process() {
-                Flow<Double, ?> child = this.child;
-                for (double t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
     public static Flow<Float, Float> of(final float[] array) {
-        return new FlowStart<Float>() {
-            @Override
-            protected void process() {
-                Flow<Float, ?> child = this.child;
-                for (float t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
     public static Flow<Byte, Byte> of(final byte[] array) {
-        return new FlowStart<Byte>() {
-            @Override
-            protected void process() {
-                Flow<Byte, ?> child = this.child;
-                for (byte t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
     public static Flow<Boolean, Boolean> of(final boolean[] array) {
-        return new FlowStart<Boolean>() {
-            @Override
-            protected void process() {
-                Flow<Boolean, ?> child = this.child;
-                for (boolean t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
     public static Flow<Short, Short> of(final short[] array) {
-        return new FlowStart<Short>() {
-            @Override
-            protected void process() {
-                Flow<Short, ?> child = this.child;
-                for (short t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
     public static Flow<Character, Character> of(final char[] array) {
-        return new FlowStart<Character>() {
-            @Override
-            protected void process() {
-                Flow<Character, ?> child = this.child;
-                for (char t : array) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
-            }
-        };
+        return FlowStart.of(array);
     }
 
-    private static abstract class FlowStart<T> extends Flow<T, T> {
-        boolean stop = false;
-
-        @Override
-        protected void start() {
-            if (child == null)
-                return;
-
-            process();
-
-            child.onEnd();
-        }
-
-        protected abstract void process();
-
-        @Override
-        protected void stop() {
-            stop = true;
-        }
-    }
-
-    protected Flow getLast(Flow flow) {
-        Flow last = flow;
-        while (last.child != null) {
-            last = last.child;
-        }
-        return last;
-    }
-
-    static class NoopFlow<T> extends Flow<T, Object> {
-        @Override
-        protected void onEnd() {
-        }
-    }
-
-    static class FinishFlow<A, B> extends Flow<A, B> {
-
-        public B startAndGet() {
-            start();
-            return get();
-        }
-    }
-
-    static class FlowFilter<T> extends Flow<T, T> {
-        private Filter<? super T> filter;
-
-        public FlowFilter(Filter<? super T> filter) {
-            this.filter = filter;
-        }
-
-        @Override
-        protected void process(T t) {
-            if (filter.allow(t))
-                child.process(t);
-        }
-    }
-
-    static class FlowCollectWithAccumulator<C, T> extends FinishFlow<T, C> {
-        private BiConsumer<? super C, ? super T> accumulator;
-        private C collector;
-
-        public FlowCollectWithAccumulator(C collector, BiConsumer<? super C, ? super T> accumulator) {
-            this.accumulator = accumulator;
-            this.collector = collector;
-        }
-
-        @Override
-        protected void process(T t) {
-            accumulator.consume(collector, t);
-        }
-
-        @Override
-        protected C get() {
-            return collector;
-        }
-    }
-
-    static class FlowEach<T> extends Flow<T, T> {
-        private Consumer<? super T> consumer;
-
-        public FlowEach(Consumer<? super T> consumer) {
-            this.consumer = consumer;
-        }
-
-        @Override
-        protected void process(T t) {
-            consumer.consume(t);
-
-            Flow<T, ?> child = this.child;
-            if (child != null)
-                child.process(t);
-        }
-    }
-
-
-    static class FlowEachWithIndex<T> extends Flow<T, T> {
-        private ConsumerWithInt<? super T> consumer;
-        private int index = 0;
-
-        public FlowEachWithIndex(ConsumerWithInt<? super T> consumer) {
-            this.consumer = consumer;
-        }
-
-        @Override
-        protected void process(T t) {
-            consumer.consume(index++, t);
-
-            Flow<T, ?> child = this.child;
-            if (child != null)
-                child.process(t);
-        }
-    }
-
-    static class FlowMerge<B extends Flow<T, T>, T> extends Flow<B, T> {
-        final Flow<T, T> proxy = new Flow<T, T>() {
-            @Override
-            protected void process(T t) {
-                FlowMerge.this.child.process(t);
-            }
-
-            @Override
-            protected void onEnd() {
-            }
-        };
-
-        @Override
-        protected void process(B b) {
-            b.child = proxy;
-        }
-    }
-
-    static class FlowMapMerge<A, B> extends Flow<A, B> {
-        final Flow<B, B> proxy = new Flow<B, B>() {
-            @Override
-            protected void process(B b) {
-                FlowMapMerge.this.child.process(b);
-            }
-
-            @Override
-            protected void onEnd() {
-            }
-        };
-        final Mapper<? super A, ? extends Flow<B, B>> mapper;
-
-        FlowMapMerge(Mapper<? super A, ? extends Flow<B, B>> mapper) {
-            this.mapper = mapper;
-        }
-
-
-        @Override
-        protected void process(A a) {
-            Flow<B, B> l = mapper.map(a);
-            l.child = proxy;
-            l.start();
-        }
-    }
-
-    static class FlowMap<A, B> extends Flow<A, B> {
-        private Mapper<? super A, B> mapper;
-
-        public FlowMap(Mapper<? super A, B> mapper) {
-            this.mapper = mapper;
-        }
-
-        @Override
-        protected void process(A a) {
-            child.process(mapper.map(a));
-        }
-    }
-
-    static class FlowReduce<T> extends FinishFlow<T, T> {
-        private final Reducer<T> reducer;
-        private T prev;
-
-        public FlowReduce(T def, Reducer<T> reducer) {
-            this.reducer = reducer;
-            prev = def;
-        }
-
-        @Override
-        protected void process(T t) {
-            if (prev == null)
-                prev = t;
-            else
-                prev = reducer.reduce(prev, t);
-        }
-
-        @Override
-        protected T get() {
-            return prev;
-        }
-    }
-
-    static class FlowCount<A> extends FinishFlow<A, Integer> {
-        private int count = 0;
-
-        @Override
-        protected void process(A a) {
-            count++;
-        }
-
-        @Override
-        public Integer get() {
-            return count;
-        }
-
-        public int getCount() {
-            return count;
-        }
-    }
-
-    static class FlowCollect<A, C extends Collection<A>> extends FinishFlow<A, C> {
-        private C collection;
-
-        FlowCollect(C collection) {
-            this.collection = collection;
-        }
-
-        @Override
-        protected void process(A a) {
-            collection.add(a);
-        }
-
-        @Override
-        public C get() {
-            return collection;
-        }
-    }
-
-    static class FlowFirst<A> extends FinishFlow<A, A> {
-        private A first;
-
-        public FlowFirst(A def) {
-            first = def;
-        }
-
-        @Override
-        protected void process(A a) {
-            first = a;
-            parent.stop();
-            onEnd();
-        }
-
-        @Override
-        public A get() {
-            return first;
-        }
-    }
-
-    static class FlowLast<A> extends FinishFlow<A, A> {
-        private A last;
-
-        public FlowLast(A def) {
-            last = def;
-        }
-
-        @Override
-        protected void process(A a) {
-            last = a;
-        }
-
-        @Override
-        public A get() {
-            return last;
-        }
-    }
-
-    static class FlowMin<A> extends FinishFlow<A, A> {
-        private A min;
-
-        public FlowMin(A def) {
-            min = def;
-        }
-
-        @Override
-        protected void process(A a) {
-            if (min == null || ((Comparable<A>) min).compareTo(a) > 0)
-                min = a;
-        }
-
-        @Override
-        public A get() {
-            return min;
-        }
-    }
-
-    static class FlowMax<A> extends FinishFlow<A, A> {
-        private A max;
-
-        public FlowMax(A def) {
-            max = def;
-        }
-
-        @Override
-        protected void process(A a) {
-            if (max == null || ((Comparable<A>) max).compareTo(a) < 0)
-                max = a;
-        }
-
-        @Override
-        public A get() {
-            return max;
-        }
-    }
-
-    static class FlowJoin<A> extends FinishFlow<A, String> {
-        private StringBuilder sb;
-        private String separator;
-
-        public FlowJoin(StringBuilder sb, String separator) {
-            this.sb = sb;
-            this.separator = separator;
-        }
-
-        @Override
-        protected void process(A a) {
-            StringBuilder sb = this.sb;
-            if (sb.length() > 0)
-                sb.append(separator);
-
-            sb.append(a);
-        }
-
-        @Override
-        protected String get() {
-            return sb.toString();
-        }
-    }
-
-    static class FlowMinWithComparator<A> extends FinishFlow<A, A> {
-        private A min;
-        private Comparator<? super A> comparator;
-
-        FlowMinWithComparator(A def, Comparator<? super A> comparator) {
-            this.comparator = comparator;
-            min = def;
-        }
-
-        @Override
-        protected void process(A a) {
-            if (min == null || comparator.compare(min, a) > 0)
-                min = a;
-        }
-
-        @Override
-        public A get() {
-            return min;
-        }
-    }
-
-    static class FlowMaxWithComparator<A> extends FinishFlow<A, A> {
-        private A max;
-        private Comparator<? super A> comparator;
-
-        FlowMaxWithComparator(A def, Comparator<? super A> comparator) {
-            this.comparator = comparator;
-            max = def;
-        }
-
-        @Override
-        protected void process(A a) {
-            if (max == null || comparator.compare(max, a) < 0)
-                max = a;
-        }
-
-        @Override
-        public A get() {
-            return max;
-        }
-    }
-
-    static class FlowAnyMatch<T> extends FinishFlow<T, Boolean> {
-        final Filter<T> filter;
-        boolean result;
-
-        FlowAnyMatch(Filter<T> filter) {
-            this.filter = filter;
-        }
-
-        @Override
-        protected void process(T t) {
-            if (filter.allow(t)) {
-                result = true;
-                parent.stop();
-            }
-        }
-
-        @Override
-        protected Boolean get() {
-            return result;
-        }
-    }
-
-    static class FlowAllMatch<T> extends FinishFlow<T, Boolean> {
-        final Filter<T> filter;
-        boolean result = true;
-
-        FlowAllMatch(Filter<T> filter) {
-            this.filter = filter;
-        }
-
-        @Override
-        protected void process(T t) {
-            if (!filter.allow(t)) {
-                result = false;
-                parent.stop();
-            }
-        }
-
-        @Override
-        protected Boolean get() {
-            return result;
-        }
-    }
-
-    static class FlowNoneMatch<T> extends FinishFlow<T, Boolean> {
-        final Filter<T> filter;
-        boolean result = true;
-
-        FlowNoneMatch(Filter<T> filter) {
-            this.filter = filter;
-        }
-
-        @Override
-        protected void process(T t) {
-            if (filter.allow(t)) {
-                result = false;
-                parent.stop();
-            }
-        }
-
-        @Override
-        protected Boolean get() {
-            return result;
-        }
-    }
 }

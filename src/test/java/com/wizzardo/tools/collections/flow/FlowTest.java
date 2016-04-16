@@ -1,5 +1,6 @@
 package com.wizzardo.tools.collections.flow;
 
+import com.wizzardo.tools.collections.flow.flows.FlowCount;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -639,7 +640,7 @@ public class FlowTest {
     @Test
     public void improveCoverage() {
         Assert.assertEquals(null, new Flow().get());
-        Assert.assertEquals(Integer.valueOf(0), new Flow.FlowCount().get());
+        Assert.assertEquals(Integer.valueOf(0), new FlowCount().get());
     }
 
     @Test
@@ -724,7 +725,7 @@ public class FlowTest {
 
     static class IllegalState extends Flow {
         @Override
-        protected void process(Object o) {
+        public void process(Object o) {
             throw new IllegalStateException();
         }
     }

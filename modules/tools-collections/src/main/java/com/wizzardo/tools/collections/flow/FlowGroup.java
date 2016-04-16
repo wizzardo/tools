@@ -1,16 +1,17 @@
 package com.wizzardo.tools.collections.flow;
 
+import com.wizzardo.tools.collections.flow.flows.FlowNoop;
+
 /**
  * Created by wizzardo on 08.11.15.
  */
 public class FlowGroup<K, T> extends Flow<T, T> {
     public final K key;
-
     private boolean stopped;
 
-    FlowGroup(K key) {
+    public FlowGroup(K key) {
         this.key = key;
-        child = new NoopFlow<T>();
+        child = new FlowNoop<T>();
     }
 
     public K getKey() {
@@ -18,7 +19,7 @@ public class FlowGroup<K, T> extends Flow<T, T> {
     }
 
     @Override
-    protected void process(T t) {
+    public void process(T t) {
         if (stopped)
             return;
 
