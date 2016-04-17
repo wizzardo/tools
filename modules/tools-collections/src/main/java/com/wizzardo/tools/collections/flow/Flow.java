@@ -109,6 +109,9 @@ public class Flow<A, B> {
         return then(new FlowEachWithIndex<B>(consumer));
     }
 
+    /**
+     * converts B into T with Mapper, ignores null-values
+     */
     public <T> Flow<B, T> map(Mapper<? super B, T> mapper) {
         return then(new FlowMap<B, T>(mapper));
     }

@@ -15,6 +15,8 @@ public class FlowMap<A, B> extends Flow<A, B> {
 
     @Override
     public void process(A a) {
-        child.process(mapper.map(a));
+        B b = mapper.map(a);
+        if (b != null)
+            child.process(b);
     }
 }
