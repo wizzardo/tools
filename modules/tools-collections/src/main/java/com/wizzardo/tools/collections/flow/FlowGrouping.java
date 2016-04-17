@@ -77,7 +77,7 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
         return then(new FlowMerge<B, T>());
     }
 
-    public <V> Flow<B, V> merge(Mapper<? super B, ? extends Flow<V, V>> mapper) {
+    public <V> Flow<B, V> merge(Mapper<? super B, ? extends Flow<? extends V, ? extends V>> mapper) {
         return then(new FlowMapMerge<B, V>(mapper));
     }
 }
