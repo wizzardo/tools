@@ -93,7 +93,7 @@ public class Flow<A, B> {
         return then(new FlowReduce<B>(def, reducer)).startAndGet();
     }
 
-    public <T> Flow<B, T> merge(Mapper<? super B, ? extends Flow<T, T>> mapper) {
+    public <T> Flow<B, T> merge(Mapper<? super B, ? extends Flow<? extends T, ? extends T>> mapper) {
         return then(new FlowMapMerge<B, T>(mapper));
     }
 
