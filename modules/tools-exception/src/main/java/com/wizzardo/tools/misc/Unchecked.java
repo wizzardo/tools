@@ -64,6 +64,25 @@ public class Unchecked {
         }
     }
 
+    public static void ignore(UncheckedRunnable runnable) {
+        try {
+            runnable.run();
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static <T> T ignore(Callable<T> callable) {
+        return ignore(callable, null);
+    }
+
+    public static <T> T ignore(Callable<T> callable, T def) {
+        try {
+            return callable.call();
+        } catch (Exception ignored) {
+        }
+        return def;
+    }
+
     public interface UncheckedRunnable {
         void run() throws Exception;
     }
