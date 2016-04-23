@@ -786,6 +786,21 @@ public class FlowTest {
     }
 
     @Test
+    public void test_each_with_index_3() {
+        final StringBuilder sb = new StringBuilder();
+        Flow.of(2, 4, 6).each(new ConsumerWithInt<Integer>() {
+            @Override
+            public void consume(int i, Integer integer) {
+                if (sb.length() != 0)
+                    sb.append(", ");
+                sb.append(i);
+            }
+        }).first();
+
+        Assert.assertEquals("0", sb.toString());
+    }
+
+    @Test
     public void test_anyMatch() {
         Assert.assertTrue(Flow.of(1, 2, 3).anyMatch(new Filter<Integer>() {
             @Override
