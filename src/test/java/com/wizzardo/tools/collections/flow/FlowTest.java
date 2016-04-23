@@ -822,6 +822,29 @@ public class FlowTest {
     }
 
     @Test
+    public void test_each_with_index_4() {
+        final StringBuilder sb = new StringBuilder();
+        Flow.of(2, 4, 6)
+                .groupBy(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer;
+                    }
+                })
+                .each(new ConsumerWithInt<FlowGroup<Integer, Integer>>() {
+                    @Override
+                    public void consume(int i, FlowGroup<Integer, Integer> integerIntegerFlowGroup) {
+                        if (sb.length() != 0)
+                            sb.append(", ");
+                        sb.append(i);
+                    }
+                })
+                .first();
+
+        Assert.assertEquals("0", sb.toString());
+    }
+
+    @Test
     public void test_anyMatch() {
         Assert.assertTrue(Flow.of(1, 2, 3).anyMatch(new Filter<Integer>() {
             @Override
