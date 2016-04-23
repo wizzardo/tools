@@ -230,6 +230,27 @@ public class FlowTest {
     }
 
     @Test
+    public void test_each_3() {
+        final AtomicInteger counter = new AtomicInteger();
+
+        Flow.of(1, 2, 3)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                })
+                .each(new Consumer<FlowGroup<Boolean, Integer>>() {
+                    @Override
+                    public void consume(FlowGroup<Boolean, Integer> group) {
+                        counter.incrementAndGet();
+                    }
+                }).first();
+
+        Assert.assertEquals(1, counter.get());
+    }
+
+    @Test
     public void test_first() {
         Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).first());
     }
