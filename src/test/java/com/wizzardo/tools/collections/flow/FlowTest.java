@@ -891,4 +891,9 @@ public class FlowTest {
             }
         }));
     }
+
+    @Test
+    public void test_skip() {
+        Assert.assertEquals("3,4,5", Flow.of(1, 2, 3, 4, 5).skip(2).join(","));
+    }
 }
