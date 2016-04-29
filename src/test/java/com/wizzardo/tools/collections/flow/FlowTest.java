@@ -896,4 +896,9 @@ public class FlowTest {
     public void test_skip() {
         Assert.assertEquals("3,4,5", Flow.of(1, 2, 3, 4, 5).skip(2).join(","));
     }
+
+    @Test
+    public void test_limit() {
+        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5).limit(3).join(","));
+    }
 }
