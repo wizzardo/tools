@@ -101,6 +101,10 @@ public class Flow<A, B> {
         return then(new FlowFilter<B>(filter));
     }
 
+    public Flow<B, B> skip(int number) {
+        return then(new FlowSkip<B>(number));
+    }
+
     public Flow<B, B> each(Consumer<? super B> consumer) {
         return then(new FlowEach<B>(consumer));
     }
