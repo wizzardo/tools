@@ -105,6 +105,10 @@ public class Flow<A, B> {
         return then(new FlowSkip<B>(number));
     }
 
+    public Flow<B, B> limit(int number) {
+        return then(new FlowLimit<B>(number));
+    }
+
     public Flow<B, B> each(Consumer<? super B> consumer) {
         return then(new FlowEach<B>(consumer));
     }
