@@ -60,6 +60,21 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
     }
 
     @Override
+    public FlowGrouping<K, T, B, B> limit(final int number) {
+        return this.then(new FlowGrouping<K, T, B, B>(new LinkedHashMap<K, FlowGroup<K, T>>()) {
+            public int counter;
+
+            @Override
+            public void process(B b) {
+                if (counter < number) {
+                    counter++;
+                    child.process(b);
+                }
+            }
+        });
+    }
+
+    @Override
     public FlowGrouping<K, T, B, B> each(final Consumer<? super B> consumer) {
         return this.then(new FlowGrouping<K, T, B, B>(groups) {
             @Override
