@@ -898,6 +898,24 @@ public class FlowTest {
     }
 
     @Test
+    public void test_skip_2() {
+        Assert.assertEquals("3,4,5", Flow.of(1, 2, 3, 4, 5)
+                .groupBy(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer;
+                    }
+                })
+                .skip(2)
+                .map(new Mapper<FlowGroup<Integer, Integer>, Integer>() {
+                    @Override
+                    public Integer map(FlowGroup<Integer, Integer> group) {
+                        return group.key;
+                    }
+                }).join(","));
+    }
+
+    @Test
     public void test_limit() {
         Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5).limit(3).join(","));
     }
