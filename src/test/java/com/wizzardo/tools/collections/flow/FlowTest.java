@@ -919,4 +919,24 @@ public class FlowTest {
     public void test_limit() {
         Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5).limit(3).join(","));
     }
+
+    @Test
+    public void test_limit_2() {
+        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5)
+
+                .groupBy(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer;
+                    }
+                })
+                .limit(3)
+                .map(new Mapper<FlowGroup<Integer, Integer>, Integer>() {
+                    @Override
+                    public Integer map(FlowGroup<Integer, Integer> group) {
+                        return group.key;
+                    }
+                })
+                .join(","));
+    }
 }
