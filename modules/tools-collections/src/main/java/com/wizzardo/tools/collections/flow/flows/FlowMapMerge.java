@@ -17,16 +17,16 @@ public class FlowMapMerge<A, B> extends Flow<A, B> {
         protected void onEnd() {
         }
     };
-    final Mapper<? super A, ? extends Flow<? extends B, ? extends B>> mapper;
+    final Mapper<? super A, ? extends Flow<?, ? extends B>> mapper;
 
-    public FlowMapMerge(Mapper<? super A, ? extends Flow<? extends B, ? extends B>> mapper) {
+    public FlowMapMerge(Mapper<? super A, ? extends Flow<?, ? extends B>> mapper) {
         this.mapper = mapper;
     }
 
 
     @Override
     public void process(A a) {
-        Flow<? extends B, ? extends B> l = mapper.map(a);
+        Flow<?, ? extends B> l = mapper.map(a);
         setChildTo(l, proxy);
         start(l);
     }
