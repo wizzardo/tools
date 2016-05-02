@@ -845,14 +845,14 @@ public class FlowTest {
     }
 
     @Test
-    public void test_anyMatch() {
-        Assert.assertTrue(Flow.of(1, 2, 3).anyMatch(new Filter<Integer>() {
+    public void test_any() {
+        Assert.assertTrue(Flow.of(1, 2, 3).any(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 == 0;
             }
         }));
-        Assert.assertFalse(Flow.of(1, 3, 5).anyMatch(new Filter<Integer>() {
+        Assert.assertFalse(Flow.of(1, 3, 5).any(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 == 0;
@@ -861,14 +861,14 @@ public class FlowTest {
     }
 
     @Test
-    public void test_allMatch() {
-        Assert.assertTrue(Flow.of(1, 3, 5).allMatch(new Filter<Integer>() {
+    public void test_all() {
+        Assert.assertTrue(Flow.of(1, 3, 5).all(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 != 0;
             }
         }));
-        Assert.assertFalse(Flow.of(1, 2, 3).allMatch(new Filter<Integer>() {
+        Assert.assertFalse(Flow.of(1, 2, 3).all(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 != 0;
@@ -877,14 +877,14 @@ public class FlowTest {
     }
 
     @Test
-    public void test_noneMatch() {
-        Assert.assertTrue(Flow.of(1, 3, 5).noneMatch(new Filter<Integer>() {
+    public void test_none() {
+        Assert.assertTrue(Flow.of(1, 3, 5).none(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 == 0;
             }
         }));
-        Assert.assertFalse(Flow.of(1, 2, 3).noneMatch(new Filter<Integer>() {
+        Assert.assertFalse(Flow.of(1, 2, 3).none(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 != 0;
@@ -938,5 +938,21 @@ public class FlowTest {
                     }
                 })
                 .join(","));
+    }
+
+    @Test
+    public void test_limit_3() {
+        Assert.assertEquals("{1=[1], 2=[2], 3=[3]}", Flow.of(1, 2, 3, 4, 5)
+
+                .groupBy(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer;
+                    }
+                })
+                .limit(3)
+                .toMap()
+                .toString()
+        );
     }
 }

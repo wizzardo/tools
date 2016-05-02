@@ -194,15 +194,15 @@ public class Flow<A, B> {
         return then(new FlowMax<B>(def)).startAndGet();
     }
 
-    public boolean anyMatch(Filter<B> filter) {
+    public boolean any(Filter<B> filter) {
         return then(new FlowAnyMatch<B>(filter)).startAndGet();
     }
 
-    public boolean allMatch(Filter<B> filter) {
+    public boolean all(Filter<B> filter) {
         return then(new FlowAllMatch<B>(filter)).startAndGet();
     }
 
-    public boolean noneMatch(Filter<B> filter) {
+    public boolean none(Filter<B> filter) {
         return then(new FlowNoneMatch<B>(filter)).startAndGet();
     }
 
