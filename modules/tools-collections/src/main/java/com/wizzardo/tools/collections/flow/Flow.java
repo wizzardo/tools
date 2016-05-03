@@ -269,6 +269,10 @@ public class Flow<A, B> {
         return FlowStart.of(array);
     }
 
+    public static <T> Flow<T, T> of(Supplier<T> supplier) {
+        return FlowStart.of(supplier);
+    }
+
     public static Flow<Integer, Integer> of(final int[] array) {
         return FlowStart.of(array);
     }

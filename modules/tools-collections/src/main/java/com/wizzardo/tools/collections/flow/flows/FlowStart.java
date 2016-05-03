@@ -1,6 +1,7 @@
 package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.Flow;
+import com.wizzardo.tools.collections.flow.Supplier;
 
 import java.util.Iterator;
 
@@ -60,6 +61,21 @@ public abstract class FlowStart<T> extends Flow<T, T> {
             protected void process() {
                 Flow<T, ?> child = this.child;
                 for (T t : array) {
+                    if (stop)
+                        break;
+                    child.process(t);
+                }
+            }
+        };
+    }
+
+    public static <T> Flow<T, T> of(final Supplier<T> supplier) {
+        return new FlowStart<T>() {
+            @Override
+            protected void process() {
+                Flow<T, ?> child = this.child;
+                T t;
+                while ((t = supplier.supply()) != null) {
                     if (stop)
                         break;
                     child.process(t);
