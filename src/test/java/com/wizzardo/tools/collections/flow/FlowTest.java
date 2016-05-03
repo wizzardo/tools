@@ -923,7 +923,6 @@ public class FlowTest {
     @Test
     public void test_limit_2() {
         Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5)
-
                 .groupBy(new Mapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer) {
@@ -943,7 +942,6 @@ public class FlowTest {
     @Test
     public void test_limit_3() {
         Assert.assertEquals("{1=[1], 2=[2], 3=[3]}", Flow.of(1, 2, 3, 4, 5)
-
                 .groupBy(new Mapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer) {
@@ -954,5 +952,17 @@ public class FlowTest {
                 .toMap()
                 .toString()
         );
+    }
+
+    @Test
+    public void test_supplier() {
+        final int[] ints = new int[]{1, 2, 3};
+        final AtomicInteger i = new AtomicInteger();
+        Assert.assertEquals("1,2,3", Flow.of(new Supplier<Integer>() {
+            @Override
+            public Integer supply() {
+                return i.get() < ints.length ? ints[i.getAndIncrement()] : null;
+            }
+        }).join(","));
     }
 }
