@@ -18,6 +18,8 @@ public class FlowLimit<T> extends Flow<T, T> {
         if (counter < number) {
             counter++;
             child.process(t);
+        } else {
+            stop();
         }
     }
 }
