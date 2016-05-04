@@ -955,6 +955,18 @@ public class FlowTest {
     }
 
     @Test
+    public void test_limit_4() {
+        final AtomicInteger i = new AtomicInteger();
+        Assert.assertEquals("0,1,2", Flow.of(new Supplier<Integer>() {
+            @Override
+            public Integer supply() {
+                Assert.assertTrue(i.get() < 5);
+                return i.get() < 5 ? i.getAndIncrement() : null;
+            }
+        }).limit(3).join(","));
+    }
+
+    @Test
     public void test_supplier() {
         final int[] ints = new int[]{1, 2, 3};
         final AtomicInteger i = new AtomicInteger();
