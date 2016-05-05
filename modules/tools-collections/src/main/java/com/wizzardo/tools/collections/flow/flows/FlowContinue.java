@@ -1,14 +1,15 @@
 package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.Flow;
+import com.wizzardo.tools.collections.flow.FlowProcessor;
 
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowContinue<T> extends Flow<T, T> {
-    protected final Flow<?, ?> flow;
+public class FlowContinue<T> extends FlowProcessor<T, T> {
+    protected final Flow<?> flow;
 
-    public FlowContinue(Flow<?, ?> flow) {
+    public FlowContinue(Flow<?> flow) {
         this.flow = flow;
     }
 

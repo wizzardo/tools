@@ -392,9 +392,9 @@ public class FlowTest {
     @Test
     public void test_merge_3() {
         List<Integer> result = Flow.of(new int[]{1, 2}, new int[]{3, 4}, new int[]{5, 6})
-                .merge(new Mapper<int[], Flow<Integer, Integer>>() {
+                .merge(new Mapper<int[], Flow<Integer>>() {
                     @Override
-                    public Flow<Integer, Integer> map(int[] ints) {
+                    public Flow<Integer> map(int[] ints) {
                         return Flow.of(ints);
                     }
                 })
@@ -424,9 +424,9 @@ public class FlowTest {
                         return group.getKey();
                     }
                 })
-                .merge(new Mapper<FlowGroup<Boolean, Integer>, Flow<Integer, Integer>>() {
+                .merge(new Mapper<FlowGroup<Boolean, Integer>, Flow<Integer>>() {
                     @Override
-                    public Flow<Integer, Integer> map(FlowGroup<Boolean, Integer> group) {
+                    public Flow<Integer> map(FlowGroup<Boolean, Integer> group) {
                         return group.map(new Mapper<Integer, Integer>() {
                             @Override
                             public Integer map(Integer integer) {
@@ -744,7 +744,7 @@ public class FlowTest {
         Assert.assertEquals(null, flow.get());
     }
 
-    static class IllegalState extends Flow {
+    static class IllegalState extends FlowProcessor {
         @Override
         public void process(Object o) {
             throw new IllegalStateException();

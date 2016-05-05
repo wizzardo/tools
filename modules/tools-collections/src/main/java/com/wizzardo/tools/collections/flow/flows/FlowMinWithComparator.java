@@ -1,11 +1,13 @@
 package com.wizzardo.tools.collections.flow.flows;
 
+import com.wizzardo.tools.collections.flow.FlowProcessor;
+
 import java.util.Comparator;
 
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowMinWithComparator<A> extends FlowFinish<A, A> {
+public class FlowMinWithComparator<A> extends FlowProcessor<A, A> {
     private A min;
     private final Comparator<? super A> comparator;
 

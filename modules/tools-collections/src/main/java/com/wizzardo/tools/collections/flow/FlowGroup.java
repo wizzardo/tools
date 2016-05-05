@@ -5,7 +5,7 @@ import com.wizzardo.tools.collections.flow.flows.FlowNoop;
 /**
  * Created by wizzardo on 08.11.15.
  */
-public class FlowGroup<K, T> extends Flow<T, T> {
+public class FlowGroup<K, T> extends FlowProcessor<T, T> {
     public final K key;
     private boolean stopped;
 

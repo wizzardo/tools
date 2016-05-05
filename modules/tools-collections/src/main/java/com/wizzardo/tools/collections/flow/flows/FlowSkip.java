@@ -1,11 +1,11 @@
 package com.wizzardo.tools.collections.flow.flows;
 
-import com.wizzardo.tools.collections.flow.Flow;
+import com.wizzardo.tools.collections.flow.FlowProcessor;
 
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowSkip<T> extends Flow<T, T> {
+public class FlowSkip<T> extends FlowProcessor<T, T> {
     private final int number;
     private int counter = 0;
 

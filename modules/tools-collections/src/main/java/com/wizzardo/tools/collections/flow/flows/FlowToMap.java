@@ -1,7 +1,7 @@
 package com.wizzardo.tools.collections.flow.flows;
 
-import com.wizzardo.tools.collections.flow.Flow;
 import com.wizzardo.tools.collections.flow.FlowGroup;
+import com.wizzardo.tools.collections.flow.FlowProcessor;
 import com.wizzardo.tools.collections.flow.Mapper;
 
 import java.util.Map;
@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowToMap<K, V, B extends FlowGroup<K, ?>> extends FlowFinish<B, Map<K, V>> {
+public class FlowToMap<K, V, B extends FlowGroup<K, ?>> extends FlowProcessor<B,Map<K,V>> {
     private final Map<K, V> groups;
     private final Mapper<? super B, V> mapper;
 
@@ -21,7 +21,7 @@ public class FlowToMap<K, V, B extends FlowGroup<K, ?>> extends FlowFinish<B, Ma
     @Override
     public void process(final B b) {
         mapper.map(b);
-        getLast(b).then(new FlowOnEnd<V>(new Flow<V, V>() {
+        getLast(b).then(new FlowOnEnd<V>(new FlowProcessor<V, V>() {
             @Override
             public void process(V v) {
                 groups.put(b.getKey(), v);

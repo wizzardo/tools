@@ -1,11 +1,12 @@
 package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.Filter;
+import com.wizzardo.tools.collections.flow.FlowProcessor;
 
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowNoneMatch<T> extends FlowFinish<T, Boolean> {
+public class FlowNoneMatch<T> extends FlowProcessor<T, Boolean> {
     final Filter<T> filter;
     boolean result = true;
 

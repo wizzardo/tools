@@ -1,11 +1,12 @@
 package com.wizzardo.tools.collections.flow.flows;
 
+import com.wizzardo.tools.collections.flow.FlowProcessor;
 import com.wizzardo.tools.collections.flow.Reducer;
 
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowReduce<T> extends FlowFinish<T, T> {
+public class FlowReduce<T> extends FlowProcessor<T, T> {
     private final Reducer<T> reducer;
     private T prev;
 

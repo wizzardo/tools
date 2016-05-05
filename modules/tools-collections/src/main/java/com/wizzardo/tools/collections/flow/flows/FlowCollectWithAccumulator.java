@@ -1,11 +1,12 @@
 package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.BiConsumer;
+import com.wizzardo.tools.collections.flow.FlowProcessor;
 
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowCollectWithAccumulator<C, T> extends FlowFinish<T, C> {
+public class FlowCollectWithAccumulator<C, T> extends FlowProcessor<T, C> {
     private final BiConsumer<? super C, ? super T> accumulator;
     private final C collector;
 

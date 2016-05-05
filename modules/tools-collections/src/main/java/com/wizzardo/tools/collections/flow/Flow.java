@@ -7,28 +7,23 @@ import java.util.*;
 /**
  * Created by wizzardo on 08.11.15.
  */
-public class Flow<A, B> {
-    protected Flow<?, A> parent;
-    protected Flow<B, ?> child;
+public class Flow<B> {
+    protected FlowProcessor<B, ?> child;
 
-    public void process(A a) {
-    }
-
-    public <T extends Flow<B, C>, C> T then(T command) {
+    public <T extends FlowProcessor<B, C>, C> T then(T command) {
         command.parent = this;
         this.child = command;
         return command;
     }
 
     protected void start() {
-        parent.start();
     }
 
     protected void start(Flow flow) {
         flow.start();
     }
 
-    protected void setChildTo(Flow parent, Flow child) {
+    protected void setChildTo(Flow parent, FlowProcessor child) {
         parent.child = child;
     }
 
@@ -42,7 +37,6 @@ public class Flow<A, B> {
     }
 
     protected void stop() {
-        parent.stop();
     }
 
     protected void stop(Flow flow) {
@@ -93,34 +87,34 @@ public class Flow<A, B> {
         return then(new FlowReduce<B>(def, reducer)).startAndGet();
     }
 
-    public <T> Flow<B, T> merge(Mapper<? super B, ? extends Flow<?, ? extends T>> mapper) {
+    public <T> Flow<T> merge(Mapper<? super B, ? extends Flow<? extends T>> mapper) {
         return then(new FlowMapMerge<B, T>(mapper));
     }
 
-    public Flow<B, B> filter(Filter<? super B> filter) {
+    public Flow<B> filter(Filter<? super B> filter) {
         return then(new FlowFilter<B>(filter));
     }
 
-    public Flow<B, B> skip(int number) {
+    public Flow<B> skip(int number) {
         return then(new FlowSkip<B>(number));
     }
 
-    public Flow<B, B> limit(int number) {
+    public Flow<B> limit(int number) {
         return then(new FlowLimit<B>(number));
     }
 
-    public Flow<B, B> each(Consumer<? super B> consumer) {
+    public Flow<B> each(Consumer<? super B> consumer) {
         return then(new FlowEach<B>(consumer));
     }
 
-    public Flow<B, B> each(ConsumerWithInt<? super B> consumer) {
+    public Flow<B> each(ConsumerWithInt<? super B> consumer) {
         return then(new FlowEachWithIndex<B>(consumer));
     }
 
     /**
      * converts B into T with Mapper, ignores null-values
      */
-    public <T> Flow<B, T> map(Mapper<? super B, T> mapper) {
+    public <T> Flow<T> map(Mapper<? super B, T> mapper) {
         return then(new FlowMap<B, T>(mapper));
     }
 
@@ -253,55 +247,55 @@ public class Flow<A, B> {
     }
 
 
-    public static <T> Flow<T, T> of(final Iterable<T> iterable) {
+    public static <T> Flow<T> of(final Iterable<T> iterable) {
         return FlowStart.of(iterable);
     }
 
-    public static <T> Flow<T, T> of(final Iterator<T> iterator) {
+    public static <T> Flow<T> of(final Iterator<T> iterator) {
         return FlowStart.of(iterator);
     }
 
-    public static <K, V> Flow<Map.Entry<K, V>, Map.Entry<K, V>> of(Map<K, V> map) {
+    public static <K, V> Flow<Map.Entry<K, V>> of(Map<K, V> map) {
         return FlowStart.of(map.entrySet());
     }
 
-    public static <T> Flow<T, T> of(final T... array) {
+    public static <T> Flow<T> of(final T... array) {
         return FlowStart.of(array);
     }
 
-    public static <T> Flow<T, T> of(Supplier<T> supplier) {
+    public static <T> Flow<T> of(Supplier<T> supplier) {
         return FlowStart.of(supplier);
     }
 
-    public static Flow<Integer, Integer> of(final int[] array) {
+    public static Flow<Integer> of(final int[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Long, Long> of(final long[] array) {
+    public static Flow<Long> of(final long[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Double, Double> of(final double[] array) {
+    public static Flow<Double> of(final double[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Float, Float> of(final float[] array) {
+    public static Flow<Float> of(final float[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Byte, Byte> of(final byte[] array) {
+    public static Flow<Byte> of(final byte[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Boolean, Boolean> of(final boolean[] array) {
+    public static Flow<Boolean> of(final boolean[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Short, Short> of(final short[] array) {
+    public static Flow<Short> of(final short[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Character, Character> of(final char[] array) {
+    public static Flow<Character> of(final char[] array) {
         return FlowStart.of(array);
     }
 

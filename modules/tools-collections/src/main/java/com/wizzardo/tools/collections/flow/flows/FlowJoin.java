@@ -1,9 +1,11 @@
 package com.wizzardo.tools.collections.flow.flows;
 
+import com.wizzardo.tools.collections.flow.FlowProcessor;
+
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowJoin<A> extends FlowFinish<A, String> {
+public class FlowJoin<A> extends FlowProcessor<A, String> {
     private final StringBuilder sb;
     private final String separator;
 

@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Created by wizzardo on 08.11.15.
  */
-public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B> {
+public abstract class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends FlowProcessor<A, B> {
 
     protected final Map<K, FlowGroup<K, T>> groups;
 
@@ -17,7 +17,7 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
         this.groups = groups;
     }
 
-    public <V> Flow<V, V> flatMap(Mapper<? super B, V> mapper) {
+    public <V> Flow<V> flatMap(Mapper<? super B, V> mapper) {
         FlowContinue<V> continueCommand = new FlowContinue<V>(this);
         then(new FlowFlatMap<K, V, B>(mapper, continueCommand));
         return continueCommand;
@@ -81,7 +81,7 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
             public void process(B b) {
                 consumer.consume(b);
 
-                Flow<B, ?> child = this.child;
+                FlowProcessor<B, ?> child = this.child;
                 if (child != null)
                     child.process(b);
             }
@@ -96,18 +96,18 @@ public class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends Flow<A, B>
             public void process(B b) {
                 consumer.consume(index++, b);
 
-                Flow<B, ?> child = this.child;
+                FlowProcessor<B, ?> child = this.child;
                 if (child != null)
                     child.process(b);
             }
         });
     }
 
-    public Flow<B, T> merge() {
+    public Flow<T> merge() {
         return then(new FlowMerge<B, T>());
     }
 
-    public <V> Flow<B, V> merge(Mapper<? super B, ? extends Flow<?, ? extends V>> mapper) {
+    public <V> Flow<V> merge(Mapper<? super B, ? extends Flow<? extends V>> mapper) {
         return then(new FlowMapMerge<B, V>(mapper));
     }
 }
