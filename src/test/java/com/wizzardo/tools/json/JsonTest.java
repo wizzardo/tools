@@ -1002,7 +1002,7 @@ public class JsonTest {
         Assert.assertEquals(1, JsonUtils.parseValue(null, "1   ".toCharArray(), 0, 4, ' '));
         Assert.assertEquals(4, JsonUtils.parseKey(null, "k  : ".toCharArray(), 0, 5));
 
-        FieldInfo.charTree.append("k\\\"ey", "k\\\"ey");
+        Binder.fieldsNames.append("k\\\"ey", "k\\\"ey");
         Assert.assertEquals(8, JsonUtils.parseKey(null, "'k\\\"ey':value".toCharArray(), 0, 15));
 
         testException(new Runnable() {

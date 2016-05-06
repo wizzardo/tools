@@ -1,5 +1,6 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.misc.DateIso8601;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.FieldReflection;
@@ -18,6 +19,7 @@ public class Binder {
     private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
     private static Map<Class, Serializer> serializers = new ConcurrentHashMap<Class, Serializer>();
+    static CharTree<String> fieldsNames = new CharTree<String>();
 
     public static abstract class Serializer {
         static char[] nullArray = new char[]{'n', 'u', 'l', 'l'};
@@ -402,31 +404,46 @@ public class Binder {
     public static Map<String, FieldInfo> getFields(Class clazz) {
         Map<String, FieldInfo> fields = cachedFields.get(clazz);
         if (fields == null) {
-            fields = new LinkedHashMap<String, FieldInfo>();
-            Class cl = clazz;
-            while (cl != null) {
-                Field[] ff = cl.getDeclaredFields();
-                for (Field field : ff) {
+            synchronized (clazz) {
+                fields = cachedFields.get(clazz);
+                if (fields != null)
+                    return fields;
+                
+                fields = Collections.unmodifiableMap(readFields(clazz));
+                cachedFields.put(clazz, fields);
+            }
+        }
+        return fields;
+    }
+
+    private static Map<String, FieldInfo> readFields(Class clazz) {
+        Map<String, FieldInfo> fields = new LinkedHashMap<String, FieldInfo>();
+        Class cl = clazz;
+        while (cl != null) {
+            Field[] ff = cl.getDeclaredFields();
+            for (Field field : ff) {
 //                    System.out.println("field " + field);
-                    if (
-                            !Modifier.isTransient(field.getModifiers())
-                                    && !Modifier.isStatic(field.getModifiers())
-                                    && (field.getModifiers() & SYNTHETIC) == 0
+                if (
+                        !Modifier.isTransient(field.getModifiers())
+                                && !Modifier.isStatic(field.getModifiers())
+                                && (field.getModifiers() & SYNTHETIC) == 0
 //                                    && !Modifier.isFinal(field.getModifiers())
 //                                    && !Modifier.isPrivate(field.getModifiers())
 //                                    && !Modifier.isProtected(field.getModifiers())
-                            ) {
+                        ) {
 //                        System.out.println("add field " + field);
-                        field.setAccessible(true);
-                        if (field.getGenericType() != field.getType())
-                            fields.put(field.getName(), new FieldInfo(field, genericSerializer));
-                        else
-                            fields.put(field.getName(), new FieldInfo(field, getReturnType(field)));
-                    }
+                    field.setAccessible(true);
+
+                    if (!fieldsNames.contains(field.getName()))
+                        fieldsNames.append(field.getName(), field.getName());
+
+                    if (field.getGenericType() != field.getType())
+                        fields.put(field.getName(), new FieldInfo(field, genericSerializer));
+                    else
+                        fields.put(field.getName(), new FieldInfo(field, getReturnType(field)));
                 }
-                cl = cl.getSuperclass();
             }
-            cachedFields.put(clazz, fields);
+            cl = cl.getSuperclass();
         }
         return fields;
     }

@@ -288,7 +288,7 @@ class JsonUtils {
             from++;
         }
 
-        CharTree.CharTreeNode<String> node = FieldInfo.charTree.getRoot();
+        CharTree.CharTreeNode<String> node = Binder.fieldsNames.getRoot();
 
         int rightBorder;
         boolean escape = false;
