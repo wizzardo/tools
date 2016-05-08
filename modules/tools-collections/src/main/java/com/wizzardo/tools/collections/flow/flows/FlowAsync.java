@@ -176,7 +176,7 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
                 protected void onEnd() {
                     endTask();
                 }
-            });
+            }).execute();
         } catch (Exception ex) {
             endTask();
             throw Unchecked.rethrow(ex);
