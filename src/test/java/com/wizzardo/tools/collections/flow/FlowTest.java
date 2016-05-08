@@ -977,4 +977,17 @@ public class FlowTest {
             }
         }).join(","));
     }
+
+    @Test
+    public void test_async() {
+        List<String> result = Flow.of("a", "b", "c").async(new Mapper<String, Flow<String>>() {
+            @Override
+            public Flow<String> map(String s) {
+                return Flow.of(s.toUpperCase());
+            }
+        }).toList();
+
+        Assert.assertEquals(3, result.size());
+        Assert.assertTrue(result.containsAll(Arrays.asList("A", "B", "C")));
+    }
 }
