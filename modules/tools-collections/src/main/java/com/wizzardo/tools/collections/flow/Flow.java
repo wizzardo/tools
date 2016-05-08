@@ -188,6 +188,10 @@ public class Flow<B> {
         return then(new FlowMax<B>(def)).startAndGet();
     }
 
+    public <T> Flow<T> async(Mapper<B, Flow<T>> mapper) {
+        return then(new FlowAsync<B, T>(mapper));
+    }
+
     public boolean any(Filter<B> filter) {
         return then(new FlowAnyMatch<B>(filter)).startAndGet();
     }
