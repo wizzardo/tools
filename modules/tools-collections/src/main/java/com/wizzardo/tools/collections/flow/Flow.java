@@ -79,12 +79,12 @@ public class Flow<B> {
     }
 
 
-    public B reduce(Reducer<B> reducer) {
+    public Flow<B> reduce(Reducer<B> reducer) {
         return reduce(null, reducer);
     }
 
-    public B reduce(B def, Reducer<B> reducer) {
-        return then(new FlowReduce<B>(def, reducer)).startAndGet();
+    public Flow<B> reduce(B def, Reducer<B> reducer) {
+        return then(new FlowReduce<B>(def, reducer));
     }
 
     public <T> Flow<T> merge(Mapper<? super B, ? extends Flow<? extends T>> mapper) {
@@ -130,8 +130,9 @@ public class Flow<B> {
         return then(new FlowCollectWithAccumulator<C, B>(collector, accumulator)).startAndGet();
     }
 
-    public void execute() {
+    public Flow<B> execute() {
         start();
+        return this;
     }
 
     public int count() {
