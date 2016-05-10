@@ -27,4 +27,13 @@ public class FlowReduce<T> extends FlowProcessor<T, T> {
     public T get() {
         return prev;
     }
+
+    @Override
+    protected void onEnd() {
+        FlowProcessor<T, ?> child = this.child;
+        if (child != null) {
+            child.process(prev);
+        }
+        super.onEnd();
+    }
 }
