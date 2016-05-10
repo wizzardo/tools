@@ -317,13 +317,13 @@ public class FlowTest {
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
             }
-        }));
+        }).execute().get());
         Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).reduce(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
             }
-        }));
+        }).execute().get());
     }
 
     @Test
