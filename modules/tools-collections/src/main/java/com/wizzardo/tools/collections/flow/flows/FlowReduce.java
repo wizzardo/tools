@@ -1,12 +1,11 @@
 package com.wizzardo.tools.collections.flow.flows;
 
-import com.wizzardo.tools.collections.flow.FlowProcessor;
 import com.wizzardo.tools.collections.flow.Reducer;
 
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowReduce<T> extends FlowProcessor<T, T> {
+public class FlowReduce<T> extends FlowProcessOnEnd<T, T> {
     private final Reducer<T> reducer;
     private T prev;
 
@@ -17,23 +16,15 @@ public class FlowReduce<T> extends FlowProcessor<T, T> {
 
     @Override
     public void process(T t) {
+        T prev = this.prev;
         if (prev == null)
-            prev = t;
+            this.prev = t;
         else
-            prev = reducer.reduce(prev, t);
+            this.prev = reducer.reduce(prev, t);
     }
 
     @Override
     public T get() {
         return prev;
-    }
-
-    @Override
-    protected void onEnd() {
-        FlowProcessor<T, ?> child = this.child;
-        if (child != null) {
-            child.process(prev);
-        }
-        super.onEnd();
     }
 }
