@@ -19,42 +19,41 @@ public class Flow<B> {
     protected void start() {
     }
 
-    protected void start(Flow flow) {
-        flow.start();
-    }
-
-    protected void setChildTo(Flow parent, FlowProcessor child) {
-        parent.child = child;
-    }
-
     protected void onEnd() {
         if (child != null)
             child.onEnd();
     }
 
-    protected void onEnd(Flow group) {
-        group.onEnd();
-    }
-
     protected void stop() {
-    }
-
-    protected void stop(Flow flow) {
-        flow.stop();
     }
 
     public B get() {
         return null;
     }
 
-    protected Flow getLast(Flow flow) {
+
+    protected static void start(Flow flow) {
+        flow.start();
+    }
+
+    protected static void setChildTo(Flow parent, FlowProcessor child) {
+        parent.child = child;
+    }
+
+    protected static void stop(Flow flow) {
+        flow.stop();
+    }
+
+    protected static void onEnd(Flow group) {
+        group.onEnd();
+    }
+    protected static Flow getLast(Flow flow) {
         Flow last = flow;
         while (last.child != null) {
             last = last.child;
         }
         return last;
     }
-
 
     public static final Supplier SUPPLIER_HASH_MAP = new Supplier<Map>() {
         @Override
