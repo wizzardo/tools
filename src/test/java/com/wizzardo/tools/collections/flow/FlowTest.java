@@ -276,7 +276,7 @@ public class FlowTest {
 
     @Test
     public void test_last() {
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).last());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).last().execute().get());
     }
 
     @Test

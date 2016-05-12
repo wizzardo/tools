@@ -52,6 +52,7 @@ public class Flow<B> {
     protected static void onEnd(Flow group) {
         group.onEnd();
     }
+
     protected static Flow getLast(Flow flow) {
         Flow last = flow;
         while (last.child != null) {
@@ -146,12 +147,12 @@ public class Flow<B> {
         return then(new FlowFirst<B>(def));
     }
 
-    public B last() {
+    public Flow<B> last() {
         return last(null);
     }
 
-    public B last(B def) {
-        return then(new FlowLast<B>(def)).startAndGet();
+    public Flow<B> last(B def) {
+        return then(new FlowLast<B>(def));
     }
 
     public B min(Comparator<? super B> comparator) {
