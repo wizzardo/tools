@@ -335,7 +335,9 @@ public class FlowTest {
                     public void consume(List<Integer> integers, Integer integer) {
                         integers.add(integer * 2);
                     }
-                });
+                })
+                .execute()
+                .get();
 
         Assert.assertSame(list, result);
         Assert.assertEquals(3, result.size());

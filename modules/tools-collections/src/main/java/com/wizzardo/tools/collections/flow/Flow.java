@@ -125,8 +125,8 @@ public class Flow<B> {
         return this.then(new FlowGroupBy<K, B>(groupMapSupplier, toKey));
     }
 
-    public <C> C collect(C collector, BiConsumer<? super C, ? super B> accumulator) {
-        return then(new FlowCollectWithAccumulator<C, B>(collector, accumulator)).startAndGet();
+    public <C> Flow<C> collect(C collector, BiConsumer<? super C, ? super B> accumulator) {
+        return then(new FlowCollectWithAccumulator<C, B>(collector, accumulator));
     }
 
     public Flow<B> execute() {
