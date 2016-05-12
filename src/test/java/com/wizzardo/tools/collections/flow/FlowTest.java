@@ -447,7 +447,7 @@ public class FlowTest {
 
     @Test
     public void test_count() {
-        int result = Flow.of(1, 2, 3, 4, 5, 6).count();
+        int result = Flow.of(1, 2, 3, 4, 5, 6).count().execute().get();
 
         Assert.assertEquals(6, result);
     }
@@ -489,7 +489,7 @@ public class FlowTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Flow.of(list).count();
+        int result = Flow.of(list).count().execute().get();
 
         Assert.assertEquals(3, result);
     }

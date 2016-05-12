@@ -16,6 +16,11 @@ public class Flow<B> {
         return command;
     }
 
+    public Flow<B> execute() {
+        start();
+        return this;
+    }
+
     protected void start() {
     }
 
@@ -129,15 +134,8 @@ public class Flow<B> {
         return then(new FlowCollectWithAccumulator<C, B>(collector, accumulator));
     }
 
-    public Flow<B> execute() {
-        start();
-        return this;
-    }
-
-    public int count() {
-        FlowCount<B> count = then(new FlowCount<B>());
-        count.start();
-        return count.getCount();
+    public Flow<Integer> count() {
+        return then(new FlowCount<B>());
     }
 
     public B first() {
