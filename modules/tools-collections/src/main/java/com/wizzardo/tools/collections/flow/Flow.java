@@ -138,12 +138,12 @@ public class Flow<B> {
         return then(new FlowCount<B>());
     }
 
-    public B first() {
+    public Flow<B> first() {
         return first(null);
     }
 
-    public B first(B def) {
-        return then(new FlowFirst<B>(def)).startAndGet();
+    public Flow<B> first(B def) {
+        return then(new FlowFirst<B>(def));
     }
 
     public B last() {

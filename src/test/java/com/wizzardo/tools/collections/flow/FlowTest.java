@@ -93,7 +93,7 @@ public class FlowTest {
                 .flatMap(new Mapper<FlowGroup<Boolean, Integer>, Integer>() {
                     @Override
                     public Integer map(FlowGroup<Boolean, Integer> group) {
-                        return group.first();
+                        return group.first().execute().get();
                     }
                 })
                 .toSortedList();
@@ -118,10 +118,12 @@ public class FlowTest {
                 .flatMap(new Mapper<FlowGroup<Boolean, Integer>, Integer>() {
                     @Override
                     public Integer map(FlowGroup<Boolean, Integer> group) {
-                        return group.first();
+                        return group.first().execute().get();
                     }
                 })
-                .first();
+                .first()
+                .execute()
+                .get();
 
         Assert.assertEquals(Integer.valueOf(1), result);
         Assert.assertEquals(1, counter.get());
@@ -245,14 +247,17 @@ public class FlowTest {
                     public void consume(FlowGroup<Boolean, Integer> group) {
                         counter.incrementAndGet();
                     }
-                }).first();
+                })
+                .first()
+                .execute()
+                .get();
 
         Assert.assertEquals(1, counter.get());
     }
 
     @Test
     public void test_first() {
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).first());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).first().execute().get());
     }
 
     @Test
@@ -264,7 +269,7 @@ public class FlowTest {
             public void consume(Integer integer) {
                 counter.incrementAndGet();
             }
-        }).first());
+        }).first().execute().get());
 
         Assert.assertEquals(1, counter.get());
     }
@@ -500,7 +505,7 @@ public class FlowTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Flow.of(list).first();
+        int result = Flow.of(list).first().execute().get();
 
         Assert.assertEquals(1, result);
     }
@@ -511,7 +516,7 @@ public class FlowTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Flow.of(list.iterator()).first();
+        int result = Flow.of(list.iterator()).first().execute().get();
 
         Assert.assertEquals(1, result);
     }
@@ -811,14 +816,18 @@ public class FlowTest {
     @Test
     public void test_each_with_index_3() {
         final StringBuilder sb = new StringBuilder();
-        Flow.of(2, 4, 6).each(new ConsumerWithInt<Integer>() {
-            @Override
-            public void consume(int i, Integer integer) {
-                if (sb.length() != 0)
-                    sb.append(", ");
-                sb.append(i);
-            }
-        }).first();
+        Flow.of(2, 4, 6)
+                .each(new ConsumerWithInt<Integer>() {
+                    @Override
+                    public void consume(int i, Integer integer) {
+                        if (sb.length() != 0)
+                            sb.append(", ");
+                        sb.append(i);
+                    }
+                })
+                .first()
+                .execute()
+                .get();
 
         Assert.assertEquals("0", sb.toString());
     }
@@ -841,7 +850,9 @@ public class FlowTest {
                         sb.append(i);
                     }
                 })
-                .first();
+                .first()
+                .execute()
+                .get();
 
         Assert.assertEquals("0", sb.toString());
     }
