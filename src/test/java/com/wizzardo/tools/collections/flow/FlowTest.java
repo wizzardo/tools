@@ -281,8 +281,8 @@ public class FlowTest {
 
     @Test
     public void test_min() {
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min());
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min().execute().get());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min().execute().get());
     }
 
     @Test
@@ -293,8 +293,8 @@ public class FlowTest {
                 return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
             }
         };
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min(comparator));
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min(comparator));
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min(comparator).execute().get());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min(comparator).execute().get());
     }
 
     @Test

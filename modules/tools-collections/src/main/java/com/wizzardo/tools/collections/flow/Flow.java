@@ -155,20 +155,20 @@ public class Flow<B> {
         return then(new FlowLast<B>(def));
     }
 
-    public B min(Comparator<? super B> comparator) {
+    public Flow<B> min(Comparator<? super B> comparator) {
         return min(null, comparator);
     }
 
-    public B min(B def, Comparator<? super B> comparator) {
-        return then(new FlowMinWithComparator<B>(def, comparator)).startAndGet();
+    public Flow<B> min(B def, Comparator<? super B> comparator) {
+        return then(new FlowMinWithComparator<B>(def, comparator));
     }
 
-    public B min() {
+    public Flow<B> min() {
         return min((B) null);
     }
 
-    public B min(B def) {
-        return then(new FlowMin<B>(def)).startAndGet();
+    public Flow<B> min(B def) {
+        return then(new FlowMin<B>(def));
     }
 
     public B max(Comparator<? super B> comparator) {
