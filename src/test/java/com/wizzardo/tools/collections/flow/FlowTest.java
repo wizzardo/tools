@@ -299,8 +299,8 @@ public class FlowTest {
 
     @Test
     public void test_max() {
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max());
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max().execute().get());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max().execute().get());
     }
 
     @Test
@@ -311,8 +311,8 @@ public class FlowTest {
                 return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
             }
         };
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max(comparator));
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max(comparator));
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max(comparator).execute().get());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max(comparator).execute().get());
     }
 
     @Test

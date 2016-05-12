@@ -171,20 +171,20 @@ public class Flow<B> {
         return then(new FlowMin<B>(def));
     }
 
-    public B max(Comparator<? super B> comparator) {
+    public Flow<B> max(Comparator<? super B> comparator) {
         return max(null, comparator);
     }
 
-    public B max(B def, Comparator<? super B> comparator) {
-        return then(new FlowMaxWithComparator<B>(def, comparator)).startAndGet();
+    public Flow<B> max(B def, Comparator<? super B> comparator) {
+        return then(new FlowMaxWithComparator<B>(def, comparator));
     }
 
-    public B max() {
+    public Flow<B> max() {
         return max((B) null);
     }
 
-    public B max(B def) {
-        return then(new FlowMax<B>(def)).startAndGet();
+    public Flow<B> max(B def) {
+        return then(new FlowMax<B>(def));
     }
 
     public <T> Flow<T> async(Mapper<B, Flow<T>> mapper) {
