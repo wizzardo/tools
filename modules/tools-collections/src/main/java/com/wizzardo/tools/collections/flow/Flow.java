@@ -199,8 +199,8 @@ public class Flow<B> {
         return then(new FlowAllMatch<B>(filter));
     }
 
-    public boolean none(Filter<B> filter) {
-        return then(new FlowNoneMatch<B>(filter)).startAndGet();
+    public Flow<Boolean> none(Filter<B> filter) {
+        return then(new FlowNoneMatch<B>(filter));
     }
 
     public List<B> toList() {
