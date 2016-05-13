@@ -191,8 +191,8 @@ public class Flow<B> {
         return then(new FlowAsync<B, T>(mapper));
     }
 
-    public boolean any(Filter<B> filter) {
-        return then(new FlowAnyMatch<B>(filter)).startAndGet();
+    public Flow<Boolean> any(Filter<B> filter) {
+        return then(new FlowAnyMatch<B>(filter));
     }
 
     public boolean all(Filter<B> filter) {
