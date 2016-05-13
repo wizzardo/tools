@@ -880,13 +880,13 @@ public class FlowTest {
             public boolean allow(Integer integer) {
                 return integer % 2 != 0;
             }
-        }));
+        }).execute().get());
         Assert.assertFalse(Flow.of(1, 2, 3).all(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 != 0;
             }
-        }));
+        }).execute().get());
     }
 
     @Test
