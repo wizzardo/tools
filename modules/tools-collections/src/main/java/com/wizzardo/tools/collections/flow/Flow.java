@@ -84,11 +84,19 @@ public class Flow<B> {
     }
 
 
-    public Flow<B> reduce(Reducer<B> reducer) {
+    public B reduce(Reducer<B> reducer) {
         return reduce(null, reducer);
     }
 
-    public Flow<B> reduce(B def, Reducer<B> reducer) {
+    public B reduce(B def, Reducer<B> reducer) {
+        return reduceAnd(def, reducer).execute().get();
+    }
+
+    public Flow<B> reduceAnd(Reducer<B> reducer) {
+        return reduceAnd(null, reducer);
+    }
+
+    public Flow<B> reduceAnd(B def, Reducer<B> reducer) {
         return then(new FlowReduce<B>(def, reducer));
     }
 
@@ -135,55 +143,107 @@ public class Flow<B> {
         return then(new FlowCollectWithAccumulator<C, B>(collector, accumulator));
     }
 
-    public Flow<Integer> count() {
+    public int count() {
+        return countAnd().execute().get();
+    }
+
+    public Flow<Integer> countAnd() {
         return then(new FlowCount<B>());
     }
 
-    public Flow<B> first() {
+    public B first() {
         return first(null);
     }
 
-    public Flow<B> first(B def) {
+    public B first(B def) {
+        return firstAnd(def).execute().get();
+    }
+
+    public Flow<B> firstAnd() {
+        return firstAnd(null);
+    }
+
+    public Flow<B> firstAnd(B def) {
         return then(new FlowFirst<B>(def));
     }
 
-    public Flow<B> last() {
+    public B last() {
         return last(null);
     }
 
-    public Flow<B> last(B def) {
+    public B last(B def) {
+        return lastAnd(def).execute().get();
+    }
+
+    public Flow<B> lastAnd() {
+        return lastAnd(null);
+    }
+
+    public Flow<B> lastAnd(B def) {
         return then(new FlowLast<B>(def));
     }
 
-    public Flow<B> min(Comparator<? super B> comparator) {
+    public B min(Comparator<? super B> comparator) {
         return min(null, comparator);
     }
 
-    public Flow<B> min(B def, Comparator<? super B> comparator) {
-        return then(new FlowMinWithComparator<B>(def, comparator));
+    public B min(B def, Comparator<? super B> comparator) {
+        return minAnd(def, comparator).execute().get();
     }
 
-    public Flow<B> min() {
+    public B min() {
         return min((B) null);
     }
 
-    public Flow<B> min(B def) {
+    public B min(B def) {
+        return minAnd(def).execute().get();
+    }
+
+    public Flow<B> minAnd(Comparator<? super B> comparator) {
+        return minAnd(null, comparator);
+    }
+
+    public Flow<B> minAnd(B def, Comparator<? super B> comparator) {
+        return then(new FlowMinWithComparator<B>(def, comparator));
+    }
+
+    public Flow<B> minAnd() {
+        return minAnd((B) null);
+    }
+
+    public Flow<B> minAnd(B def) {
         return then(new FlowMin<B>(def));
     }
 
-    public Flow<B> max(Comparator<? super B> comparator) {
+    public B max(Comparator<? super B> comparator) {
         return max(null, comparator);
     }
 
-    public Flow<B> max(B def, Comparator<? super B> comparator) {
-        return then(new FlowMaxWithComparator<B>(def, comparator));
+    public B max(B def, Comparator<? super B> comparator) {
+        return maxAnd(def, comparator).execute().get();
     }
 
-    public Flow<B> max() {
+    public B max() {
         return max((B) null);
     }
 
-    public Flow<B> max(B def) {
+    public B max(B def) {
+        return maxAnd(def).execute().get();
+    }
+
+    public Flow<B> maxAnd(Comparator<? super B> comparator) {
+        return maxAnd(null, comparator);
+    }
+
+    public Flow<B> maxAnd(B def, Comparator<? super B> comparator) {
+        return then(new FlowMaxWithComparator<B>(def, comparator));
+    }
+
+    public Flow<B> maxAnd() {
+        return maxAnd((B) null);
+    }
+
+    public Flow<B> maxAnd(B def) {
         return then(new FlowMax<B>(def));
     }
 
@@ -191,20 +251,32 @@ public class Flow<B> {
         return then(new FlowAsync<B, T>(mapper));
     }
 
-    public Flow<Boolean> any(Filter<B> filter) {
+    public boolean any(Filter<B> filter) {
+        return anyAnd(filter).execute().get();
+    }
+
+    public Flow<Boolean> anyAnd(Filter<B> filter) {
         return then(new FlowAnyMatch<B>(filter));
     }
 
-    public Flow<Boolean> all(Filter<B> filter) {
+    public boolean all(Filter<B> filter) {
+        return allAnd(filter).execute().get();
+    }
+
+    public Flow<Boolean> allAnd(Filter<B> filter) {
         return then(new FlowAllMatch<B>(filter));
     }
 
-    public Flow<Boolean> none(Filter<B> filter) {
+    public boolean none(Filter<B> filter) {
+        return noneAnd(filter).execute().get();
+    }
+
+    public Flow<Boolean> noneAnd(Filter<B> filter) {
         return then(new FlowNoneMatch<B>(filter));
     }
 
     public List<B> toList() {
-        return collect(new ArrayList<B>());
+        return toListAnd().execute().get();
     }
 
     public Flow<ArrayList<B>> toListAnd() {
