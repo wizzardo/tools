@@ -207,8 +207,16 @@ public class Flow<B> {
         return collect(new ArrayList<B>());
     }
 
+    public Flow<ArrayList<B>> toListAnd() {
+        return collectAnd(new ArrayList<B>());
+    }
+
     public <C extends Collection<B>> C collect(C collection) {
-        return then(new FlowCollect<B, C>(collection)).startAndGet();
+        return then(new FlowCollect<B, C>(collection)).execute().get();
+    }
+
+    public <C extends Collection<B>> Flow<C> collectAnd(C collection) {
+        return then(new FlowCollect<B, C>(collection));
     }
 
     public List<B> toSortedList(Comparator<? super B> comparator) {
