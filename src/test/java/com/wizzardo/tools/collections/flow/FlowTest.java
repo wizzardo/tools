@@ -330,6 +330,32 @@ public class FlowTest {
     }
 
     @Test
+    public void test_reduce2() {
+        Assert.assertEquals(Integer.valueOf(6), Flow.of(1, 2, 3).reduceAnd(new Reducer<Integer>() {
+            @Override
+            public Integer reduce(Integer a, Integer b) {
+                return a > b ? a : b;
+            }
+        }).map(new Mapper<Integer, Integer>() {
+            @Override
+            public Integer map(Integer integer) {
+                return integer * 2;
+            }
+        }).first());
+        Assert.assertEquals(Integer.valueOf(6), Flow.of(3, 2, 1).reduceAnd(new Reducer<Integer>() {
+            @Override
+            public Integer reduce(Integer a, Integer b) {
+                return a > b ? a : b;
+            }
+        }).map(new Mapper<Integer, Integer>() {
+            @Override
+            public Integer map(Integer integer) {
+                return integer * 2;
+            }
+        }).first());
+    }
+
+    @Test
     public void test_collect() {
         List<Integer> list = new ArrayList<Integer>();
         List<Integer> result = Flow.of(1, 2, 3)
