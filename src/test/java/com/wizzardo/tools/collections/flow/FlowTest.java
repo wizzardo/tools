@@ -314,6 +314,27 @@ public class FlowTest {
     }
 
     @Test
+    public void test_max_3() {
+        Assert.assertEquals(Integer.valueOf(6), Flow.of(1, 2, 3)
+                .maxAnd()
+                .map(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer * 2;
+                    }
+                }).first()
+        );
+        Assert.assertEquals(Integer.valueOf(6), Flow.of(3, 2, 1)
+                .maxAnd()
+                .map(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer * 2;
+                    }
+                }).first());
+    }
+
+    @Test
     public void test_reduce() {
         Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).reduce(new Reducer<Integer>() {
             @Override
