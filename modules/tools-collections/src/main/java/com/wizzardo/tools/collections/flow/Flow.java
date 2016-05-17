@@ -33,7 +33,7 @@ public class Flow<B> {
     }
 
     public B get() {
-        return null;
+        return first();
     }
 
 
