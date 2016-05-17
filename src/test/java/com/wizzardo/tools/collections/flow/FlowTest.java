@@ -947,6 +947,40 @@ public class FlowTest {
     }
 
     @Test
+    public void test_none_and() {
+        Assert.assertEquals("yes", Flow.of(1, 3, 5)
+                .noneAnd(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer % 2 == 0;
+                    }
+                })
+                .map(new Mapper<Boolean, String>() {
+                    @Override
+                    public String map(Boolean aBoolean) {
+                        return aBoolean ? "yes" : "no";
+                    }
+                })
+                .first()
+        );
+        Assert.assertEquals("no", Flow.of(1, 2, 3)
+                .noneAnd(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer % 2 != 0;
+                    }
+                })
+                .map(new Mapper<Boolean, String>() {
+                    @Override
+                    public String map(Boolean aBoolean) {
+                        return aBoolean ? "yes" : "no";
+                    }
+                })
+                .first()
+        );
+    }
+
+    @Test
     public void test_skip() {
         Assert.assertEquals("3,4,5", Flow.of(1, 2, 3, 4, 5).skip(2).join(","));
     }
