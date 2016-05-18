@@ -7,10 +7,10 @@ import com.wizzardo.tools.collections.flow.Filter;
  */
 public class FlowAnyMatch<T> extends FlowProcessOnEnd<T, Boolean> {
     final Filter<T> filter;
-    boolean result;
 
     public FlowAnyMatch(Filter<T> filter) {
         this.filter = filter;
+        result = Boolean.FALSE;
     }
 
     @Override
@@ -19,10 +19,5 @@ public class FlowAnyMatch<T> extends FlowProcessOnEnd<T, Boolean> {
             result = true;
             stop();
         }
-    }
-
-    @Override
-    public Boolean get() {
-        return result;
     }
 }
