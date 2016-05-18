@@ -713,7 +713,6 @@ public class FlowTest {
     @Test
     public void improveCoverage() {
         Assert.assertEquals(null, new Flow().get());
-        Assert.assertEquals(Integer.valueOf(0), new FlowCount().get());
     }
 
     @Test
