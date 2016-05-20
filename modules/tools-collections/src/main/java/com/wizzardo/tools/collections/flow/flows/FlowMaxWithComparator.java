@@ -7,23 +7,17 @@ import java.util.Comparator;
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowMaxWithComparator<A> extends FlowProcessor<A, A> {
-    private A max;
+public class FlowMaxWithComparator<A> extends FlowProcessOnEnd<A, A> {
     private final Comparator<? super A> comparator;
 
     public FlowMaxWithComparator(A def, Comparator<? super A> comparator) {
         this.comparator = comparator;
-        max = def;
+        result = def;
     }
 
     @Override
     public void process(A a) {
-        if (max == null || comparator.compare(max, a) < 0)
-            max = a;
-    }
-
-    @Override
-    public A get() {
-        return max;
+        if (result == null || comparator.compare(result, a) < 0)
+            result = a;
     }
 }
