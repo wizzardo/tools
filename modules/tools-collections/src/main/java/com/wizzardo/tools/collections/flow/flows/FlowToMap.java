@@ -9,12 +9,11 @@ import java.util.Map;
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowToMap<K, V, B extends FlowGroup<K, ?>> extends FlowProcessor<B,Map<K,V>> {
-    private final Map<K, V> groups;
+public class FlowToMap<K, V, B extends FlowGroup<K, ?>> extends FlowProcessOnEnd<B, Map<K, V>> {
     private final Mapper<? super B, V> mapper;
 
     public FlowToMap(Map<K, V> groups, Mapper<? super B, V> mapper) {
-        this.groups = groups;
+        this.result = groups;
         this.mapper = mapper;
     }
 
@@ -24,13 +23,8 @@ public class FlowToMap<K, V, B extends FlowGroup<K, ?>> extends FlowProcessor<B,
         getLast(b).then(new FlowOnEnd<V>(new FlowProcessor<V, V>() {
             @Override
             public void process(V v) {
-                groups.put(b.getKey(), v);
+                result.put(b.getKey(), v);
             }
         }));
-    }
-
-    @Override
-    public Map<K, V> get() {
-        return groups;
     }
 }
