@@ -314,7 +314,15 @@ public class Flow<B> {
     }
 
     public String join(String separator, StringBuilder sb) {
-        return then(new FlowJoin<B>(sb, separator)).startAndGet();
+        return joinAnd(separator, sb).get();
+    }
+
+    public Flow<String> joinAnd(String separator) {
+        return joinAnd(separator, new StringBuilder());
+    }
+
+    public Flow<String> joinAnd(String separator, StringBuilder sb) {
+        return then(new FlowJoin<B>(sb, separator));
     }
 
     public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<FlowGroup<K, B>, V> toValue) {
