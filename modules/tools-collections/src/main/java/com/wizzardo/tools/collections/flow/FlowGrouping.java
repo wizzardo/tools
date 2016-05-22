@@ -28,7 +28,7 @@ public abstract class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends F
     }
 
     public <V> Map<K, V> toMap(Mapper<? super B, V> mapper) {
-        return then(new FlowToMap<K, V, B>((Map<K, V>) groups, mapper)).startAndGet();
+        return then(new FlowToMap<K, V, B>((Map<K, V>) groups, mapper)).get();
     }
 
     @Override
