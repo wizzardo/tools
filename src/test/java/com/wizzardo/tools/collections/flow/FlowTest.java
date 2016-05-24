@@ -1,6 +1,5 @@
 package com.wizzardo.tools.collections.flow;
 
-import com.wizzardo.tools.collections.flow.flows.FlowCount;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -316,7 +315,7 @@ public class FlowTest {
     @Test
     public void test_max_3() {
         Assert.assertEquals(Integer.valueOf(6), Flow.of(1, 2, 3)
-                .maxAnd()
+                .maxFlow()
                 .map(new Mapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer) {
@@ -325,7 +324,7 @@ public class FlowTest {
                 }).first()
         );
         Assert.assertEquals(Integer.valueOf(6), Flow.of(3, 2, 1)
-                .maxAnd()
+                .maxFlow()
                 .map(new Mapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer) {
@@ -352,7 +351,7 @@ public class FlowTest {
 
     @Test
     public void test_reduce2() {
-        Assert.assertEquals(Integer.valueOf(6), Flow.of(1, 2, 3).reduceAnd(new Reducer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(6), Flow.of(1, 2, 3).reduceFlow(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
@@ -363,7 +362,7 @@ public class FlowTest {
                 return integer * 2;
             }
         }).first());
-        Assert.assertEquals(Integer.valueOf(6), Flow.of(3, 2, 1).reduceAnd(new Reducer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(6), Flow.of(3, 2, 1).reduceFlow(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
@@ -948,7 +947,7 @@ public class FlowTest {
     @Test
     public void test_none_and() {
         Assert.assertEquals("yes", Flow.of(1, 3, 5)
-                .noneAnd(new Filter<Integer>() {
+                .noneFlow(new Filter<Integer>() {
                     @Override
                     public boolean allow(Integer integer) {
                         return integer % 2 == 0;
@@ -963,7 +962,7 @@ public class FlowTest {
                 .first()
         );
         Assert.assertEquals("no", Flow.of(1, 2, 3)
-                .noneAnd(new Filter<Integer>() {
+                .noneFlow(new Filter<Integer>() {
                     @Override
                     public boolean allow(Integer integer) {
                         return integer % 2 != 0;
