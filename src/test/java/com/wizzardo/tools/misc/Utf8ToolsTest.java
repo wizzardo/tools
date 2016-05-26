@@ -283,6 +283,12 @@ public class Utf8ToolsTest {
 
     @Test
     public void test_supplier_consumer() throws UnsupportedEncodingException {
+        for (int i = 4; i < 100; i++) {
+            test_supplier(i);
+        }
+    }
+
+    private void test_supplier(final int bufferSize) throws UnsupportedEncodingException {
         String s = "€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€";
         char[] chars = s.toCharArray();
 
@@ -291,7 +297,7 @@ public class Utf8ToolsTest {
         UTF8.encode(chars, 0, chars.length, new Supplier<byte[]>() {
             @Override
             public byte[] supply() {
-                return new byte[4];
+                return new byte[bufferSize];
             }
         }, new UTF8.BytesConsumer() {
             @Override
