@@ -86,9 +86,11 @@ public class UTF8 {
             if (ll < 0)
                 throw new IllegalArgumentException("bytesSupplier.supply().length must be >= 4");
 
+            int max = Math.min(ll, limit - off - 1);
+
             int l = 0;
             int ch;
-            while (off < limit && l <= ll) {
+            while (l <= max) {
                 if ((ch = chars[off++]) < 128)
                     bytes[l++] = (byte) ch;
                 else {
@@ -97,7 +99,7 @@ public class UTF8 {
                 }
             }
 
-            while (off < limit && l <= ll) {
+            while (l <= max) {
                 int c = chars[off++];
                 if (c < 128) {
                     bytes[l++] = (byte) c;
