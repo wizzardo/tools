@@ -10,7 +10,7 @@ class JavaObjectBinder implements JsonBinder {
     protected Object object;
     protected Class clazz;
     protected Generic generic;
-    protected Map<String, FieldInfo> fields;
+    protected Fields fields;
     protected String tempKey;
 
     public JavaObjectBinder(Generic generic) {

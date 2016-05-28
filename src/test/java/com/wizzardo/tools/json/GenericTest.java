@@ -120,7 +120,7 @@ public class GenericTest {
     @Test
     public void fieldsTest() throws NoSuchFieldException {
         Generic generic = new Generic(ArrayHolder.class);
-        Map<String, FieldInfo> map = generic.getFields();
+        Fields map = generic.getFields();
 
         Assert.assertEquals(2, map.size());
         Assert.assertTrue(map.containsKey("array"));

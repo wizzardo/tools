@@ -1,6 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.CharTree;
+import com.wizzardo.tools.misc.Consumer;
 import com.wizzardo.tools.misc.DateIso8601;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.FieldReflection;
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Binder {
 
     private static final int SYNTHETIC = 0x00001000;
-    private static Map<Class, Map<String, FieldInfo>> cachedFields = new ConcurrentHashMap<Class, Map<String, FieldInfo>>();
+    private static Map<Class, Fields> cachedFields = new ConcurrentHashMap<Class, Fields>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
     private static Map<Class, Serializer> serializers = new ConcurrentHashMap<Class, Serializer>();
     static CharTree<String> fieldsNames = new CharTree<String>();
@@ -339,13 +340,13 @@ public class Binder {
         public void serialize(Object src, Appender sb, Generic generic) {
             sb.append('{');
             boolean comma = false;
-            Map<String, FieldInfo> list;
+            Fields fields;
             if (generic != null && src.getClass() == generic.clazz)
-                list = generic.getFields();
+                fields = generic.getFields();
             else
-                list = getFields(src.getClass());
+                fields = getFields(src.getClass());
 
-            for (FieldInfo info : list.values()) {
+            for (FieldInfo info : fields.array) {
                 Field field = info.field;
                 if (comma)
                     sb.append(',');
@@ -401,22 +402,22 @@ public class Binder {
             return new JavaArrayBinder(generic);
     }
 
-    public static Map<String, FieldInfo> getFields(Class clazz) {
-        Map<String, FieldInfo> fields = cachedFields.get(clazz);
+    public static Fields getFields(Class clazz) {
+        Fields fields = cachedFields.get(clazz);
         if (fields == null) {
             synchronized (clazz) {
                 fields = cachedFields.get(clazz);
                 if (fields != null)
                     return fields;
                 
-                fields = Collections.unmodifiableMap(readFields(clazz));
+                fields = readFields(clazz);
                 cachedFields.put(clazz, fields);
             }
         }
         return fields;
     }
 
-    private static Map<String, FieldInfo> readFields(Class clazz) {
+    private static Fields readFields(Class clazz) {
         Map<String, FieldInfo> fields = new LinkedHashMap<String, FieldInfo>();
         Class cl = clazz;
         while (cl != null) {
@@ -445,7 +446,7 @@ public class Binder {
             }
             cl = cl.getSuperclass();
         }
-        return fields;
+        return new Fields(fields);
     }
 
     public static FieldInfo getField(Class clazz, String key) {

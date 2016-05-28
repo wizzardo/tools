@@ -14,7 +14,7 @@ public class Generic<T> {
     final Generic parent;
     final Binder.Serializer serializer;
     private Map<String, Generic> types;
-    private Map<String, FieldInfo> fields;
+    private Fields fields;
 
     public Generic(Type c) {
         this(c, (Map) null);
@@ -129,7 +129,7 @@ public class Generic<T> {
         return null;
     }
 
-    public Map<String, FieldInfo> getFields() {
+    public Fields getFields() {
         if (fields != null)
             return fields;
 
