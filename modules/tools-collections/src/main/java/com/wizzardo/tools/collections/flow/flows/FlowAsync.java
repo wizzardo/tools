@@ -13,15 +13,16 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
     protected final static int NATIVE_THREADS_COUNT = Runtime.getRuntime().availableProcessors();
 
     protected final ExecutorService service;
-    protected final BlockingQueue<B> output;
     protected final BlockingQueue<A> input;
     protected final Mapper<A, Flow<B>> mapper;
     protected final AtomicInteger counter = new AtomicInteger();
     protected final int queueLimit;
-    protected boolean waiting = false;
+    protected volatile boolean waiting = false;
+    protected volatile boolean blocking = false;
+    protected BlockingQueue<B> output;
 
     public FlowAsync(Mapper<A, Flow<B>> mapper) {
-        this(NATIVE_THREADS_COUNT, mapper);
+        this(NATIVE_THREADS_COUNT * 2, mapper);
     }
 
     public FlowAsync(int queueLimit, Mapper<A, Flow<B>> mapper) {
@@ -33,28 +34,25 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
         this.mapper = mapper;
         this.queueLimit = queueLimit;
         input = new LinkedBlockingQueue<A>(queueLimit);
+    }
+
+    @Override
+    public <T extends FlowProcessor<B, C>, C> T then(T command) {
         output = new LinkedBlockingQueue<B>();
+        blocking = true;
+        return super.then(command);
     }
 
     @Override
     public void process(final A a) {
         while (!canAdd()) {
-            processOutput();
+            if (blocking)
+                processOutput();
             waitForInput();
         }
 
         add(a);
         service.submit(this);
-
-
-//        try {
-//            input.put(a);
-//        } catch (InterruptedException e) {
-//            throw Unchecked.rethrow(e);
-//        }
-//        service.submit(task);
-//        if (!output.isEmpty())
-//            processOutput();
     }
 
     @Override
@@ -75,15 +73,6 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
             if (child != null)
                 child.process(b);
         }
-//
-//        if (ended)
-//            if (monitor.isEnded())
-//                super.onEnd();
-//            else {
-//                waitForOutput();
-//                processOutput();
-//            }
-
     }
 
     public boolean isEnded() {
@@ -103,7 +92,7 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
         if (input.size() < queueLimit)
             return;
 
-        if (!output.isEmpty())
+        if (blocking && !output.isEmpty())
             return;
 
         synchronized (this) {
@@ -111,13 +100,15 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
                 if (input.size() < queueLimit)
                     return;
 
-                if (!output.isEmpty())
+                if (blocking && !output.isEmpty())
                     return;
 
+                waiting = true;
                 try {
                     this.wait();
                 } catch (InterruptedException ignored) {
                 }
+                waiting = false;
             } while (true);
         }
     }
@@ -166,7 +157,9 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
                 @Override
                 public void process(B b) {
                     try {
-                        output.put(b);
+                        if (blocking)
+                            output.put(b);
+
                         notifyIfWaiting();
                     } catch (InterruptedException e) {
                         throw Unchecked.rethrow(e);
