@@ -57,6 +57,9 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
 
     @Override
     protected void onEnd() {
+        if (!blocking)
+            return;
+
         processOutput();
         while (!isEnded()) {
             waitForOutput();
