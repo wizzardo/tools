@@ -1076,4 +1076,30 @@ public class FlowTest {
         Assert.assertEquals(3, result.size());
         Assert.assertTrue(result.containsAll(Arrays.asList("A", "B", "C")));
     }
+
+    @Test
+    public void test_async_non_blocking() {
+        final AtomicInteger counter = new AtomicInteger();
+        Flow.of("a", "b", "c")
+                .async(new Mapper<String, Flow<String>>() {
+                    @Override
+                    public Flow<String> map(String s) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        counter.incrementAndGet();
+                        return Flow.of(s);
+                    }
+                }).execute();
+
+        Assert.assertEquals(0, counter.get());
+        try {
+            Thread.sleep(350);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Assert.assertEquals(3, counter.get());
+    }
 }
