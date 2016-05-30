@@ -1125,4 +1125,25 @@ public class FlowTest {
         Assert.assertTrue(result.containsAll(Arrays.asList("A", "B", "C")));
     }
 
+    @Test
+    public void test_async_executor_service_2() {
+        long time = System.currentTimeMillis();
+        List<String> result = Flow.of("a", "b", "c")
+                .async(Executors.newFixedThreadPool(2), 1, new Mapper<String, Flow<String>>() {
+                    @Override
+                    public Flow<String> map(String s) {
+                        try {
+                            Thread.sleep(20);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        return Flow.of(s.toUpperCase());
+                    }
+                }).toList();
+        time = System.currentTimeMillis() - time;
+        Assert.assertTrue(time > 40);
+        Assert.assertEquals(3, result.size());
+        Assert.assertTrue(result.containsAll(Arrays.asList("A", "B", "C")));
+    }
+
 }
