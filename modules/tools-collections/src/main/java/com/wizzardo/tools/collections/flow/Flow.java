@@ -3,6 +3,7 @@ package com.wizzardo.tools.collections.flow;
 import com.wizzardo.tools.collections.flow.flows.*;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Created by wizzardo on 08.11.15.
@@ -249,6 +250,14 @@ public class Flow<B> {
 
     public <T> Flow<T> async(Mapper<B, Flow<T>> mapper) {
         return then(new FlowAsync<B, T>(mapper));
+    }
+
+    public <T> Flow<T> async(int queueLimit, Mapper<B, Flow<T>> mapper) {
+        return then(new FlowAsync<B, T>(queueLimit, mapper));
+    }
+
+    public <T> Flow<T> async(ExecutorService service, int queueLimit, Mapper<B, Flow<T>> mapper) {
+        return then(new FlowAsync<B, T>(service, queueLimit, mapper));
     }
 
     public boolean any(Filter<B> filter) {
