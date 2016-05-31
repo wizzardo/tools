@@ -1175,4 +1175,30 @@ public class FlowTest {
         Assert.assertEquals("1", result);
     }
 
+    @Test
+    public void test_async_process_only_first_after() {
+        final AtomicInteger after = new AtomicInteger();
+        String result = Flow.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                .async(Executors.newFixedThreadPool(1), 5, new Mapper<Integer, Flow<String>>() {
+                    @Override
+                    public Flow<String> map(Integer i) {
+                        return Flow.of(String.valueOf(i));
+                    }
+                })
+                .each(new Consumer<String>() {
+                    @Override
+                    public void consume(String s) {
+                        after.incrementAndGet();
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .first();
+        Assert.assertEquals(1, after.get());
+        Assert.assertEquals("1", result);
+    }
+
 }
