@@ -1146,4 +1146,33 @@ public class FlowTest {
         Assert.assertTrue(result.containsAll(Arrays.asList("A", "B", "C")));
     }
 
+    @Test
+    public void test_async_queue_limit() {
+        final AtomicInteger before = new AtomicInteger();
+        long time = System.currentTimeMillis();
+        String result = Flow.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                .each(new Consumer<Integer>() {
+                    @Override
+                    public void consume(Integer integer) {
+                        before.incrementAndGet();
+                    }
+                })
+                .async(Executors.newFixedThreadPool(1), 5, new Mapper<Integer, Flow<String>>() {
+                    @Override
+                    public Flow<String> map(Integer i) {
+                        try {
+                            Thread.sleep(20);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        return Flow.of(String.valueOf(i));
+                    }
+                })
+                .first();
+        time = System.currentTimeMillis() - time;
+        Assert.assertTrue(time > 20);
+        Assert.assertEquals(7, before.get()); // 1 processed + 5 in queue + 1 waiting to be added
+        Assert.assertEquals("1", result);
+    }
+
 }
