@@ -19,6 +19,7 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
     protected final int queueLimit;
     protected volatile boolean waiting = false;
     protected volatile boolean blocking = false;
+    protected boolean stopped = false;
     protected BlockingQueue<B> output;
 
     public FlowAsync(Mapper<A, Flow<B>> mapper) {
@@ -51,8 +52,20 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
             waitForInput();
         }
 
+        if (stopped) {
+            input.clear();
+            counter.set(0);
+            return;
+        }
+
         add(a);
         service.submit(this);
+    }
+
+    @Override
+    protected void stop() {
+        stopped = true;
+        super.stop();
     }
 
     @Override
@@ -79,7 +92,7 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
     }
 
     public boolean isEnded() {
-        return counter.get() == 0;
+        return counter.get() <= 0;
     }
 
     protected void add(A a) {
