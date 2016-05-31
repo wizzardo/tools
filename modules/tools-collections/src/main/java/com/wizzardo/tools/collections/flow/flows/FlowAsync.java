@@ -70,7 +70,7 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
 
     @Override
     protected void onEnd() {
-        if (!blocking)
+        if (!blocking || stopped)
             return;
 
         processOutput();
@@ -84,7 +84,7 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
     protected void processOutput() {
         BlockingQueue<B> queue = this.output;
         FlowProcessor<B, ?> child = FlowAsync.this.child;
-        while (!queue.isEmpty()) {
+        while (!stopped && !queue.isEmpty()) {
             B b = queue.poll();
             if (child != null)
                 child.process(b);
