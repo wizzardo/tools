@@ -73,11 +73,11 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
         if (!blocking || stopped)
             return;
 
-        processOutput();
         while (!isEnded()) {
             waitForOutput();
             processOutput();
         }
+        processOutput();
         super.onEnd();
     }
 
