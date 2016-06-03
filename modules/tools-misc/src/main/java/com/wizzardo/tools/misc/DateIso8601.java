@@ -2,10 +2,7 @@ package com.wizzardo.tools.misc;
 
 import com.wizzardo.tools.reflection.StringReflection;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * @author: wizzardo
@@ -40,7 +37,7 @@ public class DateIso8601 {
      */
     public Date parse(String s) {
         //YYYY-MM-DDTHH:mm:ss.sssZ
-        Calendar calendar = GregorianCalendar.getInstance();
+        Calendar calendar = new GregorianCalendar();
         int length = s.length();
         char[] chars = StringReflection.chars(s);
         int i = length == chars.length ? 0 : StringReflection.offset(s);
@@ -239,7 +236,7 @@ public class DateIso8601 {
     }
 
     public static char[] formatToChars(Date date, TimeZone timeZone) {
-        Calendar calendar = GregorianCalendar.getInstance(timeZone);
+        Calendar calendar = new GregorianCalendar(timeZone);
         calendar.setTime(date);
 
         char[] chars;
