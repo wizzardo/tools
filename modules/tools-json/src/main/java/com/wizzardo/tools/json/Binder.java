@@ -409,7 +409,7 @@ public class Binder {
                 fields = cachedFields.get(clazz);
                 if (fields != null)
                     return fields;
-                
+
                 fields = readFields(clazz);
                 cachedFields.put(clazz, fields);
             }
@@ -419,34 +419,36 @@ public class Binder {
 
     private static Fields readFields(Class clazz) {
         Map<String, FieldInfo> fields = new LinkedHashMap<String, FieldInfo>();
-        Class cl = clazz;
-        while (cl != null) {
-            Field[] ff = cl.getDeclaredFields();
-            for (Field field : ff) {
-//                    System.out.println("field " + field);
-                if (
-                        !Modifier.isTransient(field.getModifiers())
-                                && !Modifier.isStatic(field.getModifiers())
-                                && (field.getModifiers() & SYNTHETIC) == 0
+        readFields(clazz, fields);
+        return new Fields(fields);
+    }
+
+    private static void readFields(Class clazz, Map<String, FieldInfo> fields) {
+        if (clazz == null)
+            return;
+
+        readFields(clazz.getSuperclass(), fields);
+
+        Field[] ff = clazz.getDeclaredFields();
+        for (Field field : ff) {
+            if (!Modifier.isTransient(field.getModifiers())
+                    && !Modifier.isStatic(field.getModifiers())
+                    && (field.getModifiers() & SYNTHETIC) == 0
 //                                    && !Modifier.isFinal(field.getModifiers())
 //                                    && !Modifier.isPrivate(field.getModifiers())
 //                                    && !Modifier.isProtected(field.getModifiers())
-                        ) {
-//                        System.out.println("add field " + field);
-                    field.setAccessible(true);
+                    ) {
+                field.setAccessible(true);
 
-                    if (!fieldsNames.contains(field.getName()))
-                        fieldsNames.append(field.getName(), field.getName());
+                if (!fieldsNames.contains(field.getName()))
+                    fieldsNames.append(field.getName(), field.getName());
 
-                    if (field.getGenericType() != field.getType())
-                        fields.put(field.getName(), new FieldInfo(field, genericSerializer));
-                    else
-                        fields.put(field.getName(), new FieldInfo(field, getReturnType(field)));
-                }
+                if (field.getGenericType() != field.getType())
+                    fields.put(field.getName(), new FieldInfo(field, genericSerializer));
+                else
+                    fields.put(field.getName(), new FieldInfo(field, getReturnType(field)));
             }
-            cl = cl.getSuperclass();
         }
-        return new Fields(fields);
     }
 
     public static FieldInfo getField(Class clazz, String key) {
