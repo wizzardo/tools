@@ -9,12 +9,12 @@ import java.util.Map;
  * Date: 2/21/14
  */
 public class Generic<T> {
-    final Class<T> clazz;
-    final Generic[] typeParameters;
-    final Generic parent;
-    final Binder.Serializer serializer;
+    public final Class<T> clazz;
+    public final Generic parent;
+    public final Binder.Serializer serializer;
     private Map<String, Generic> types;
     private Fields fields;
+    final Generic[] typeParameters;
 
     public Generic(Type c) {
         this(c, (Map) null);
@@ -111,6 +111,14 @@ public class Generic<T> {
                 parent = null;
         }
         serializer = Binder.classToSerializer(clazz);
+    }
+
+    public int typesCount() {
+        return typeParameters.length;
+    }
+
+    public Generic type(int i) {
+        return typeParameters[i];
     }
 
     @Override
