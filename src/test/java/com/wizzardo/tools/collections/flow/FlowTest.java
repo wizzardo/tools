@@ -141,31 +141,36 @@ public class FlowTest {
 
     @Test
     public void test_grouping_5() {
-        Map<Integer, Map<Long, List<Person>>> result = Flow.of(new Person("Paul", 24, 20000),
+        Map<Integer, Map<Long, List<Person>>> result = Flow.of(
+                new Person("Paul", 24, 20000),
                 new Person("Mark", 24, 30000),
                 new Person("Will", 28, 28000),
                 new Person("William", 28, 28000)
-        ).groupBy(new Mapper<Person, Integer>() {
-            @Override
-            public Integer map(Person person) {
-                return person.age;
-            }
-        }).toMap(new Mapper<FlowGroup<Integer, Person>, Map<Long, List<Person>>>() {
-            @Override
-            public Map<Long, List<Person>> map(FlowGroup<Integer, Person> ageGroup) {
-                return ageGroup.groupBy(new Mapper<Person, Long>() {
+        )
+                .groupBy(new Mapper<Person, Integer>() {
                     @Override
-                    public Long map(Person person) {
-                        return person.salary;
+                    public Integer map(Person person) {
+                        return person.age;
                     }
-                }).toMap(new Mapper<FlowGroup<Long, Person>, List<Person>>() {
+                })
+                .toMap(new Mapper<FlowGroup<Integer, Person>, Map<Long, List<Person>>>() {
                     @Override
-                    public List<Person> map(FlowGroup<Long, Person> salaryGroup) {
-                        return salaryGroup.toList();
+                    public Map<Long, List<Person>> map(FlowGroup<Integer, Person> ageGroup) {
+                        return ageGroup
+                                .groupBy(new Mapper<Person, Long>() {
+                                    @Override
+                                    public Long map(Person person) {
+                                        return person.salary;
+                                    }
+                                })
+                                .toMap(new Mapper<FlowGroup<Long, Person>, List<Person>>() {
+                                    @Override
+                                    public List<Person> map(FlowGroup<Long, Person> salaryGroup) {
+                                        return salaryGroup.toList();
+                                    }
+                                });
                     }
                 });
-            }
-        });
 
         Assert.assertEquals(2, result.size());
 
@@ -182,6 +187,62 @@ public class FlowTest {
         Assert.assertEquals("Will", result.get(28).get(28000l).get(0).name);
         Assert.assertEquals("William", result.get(28).get(28000l).get(1).name);
 
+    }
+
+    @Test
+    public void test_grouping_6() {
+        List<List<Map<String, List<Person>>>> result = Flow.of(
+                new Person("Paul", 24, 20000),
+                new Person("Mark", 24, 30000),
+                new Person("Will", 28, 28000),
+                new Person("William", 28, 28000)
+        )
+                .groupBy(new Mapper<Person, Integer>() {
+                    @Override
+                    public Integer map(Person person) {
+                        return person.age;
+                    }
+                })
+                .flatMap(new Mapper<FlowGroup<Integer, Person>, List<Map<String, List<Person>>>>() {
+                    @Override
+                    public List<Map<String, List<Person>>> map(FlowGroup<Integer, Person> integerPersonFlowGroup) {
+                        return integerPersonFlowGroup.groupBy(new Mapper<Person, Long>() {
+                            @Override
+                            public Long map(Person person) {
+                                return person.salary;
+                            }
+                        }).flatMap(new Mapper<FlowGroup<Long, Person>, Map<String, List<Person>>>() {
+                            @Override
+                            public Map<String, List<Person>> map(FlowGroup<Long, Person> longPersonFlowGroup) {
+                                return longPersonFlowGroup.groupBy(new Mapper<Person, String>() {
+                                    @Override
+                                    public String map(Person person) {
+                                        return person.name;
+                                    }
+                                }).toMap();
+                            }
+                        }).toList();
+                    }
+                })
+                .toList();
+
+        Assert.assertEquals(2, result.size());
+
+        Assert.assertEquals(2, result.get(0).size());
+        Assert.assertEquals(1, result.get(0).get(0).size());
+        Assert.assertEquals(1, result.get(0).get(0).get("Paul").size());
+        Assert.assertEquals("Paul", result.get(0).get(0).get("Paul").get(0).name);
+
+        Assert.assertEquals(1, result.get(0).get(1).size());
+        Assert.assertEquals(1, result.get(0).get(1).get("Mark").size());
+        Assert.assertEquals("Mark", result.get(0).get(1).get("Mark").get(0).name);
+
+        Assert.assertEquals(1, result.get(1).size());
+        Assert.assertEquals(2, result.get(1).get(0).size());
+        Assert.assertEquals(1, result.get(1).get(0).get("Will").size());
+        Assert.assertEquals("Will", result.get(1).get(0).get("Will").get(0).name);
+        Assert.assertEquals(1, result.get(1).get(0).get("William").size());
+        Assert.assertEquals("William", result.get(1).get(0).get("William").get(0).name);
     }
 
     @Test
