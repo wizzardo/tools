@@ -54,14 +54,6 @@ public class Flow<B> {
         group.onEnd();
     }
 
-    protected static Flow getLast(Flow flow) {
-        Flow last = flow;
-        while (last.child != null) {
-            last = last.child;
-        }
-        return last;
-    }
-
     public static final Supplier SUPPLIER_HASH_MAP = new Supplier<Map>() {
         @Override
         public Map supply() {

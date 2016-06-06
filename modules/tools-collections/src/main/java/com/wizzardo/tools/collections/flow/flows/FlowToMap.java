@@ -20,7 +20,7 @@ public class FlowToMap<K, V, B extends FlowGroup<K, ?>> extends FlowProcessOnEnd
     @Override
     public void process(final B b) {
         mapper.map(b);
-        getLast(b).then(new FlowOnEnd<V>(new FlowProcessor<V, V>() {
+        b.getLast().then(new FlowOnEnd<V>(new FlowProcessor<V, V>() {
             @Override
             public void process(V v) {
                 result.put(b.getKey(), v);

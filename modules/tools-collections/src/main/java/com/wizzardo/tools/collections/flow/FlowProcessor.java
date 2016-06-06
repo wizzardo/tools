@@ -16,4 +16,8 @@ public abstract class FlowProcessor<A, B> extends Flow<B> {
     protected void stop() {
         parent.stop();
     }
+
+    public Flow getLast() {
+        return child == null ? this : child.getLast();
+    }
 }

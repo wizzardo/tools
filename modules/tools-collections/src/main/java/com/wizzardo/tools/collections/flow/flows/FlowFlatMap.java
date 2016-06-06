@@ -20,10 +20,16 @@ public class FlowFlatMap<K, V, B extends FlowGroup<K, ?>> extends FlowProcessor<
     @Override
     public void process(B b) {
         mapper.map(b);
-        getLast(b).then(new FlowOnEnd<V>(continueFlow));
+        b.getLast().then(new FlowOnEnd<V>(continueFlow));
     }
 
     @Override
     protected void onEnd() {
+        onEnd(continueFlow);
+    }
+
+    @Override
+    public Flow getLast() {
+        return continueFlow.getLast();
     }
 }
