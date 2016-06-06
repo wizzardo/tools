@@ -170,6 +170,9 @@ public class Request extends RequestArguments<Request> {
                 }
             }
             if (redirects && (c.getResponseCode() == 301 || c.getResponseCode() == 302)) {
+                if (session == null)
+                    session = new HttpSession();
+
                 Response r = new Response(c, session);
                 String path = r.getHeader("Location");
                 if (!path.startsWith("http://") && !path.startsWith("https://"))
