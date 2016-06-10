@@ -27,4 +27,13 @@ public class FlowContinue<T> extends FlowProcessor<T, T> {
     public void process(T t) {
         child.process(t);
     }
+
+    @Override
+    protected void onEnd() {
+    }
+
+    protected void doOnEnd() {
+        if (child != null)
+            onEnd(child);
+    }
 }

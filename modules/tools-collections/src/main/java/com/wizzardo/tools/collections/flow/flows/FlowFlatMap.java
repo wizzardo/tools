@@ -8,24 +8,23 @@ import com.wizzardo.tools.collections.flow.Mapper;
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowFlatMap<K, V, B extends FlowGroup<K, ?>> extends FlowProcessor<B, B> {
+public class FlowFlatMap<K, V extends FlowProcessOnEnd<?, Z>, B extends FlowGroup<K, ?>, Z> extends FlowProcessor<B, B> {
     private final Mapper<? super B, V> mapper;
-    private final FlowProcessor<V, V> continueFlow;
+    private final FlowContinue<Z> continueFlow;
 
-    public FlowFlatMap(Mapper<? super B, V> mapper, FlowProcessor<V, V> continueFlow) {
+    public FlowFlatMap(Mapper<? super B, V> mapper, FlowContinue<Z> continueFlow) {
         this.mapper = mapper;
         this.continueFlow = continueFlow;
     }
 
     @Override
     public void process(B b) {
-        mapper.map(b);
-        b.getLast().then(new FlowOnEnd<V>(continueFlow));
+        mapper.map(b).then(continueFlow);
     }
 
     @Override
     protected void onEnd() {
-        onEnd(continueFlow);
+        continueFlow.doOnEnd();
     }
 
     @Override
