@@ -152,11 +152,11 @@ public class Flow<B> {
         return firstFlow(def).execute().get();
     }
 
-    public Flow<B> firstFlow() {
+    public FlowFirst<B> firstFlow() {
         return firstFlow(null);
     }
 
-    public Flow<B> firstFlow(B def) {
+    public FlowFirst<B> firstFlow(B def) {
         return then(new FlowFirst<B>(def));
     }
 
@@ -280,7 +280,7 @@ public class Flow<B> {
         return toListFlow().execute().get();
     }
 
-    public Flow<ArrayList<B>> toListFlow() {
+    public FlowCollect<?, ArrayList<B>> toListFlow() {
         return collectFlow(new ArrayList<B>());
     }
 
@@ -288,7 +288,7 @@ public class Flow<B> {
         return then(new FlowCollect<B, C>(collection)).execute().get();
     }
 
-    public <C extends Collection<B>> Flow<C> collectFlow(C collection) {
+    public <C extends Collection<B>> FlowCollect<?, C> collectFlow(C collection) {
         return then(new FlowCollect<B, C>(collection));
     }
 

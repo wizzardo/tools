@@ -1,5 +1,6 @@
 package com.wizzardo.tools.collections.flow;
 
+import com.wizzardo.tools.collections.flow.flows.FlowProcessOnEnd;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,17 +15,17 @@ public class FlowTest {
 
     @Test
     public void test_grouping_1() {
-        List<List<Integer>> result = Flow.of(1, 2, 3)
+        List<ArrayList<Integer>> result = Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, List<Integer>>() {
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, FlowProcessOnEnd<?, ArrayList<Integer>>>() {
                     @Override
-                    public List<Integer> map(FlowGroup<Boolean, Integer> group) {
-                        return group.toList();
+                    public FlowProcessOnEnd<?, ArrayList<Integer>> map(FlowGroup<Boolean, Integer> group) {
+                        return group.toListFlow();
                     }
                 })
                 .toSortedList(new Comparator<List<Integer>>() {
@@ -46,7 +47,7 @@ public class FlowTest {
 
     @Test
     public void test_grouping_2() {
-        List<List<Integer>> result = Flow.of(1, 2, 3)
+        List<ArrayList<Integer>> result = Flow.of(1, 2, 3)
                 .groupBy(new Mapper<Integer, Boolean>() {
                     @Override
                     public Boolean map(Integer it) {
@@ -59,13 +60,13 @@ public class FlowTest {
                         return group.getKey();
                     }
                 })
-                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, List<Integer>>() {
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, FlowProcessOnEnd<?, ArrayList<Integer>>>() {
                     int counter = 0;
 
                     @Override
-                    public List<Integer> map(FlowGroup<Boolean, Integer> group) {
+                    public FlowProcessOnEnd<?, ArrayList<Integer>> map(FlowGroup<Boolean, Integer> group) {
                         Assert.assertEquals("should be executed only once", 1, ++counter);
-                        return group.toList();
+                        return group.toListFlow();
                     }
                 })
                 .toSortedList(new Comparator<List<Integer>>() {
@@ -90,10 +91,10 @@ public class FlowTest {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, Integer>() {
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, FlowProcessOnEnd<?, Integer>>() {
                     @Override
-                    public Integer map(FlowGroup<Boolean, Integer> group) {
-                        return group.first();
+                    public FlowProcessOnEnd<?, Integer> map(FlowGroup<Boolean, Integer> group) {
+                        return group.firstFlow();
                     }
                 })
                 .toSortedList();
@@ -115,10 +116,10 @@ public class FlowTest {
                         return it % 2 == 0;
                     }
                 })
-                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, Integer>() {
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, FlowProcessOnEnd<?, Integer>>() {
                     @Override
-                    public Integer map(FlowGroup<Boolean, Integer> group) {
-                        return group.first();
+                    public FlowProcessOnEnd<?, Integer> map(FlowGroup<Boolean, Integer> group) {
+                        return group.firstFlow();
                     }
                 })
                 .first();
@@ -191,7 +192,7 @@ public class FlowTest {
 
     @Test
     public void test_grouping_6() {
-        List<List<Map<String, List<Person>>>> result = Flow.of(
+        List<ArrayList<Map<String, List<Person>>>> result = Flow.of(
                 new Person("Paul", 24, 20000),
                 new Person("Mark", 24, 30000),
                 new Person("Will", 28, 28000),
@@ -203,25 +204,25 @@ public class FlowTest {
                         return person.age;
                     }
                 })
-                .flatMap(new Mapper<FlowGroup<Integer, Person>, List<Map<String, List<Person>>>>() {
+                .flatMap(new Mapper<FlowGroup<Integer, Person>, FlowProcessOnEnd<?, ArrayList<Map<String, List<Person>>>>>() {
                     @Override
-                    public List<Map<String, List<Person>>> map(FlowGroup<Integer, Person> integerPersonFlowGroup) {
+                    public FlowProcessOnEnd<?, ArrayList<Map<String, List<Person>>>> map(FlowGroup<Integer, Person> integerPersonFlowGroup) {
                         return integerPersonFlowGroup.groupBy(new Mapper<Person, Long>() {
                             @Override
                             public Long map(Person person) {
                                 return person.salary;
                             }
-                        }).flatMap(new Mapper<FlowGroup<Long, Person>, Map<String, List<Person>>>() {
+                        }).flatMap(new Mapper<FlowGroup<Long, Person>, FlowProcessOnEnd<?, Map<String, List<Person>>>>() {
                             @Override
-                            public Map<String, List<Person>> map(FlowGroup<Long, Person> longPersonFlowGroup) {
+                            public FlowProcessOnEnd<?, Map<String, List<Person>>> map(FlowGroup<Long, Person> longPersonFlowGroup) {
                                 return longPersonFlowGroup.groupBy(new Mapper<Person, String>() {
                                     @Override
                                     public String map(Person person) {
                                         return person.name;
                                     }
-                                }).toMap();
+                                }).toMapFlow();
                             }
-                        }).toList();
+                        }).toListFlow();
                     }
                 })
                 .toList();
