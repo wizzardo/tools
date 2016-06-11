@@ -25,7 +25,7 @@ public class FlowTest {
                 .flatMap(new Mapper<FlowGroup<Boolean, Integer>, FlowProcessOnEnd<?, ArrayList<Integer>>>() {
                     @Override
                     public FlowProcessOnEnd<?, ArrayList<Integer>> map(FlowGroup<Boolean, Integer> group) {
-                        return group.toListFlow();
+                        return group.toList();
                     }
                 })
                 .toSortedList(new Comparator<List<Integer>>() {
@@ -33,7 +33,7 @@ public class FlowTest {
                     public int compare(List<Integer> o1, List<Integer> o2) {
                         return o1.size() < o2.size() ? -1 : (o1.size() == o2.size() ? 0 : 1);
                     }
-                });
+                }).get();
 
         Assert.assertEquals(2, result.size());
 
@@ -66,7 +66,7 @@ public class FlowTest {
                     @Override
                     public FlowProcessOnEnd<?, ArrayList<Integer>> map(FlowGroup<Boolean, Integer> group) {
                         Assert.assertEquals("should be executed only once", 1, ++counter);
-                        return group.toListFlow();
+                        return group.toList();
                     }
                 })
                 .toSortedList(new Comparator<List<Integer>>() {
@@ -74,7 +74,8 @@ public class FlowTest {
                     public int compare(List<Integer> o1, List<Integer> o2) {
                         return o1.size() < o2.size() ? -1 : (o1.size() == o2.size() ? 0 : 1);
                     }
-                });
+                })
+                .get();
 
         Assert.assertEquals(1, result.size());
 
@@ -94,10 +95,11 @@ public class FlowTest {
                 .flatMap(new Mapper<FlowGroup<Boolean, Integer>, FlowProcessOnEnd<?, Integer>>() {
                     @Override
                     public FlowProcessOnEnd<?, Integer> map(FlowGroup<Boolean, Integer> group) {
-                        return group.firstFlow();
+                        return group.first();
                     }
                 })
-                .toSortedList();
+                .toSortedList()
+                .get();
 
         Assert.assertEquals(2, result.size());
 
@@ -119,10 +121,11 @@ public class FlowTest {
                 .flatMap(new Mapper<FlowGroup<Boolean, Integer>, FlowProcessOnEnd<?, Integer>>() {
                     @Override
                     public FlowProcessOnEnd<?, Integer> map(FlowGroup<Boolean, Integer> group) {
-                        return group.firstFlow();
+                        return group.first();
                     }
                 })
-                .first();
+                .first()
+                .get();
 
         Assert.assertEquals(Integer.valueOf(1), result);
         Assert.assertEquals(1, counter.get());
@@ -167,7 +170,7 @@ public class FlowTest {
                                 .toMap(new Mapper<FlowGroup<Long, Person>, List<Person>>() {
                                     @Override
                                     public List<Person> map(FlowGroup<Long, Person> salaryGroup) {
-                                        return salaryGroup.toList();
+                                        return salaryGroup.toList().get();
                                     }
                                 });
                     }
@@ -222,10 +225,10 @@ public class FlowTest {
                                     }
                                 }).toMapFlow();
                             }
-                        }).toListFlow();
+                        }).toList();
                     }
                 })
-                .toList();
+                .toList().get();
 
         Assert.assertEquals(2, result.size());
 
@@ -248,7 +251,7 @@ public class FlowTest {
 
     @Test
     public void test_sorted_list() {
-        List<Integer> result = Flow.of(3, 2, 1).toSortedList();
+        List<Integer> result = Flow.of(3, 2, 1).toSortedList().get();
 
         Assert.assertEquals(3, result.size());
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
@@ -309,7 +312,6 @@ public class FlowTest {
                     }
                 })
                 .first()
-                .execute()
                 .get();
 
         Assert.assertEquals(1, counter.get());
@@ -317,7 +319,7 @@ public class FlowTest {
 
     @Test
     public void test_first() {
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).first());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).first().get());
     }
 
     @Test
@@ -329,20 +331,20 @@ public class FlowTest {
             public void consume(Integer integer) {
                 counter.incrementAndGet();
             }
-        }).first());
+        }).first().get());
 
         Assert.assertEquals(1, counter.get());
     }
 
     @Test
     public void test_last() {
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).last());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).last().get());
     }
 
     @Test
     public void test_min() {
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min());
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min().get());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min().get());
     }
 
     @Test
@@ -353,14 +355,14 @@ public class FlowTest {
                 return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
             }
         };
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min(comparator));
-        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min(comparator));
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min(comparator).get());
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min(comparator).get());
     }
 
     @Test
     public void test_max() {
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max());
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max().get());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max().get());
     }
 
     @Test
@@ -371,29 +373,29 @@ public class FlowTest {
                 return Integer.valueOf(o1.intValue()).compareTo(o2.intValue());
             }
         };
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max(comparator));
-        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max(comparator));
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(1, 2, 3).max(comparator).get());
+        Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).max(comparator).get());
     }
 
     @Test
     public void test_max_3() {
         Assert.assertEquals(Integer.valueOf(6), Flow.of(1, 2, 3)
-                .maxFlow()
+                .max()
                 .map(new Mapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer) {
                         return integer * 2;
                     }
-                }).first()
+                }).first().get()
         );
         Assert.assertEquals(Integer.valueOf(6), Flow.of(3, 2, 1)
-                .maxFlow()
+                .max()
                 .map(new Mapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer) {
                         return integer * 2;
                     }
-                }).first());
+                }).first().get());
     }
 
     @Test
@@ -403,18 +405,18 @@ public class FlowTest {
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
             }
-        }));
+        }).get());
         Assert.assertEquals(Integer.valueOf(3), Flow.of(3, 2, 1).reduce(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
             }
-        }));
+        }).get());
     }
 
     @Test
     public void test_reduce2() {
-        Assert.assertEquals(Integer.valueOf(6), Flow.of(1, 2, 3).reduceFlow(new Reducer<Integer>() {
+        Assert.assertEquals(Integer.valueOf(6), Flow.of(1, 2, 3).reduce(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
@@ -424,8 +426,8 @@ public class FlowTest {
             public Integer map(Integer integer) {
                 return integer * 2;
             }
-        }).first());
-        Assert.assertEquals(Integer.valueOf(6), Flow.of(3, 2, 1).reduceFlow(new Reducer<Integer>() {
+        }).first().get());
+        Assert.assertEquals(Integer.valueOf(6), Flow.of(3, 2, 1).reduce(new Reducer<Integer>() {
             @Override
             public Integer reduce(Integer a, Integer b) {
                 return a > b ? a : b;
@@ -435,7 +437,7 @@ public class FlowTest {
             public Integer map(Integer integer) {
                 return integer * 2;
             }
-        }).first());
+        }).first().get());
     }
 
     @Test
@@ -448,7 +450,6 @@ public class FlowTest {
                         integers.add(integer * 2);
                     }
                 })
-                .execute()
                 .get();
 
         Assert.assertSame(list, result);
@@ -468,7 +469,8 @@ public class FlowTest {
                     }
                 })
                 .merge()
-                .toList();
+                .toList()
+                .get();
 
         Assert.assertEquals(6, result.size());
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
@@ -495,7 +497,8 @@ public class FlowTest {
                     }
                 })
                 .merge()
-                .toList();
+                .toList()
+                .get();
 
         Assert.assertEquals(3, result.size());
         Assert.assertEquals(Integer.valueOf(2), result.get(0));
@@ -512,7 +515,8 @@ public class FlowTest {
                         return Flow.of(ints);
                     }
                 })
-                .toList();
+                .toList()
+                .get();
 
         Assert.assertEquals(6, result.size());
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
@@ -549,7 +553,8 @@ public class FlowTest {
                         });
                     }
                 })
-                .toList();
+                .toList()
+                .get();
 
         Assert.assertEquals(3, result.size());
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
@@ -559,7 +564,7 @@ public class FlowTest {
 
     @Test
     public void test_count() {
-        int result = Flow.of(1, 2, 3, 4, 5, 6).count();
+        int result = Flow.of(1, 2, 3, 4, 5, 6).count().get();
 
         Assert.assertEquals(6, result);
     }
@@ -572,7 +577,7 @@ public class FlowTest {
                     public String map(Integer integer) {
                         return integer.toString();
                     }
-                }).toList();
+                }).toList().get();
 
         Assert.assertEquals(3, result.size());
         Assert.assertEquals("1", result.get(0));
@@ -588,7 +593,7 @@ public class FlowTest {
                     public boolean allow(Integer integer) {
                         return integer % 2 == 0;
                     }
-                }).toList();
+                }).toList().get();
 
         Assert.assertEquals(2, result.size());
         Assert.assertEquals(Integer.valueOf(2), result.get(0));
@@ -601,7 +606,7 @@ public class FlowTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Flow.of(list).count();
+        int result = Flow.of(list).count().get();
 
         Assert.assertEquals(3, result);
     }
@@ -612,7 +617,7 @@ public class FlowTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Flow.of(list).first();
+        int result = Flow.of(list).first().get();
 
         Assert.assertEquals(1, result);
     }
@@ -623,7 +628,7 @@ public class FlowTest {
         list.add(1);
         list.add(2);
         list.add(3);
-        int result = Flow.of(list.iterator()).first();
+        int result = Flow.of(list.iterator()).first().get();
 
         Assert.assertEquals(1, result);
     }
@@ -728,7 +733,7 @@ public class FlowTest {
                             public String map(Integer integer) {
                                 return integer.toString();
                             }
-                        }).toList();
+                        }).toList().get();
                     }
                 });
 
@@ -769,7 +774,7 @@ public class FlowTest {
 
     @Test
     public void test_join() {
-        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3).join(",").get());
     }
 
     @Test
@@ -779,7 +784,7 @@ public class FlowTest {
 
     @Test
     public void test_of_ints() {
-        Assert.assertEquals("1,2,3", Flow.of(new int[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(new int[]{1, 2, 3}).join(",").get());
 
         IllegalState flow = Flow.of(new int[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
@@ -789,7 +794,7 @@ public class FlowTest {
 
     @Test
     public void test_of_longs() {
-        Assert.assertEquals("1,2,3", Flow.of(new long[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(new long[]{1, 2, 3}).join(",").get());
 
         IllegalState flow = Flow.of(new long[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
@@ -799,7 +804,7 @@ public class FlowTest {
 
     @Test
     public void test_of_shorts() {
-        Assert.assertEquals("1,2,3", Flow.of(new short[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(new short[]{1, 2, 3}).join(",").get());
 
         IllegalState flow = Flow.of(new short[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
@@ -809,7 +814,7 @@ public class FlowTest {
 
     @Test
     public void test_of_bytes() {
-        Assert.assertEquals("1,2,3", Flow.of(new byte[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(new byte[]{1, 2, 3}).join(",").get());
 
         IllegalState flow = Flow.of(new byte[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
@@ -819,7 +824,7 @@ public class FlowTest {
 
     @Test
     public void test_of_floats() {
-        Assert.assertEquals("1.0,2.0,3.0", Flow.of(new float[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1.0,2.0,3.0", Flow.of(new float[]{1, 2, 3}).join(",").get());
 
         IllegalState flow = Flow.of(new float[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
@@ -829,7 +834,7 @@ public class FlowTest {
 
     @Test
     public void test_of_doubles() {
-        Assert.assertEquals("1.0,2.0,3.0", Flow.of(new double[]{1, 2, 3}).join(","));
+        Assert.assertEquals("1.0,2.0,3.0", Flow.of(new double[]{1, 2, 3}).join(",").get());
 
         IllegalState flow = Flow.of(new double[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
@@ -839,7 +844,7 @@ public class FlowTest {
 
     @Test
     public void test_of_booleans() {
-        Assert.assertEquals("true,false", Flow.of(new boolean[]{true, false}).join(","));
+        Assert.assertEquals("true,false", Flow.of(new boolean[]{true, false}).join(",").get());
 
         IllegalState flow = Flow.of(new boolean[]{true, false}).then(new IllegalState());
         flow.stop();
@@ -849,7 +854,7 @@ public class FlowTest {
 
     @Test
     public void test_of_chars() {
-        Assert.assertEquals("a,b,c", Flow.of(new char[]{'a', 'b', 'c'}).join(","));
+        Assert.assertEquals("a,b,c", Flow.of(new char[]{'a', 'b', 'c'}).join(",").get());
 
         IllegalState flow = Flow.of(new char[]{'a', 'b', 'c'}).then(new IllegalState());
         flow.stop();
@@ -876,7 +881,7 @@ public class FlowTest {
             public Integer map(Map.Entry<Integer, String> entry) {
                 return entry.getKey();
             }
-        }).join(", ");
+        }).join(", ").get();
 
         Assert.assertEquals("1, 2, 3", result);
     }
@@ -931,7 +936,8 @@ public class FlowTest {
                         sb.append(i);
                     }
                 })
-                .first();
+                .first()
+                .get();
 
         Assert.assertEquals("0", sb.toString());
     }
@@ -954,7 +960,8 @@ public class FlowTest {
                         sb.append(i);
                     }
                 })
-                .first();
+                .first()
+                .get();
 
         Assert.assertEquals("0", sb.toString());
     }
@@ -966,13 +973,13 @@ public class FlowTest {
             public boolean allow(Integer integer) {
                 return integer % 2 == 0;
             }
-        }));
+        }).get());
         Assert.assertFalse(Flow.of(1, 3, 5).any(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 == 0;
             }
-        }));
+        }).get());
     }
 
     @Test
@@ -982,13 +989,13 @@ public class FlowTest {
             public boolean allow(Integer integer) {
                 return integer % 2 != 0;
             }
-        }));
+        }).get());
         Assert.assertFalse(Flow.of(1, 2, 3).all(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 != 0;
             }
-        }));
+        }).get());
     }
 
     @Test
@@ -998,19 +1005,19 @@ public class FlowTest {
             public boolean allow(Integer integer) {
                 return integer % 2 == 0;
             }
-        }));
+        }).get());
         Assert.assertFalse(Flow.of(1, 2, 3).none(new Filter<Integer>() {
             @Override
             public boolean allow(Integer integer) {
                 return integer % 2 != 0;
             }
-        }));
+        }).get());
     }
 
     @Test
     public void test_none_and() {
         Assert.assertEquals("yes", Flow.of(1, 3, 5)
-                .noneFlow(new Filter<Integer>() {
+                .none(new Filter<Integer>() {
                     @Override
                     public boolean allow(Integer integer) {
                         return integer % 2 == 0;
@@ -1023,9 +1030,10 @@ public class FlowTest {
                     }
                 })
                 .first()
+                .get()
         );
         Assert.assertEquals("no", Flow.of(1, 2, 3)
-                .noneFlow(new Filter<Integer>() {
+                .none(new Filter<Integer>() {
                     @Override
                     public boolean allow(Integer integer) {
                         return integer % 2 != 0;
@@ -1038,12 +1046,13 @@ public class FlowTest {
                     }
                 })
                 .first()
+                .get()
         );
     }
 
     @Test
     public void test_skip() {
-        Assert.assertEquals("3,4,5", Flow.of(1, 2, 3, 4, 5).skip(2).join(","));
+        Assert.assertEquals("3,4,5", Flow.of(1, 2, 3, 4, 5).skip(2).join(",").get());
     }
 
     @Test
@@ -1061,12 +1070,14 @@ public class FlowTest {
                     public Integer map(FlowGroup<Integer, Integer> group) {
                         return group.key;
                     }
-                }).join(","));
+                })
+                .join(",")
+                .get());
     }
 
     @Test
     public void test_limit() {
-        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5).limit(3).join(","));
+        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5).limit(3).join(",").get());
     }
 
     @Test
@@ -1085,7 +1096,8 @@ public class FlowTest {
                         return group.key;
                     }
                 })
-                .join(","));
+                .join(",")
+                .get());
     }
 
     @Test
@@ -1112,7 +1124,7 @@ public class FlowTest {
                 Assert.assertTrue(i.get() < 5);
                 return i.get() < 5 ? i.getAndIncrement() : null;
             }
-        }).limit(3).join(","));
+        }).limit(3).join(",").get());
     }
 
     @Test
@@ -1124,7 +1136,7 @@ public class FlowTest {
             public Integer supply() {
                 return i.get() < ints.length ? ints[i.getAndIncrement()] : null;
             }
-        }).join(","));
+        }).join(",").get());
     }
 
     @Test
@@ -1134,7 +1146,7 @@ public class FlowTest {
             public Flow<String> map(String s) {
                 return Flow.of(s.toUpperCase());
             }
-        }).toList();
+        }).toList().get();
 
         Assert.assertEquals(3, result.size());
         Assert.assertTrue(result.containsAll(Arrays.asList("A", "B", "C")));
@@ -1180,7 +1192,7 @@ public class FlowTest {
                         }
                         return Flow.of(s.toUpperCase());
                     }
-                }).toList();
+                }).toList().get();
         time = System.currentTimeMillis() - time;
         Assert.assertTrue(time > 60);
         Assert.assertEquals(3, result.size());
@@ -1201,7 +1213,7 @@ public class FlowTest {
                         }
                         return Flow.of(s.toUpperCase());
                     }
-                }).toList();
+                }).toList().get();
         time = System.currentTimeMillis() - time;
         Assert.assertTrue(time > 40);
         Assert.assertEquals(3, result.size());
@@ -1230,7 +1242,8 @@ public class FlowTest {
                         return Flow.of(String.valueOf(i));
                     }
                 })
-                .first();
+                .first()
+                .get();
         time = System.currentTimeMillis() - time;
         Assert.assertTrue(time > 20);
         Assert.assertEquals(7, before.get()); // 1 processed + 5 in queue + 1 waiting to be added
@@ -1258,7 +1271,8 @@ public class FlowTest {
                         }
                     }
                 })
-                .first();
+                .first()
+                .get();
         Assert.assertEquals(1, after.get());
         Assert.assertEquals("1", result);
     }
