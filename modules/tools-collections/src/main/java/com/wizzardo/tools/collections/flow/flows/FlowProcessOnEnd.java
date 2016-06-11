@@ -13,7 +13,7 @@ public abstract class FlowProcessOnEnd<A, B> extends FlowProcessor<A, B> {
     protected void onEnd() {
         FlowProcessor<B, ?> child = this.child;
         if (child != null) {
-            child.process(get());
+            child.process(result);
             onEnd(child);
         }
     }
@@ -26,7 +26,6 @@ public abstract class FlowProcessOnEnd<A, B> extends FlowProcessor<A, B> {
         }
     }
 
-    @Override
     public B get() {
         start();
         return result;

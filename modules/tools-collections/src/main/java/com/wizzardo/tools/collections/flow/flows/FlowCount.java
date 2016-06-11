@@ -12,9 +12,8 @@ public class FlowCount<A> extends FlowProcessOnEnd<A, Integer> {
     }
 
     @Override
-    public Integer get() {
-        start();
+    protected void onEnd() {
         result = count;
-        return result;
+        super.onEnd();
     }
 }

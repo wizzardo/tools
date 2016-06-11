@@ -34,7 +34,7 @@ public class Flow<B> {
     }
 
     public B get() {
-        return first();
+        return first().get();
     }
 
 
@@ -68,7 +68,7 @@ public class Flow<B> {
     public static final Mapper FLOW_GROUP_LIST_MAPPER = new Mapper<FlowGroup, List>() {
         @Override
         public List map(FlowGroup flowGroup) {
-            return flowGroup.toList();
+            return (List) flowGroup.toList().get();
         }
     };
 
@@ -77,19 +77,11 @@ public class Flow<B> {
     }
 
 
-    public B reduce(Reducer<B> reducer) {
+    public FlowReduce<B> reduce(Reducer<B> reducer) {
         return reduce(null, reducer);
     }
 
-    public B reduce(B def, Reducer<B> reducer) {
-        return reduceFlow(def, reducer).execute().get();
-    }
-
-    public Flow<B> reduceFlow(Reducer<B> reducer) {
-        return reduceFlow(null, reducer);
-    }
-
-    public Flow<B> reduceFlow(B def, Reducer<B> reducer) {
+    public FlowReduce<B> reduce(B def, Reducer<B> reducer) {
         return then(new FlowReduce<B>(def, reducer));
     }
 
@@ -132,111 +124,59 @@ public class Flow<B> {
         return this.then(new FlowGroupBy<K, B>(groupMapSupplier, toKey));
     }
 
-    public <C> Flow<C> collect(C collector, BiConsumer<? super C, ? super B> accumulator) {
+    public <C> FlowCollectWithAccumulator<C, B> collect(C collector, BiConsumer<? super C, ? super B> accumulator) {
         return then(new FlowCollectWithAccumulator<C, B>(collector, accumulator));
     }
 
-    public int count() {
-        return countFlow().execute().get();
-    }
-
-    public Flow<Integer> countFlow() {
+    public FlowCount<B> count() {
         return then(new FlowCount<B>());
     }
 
-    public B first() {
+    public FlowFirst<B> first() {
         return first(null);
     }
 
-    public B first(B def) {
-        return firstFlow(def).execute().get();
-    }
-
-    public FlowFirst<B> firstFlow() {
-        return firstFlow(null);
-    }
-
-    public FlowFirst<B> firstFlow(B def) {
+    public FlowFirst<B> first(B def) {
         return then(new FlowFirst<B>(def));
     }
 
-    public B last() {
+    public FlowLast<B> last() {
         return last(null);
     }
 
-    public B last(B def) {
-        return lastFlow(def).execute().get();
-    }
-
-    public Flow<B> lastFlow() {
-        return lastFlow(null);
-    }
-
-    public Flow<B> lastFlow(B def) {
+    public FlowLast<B> last(B def) {
         return then(new FlowLast<B>(def));
     }
 
-    public B min(Comparator<? super B> comparator) {
+    public FlowMinWithComparator<B> min(Comparator<? super B> comparator) {
         return min(null, comparator);
     }
 
-    public B min(B def, Comparator<? super B> comparator) {
-        return minFlow(def, comparator).execute().get();
-    }
-
-    public B min() {
-        return min((B) null);
-    }
-
-    public B min(B def) {
-        return minFlow(def).execute().get();
-    }
-
-    public Flow<B> minFlow(Comparator<? super B> comparator) {
-        return minFlow(null, comparator);
-    }
-
-    public Flow<B> minFlow(B def, Comparator<? super B> comparator) {
+    public FlowMinWithComparator<B> min(B def, Comparator<? super B> comparator) {
         return then(new FlowMinWithComparator<B>(def, comparator));
     }
 
-    public Flow<B> minFlow() {
-        return minFlow((B) null);
+    public FlowMin<B> min() {
+        return min((B) null);
     }
 
-    public Flow<B> minFlow(B def) {
+    public FlowMin<B> min(B def) {
         return then(new FlowMin<B>(def));
     }
 
-    public B max(Comparator<? super B> comparator) {
+    public FlowMaxWithComparator<B> max(Comparator<? super B> comparator) {
         return max(null, comparator);
     }
 
-    public B max(B def, Comparator<? super B> comparator) {
-        return maxFlow(def, comparator).execute().get();
-    }
-
-    public B max() {
-        return max((B) null);
-    }
-
-    public B max(B def) {
-        return maxFlow(def).execute().get();
-    }
-
-    public Flow<B> maxFlow(Comparator<? super B> comparator) {
-        return maxFlow(null, comparator);
-    }
-
-    public Flow<B> maxFlow(B def, Comparator<? super B> comparator) {
+    public FlowMaxWithComparator<B> max(B def, Comparator<? super B> comparator) {
         return then(new FlowMaxWithComparator<B>(def, comparator));
     }
 
-    public Flow<B> maxFlow() {
-        return maxFlow((B) null);
+    public FlowMax<B> max() {
+        return max((B) null);
     }
 
-    public Flow<B> maxFlow(B def) {
+    public FlowMax<B> max(B def) {
         return then(new FlowMax<B>(def));
     }
 
@@ -252,77 +192,47 @@ public class Flow<B> {
         return then(new FlowAsync<B, T>(service, queueLimit, mapper));
     }
 
-    public boolean any(Filter<B> filter) {
-        return anyFlow(filter).execute().get();
-    }
-
-    public Flow<Boolean> anyFlow(Filter<B> filter) {
+    public FlowAnyMatch<B> any(Filter<B> filter) {
         return then(new FlowAnyMatch<B>(filter));
     }
 
-    public boolean all(Filter<B> filter) {
-        return allFlow(filter).execute().get();
-    }
-
-    public Flow<Boolean> allFlow(Filter<B> filter) {
+    public FlowAllMatch<B> all(Filter<B> filter) {
         return then(new FlowAllMatch<B>(filter));
     }
 
-    public boolean none(Filter<B> filter) {
-        return noneFlow(filter).execute().get();
-    }
-
-    public Flow<Boolean> noneFlow(Filter<B> filter) {
+    public FlowNoneMatch<B> none(Filter<B> filter) {
         return then(new FlowNoneMatch<B>(filter));
     }
 
-    public List<B> toList() {
-        return toListFlow().execute().get();
+    public FlowCollect<B, ArrayList<B>> toList() {
+        return collect(new ArrayList<B>());
     }
 
-    public FlowCollect<?, ArrayList<B>> toListFlow() {
-        return collectFlow(new ArrayList<B>());
-    }
-
-    public <C extends Collection<B>> C collect(C collection) {
-        return then(new FlowCollect<B, C>(collection)).execute().get();
-    }
-
-    public <C extends Collection<B>> FlowCollect<?, C> collectFlow(C collection) {
+    public <C extends Collection<B>> FlowCollect<B, C> collect(C collection) {
         return then(new FlowCollect<B, C>(collection));
     }
 
-    public List<B> toSortedList(Comparator<? super B> comparator) {
+    public FlowCollectAndSortWithComparator<B, List<B>> toSortedList(Comparator<? super B> comparator) {
         return toSortedList(new ArrayList<B>(), comparator);
     }
 
-    public List<B> toSortedList() {
+    public FlowCollectAndSort<B, List<B>> toSortedList() {
         return toSortedList(new ArrayList<B>());
     }
 
-    public List<B> toSortedList(List<B> list, Comparator<? super B> comparator) {
-        Collections.sort(collect(list), comparator);
-        return list;
+    public FlowCollectAndSortWithComparator<B, List<B>> toSortedList(List<B> list, Comparator<? super B> comparator) {
+        return then(new FlowCollectAndSortWithComparator<B, List<B>>(list, comparator));
     }
 
-    public List<B> toSortedList(List<B> list) {
-        Collections.sort((List<Comparable>) collect(list));
-        return list;
+    public FlowCollectAndSort<B, List<B>> toSortedList(List<B> list) {
+        return then(new FlowCollectAndSort<B, List<B>>(list));
     }
 
-    public String join(String separator) {
+    public FlowJoin<B> join(String separator) {
         return join(separator, new StringBuilder());
     }
 
-    public String join(String separator, StringBuilder sb) {
-        return joinFlow(separator, sb).get();
-    }
-
-    public Flow<String> joinFlow(String separator) {
-        return joinFlow(separator, new StringBuilder());
-    }
-
-    public Flow<String> joinFlow(String separator, StringBuilder sb) {
+    public FlowJoin<B> join(String separator, StringBuilder sb) {
         return then(new FlowJoin<B>(sb, separator));
     }
 

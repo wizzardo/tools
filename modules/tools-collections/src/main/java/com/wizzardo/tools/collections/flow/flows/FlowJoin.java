@@ -22,8 +22,8 @@ public class FlowJoin<A> extends FlowProcessOnEnd<A, String> {
     }
 
     @Override
-    public String get() {
-        start();
-        return sb.toString();
+    protected void onEnd() {
+        result = sb.toString();
+        super.onEnd();
     }
 }
