@@ -172,9 +172,10 @@ public class FlowTest {
                                     public List<Person> map(FlowGroup<Long, Person> salaryGroup) {
                                         return salaryGroup.toList().get();
                                     }
-                                });
+                                })
+                                .get();
                     }
-                });
+                }).get();
 
         Assert.assertEquals(2, result.size());
 
@@ -223,7 +224,7 @@ public class FlowTest {
                                     public String map(Person person) {
                                         return person.name;
                                     }
-                                }).toMapFlow();
+                                }).toMap();
                             }
                         }).toList();
                     }
@@ -661,7 +662,8 @@ public class FlowTest {
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
-                }, Flow.<Boolean, Integer>flowGroupListMapper());
+                }, Flow.<Boolean, Integer>flowGroupListMapper())
+                .get();
 
         Assert.assertEquals(2, map.size());
 
@@ -682,7 +684,8 @@ public class FlowTest {
                         return integer % 2 == 0;
                     }
                 })
-                .toMap();
+                .toMap()
+                .get();
 
         Assert.assertEquals(2, map.size());
 
@@ -709,7 +712,8 @@ public class FlowTest {
                         return group.getKey();
                     }
                 })
-                .toMap();
+                .toMap()
+                .get();
 
         Assert.assertEquals(1, map.size());
 
@@ -735,7 +739,8 @@ public class FlowTest {
                             }
                         }).toList().get();
                     }
-                });
+                })
+                .get();
 
         Assert.assertEquals(2, map.size());
 
@@ -760,7 +765,8 @@ public class FlowTest {
                     public Boolean map(Integer integer) {
                         return integer % 2 == 0;
                     }
-                });
+                })
+                .get();
 
         Assert.assertEquals(2, map.size());
 
@@ -778,18 +784,12 @@ public class FlowTest {
     }
 
     @Test
-    public void improveCoverage() {
-        Assert.assertEquals(null, new Flow().get());
-    }
-
-    @Test
     public void test_of_ints() {
         Assert.assertEquals("1,2,3", Flow.of(new int[]{1, 2, 3}).join(",").get());
 
         IllegalState flow = Flow.of(new int[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
         flow.execute();
-        Assert.assertEquals(null, flow.get());
     }
 
     @Test
@@ -799,7 +799,6 @@ public class FlowTest {
         IllegalState flow = Flow.of(new long[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
         flow.execute();
-        Assert.assertEquals(null, flow.get());
     }
 
     @Test
@@ -809,7 +808,6 @@ public class FlowTest {
         IllegalState flow = Flow.of(new short[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
         flow.execute();
-        Assert.assertEquals(null, flow.get());
     }
 
     @Test
@@ -819,7 +817,6 @@ public class FlowTest {
         IllegalState flow = Flow.of(new byte[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
         flow.execute();
-        Assert.assertEquals(null, flow.get());
     }
 
     @Test
@@ -829,7 +826,6 @@ public class FlowTest {
         IllegalState flow = Flow.of(new float[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
         flow.execute();
-        Assert.assertEquals(null, flow.get());
     }
 
     @Test
@@ -839,7 +835,6 @@ public class FlowTest {
         IllegalState flow = Flow.of(new double[]{1, 2, 3}).then(new IllegalState());
         flow.stop();
         flow.execute();
-        Assert.assertEquals(null, flow.get());
     }
 
     @Test
@@ -849,7 +844,6 @@ public class FlowTest {
         IllegalState flow = Flow.of(new boolean[]{true, false}).then(new IllegalState());
         flow.stop();
         flow.execute();
-        Assert.assertEquals(null, flow.get());
     }
 
     @Test
@@ -859,7 +853,6 @@ public class FlowTest {
         IllegalState flow = Flow.of(new char[]{'a', 'b', 'c'}).then(new IllegalState());
         flow.stop();
         flow.execute();
-        Assert.assertEquals(null, flow.get());
     }
 
     static class IllegalState extends FlowProcessor {
@@ -1111,6 +1104,7 @@ public class FlowTest {
                 })
                 .limit(3)
                 .toMap()
+                .get()
                 .toString()
         );
     }
