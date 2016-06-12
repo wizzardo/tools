@@ -33,10 +33,6 @@ public class Flow<B> {
     protected void stop() {
     }
 
-    public B get() {
-        return first().get();
-    }
-
 
     protected static void start(Flow flow) {
         flow.start();
@@ -236,15 +232,15 @@ public class Flow<B> {
         return then(new FlowJoin<B>(sb, separator));
     }
 
-    public <K, V> Map<K, V> toMap(Mapper<B, K> toKey, Mapper<FlowGroup<K, B>, V> toValue) {
+    public <K, V> FlowToMap<K, V, FlowGroup<K, B>> toMap(Mapper<B, K> toKey, Mapper<FlowGroup<K, B>, V> toValue) {
         return toMap(Flow.<K, FlowGroup<K, B>>hashMapSupplier(), toKey, toValue);
     }
 
-    public <K> Map<K, List<B>> toMap(Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey) {
+    public <K> FlowToMap<K, List<B>, FlowGroup<K, B>> toMap(Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey) {
         return toMap(groupMapSupplier, toKey, Flow.<K, B>flowGroupListMapper());
     }
 
-    public <K, V> Map<K, V> toMap(Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey, Mapper<FlowGroup<K, B>, V> toValue) {
+    public <K, V> FlowToMap<K, V, FlowGroup<K, B>> toMap(Supplier<Map<K, FlowGroup<K, B>>> groupMapSupplier, Mapper<B, K> toKey, Mapper<FlowGroup<K, B>, V> toValue) {
         return groupBy(toKey, groupMapSupplier).toMap(toValue);
     }
 

@@ -23,19 +23,11 @@ public abstract class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends F
         return continueCommand;
     }
 
-    public Map<K, List<T>> toMap() {
+    public FlowToMap<K, List<T>, B> toMap() {
         return toMap(Flow.<K, T>flowGroupListMapper());
     }
 
-    public <V> Map<K, V> toMap(Mapper<? super B, V> mapper) {
-        return then(new FlowToMap<K, V, B>((Map<K, V>) groups, mapper)).get();
-    }
-
-    public FlowToMap<K, List<T>, B> toMapFlow() {
-        return toMapFlow(Flow.<K, T>flowGroupListMapper());
-    }
-
-    public <V> FlowToMap<K, V, B> toMapFlow(Mapper<? super B, V> mapper) {
+    public <V> FlowToMap<K, V, B> toMap(Mapper<? super B, V> mapper) {
         return then(new FlowToMap<K, V, B>((Map<K, V>) groups, mapper));
     }
 

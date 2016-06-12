@@ -14,7 +14,7 @@ public class FlowOnEnd<T> extends FlowProcessor<T, T> {
 
     @Override
     protected void onEnd() {
-        flow.process(parent.get());
+        flow.process(((FlowProcessOnEnd<?, T>) parent).get());
     }
 
     @Override
