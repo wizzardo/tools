@@ -5,6 +5,7 @@ import com.wizzardo.tools.misc.Supplier;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by wizzardo on 30.06.15.
@@ -38,19 +39,34 @@ public class PoolBuilder<T> {
         }
     };
 
-    protected Supplier<Queue<Holder<T>>> queueSupplier = new Supplier<Queue<Holder<T>>>() {
-        ThreadLocal<Queue<Holder<T>>> queue = new ThreadLocal<Queue<Holder<T>>>() {
+    protected Supplier<Queue<Holder<T>>> queueSupplier = createThreadLocalQueueSupplier();
+
+    public static <T> Supplier<Queue<Holder<T>>> createThreadLocalQueueSupplier() {
+        return new Supplier<Queue<Holder<T>>>() {
+            ThreadLocal<Queue<Holder<T>>> queue = new ThreadLocal<Queue<Holder<T>>>() {
+                @Override
+                protected Queue<Holder<T>> initialValue() {
+                    return new LinkedList<Holder<T>>();
+                }
+            };
+
             @Override
-            protected Queue<Holder<T>> initialValue() {
-                return new LinkedList<Holder<T>>();
+            public Queue<Holder<T>> supply() {
+                return queue.get();
             }
         };
+    }
 
-        @Override
-        public Queue<Holder<T>> supply() {
-            return queue.get();
-        }
-    };
+    public static <T> Supplier<Queue<Holder<T>>> createSharedQueueSupplier() {
+        return new Supplier<Queue<Holder<T>>>() {
+            Queue<Holder<T>> queue = new ConcurrentLinkedQueue<Holder<T>>();
+
+            @Override
+            public Queue<Holder<T>> supply() {
+                return queue;
+            }
+        };
+    }
 
     public PoolBuilder<T> queue(Supplier<Queue<Holder<T>>> queueSupplier) {
         this.queueSupplier = queueSupplier;
