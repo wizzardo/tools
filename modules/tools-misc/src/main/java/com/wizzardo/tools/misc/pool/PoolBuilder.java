@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class PoolBuilder<T> {
 
+    protected int initialSize = 0;
+
     protected Supplier<T> supplier = new Supplier<T>() {
         @Override
         public T supply() {
@@ -88,11 +90,16 @@ public class PoolBuilder<T> {
         return this;
     }
 
+    public PoolBuilder<T> initialSize(int initialSize) {
+        this.initialSize = initialSize;
+        return this;
+    }
+
     public Pool<T> build() {
         if (queueSupplier == null)
             throw new IllegalArgumentException("queueSupplier must not be null");
 
-        return new AbstractQueuedPool<T>() {
+        AbstractQueuedPool<T> pool = new AbstractQueuedPool<T>() {
             @Override
             public T create() {
                 return supplier.supply();
@@ -108,6 +115,11 @@ public class PoolBuilder<T> {
                 return holderSupplier.get(this, t, resetter);
             }
         };
+
+        for (int i = 0; i < initialSize; i++) {
+            pool.release(pool.create());
+        }
+        return pool;
     }
 
     public interface HolderSupplier<T> {
