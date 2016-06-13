@@ -39,7 +39,7 @@ public class PoolBuilder<T> {
         }
     };
 
-    protected Supplier<Queue<Holder<T>>> queueSupplier = createThreadLocalQueueSupplier();
+    protected Supplier<Queue<Holder<T>>> queueSupplier;
 
     public static <T> Supplier<Queue<Holder<T>>> createThreadLocalQueueSupplier() {
         return new Supplier<Queue<Holder<T>>>() {
@@ -89,6 +89,9 @@ public class PoolBuilder<T> {
     }
 
     public Pool<T> build() {
+        if (queueSupplier == null)
+            throw new IllegalArgumentException("queueSupplier must not be null");
+
         return new AbstractQueuedPool<T>() {
             @Override
             public T create() {

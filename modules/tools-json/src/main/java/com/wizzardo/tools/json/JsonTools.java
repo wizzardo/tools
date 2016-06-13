@@ -76,17 +76,20 @@ public class JsonTools {
     }
 
     public static final Pool<ExceptionDrivenStringBuilder> builderPool = new PoolBuilder<ExceptionDrivenStringBuilder>()
+            .queue(PoolBuilder.<ExceptionDrivenStringBuilder>createThreadLocalQueueSupplier())
             .supplier(new Supplier<ExceptionDrivenStringBuilder>() {
                 @Override
                 public ExceptionDrivenStringBuilder supply() {
                     return new ExceptionDrivenStringBuilder();
                 }
-            }).resetter(new Consumer<ExceptionDrivenStringBuilder>() {
+            })
+            .resetter(new Consumer<ExceptionDrivenStringBuilder>() {
                 @Override
                 public void consume(ExceptionDrivenStringBuilder sb) {
                     sb.clear();
                 }
-            }).build();
+            })
+            .build();
 
     public static JsonItem parse(String s) {
         return new JsonItem(parse(s, (Generic<Object>) null));
