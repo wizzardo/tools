@@ -11,6 +11,7 @@ public class FlowContinue<T> extends FlowProcessor<T, T> {
 
     public FlowContinue(Flow<?> flow) {
         this.flow = flow;
+        child = new FlowNoop<T>();
     }
 
     @Override
