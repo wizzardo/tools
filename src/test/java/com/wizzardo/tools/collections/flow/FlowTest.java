@@ -251,6 +251,40 @@ public class FlowTest {
     }
 
     @Test
+    public void test_flatMap() {
+        final Map<Boolean, AtomicInteger> counters = new HashMap<Boolean, AtomicInteger>();
+        Flow.of(1, 2, 3)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer it) {
+                        return it % 2 == 0;
+                    }
+                })
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, FlowProcessOnEnd<?, ArrayList<Integer>>>() {
+                    @Override
+                    public FlowProcessOnEnd<?, ArrayList<Integer>> map(final FlowGroup<Boolean, Integer> group) {
+                        return group
+                                .each(new Consumer<Integer>() {
+                                    @Override
+                                    public void consume(Integer integer) {
+                                        AtomicInteger counter = counters.get(group.key);
+                                        if (counter == null)
+                                            counters.put(group.key, counter = new AtomicInteger());
+                                        counter.incrementAndGet();
+                                    }
+                                })
+                                .toList();
+                    }
+                })
+                .execute();
+
+        Assert.assertEquals(2, counters.size());
+
+        Assert.assertEquals(1, counters.get(true).get());
+        Assert.assertEquals(2, counters.get(false).get());
+    }
+
+    @Test
     public void test_sorted_list() {
         List<Integer> result = Flow.of(3, 2, 1).toSortedList().get();
 
