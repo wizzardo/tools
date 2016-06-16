@@ -47,9 +47,9 @@ public class FlowAsync<A, B> extends FlowProcessor<A, B> implements Runnable {
     @Override
     public void process(final A a) {
         while (!canAdd()) {
+            waitForInput();
             if (blocking)
                 processOutput();
-            waitForInput();
         }
 
         if (stopped) {

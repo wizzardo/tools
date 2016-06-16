@@ -1263,7 +1263,7 @@ public class FlowTest {
                     @Override
                     public Flow<String> map(Integer i) {
                         try {
-                            Thread.sleep(100);
+                            Thread.sleep(10);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -1273,7 +1273,7 @@ public class FlowTest {
                 .first()
                 .get();
         time = System.currentTimeMillis() - time;
-        Assert.assertTrue(time > 20);
+        Assert.assertTrue(time >= 10);
         Assert.assertEquals(7, before.get()); // 1 processed + 5 in queue + 1 waiting to be added
         Assert.assertEquals("1", result);
     }
