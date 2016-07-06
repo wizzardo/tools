@@ -1305,4 +1305,27 @@ public class FlowTest {
         Assert.assertEquals("1", result);
     }
 
+    @Test
+    public void test_each_after_first() {
+        final AtomicInteger before = new AtomicInteger();
+        final AtomicInteger after = new AtomicInteger();
+        Flow.of(1, 2, 3)
+                .each(new Consumer<Integer>() {
+                    @Override
+                    public void consume(Integer i) {
+                        before.incrementAndGet();
+                    }
+                })
+                .first()
+                .each(new Consumer<Integer>() {
+                    @Override
+                    public void consume(Integer i) {
+                        after.incrementAndGet();
+                    }
+                })
+                .execute();
+        Assert.assertEquals(1, before.get());
+        Assert.assertEquals(1, after.get());
+    }
+
 }
