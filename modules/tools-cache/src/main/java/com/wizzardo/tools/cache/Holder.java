@@ -49,8 +49,12 @@ public class Holder<K, V> {
         }
     }
 
-    public void setValidUntil(long validUntil) {
+    void setValidUntil(long validUntil) {
         this.validUntil = validUntil;
+    }
+
+    public boolean isValid() {
+        return System.currentTimeMillis() < validUntil;
     }
 
     public K getKey() {
