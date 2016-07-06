@@ -5,7 +5,7 @@ import com.wizzardo.tools.collections.flow.Filter;
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowAllMatch<T> extends FlowProcessOnEnd<T, Boolean> {
+public class FlowAllMatch<T> extends FlowStoppable<T, Boolean> {
     final Filter<T> filter;
 
     public FlowAllMatch(Filter<T> filter) {
@@ -16,8 +16,7 @@ public class FlowAllMatch<T> extends FlowProcessOnEnd<T, Boolean> {
     @Override
     public void process(T t) {
         if (!filter.allow(t)) {
-            result = false;
-            stop();
+            stop(result = Boolean.FALSE);
         }
     }
 }
