@@ -32,8 +32,7 @@ public class FlowGroup<K, T> extends FlowProcessor<T, T> {
 
     @Override
     protected void onEnd() {
-        if (!stopped)
-            child.onEnd();
+        child.onEnd();
     }
 
     @Override
