@@ -42,19 +42,35 @@ public class Cache<K, V> {
     }
 
     public V get(K k) {
-        return getFromCache(k, computable, false);
+        return getHolder(k, computable, false).get();
     }
 
     public V get(K k, boolean updateTTL) {
-        return getFromCache(k, computable, updateTTL);
+        return getHolder(k, computable, updateTTL).get();
     }
 
     public V get(K k, Computable<? super K, ? extends V> computable) {
-        return getFromCache(k, computable, false);
+        return getHolder(k, computable, false).get();
     }
 
     public V get(K k, Computable<? super K, ? extends V> computable, boolean updateTTL) {
-        return getFromCache(k, computable, updateTTL);
+        return getHolder(k, computable, updateTTL).get();
+    }
+
+    public Holder<K, V> getHolder(K k) {
+        return getHolderFromCache(k, computable, false);
+    }
+
+    public Holder<K, V> getHolder(K k, boolean updateTTL) {
+        return getHolderFromCache(k, computable, updateTTL);
+    }
+
+    public Holder<K, V> getHolder(K k, Computable<? super K, ? extends V> computable) {
+        return getHolderFromCache(k, computable, false);
+    }
+
+    public Holder<K, V> getHolder(K k, Computable<? super K, ? extends V> computable, boolean updateTTL) {
+        return getHolderFromCache(k, computable, updateTTL);
     }
 
     public void setRemoveOnException(boolean removeOnException) {
@@ -133,7 +149,7 @@ public class Cache<K, V> {
     public void onAddItem(K k, V v) {
     }
 
-    private V getFromCache(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
+    private Holder<K, V> getHolderFromCache(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
         Holder<K, V> f = map.get(key);
         if (f == null) {
             if (c == null || destroyed) {
@@ -145,7 +161,7 @@ public class Cache<K, V> {
                 boolean failed = true;
                 f = ft;
                 try {
-                    ft.run(c, key);
+                    ft.compute(c, key);
                     failed = false;
                 } catch (Exception e) {
                     throw Unchecked.rethrow(e);
@@ -161,21 +177,20 @@ public class Cache<K, V> {
                             outdated.remove(key);
                     }
                 }
-                return f.get();
+                return f;
             }
         }
 
         if (!f.done && outdated != null) {
-            V v = outdated.get(key);
-            if (v != null)
-                return v;
+            Holder<K, V> h = outdated.getHolder(key);
+            if (h != null)
+                return h;
         }
 
-        V v = f.get();
         if (updateTTL)
             updateTimingCache(f);
 
-        return v;
+        return f;
     }
 
     public void put(final K key, final V value) {

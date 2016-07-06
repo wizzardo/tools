@@ -4,10 +4,10 @@ package com.wizzardo.tools.cache;
  * @author: wizzardo
  * Date: 2/12/14
  */
-class Holder<K, V> {
+public class Holder<K, V> {
 
     protected V v;
-    protected K k;
+    protected final K k;
     protected volatile boolean done = false;
     protected volatile long validUntil;
     private Cache.TimingsHolder<K, V> timingsHolder;
@@ -38,7 +38,7 @@ class Holder<K, V> {
         return v;
     }
 
-    public void run(Computable<? super K, ? extends V> c, K k) throws Exception {
+    void compute(Computable<? super K, ? extends V> c, K k) throws Exception {
         v = c.compute(k);
     }
 
