@@ -74,13 +74,7 @@ public abstract class FlowStart<T> extends Flow<T> {
         return new FlowStart<T>() {
             @Override
             protected void process() {
-                FlowProcessor<T, ?> child = this.child;
-                T t;
-                while ((t = supplier.supply()) != null) {
-                    if (stop)
-                        break;
-                    child.process(t);
-                }
+                child.process(supplier.supply());
             }
         };
     }
