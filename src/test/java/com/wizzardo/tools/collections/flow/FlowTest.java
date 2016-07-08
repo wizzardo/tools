@@ -1162,6 +1162,40 @@ public class FlowTest {
     }
 
     @Test
+    public void test_suppliers() {
+        final AtomicInteger i = new AtomicInteger();
+        Assert.assertEquals("1", Flow.of(new Supplier<Integer>() {
+            @Override
+            public Integer supply() {
+                return i.incrementAndGet();
+            }
+        }, new Supplier<Integer>() {
+            @Override
+            public Integer supply() {
+                return i.incrementAndGet();
+            }
+        }).first().join(",").get());
+        Assert.assertEquals(1, i.get());
+    }
+
+    @Test
+    public void test_suppliers_2() {
+        final AtomicInteger i = new AtomicInteger();
+        Assert.assertEquals("1,2", Flow.of(new Supplier<Integer>() {
+            @Override
+            public Integer supply() {
+                return i.incrementAndGet();
+            }
+        }, new Supplier<Integer>() {
+            @Override
+            public Integer supply() {
+                return i.incrementAndGet();
+            }
+        }).join(",").get());
+        Assert.assertEquals(2, i.get());
+    }
+
+    @Test
     public void test_async() {
         List<String> result = Flow.of("a", "b", "c").async(new Mapper<String, Flow<String>>() {
             @Override
