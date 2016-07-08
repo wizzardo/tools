@@ -79,6 +79,21 @@ public abstract class FlowStart<T> extends Flow<T> {
         };
     }
 
+    public static <T> Flow<T> of(final Supplier<T>... suppliers) {
+        return new FlowStart<T>() {
+            @Override
+            protected void process() {
+
+                FlowProcessor<T, ?> child = this.child;
+                for (Supplier<T> supplier : suppliers) {
+                    if (stop)
+                        break;
+                    child.process(supplier.supply());
+                }
+            }
+        };
+    }
+
     public static Flow<Integer> of(final int[] array) {
         return new FlowStart<Integer>() {
             @Override
