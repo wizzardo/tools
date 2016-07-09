@@ -6,6 +6,7 @@ import com.wizzardo.tools.misc.Supplier;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by wizzardo on 30.06.15.
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class PoolBuilder<T> {
 
     protected int initialSize = 0;
+    protected int limitSize = 0;
 
     protected Supplier<T> supplier = new Supplier<T>() {
         @Override
@@ -95,26 +97,59 @@ public class PoolBuilder<T> {
         return this;
     }
 
+    public PoolBuilder<T> limitSize(int limitSize) {
+        this.limitSize = limitSize;
+        return this;
+    }
+
     public Pool<T> build() {
         if (queueSupplier == null)
             throw new IllegalArgumentException("queueSupplier must not be null");
 
-        AbstractQueuedPool<T> pool = new AbstractQueuedPool<T>() {
-            @Override
-            public T create() {
-                return supplier.supply();
-            }
+        AbstractQueuedPool<T> pool;
+        if (limitSize <= 0) {
+            pool = new QueuedPool<T>(supplier, queueSupplier, holderSupplier, resetter);
+        } else {
+            pool = new QueuedPool<T>(supplier, queueSupplier, holderSupplier, resetter) {
+                AtomicInteger created = new AtomicInteger();
+                AtomicInteger waits = new AtomicInteger();
 
-            @Override
-            protected Queue<Holder<T>> queue() {
-                return queueSupplier.supply();
-            }
+                @Override
+                protected Holder<T> poll() {
+                    Holder<T> holder = super.poll();
+                    if (holder == null && created.get() == limitSize) {
+                        synchronized (this) {
+                            while ((holder = super.poll()) == null) {
+                                waits.incrementAndGet();
+                                try {
+                                    this.wait();
+                                } catch (InterruptedException ignored) {
+                                }
+                                waits.decrementAndGet();
+                            }
+                        }
+                    }
+                    return holder;
+                }
 
-            @Override
-            protected Holder<T> createHolder(T t) {
-                return holderSupplier.get(this, t, resetter);
-            }
-        };
+                @Override
+                public T create() {
+                    created.incrementAndGet();
+                    return super.create();
+                }
+
+                @Override
+                public void release(Holder<T> holder) {
+                    super.release(holder);
+                    if (waits.get() > 0) {
+                        synchronized (this) {
+                            if (waits.get() > 0)
+                                this.notify();
+                        }
+                    }
+                }
+            };
+        }
 
         for (int i = 0; i < initialSize; i++) {
             pool.release(pool.create());

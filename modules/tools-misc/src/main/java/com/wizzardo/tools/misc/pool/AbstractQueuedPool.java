@@ -15,7 +15,7 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
     public T get() {
         T value;
         do {
-            Holder<T> item = queue().poll();
+            Holder<T> item = poll();
             if (item == null)
                 return create();
 
@@ -25,9 +25,13 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
         return value;
     }
 
+    protected Holder<T> poll() {
+        return queue().poll();
+    }
+
     @Override
     public Holder<T> holder() {
-        Holder<T> item = queue().poll();
+        Holder<T> item = poll();
         if (item == null)
             return createHolder(create());
 

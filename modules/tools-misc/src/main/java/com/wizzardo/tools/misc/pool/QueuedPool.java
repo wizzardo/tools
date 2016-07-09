@@ -1,0 +1,37 @@
+package com.wizzardo.tools.misc.pool;
+
+import com.wizzardo.tools.misc.Supplier;
+
+import java.util.Queue;
+
+/**
+ * Created by wizzardo on 09/07/16.
+ */
+public class QueuedPool<T> extends AbstractQueuedPool<T> {
+    protected final Supplier<T> supplier;
+    protected final Supplier<Queue<Holder<T>>> queueSupplier;
+    protected final PoolBuilder.HolderSupplier<T> holderSupplier;
+    protected final com.wizzardo.tools.misc.Consumer<T> resetter;
+
+    public QueuedPool(Supplier<T> supplier, Supplier<Queue<Holder<T>>> queueSupplier, PoolBuilder.HolderSupplier<T> holderSupplier, com.wizzardo.tools.misc.Consumer<T> resetter) {
+        this.supplier = supplier;
+        this.queueSupplier = queueSupplier;
+        this.holderSupplier = holderSupplier;
+        this.resetter = resetter;
+    }
+
+    @Override
+    public T create() {
+        return supplier.supply();
+    }
+
+    @Override
+    protected Queue<Holder<T>> queue() {
+        return queueSupplier.supply();
+    }
+
+    @Override
+    protected Holder<T> createHolder(T t) {
+        return holderSupplier.get(this, t, resetter);
+    }
+}
