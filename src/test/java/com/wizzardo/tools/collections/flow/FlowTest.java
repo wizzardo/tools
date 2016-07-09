@@ -1144,12 +1144,6 @@ public class FlowTest {
     }
 
     @Test
-    public void test_limit_4() {
-        final AtomicInteger i = new AtomicInteger();
-        Assert.assertEquals("0,1,2", Flow.of(0, 1, 2, 3, 4, 5).limit(3).join(",").get());
-    }
-
-    @Test
     public void test_supplier() {
         final AtomicInteger i = new AtomicInteger();
         Assert.assertEquals("1", Flow.of(new Supplier<Integer>() {
