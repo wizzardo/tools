@@ -27,6 +27,87 @@ public class PoolBuilderTest {
 
         Assert.assertEquals(1, pool.size());
         Assert.assertEquals(1, counter.get());
+    }
 
+    @Test
+    public void test_limitSize() {
+        final AtomicInteger counter = new AtomicInteger();
+        final Pool<Integer> pool = new PoolBuilder<Integer>()
+                .supplier(new Supplier<Integer>() {
+                    @Override
+                    public Integer supply() {
+                        return counter.incrementAndGet();
+                    }
+                })
+                .queue(PoolBuilder.<Integer>createSharedQueueSupplier())
+                .limitSize(1)
+                .build();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Holder<Integer> holder = pool.holder();
+                Integer value = 0;
+                try {
+                    value = holder.get();
+                    Thread.sleep(100);
+                } catch (Exception ignored) {
+                } finally {
+                    holder.close();
+                }
+                Assert.assertEquals(1, value.intValue());
+            }
+        }).start();
+
+        long time = System.currentTimeMillis();
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException ignore) {
+        }
+
+        Assert.assertEquals(1, pool.get().intValue());
+        time = System.currentTimeMillis() - time;
+        Assert.assertTrue(time >= 100);
+        Assert.assertEquals(1, counter.get());
+    }
+
+    @Test
+    public void test_limitSize_2() {
+        final AtomicInteger counter = new AtomicInteger();
+        final Pool<Integer> pool = new PoolBuilder<Integer>()
+                .supplier(new Supplier<Integer>() {
+                    @Override
+                    public Integer supply() {
+                        return counter.incrementAndGet();
+                    }
+                })
+                .queue(PoolBuilder.<Integer>createSharedQueueSupplier())
+                .limitSize(1)
+                .build();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Integer value = pool.provide(new Pool.Consumer<Integer, Integer>() {
+                    @Override
+                    public Integer consume(Integer integer) throws Exception {
+                        Thread.sleep(100);
+                        return integer;
+                    }
+                });
+                Assert.assertEquals(1, value.intValue());
+            }
+        }).start();
+
+        long time = System.currentTimeMillis();
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException ignore) {
+        }
+
+        Assert.assertEquals(1, pool.get().intValue());
+        time = System.currentTimeMillis() - time;
+        Assert.assertTrue(time >= 100);
+        Assert.assertEquals(1, counter.get());
     }
 }
