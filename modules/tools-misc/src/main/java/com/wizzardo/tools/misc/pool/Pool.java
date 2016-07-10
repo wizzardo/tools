@@ -21,4 +21,8 @@ public interface Pool<T> {
         R consume(T t) throws Exception;
     }
 
+    /**
+     * @return current queue size
+    **/
+    int size();
 }

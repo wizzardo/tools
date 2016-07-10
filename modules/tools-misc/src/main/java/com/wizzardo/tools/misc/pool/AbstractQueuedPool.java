@@ -86,4 +86,7 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
         }
     }
 
+    public int size() {
+        return queue().size();
+    }
 }
