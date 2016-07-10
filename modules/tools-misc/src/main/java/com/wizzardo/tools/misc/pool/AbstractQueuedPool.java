@@ -52,8 +52,7 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
     }
 
     public <R> R provide(Consumer<T, R> consumer) {
-        Queue<Holder<T>> queue = queue();
-        Holder<T> holder = queue.poll();
+        Holder<T> holder = poll();
         if (holder == null)
             holder = createHolder(create());
 
@@ -64,7 +63,7 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
                 throw Unchecked.rethrow(e);
             }
         } finally {
-            queue.add(holder);
+            release(holder);
         }
     }
 
