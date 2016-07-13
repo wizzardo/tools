@@ -10,18 +10,19 @@ import java.util.Map;
  */
 public class JavaMapBinder extends JavaObjectBinder {
     private Map that;
-    private Generic[] type;
+    private JsonGeneric type;
     private boolean valueIsMap;
     private JsonFieldSetter valueSetter;
     private StringConverter keyConverter;
 
-    public JavaMapBinder(Generic generic) {
+    public JavaMapBinder(JsonGeneric generic) {
         super(generic);
         that = (Map) object;
-        type = getTypes(generic);
-        valueIsMap = Map.class.isAssignableFrom(type[1].clazz);
-        keyConverter = StringConverter.getConverter(type[0].clazz);
-        valueSetter = getValueSetter(type[1].clazz);
+        JsonGeneric types = getTypes(generic);
+        type = types.type(1);
+        keyConverter = StringConverter.getConverter(types.type(0).clazz);
+        valueIsMap = Map.class.isAssignableFrom(type.clazz);
+        valueSetter = getValueSetter(type.clazz);
     }
 
     protected JsonFieldSetter getValueSetter(Class classValue) {
@@ -60,13 +61,13 @@ public class JavaMapBinder extends JavaObjectBinder {
         return Binder.createMap(clazz);
     }
 
-    private Generic[] getTypes(Generic generic) {
+    private JsonGeneric getTypes(JsonGeneric generic) {
         if (generic == null)
-            return new Generic[]{new Generic(Object.class), new Generic(Object.class)};
+            return new JsonGeneric(Object.class, Object.class, Object.class);
 
-        if (generic.typeParameters.length != 2)
-            return getTypes(generic.parent);
-        return generic.typeParameters;
+        if (generic.typesCount() != 2)
+            return getTypes(generic.parent());
+        return generic;
     }
 
     @Override
@@ -77,14 +78,14 @@ public class JavaMapBinder extends JavaObjectBinder {
     @Override
     public JsonBinder getObjectBinder() {
         if (valueIsMap)
-            return new JavaMapBinder(type[1]);
+            return new JavaMapBinder(type);
         else
-            return new JavaObjectBinder(type[1]);
+            return new JavaObjectBinder(type);
     }
 
     @Override
     public JsonBinder getArrayBinder() {
-        return new JavaArrayBinder(type[1]);
+        return new JavaArrayBinder(type);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.wizzardo.tools.json;
+package com.wizzardo.tools.reflection;
 
 import org.junit.Assert;
 import org.junit.Test;

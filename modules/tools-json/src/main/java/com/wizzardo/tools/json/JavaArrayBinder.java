@@ -16,16 +16,16 @@ class JavaArrayBinder implements JsonBinder {
     private Collection l;
     private Binder.SerializerType serializer;
     private Class clazz;
-    private Generic generic;
+    private JsonGeneric generic;
     private JsonFieldSetter valueSetter;
 
-    public JavaArrayBinder(Generic generic) {
+    public JavaArrayBinder(JsonGeneric generic) {
         if (generic != null)
             this.generic = generic;
         else
-            this.generic = new Generic(Object.class);
+            this.generic = generic = new JsonGeneric(Object.class);
 
-        this.clazz = this.generic.clazz;
+        this.clazz = generic.clazz;
         serializer = Binder.classToSerializer(clazz).type;
         if (serializer == Binder.SerializerType.ARRAY) {
             l = new ArrayList();
@@ -35,8 +35,8 @@ class JavaArrayBinder implements JsonBinder {
             throw new IllegalArgumentException("this binder only for collections and arrays! not for " + clazz);
         }
 
-        if (generic.typeParameters.length == 1)
-            valueSetter = getValueSetter(generic.typeParameters[0].clazz);
+        if (generic.typesCount() == 1)
+            valueSetter = getValueSetter(generic.type(0).clazz);
     }
 
     protected JsonFieldSetter getValueSetter(Class clazz) {
@@ -79,7 +79,7 @@ class JavaArrayBinder implements JsonBinder {
         else {
             List l = (List) this.l;
             Object array = Binder.createArray(generic, l.size());
-            Class type = generic.typeParameters[0].clazz;
+            Class type = generic.type(0).clazz;
             for (int i = 0; i < l.size(); i++) {
                 Array.set(array, i, JsonItem.getAs(l.get(i), type));
             }
@@ -87,9 +87,9 @@ class JavaArrayBinder implements JsonBinder {
         }
     }
 
-    public Generic getGeneric() {
-        if (generic != null && generic.typeParameters.length != 0)
-            return generic.typeParameters[0];
+    public JsonGeneric getGeneric() {
+        if (generic.typesCount() != 0)
+            return generic.type(0);
 
         return null;
     }
@@ -101,10 +101,11 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public JsonBinder getObjectBinder() {
-        if (Map.class.isAssignableFrom(generic.typeParameters[0].clazz))
-            return new JavaMapBinder(generic.typeParameters[0]);
+        JsonGeneric type = generic.type(0);
+        if (Map.class.isAssignableFrom(type.clazz))
+            return new JavaMapBinder(type);
 
-        return new JavaObjectBinder(generic.typeParameters[0]);
+        return new JavaObjectBinder(type);
     }
 
     @Override

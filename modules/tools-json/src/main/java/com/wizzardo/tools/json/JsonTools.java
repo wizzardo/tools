@@ -5,6 +5,7 @@ import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.Supplier;
 import com.wizzardo.tools.misc.UTF8;
 import com.wizzardo.tools.misc.pool.*;
+import com.wizzardo.tools.reflection.Generic;
 import com.wizzardo.tools.reflection.StringReflection;
 
 import java.io.OutputStream;
@@ -92,19 +93,19 @@ public class JsonTools {
             .build();
 
     public static JsonItem parse(String s) {
-        return new JsonItem(parse(s, (Generic<Object>) null));
+        return new JsonItem(parse(s, (JsonGeneric<Object>) null));
     }
 
     public static <T> T parse(String s, Class<T> clazz) {
-        return parse(s, new Generic<T>(clazz));
+        return parse(s, new JsonGeneric<T>(clazz));
     }
 
     public static <T> T parse(String s, Class<T> clazz, Class... generic) {
-        return parse(s, new Generic<T>(clazz, generic));
+        return parse(s, new JsonGeneric<T>(clazz, generic));
     }
 
-    public static <T> T parse(String s, Class<T> clazz, Generic... generic) {
-        return parse(s, new Generic<T>(clazz, generic));
+    public static <T> T parse(String s, Class<T> clazz, JsonGeneric... generic) {
+        return parse(s, new JsonGeneric<T>(clazz, generic));
     }
 
     public static JsonItem parse(byte[] bytes) {
@@ -116,30 +117,30 @@ public class JsonTools {
     }
 
     public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz) {
-        return parse(new String(bytes, from, length, UTF_8), new Generic<T>(clazz));
+        return parse(new String(bytes, from, length, UTF_8), new JsonGeneric<T>(clazz));
     }
 
     public static <T> T parse(byte[] bytes, Class<T> clazz) {
-        return parse(new String(bytes, UTF_8), new Generic<T>(clazz));
+        return parse(new String(bytes, UTF_8), new JsonGeneric<T>(clazz));
     }
 
     public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, Class... generic) {
-        return parse(new String(bytes, from, length, UTF_8), new Generic<T>(clazz, generic));
+        return parse(new String(bytes, from, length, UTF_8), new JsonGeneric<T>(clazz, generic));
     }
 
     public static <T> T parse(byte[] bytes, Class<T> clazz, Class... generic) {
-        return parse(new String(bytes, UTF_8), new Generic<T>(clazz, generic));
+        return parse(new String(bytes, UTF_8), new JsonGeneric<T>(clazz, generic));
     }
 
-    public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, Generic... generic) {
-        return parse(new String(bytes, from, length, UTF_8), new Generic<T>(clazz, generic));
+    public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, JsonGeneric... generic) {
+        return parse(new String(bytes, from, length, UTF_8), new JsonGeneric<T>(clazz, generic));
     }
 
-    public static <T> T parse(byte[] bytes, Class<T> clazz, Generic... generic) {
-        return parse(new String(bytes, UTF_8), new Generic<T>(clazz, generic));
+    public static <T> T parse(byte[] bytes, Class<T> clazz, JsonGeneric... generic) {
+        return parse(new String(bytes, UTF_8), new JsonGeneric<T>(clazz, generic));
     }
 
-    public static <T> T parse(String s, Generic<T> generic) {
+    public static <T> T parse(String s, JsonGeneric<T> generic) {
         s = s.trim();
         char[] data = StringReflection.chars(s);
         int offset = 0;
@@ -153,14 +154,14 @@ public class JsonTools {
     }
 
     public static <T> T parse(char[] s, Class<T> clazz, Class... generic) {
-        return parse(s, 0, s.length, new Generic<T>(clazz, generic));
+        return parse(s, 0, s.length, new JsonGeneric<T>(clazz, generic));
     }
 
-    public static <T> T parse(char[] s, Class<T> clazz, Generic... generic) {
-        return parse(s, 0, s.length, new Generic<T>(clazz, generic));
+    public static <T> T parse(char[] s, Class<T> clazz, JsonGeneric... generic) {
+        return parse(s, 0, s.length, new JsonGeneric<T>(clazz, generic));
     }
 
-    public static <T> T parse(char[] s, int from, int to, Generic<T> generic) {
+    public static <T> T parse(char[] s, int from, int to, JsonGeneric<T> generic) {
         // check first char
         if (s[from] == '{') {
             JsonBinder binder = Binder.getObjectBinder(generic);

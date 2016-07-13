@@ -9,31 +9,31 @@ import java.util.Map;
 class JavaObjectBinder implements JsonBinder {
     protected Object object;
     protected Class clazz;
-    protected Generic generic;
-    protected Fields fields;
+    protected JsonGeneric generic;
+    protected JsonFields fields;
     protected String tempKey;
 
-    public JavaObjectBinder(Generic generic) {
+    public JavaObjectBinder(JsonGeneric generic) {
         this.clazz = generic.clazz;
         this.generic = generic;
         object = createInstance(clazz);
-        fields = Binder.getFields(clazz);
+        fields = generic.getFields();
     }
 
     protected Object createInstance(Class clazz) {
         return Binder.createObject(clazz);
     }
 
-    private FieldInfo getField() {
+    private JsonFieldInfo getField() {
         return fields.get(tempKey);
     }
 
     @Override
     public void add(Object value) {
-        FieldInfo fieldInfo = getField();
+        JsonFieldInfo fieldInfo = getField();
         if (fieldInfo == null)
             return;
-        fieldInfo.setter.setObject(object, value);
+        fieldInfo.reflection.setObject(object, value);
     }
 
     @Override
@@ -48,7 +48,7 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public JsonBinder getObjectBinder() {
-        FieldInfo info = getField();
+        JsonFieldInfo info = getField();
         if (info == null)
             return null;
 
@@ -60,15 +60,13 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public JsonBinder getArrayBinder() {
-        FieldInfo info = getField();
+        JsonFieldInfo info = getField();
         if (info == null)
             return null;
 
-        if (generic != null) {
-            Generic type = generic.getGenericType(info.field);
-            if (type != null)
-                return new JavaArrayBinder(type);
-        }
+        JsonGeneric type = generic.getGenericType(info.field);
+        if (type != null)
+            return new JavaArrayBinder(type);
 
         return new JavaArrayBinder(info.generic);
     }
@@ -80,9 +78,9 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public JsonFieldSetter getFieldSetter() {
-        FieldInfo f = getField();
+        JsonFieldInfo f = getField();
         if (f != null)
-            return f.setter;
+            return f.reflection;
         return null;
     }
 }

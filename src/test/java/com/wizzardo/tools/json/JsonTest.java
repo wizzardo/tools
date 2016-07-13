@@ -1,6 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
+import com.wizzardo.tools.reflection.Generic;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -449,7 +450,7 @@ public class JsonTest {
     @Test
     public void testListListBinding() {
         String s = "[[\"foo1\",\"foo2\",\"foo3\"],[\"bar1\",\"bar2\"]]";
-        List<List<String>> l = JsonTools.parse(s, List.class, new Generic(List.class, String.class));
+        List<List<String>> l = JsonTools.parse(s, List.class, new JsonGeneric(List.class, String.class));
 
         assertEquals(2, l.size());
         assertEquals(3, l.get(0).size());
@@ -462,7 +463,7 @@ public class JsonTest {
     @Test
     public void testMapStringListIntegerBinding() {
         String s = "{\"key1\":[1,2,3],\"key2\":[4,5]}";
-        Map<String, List<Integer>> map = JsonTools.parse(s, Map.class, new Generic(String.class), new Generic(List.class, Integer.class));
+        Map<String, List<Integer>> map = JsonTools.parse(s, Map.class, new JsonGeneric(String.class), new JsonGeneric(List.class, Integer.class));
 
         assertEquals(2, map.size());
         assertEquals(3, map.get("key1").size());
@@ -479,7 +480,7 @@ public class JsonTest {
     @Test
     public void testListMapStringIntegerBinding() {
         String s = "[{key:1}]";
-        List<Map<String, Integer>> l = JsonTools.parse(s, List.class, new Generic(Map.class, String.class, Integer.class));
+        List<Map<String, Integer>> l = JsonTools.parse(s, List.class, new JsonGeneric(Map.class, String.class, Integer.class));
 
         assertEquals(1, l.size());
         assertEquals(new Integer(1), l.get(0).get("key"));
@@ -488,7 +489,7 @@ public class JsonTest {
     @Test
     public void testListMapIntegerIntegerBinding() {
         String s = "[{10:2}]";
-        List<Map<Integer, Integer>> l = JsonTools.parse(s, List.class, new Generic(Map.class, Integer.class, Integer.class));
+        List<Map<Integer, Integer>> l = JsonTools.parse(s, List.class, new JsonGeneric(Map.class, Integer.class, Integer.class));
 
         assertEquals(1, l.size());
         assertEquals(new Integer(2), l.get(0).get(10));
@@ -497,14 +498,14 @@ public class JsonTest {
     @Test
     public void testIntegerArray() {
         String s = "[1,2,3]";
-        Integer[] l = (Integer[]) JsonTools.parse(s, new Generic(Array.class, Integer.class));
+        Integer[] l = (Integer[]) JsonTools.parse(s, new JsonGeneric(Array.class, Integer.class));
 
         assertEquals(3, l.length);
         assertEquals(new Integer(1), l[0]);
         assertEquals(new Integer(2), l[1]);
         assertEquals(new Integer(3), l[2]);
 
-        int[] arr = (int[]) JsonTools.parse(s, new Generic(Array.class, int.class));
+        int[] arr = (int[]) JsonTools.parse(s, new JsonGeneric(Array.class, int.class));
 
         assertEquals(3, arr.length);
         assertEquals(1, arr[0]);
@@ -532,7 +533,7 @@ public class JsonTest {
         assertEquals(1, arr.length);
         assertEquals("value", arr[0].value);
 
-        arr = (StringHolder[]) (Object) JsonTools.parse(s.toCharArray(), Array.class, new Generic(StringHolder.class));
+        arr = (StringHolder[]) (Object) JsonTools.parse(s.toCharArray(), Array.class, new JsonGeneric(StringHolder.class));
         assertEquals(1, arr.length);
         assertEquals("value", arr[0].value);
 
@@ -907,7 +908,7 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
-                new JavaArrayBinder(new Generic(List.class)).setTemporaryKey("key");
+                new JavaArrayBinder(new JsonGeneric(List.class)).setTemporaryKey("key");
             }
         }, UnsupportedOperationException.class, "arrays has no keys");
 
@@ -921,14 +922,14 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
-                new JavaArrayBinder(new Generic(List.class)).add(new JsonItem(null));
+                new JavaArrayBinder(new JsonGeneric(List.class)).add(new JsonItem(null));
             }
         }, UnsupportedOperationException.class, "only raw objects are supported");
 
         testException(new Runnable() {
             @Override
             public void run() {
-                new JavaObjectBinder(new Generic(StringHolder.class)).add(new JsonItem(null));
+                new JavaObjectBinder(new JsonGeneric(StringHolder.class)).add(new JsonItem(null));
             }
         }, UnsupportedOperationException.class, "only raw objects are supported");
 
