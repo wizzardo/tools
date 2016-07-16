@@ -1470,9 +1470,15 @@ public class JsonTest {
 
     @Test
     public void testScientificNotation() {
-        Assert.assertEquals(1.0, JsonTools.parse("{d:1e}", DoubleHolder.class).d, 0.00001);
-        Assert.assertEquals(100.0, JsonTools.parse("{d:1e2}", DoubleHolder.class).d, 0.00001);
-        Assert.assertEquals(0.01, JsonTools.parse("{d:1e-2}", DoubleHolder.class).d, 0.00001);
+        Assert.assertEquals(1.0, JsonTools.parse("{d:1e}", DoubleHolder.class).d, 0);
+        Assert.assertEquals(100.0, JsonTools.parse("{d:1e2}", DoubleHolder.class).d, 0);
+        Assert.assertEquals(0.01, JsonTools.parse("{d:1e-2}", DoubleHolder.class).d, 0);
+
+        Assert.assertEquals(0000.1234567890123456789, JsonTools.parse("{d:0000.1234567890123456789}", DoubleHolder.class).d, 0);
+        Assert.assertEquals(0.1234567890123456789, JsonTools.parse("{d:0.1234567890123456789}", DoubleHolder.class).d, 0);
+        Assert.assertEquals(0.000001234567890123456789, JsonTools.parse("{d:0.000001234567890123456789}", DoubleHolder.class).d, 0);
+        Assert.assertEquals(0.1000001234567890123456789, JsonTools.parse("{d:0.1000001234567890123456789}", DoubleHolder.class).d, 0.000000000000001);
+        Assert.assertEquals(123.1000001234567890123456789, JsonTools.parse("{d:123.1000001234567890123456789}", DoubleHolder.class).d, 0);
     }
 
     private void testException(Runnable closure, Class exceptionClass, String message) {
