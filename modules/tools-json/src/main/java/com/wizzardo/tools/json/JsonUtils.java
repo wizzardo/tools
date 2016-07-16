@@ -12,7 +12,7 @@ class JsonUtils {
     private static long[] fractionalShift;
 
     static {
-        fractionalShift = new long[19];
+        fractionalShift = new long[10];
         fractionalShift[0] = 1;
         for (int i = 1; i < fractionalShift.length; i++) {
             fractionalShift[i] = fractionalShift[i - 1] * 10;
@@ -60,6 +60,13 @@ class JsonUtils {
         char ch = 0;
         while (i < to) {
             ch = s[i];
+            if (ch != '0')
+                break;
+            i++;
+        }
+        from = i;
+        while (i < to) {
+            ch = s[i];
             if (ch >= '0' && ch <= '9') {
                 l = l * 10 + (ch - '0');
             } else if (ch == '.') {
@@ -75,26 +82,54 @@ class JsonUtils {
         double d = 0;
         if (floatValue) {
             long number = l;
+            int numberLength = number == 0 ? 0 : i - from;
             i++;
             int fractionalPartStart = i;
+            int fractionalPartStop = -1;
 
+            if (numberLength == 0)
+                while (i < to) {
+                    ch = s[i];
+                    if (ch != '0')
+                        break;
+                    i++;
+                }
+
+            outer:
             while (i < to) {
                 ch = s[i];
-                if (ch >= '0' && ch <= '9')
-                    number = number * 10 + (ch - '0');
-                else
+                if (ch >= '0' && ch <= '9') {
+                    if (numberLength < 19) {
+                        number = number * 10 + (ch - '0');
+                        numberLength++;
+                    }
+                    if (numberLength == 19) {
+                        fractionalPartStop = i + 1;
+                        while (i < to) {
+                            ch = s[i];
+                            if (ch < '0' || ch > '9') {
+                                break outer;
+                            }
+                            i++;
+                        }
+                    }
+                } else {
+                    fractionalPartStop = i;
                     break;
+                }
                 i++;
             }
+            if (fractionalPartStop == -1)
+                fractionalPartStop = i;
 
 //            if (ch != '"' && ch != '\'' && ch != '}' && ch != ']' && ch != ',')
 //                throw new NumberFormatException("can't parse '" + new String(s, from, i - from + 1) + "' as number");
 
 
             if (minus)
-                d = -((double) number) / fractionalShift[i - fractionalPartStart];
+                d = -createDouble(number, fractionalPartStop - fractionalPartStart);
             else
-                d = ((double) number) / fractionalShift[i - fractionalPartStart];
+                d = createDouble(number, fractionalPartStop - fractionalPartStart);
         }
 
         if (minus)
@@ -136,6 +171,18 @@ class JsonUtils {
             binder.add(d);
 
         return i;
+    }
+
+    private static double createDouble(long number, int fractionalPartLength) {
+        double d = number;
+        while (fractionalPartLength >= 10) {
+            d /= 10000000000d;
+            fractionalPartLength -= 10;
+        }
+        if (fractionalPartLength != 0) {
+            d /= fractionalShift[fractionalPartLength];
+        }
+        return d;
     }
 
     private static void setNumber(FieldReflection setter, Object object, long l, double d, boolean floatValue) {
