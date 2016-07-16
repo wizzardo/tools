@@ -245,11 +245,11 @@ public class Flow<B> {
     }
 
 
-    public static <T> Flow<T> of(final Iterable<T> iterable) {
+    public static <T> Flow<T> of(Iterable<T> iterable) {
         return FlowStart.of(iterable);
     }
 
-    public static <T> Flow<T> of(final Iterator<T> iterator) {
+    public static <T> Flow<T> of(Iterator<T> iterator) {
         return FlowStart.of(iterator);
     }
 
@@ -257,8 +257,12 @@ public class Flow<B> {
         return FlowStart.of(map.entrySet());
     }
 
-    public static <T> Flow<T> of(final T... array) {
+    public static <T> Flow<T> of(T... array) {
         return FlowStart.of(array);
+    }
+
+    public static <T> Flow<T> of(T t) {
+        return FlowStart.of(t);
     }
 
     public static <T> Flow<T> of(Supplier<T> supplier) {
@@ -269,35 +273,35 @@ public class Flow<B> {
         return FlowStart.of(supplier);
     }
 
-    public static Flow<Integer> of(final int[] array) {
+    public static Flow<Integer> of(int[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Long> of(final long[] array) {
+    public static Flow<Long> of(long[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Double> of(final double[] array) {
+    public static Flow<Double> of(double[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Float> of(final float[] array) {
+    public static Flow<Float> of(float[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Byte> of(final byte[] array) {
+    public static Flow<Byte> of(byte[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Boolean> of(final boolean[] array) {
+    public static Flow<Boolean> of(boolean[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Short> of(final short[] array) {
+    public static Flow<Short> of(short[] array) {
         return FlowStart.of(array);
     }
 
-    public static Flow<Character> of(final char[] array) {
+    public static Flow<Character> of(char[] array) {
         return FlowStart.of(array);
     }
 

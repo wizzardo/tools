@@ -70,6 +70,15 @@ public abstract class FlowStart<T> extends Flow<T> {
         };
     }
 
+    public static <T> Flow<T> of(final T t) {
+        return new FlowStart<T>() {
+            @Override
+            protected void process() {
+                child.process(t);
+            }
+        };
+    }
+
     public static <T> Flow<T> of(final Supplier<T> supplier) {
         return new FlowStart<T>() {
             @Override
