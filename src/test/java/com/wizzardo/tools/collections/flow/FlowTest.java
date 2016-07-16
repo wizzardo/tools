@@ -669,6 +669,16 @@ public class FlowTest {
     }
 
     @Test
+    public void test_flow_of_one() {
+        Assert.assertEquals("A", Flow.of("a").map(new Mapper<String, String>() {
+            @Override
+            public String map(String s) {
+                return s.toUpperCase();
+            }
+        }).first().get());
+    }
+
+    @Test
     public void test_do_nothing() {
         Flow.of(new Iterator() {
             @Override
