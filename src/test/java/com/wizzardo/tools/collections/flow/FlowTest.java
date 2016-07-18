@@ -285,6 +285,51 @@ public class FlowTest {
     }
 
     @Test
+    public void test_flatMap_2() {
+        ArrayList<Integer> integers = Flow.of(1, 2, 3)
+                .groupBy(new Mapper<Integer, Boolean>() {
+                    @Override
+                    public Boolean map(Integer it) {
+                        return it % 2 == 0;
+                    }
+                })
+                .flatMap(new Mapper<FlowGroup<Boolean, Integer>, Flow<Integer>>() {
+                    @Override
+                    public Flow<Integer> map(final FlowGroup<Boolean, Integer> group) {
+                        return group;
+                    }
+                })
+                .toList().get();
+
+        Assert.assertEquals(3, integers.size());
+
+        Assert.assertEquals(Integer.valueOf(1), integers.get(0));
+        Assert.assertEquals(Integer.valueOf(2), integers.get(1));
+        Assert.assertEquals(Integer.valueOf(3), integers.get(2));
+    }
+
+    @Test
+    public void test_flatMap_3() {
+        ArrayList<Integer> integers = Flow.of(1, 2, 3)
+                .flatMap(new Mapper<Integer, Flow<Integer>>() {
+                    @Override
+                    public Flow<Integer> map(Integer i) {
+                        return Flow.of(i, i);
+                    }
+                })
+                .toList().get();
+
+        Assert.assertEquals(6, integers.size());
+
+        Assert.assertEquals(Integer.valueOf(1), integers.get(0));
+        Assert.assertEquals(Integer.valueOf(1), integers.get(1));
+        Assert.assertEquals(Integer.valueOf(2), integers.get(2));
+        Assert.assertEquals(Integer.valueOf(2), integers.get(3));
+        Assert.assertEquals(Integer.valueOf(3), integers.get(4));
+        Assert.assertEquals(Integer.valueOf(3), integers.get(5));
+    }
+
+    @Test
     public void test_sorted_list() {
         List<Integer> result = Flow.of(3, 2, 1).toSortedList().get();
 
@@ -539,62 +584,6 @@ public class FlowTest {
         Assert.assertEquals(Integer.valueOf(2), result.get(0));
         Assert.assertEquals(Integer.valueOf(4), result.get(1));
         Assert.assertEquals(Integer.valueOf(6), result.get(2));
-    }
-
-    @Test
-    public void test_merge_3() {
-        List<Integer> result = Flow.of(new int[]{1, 2}, new int[]{3, 4}, new int[]{5, 6})
-                .merge(new Mapper<int[], Flow<Integer>>() {
-                    @Override
-                    public Flow<Integer> map(int[] ints) {
-                        return Flow.of(ints);
-                    }
-                })
-                .toList()
-                .get();
-
-        Assert.assertEquals(6, result.size());
-        Assert.assertEquals(Integer.valueOf(1), result.get(0));
-        Assert.assertEquals(Integer.valueOf(2), result.get(1));
-        Assert.assertEquals(Integer.valueOf(3), result.get(2));
-        Assert.assertEquals(Integer.valueOf(4), result.get(3));
-        Assert.assertEquals(Integer.valueOf(5), result.get(4));
-        Assert.assertEquals(Integer.valueOf(6), result.get(5));
-    }
-
-    @Test
-    public void test_merge_4() {
-        List<Integer> result = Flow.of(1, 2, 3, 4, 5, 6)
-                .groupBy(new Mapper<Integer, Boolean>() {
-                    @Override
-                    public Boolean map(Integer integer) {
-                        return integer % 2 == 0;
-                    }
-                })
-                .filter(new Filter<FlowGroup<Boolean, Integer>>() {
-                    @Override
-                    public boolean allow(FlowGroup<Boolean, Integer> group) {
-                        return group.getKey();
-                    }
-                })
-                .merge(new Mapper<FlowGroup<Boolean, Integer>, Flow<Integer>>() {
-                    @Override
-                    public Flow<Integer> map(FlowGroup<Boolean, Integer> group) {
-                        return group.map(new Mapper<Integer, Integer>() {
-                            @Override
-                            public Integer map(Integer integer) {
-                                return integer / 2;
-                            }
-                        });
-                    }
-                })
-                .toList()
-                .get();
-
-        Assert.assertEquals(3, result.size());
-        Assert.assertEquals(Integer.valueOf(1), result.get(0));
-        Assert.assertEquals(Integer.valueOf(2), result.get(1));
-        Assert.assertEquals(Integer.valueOf(3), result.get(2));
     }
 
     @Test
