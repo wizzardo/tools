@@ -17,7 +17,7 @@ public abstract class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends F
         this.groups = groups;
     }
 
-    public <Z, V extends FlowProcessOnEnd<?, Z>> Flow<Z> flatMap(Mapper<? super B, V> mapper) {
+    public <Z, V extends Flow<Z>> Flow<Z> flatMap(Mapper<? super B, ? extends V> mapper) {
         FlowContinue<Z> continueCommand = new FlowContinue<Z>(this);
         then(new FlowFlatMap<K, V, B, Z>(mapper, continueCommand));
         return continueCommand;
@@ -105,9 +105,5 @@ public abstract class FlowGrouping<K, T, A, B extends FlowGroup<K, T>> extends F
 
     public Flow<T> merge() {
         return then(new FlowMerge<B, T>());
-    }
-
-    public <V> Flow<V> merge(Mapper<? super B, ? extends Flow<? extends V>> mapper) {
-        return then(new FlowMapMerge<B, V>(mapper));
     }
 }

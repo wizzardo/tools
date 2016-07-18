@@ -81,8 +81,8 @@ public class Flow<B> {
         return then(new FlowReduce<B>(def, reducer));
     }
 
-    public <T> Flow<T> merge(Mapper<? super B, ? extends Flow<? extends T>> mapper) {
-        return then(new FlowMapMerge<B, T>(mapper));
+    public <Z, V extends Flow<Z>> Flow<Z> flatMap(Mapper<? super B, ? extends V> mapper) {
+        return then(new FlowMapMerge<B, Z>(mapper));
     }
 
     public Flow<B> filter(Filter<? super B> filter) {

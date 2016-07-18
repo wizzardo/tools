@@ -8,11 +8,11 @@ import com.wizzardo.tools.collections.flow.Mapper;
 /**
  * Created by wizzardo on 16.04.16.
  */
-public class FlowFlatMap<K, V extends FlowProcessOnEnd<?, Z>, B extends FlowGroup<K, ?>, Z> extends FlowProcessor<B, B> {
-    private final Mapper<? super B, V> mapper;
+public class FlowFlatMap<K, V extends Flow<Z>, B extends FlowGroup<K, ?>, Z> extends FlowProcessor<B, B> {
+    private final Mapper<? super B, ? extends V> mapper;
     private final FlowContinue<Z> continueFlow;
 
-    public FlowFlatMap(Mapper<? super B, V> mapper, FlowContinue<Z> continueFlow) {
+    public FlowFlatMap(Mapper<? super B, ? extends V> mapper, FlowContinue<Z> continueFlow) {
         this.mapper = mapper;
         this.continueFlow = continueFlow;
     }
