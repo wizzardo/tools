@@ -244,6 +244,9 @@ public class Flow<B> {
         return groupBy(toKey, groupMapSupplier).toMap(toValue);
     }
 
+    public <T> Flow<T> with(Mapper<Flow<B>, Flow<T>> mapper){
+        return mapper.map(this);
+    }
 
     public static <T> Flow<T> of(Iterable<T> iterable) {
         return FlowStart.of(iterable);
