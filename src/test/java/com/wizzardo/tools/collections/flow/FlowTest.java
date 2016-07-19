@@ -1349,4 +1349,24 @@ public class FlowTest {
         Assert.assertEquals(1, after.get());
     }
 
+    @Test
+    public void test_with() {
+        final boolean onlyEven = true;
+        ArrayList<Integer> result = Flow.of(1, 2, 3)
+                .with(new Mapper<Flow<Integer>, Flow<Integer>>() {
+                    @Override
+                    public Flow<Integer> map(Flow<Integer> flow) {
+                        return !onlyEven ? flow : flow.filter(new Filter<Integer>() {
+                            @Override
+                            public boolean allow(Integer integer) {
+                                return integer % 2 == 0;
+                            }
+                        });
+                    }
+                }).toList().get();
+
+        Assert.assertEquals(1, result.size());
+        Assert.assertEquals(Integer.valueOf(2), result.get(0));
+    }
+
 }
