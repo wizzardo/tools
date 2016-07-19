@@ -658,6 +658,16 @@ public class FlowTest {
     }
 
     @Test
+    public void test_of_flows() {
+        List<Integer> result = Flow.of(Flow.of(1), Flow.of(2, 3)).toList().get();
+
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals(Integer.valueOf(1), result.get(0));
+        Assert.assertEquals(Integer.valueOf(2), result.get(1));
+        Assert.assertEquals(Integer.valueOf(3), result.get(2));
+    }
+
+    @Test
     public void test_flow_of_one() {
         Assert.assertEquals("A", Flow.of("a").map(new Mapper<String, String>() {
             @Override
