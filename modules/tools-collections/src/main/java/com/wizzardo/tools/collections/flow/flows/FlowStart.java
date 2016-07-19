@@ -103,6 +103,40 @@ public abstract class FlowStart<T> extends Flow<T> {
         };
     }
 
+    public static <T> Flow<T> of(final Flow<T>... flows) {
+        return new FlowStart<T>() {
+            final FlowProcessor<T, T> noopOnEnd = new FlowProcessor<T, T>() {
+
+                @Override
+                public void process(T t) {
+                    child.process(t);
+                }
+
+                @Override
+                protected void onEnd() {
+                }
+
+                @Override
+                protected void stop() {
+                    super.stop();
+                    stop = true;
+                }
+            };
+
+            @Override
+            protected void process() {
+                FlowProcessor<T, ?> child = this.child;
+                for (Flow<T> flow : flows) {
+                    if (stop)
+                        break;
+
+                    flow.then(noopOnEnd).then(child);
+                    start(flow);
+                }
+            }
+        };
+    }
+
     public static Flow<Integer> of(final int[] array) {
         return new FlowStart<Integer>() {
             @Override

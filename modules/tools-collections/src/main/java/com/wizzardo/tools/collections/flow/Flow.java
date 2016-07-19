@@ -244,9 +244,10 @@ public class Flow<B> {
         return groupBy(toKey, groupMapSupplier).toMap(toValue);
     }
 
-    public <T> Flow<T> with(Mapper<Flow<B>, Flow<T>> mapper){
+    public <T> Flow<T> with(Mapper<Flow<B>, Flow<T>> mapper) {
         return mapper.map(this);
     }
+
 
     public static <T> Flow<T> of(Iterable<T> iterable) {
         return FlowStart.of(iterable);
@@ -274,6 +275,10 @@ public class Flow<B> {
 
     public static <T> Flow<T> of(Supplier<T>... supplier) {
         return FlowStart.of(supplier);
+    }
+
+    public static <T> Flow<T> of(Flow<T>... flows) {
+        return FlowStart.of(flows);
     }
 
     public static Flow<Integer> of(int[] array) {
