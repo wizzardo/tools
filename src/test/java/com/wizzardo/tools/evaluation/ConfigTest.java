@@ -3,6 +3,7 @@ package com.wizzardo.tools.evaluation;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -165,5 +166,103 @@ public class ConfigTest {
         Assert.assertEquals(1, configA.size());
         Assert.assertEquals(1, ((Map) configA.get("a")).size());
         Assert.assertEquals(2, ((Map) configA.get("a")).get("c"));
+    }
+
+    static class TestClass {
+        int i;
+        long l;
+        short s;
+        byte b;
+        boolean flag;
+        float f;
+        double d;
+        char c;
+
+        Integer ii;
+        Long ll;
+        Short ss;
+        Byte bb;
+        Boolean aBoolean;
+        Double dd;
+        Float ff;
+        Character cc;
+
+        String string;
+        List list;
+        Map map;
+
+        TestClass aClass;
+    }
+
+    @Test
+    public void test_bind_1() {
+        String s = "" +
+                "a.i = 1\n" +
+                "a.l = 1l\n" +
+                "a.s = Short.valueOf('1')\n" +
+                "a.b = Byte.valueOf('1')\n" +
+                "a.flag = true\n" +
+                "a.f = 1f\n" +
+                "a.d = 1.0\n" +
+                "a.c = '1'.charAt(0)\n" +
+                "\n" +
+                "a.ii = 1\n" +
+                "a.ll = 1l\n" +
+                "a.ss = Short.valueOf('1')\n" +
+                "a.bb = Byte.valueOf('1')\n" +
+                "a.aBoolean = true\n" +
+                "a.ff = 1f\n" +
+                "a.dd = 1.0\n" +
+                "a.cc = '1'.charAt(0)\n" +
+                "\n" +
+                "a.string = 'string'\n" +
+                "a.list = [1,2,3]\n" +
+                "a.map = [1:'1', 2:'2']\n" +
+                "";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        TestClass t = config.config("a").bind(TestClass.class);
+
+        Assert.assertEquals(1, t.i);
+        Assert.assertEquals(1l, t.l);
+        Assert.assertEquals(1, t.s);
+        Assert.assertEquals(1, t.b);
+        Assert.assertEquals(true, t.flag);
+        Assert.assertEquals(1f, t.f, 0);
+        Assert.assertEquals(1d, t.d, 0);
+        Assert.assertEquals('1', t.c);
+
+        Assert.assertEquals(Integer.valueOf(1), t.ii);
+        Assert.assertEquals(Long.valueOf(1l), t.ll);
+        Assert.assertEquals(Short.valueOf((short) 1), t.ss);
+        Assert.assertEquals(Byte.valueOf((byte) 1), t.bb);
+        Assert.assertEquals(Boolean.TRUE, t.aBoolean);
+        Assert.assertEquals(Float.valueOf(1f), t.ff);
+        Assert.assertEquals(Double.valueOf(1d), t.dd);
+        Assert.assertEquals(Character.valueOf('1'), t.cc);
+
+        Assert.assertEquals("string", t.string);
+        Assert.assertEquals(3, t.list.size());
+        Assert.assertEquals(2, t.map.size());
+
+        Assert.assertEquals(null, t.aClass);
+    }
+
+    @Test
+    public void test_bind_2() {
+        String s = "" +
+                "a.i = 1\n" +
+                "a.aClass.i = 1\n" +
+                "";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        TestClass t = config.config("a").bind(TestClass.class);
+
+        Assert.assertEquals(1, t.i);
+        Assert.assertEquals(1, t.aClass.i);
     }
 }
