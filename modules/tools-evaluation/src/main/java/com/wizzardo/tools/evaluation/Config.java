@@ -2,6 +2,10 @@ package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.collections.CollectionTools;
 import com.wizzardo.tools.misc.Supplier;
+import com.wizzardo.tools.misc.Unchecked;
+import com.wizzardo.tools.reflection.FieldInfo;
+import com.wizzardo.tools.reflection.FieldReflection;
+import com.wizzardo.tools.reflection.Fields;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,5 +72,74 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
                 into.put(entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    public <T> T bind(Class<T> clazz) {
+        Fields<FieldInfo> fields = new Fields<FieldInfo>(clazz);
+        T t = creteInstance(clazz);
+        for (FieldInfo fieldInfo : fields) {
+            FieldReflection reflection = fieldInfo.reflection;
+            String name = fieldInfo.field.getName();
+            switch (reflection.getType()) {
+                case BOOLEAN:
+                    reflection.setBoolean(t, get(name, Boolean.FALSE));
+                    break;
+                case BYTE:
+                    reflection.setByte(t, get(name, (byte) 0));
+                    break;
+                case CHAR:
+                    reflection.setChar(t, get(name, (char) 0));
+                    break;
+                case DOUBLE:
+                    reflection.setDouble(t, get(name, 0.0));
+                    break;
+                case FLOAT:
+                    reflection.setFloat(t, get(name, 0.0f));
+                    break;
+                case INTEGER:
+                    reflection.setInteger(t, get(name, 0));
+                    break;
+                case LONG:
+                    reflection.setLong(t, get(name, 0l));
+                    break;
+                case SHORT:
+                    reflection.setShort(t, get(name, (short) 0));
+                    break;
+                case OBJECT: {
+                    Object o = super.get(name);
+                    if (o == null) {
+                        reflection.setObject(t, null);
+                        break;
+                    }
+
+                    if (fieldInfo.generic.clazz.isAssignableFrom(o.getClass())) {
+                        reflection.setObject(t, o);
+                        break;
+                    }
+
+                    try {
+                        reflection.setObject(t, ((Config) o).bind(fieldInfo.generic.clazz));
+                    } catch (ClassCastException e) {
+                        throw new IllegalStateException("Cannot bind " + o.getClass() + " to " + fieldInfo.field);
+                    }
+                    break;
+                }
+                default:
+                    throw new IllegalStateException("Unknown type of field " + fieldInfo.field);
+            }
+        }
+        return t;
+    }
+
+    protected <T> T creteInstance(Class<T> clazz) {
+        T t;
+        try {
+            t = clazz.newInstance();
+        } catch (InstantiationException e) {
+            throw Unchecked.rethrow(e);
+        } catch (IllegalAccessException e) {
+            throw Unchecked.rethrow(e);
+        }
+        return t;
     }
 }
