@@ -75,8 +75,11 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
     }
 
     public <T> T bind(Class<T> clazz) {
-        Fields<FieldInfo> fields = new Fields<FieldInfo>(clazz);
-        T t = creteInstance(clazz);
+        return bind(creteInstance(clazz));
+    }
+
+    public <T> T bind(T t) {
+        Fields<FieldInfo> fields = new Fields<FieldInfo>(t.getClass());
         for (FieldInfo fieldInfo : fields) {
             FieldReflection reflection = fieldInfo.reflection;
             String name = fieldInfo.field.getName();
