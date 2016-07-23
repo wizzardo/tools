@@ -42,19 +42,23 @@ public class Cache<K, V> {
     }
 
     public V get(K k) {
-        return getHolder(k, computable, false).get();
+        return getFromHolder(getHolder(k, computable, false));
     }
 
     public V get(K k, boolean updateTTL) {
-        return getHolder(k, computable, updateTTL).get();
+        return getFromHolder(getHolder(k, computable, updateTTL));
     }
 
     public V get(K k, Computable<? super K, ? extends V> computable) {
-        return getHolder(k, computable, false).get();
+        return getFromHolder(getHolder(k, computable, false));
     }
 
     public V get(K k, Computable<? super K, ? extends V> computable, boolean updateTTL) {
-        return getHolder(k, computable, updateTTL).get();
+        return getFromHolder(getHolder(k, computable, updateTTL));
+    }
+
+    protected V getFromHolder(Holder<K, V> holder) {
+        return holder == null ? null : holder.get();
     }
 
     public Holder<K, V> getHolder(K k) {
