@@ -1379,4 +1379,29 @@ public class FlowTest {
         Assert.assertEquals(Integer.valueOf(2), result.get(0));
     }
 
+    @Test
+    public void test_while() {
+        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5)
+                .whilst(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer < 4;
+                    }
+                })
+                .join(",")
+                .get());
+    }
+
+    @Test
+    public void test_until() {
+        Assert.assertEquals("1,2,3", Flow.of(1, 2, 3, 4, 5)
+                .until(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer >= 4;
+                    }
+                })
+                .join(",")
+                .get());
+    }
 }
