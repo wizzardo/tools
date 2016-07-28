@@ -89,6 +89,14 @@ public class Flow<B> {
         return then(new FlowFilter<B>(filter));
     }
 
+    public Flow<B> until(Filter<? super B> until) {
+        return then(new FlowUntil<B>(until));
+    }
+
+    public Flow<B> whilst(Filter<? super B> whilst) {
+        return then(new FlowWhile<B>(whilst));
+    }
+
     public Flow<B> skip(int number) {
         return then(new FlowSkip<B>(number));
     }
