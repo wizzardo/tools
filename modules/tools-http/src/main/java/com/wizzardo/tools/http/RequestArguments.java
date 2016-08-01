@@ -231,6 +231,10 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
+    public Map<String, List<String>> params() {
+        return params;
+    }
+
     public T setUrlEncoding(String charset) {
         charsetForEncoding = charset;
         return self();
@@ -272,6 +276,10 @@ public class RequestArguments<T extends RequestArguments> {
             dataTypes.put(key, type);
         }
         return self();
+    }
+
+    public Map<String, String> headers() {
+        return headers;
     }
 
     public T addHeader(String key, String value) {
