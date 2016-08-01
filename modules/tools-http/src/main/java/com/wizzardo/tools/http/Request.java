@@ -169,7 +169,9 @@ public class Request extends RequestArguments<Request> {
                     out.close();
                 }
             }
-            if (redirects && (c.getResponseCode() == 301 || c.getResponseCode() == 302)) {
+
+            int responseCode = c.getResponseCode();
+            if (redirects && responseCode >= 300 && responseCode < 400) {
                 if (session == null)
                     session = new HttpSession();
 
