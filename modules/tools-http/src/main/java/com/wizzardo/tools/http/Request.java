@@ -44,37 +44,37 @@ public class Request extends RequestArguments<Request> {
 
     public Response get() throws IOException {
         setMethod(ConnectionMethod.GET);
-        return execute(0);
+        return execute();
     }
 
     public Response post() throws IOException {
         setMethod(ConnectionMethod.POST);
-        return execute(0);
+        return execute();
     }
 
     public Response put() throws IOException {
         setMethod(ConnectionMethod.PUT);
-        return execute(0);
+        return execute();
     }
 
     public Response head() throws IOException {
         setMethod(ConnectionMethod.HEAD);
-        return execute(0);
+        return execute();
     }
 
     public Response delete() throws IOException {
         setMethod(ConnectionMethod.DELETE);
-        return execute(0);
+        return execute();
     }
 
     public Response options() throws IOException {
         setMethod(ConnectionMethod.OPTIONS);
-        return execute(0);
+        return execute();
     }
 
     public Response trace() throws IOException {
         setMethod(ConnectionMethod.TRACE);
-        return execute(0);
+        return execute();
     }
 
     protected Request setSession(HttpSession session) {
@@ -87,7 +87,7 @@ public class Request extends RequestArguments<Request> {
         return this;
     }
 
-    private Response execute(int retryNumber) throws IOException {
+    protected Response execute(int retryNumber) throws IOException {
         try {
             String url = this.url;
             if (data != null || (method != ConnectionMethod.PUT && method != ConnectionMethod.POST)) {
