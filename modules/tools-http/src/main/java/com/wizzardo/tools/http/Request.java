@@ -117,11 +117,11 @@ public class Request extends RequestArguments<Request> {
                 c.setDoOutput(true);
                 if (!multipart) {
                     if (data == null) {
-                        c.addRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                        c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                         data = createPostParameters(params, charsetForEncoding).getBytes(charsetForEncoding);
                     }
 
-                    c.addRequestProperty("Content-Length", String.valueOf(data.length));
+                    c.setRequestProperty("Content-Length", String.valueOf(data.length));
                     OutputStream out = c.getOutputStream();
                     out.write(data);
                     out.flush();
