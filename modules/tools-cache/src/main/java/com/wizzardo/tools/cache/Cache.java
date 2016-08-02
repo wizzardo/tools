@@ -116,7 +116,11 @@ public class Cache<K, V> {
                     if (h != null && h.validUntil <= time) {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
                         if (map.remove(h.k, h)) {
-                            onRemoveItem(h.k, h.v);
+                            try {
+                                onRemoveItem(h.k, h.v);
+                            } catch (Exception e) {
+                                onErrorDuringRefresh(e);
+                            }
                             putToOutdated(h);
                         }
                     }
@@ -128,6 +132,10 @@ public class Cache<K, V> {
         }
 
         return nextWakeUp;
+    }
+
+    protected void onErrorDuringRefresh(Exception e) {
+        throw Unchecked.rethrow(e);
     }
 
     private void putToOutdated(Holder<K, V> h) {
