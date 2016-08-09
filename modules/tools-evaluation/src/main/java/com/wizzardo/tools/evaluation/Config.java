@@ -109,19 +109,20 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
                     reflection.setShort(t, get(name, (short) 0));
                     break;
                 case OBJECT: {
-                    Object o = super.get(name);
-                    if (o == null) {
-                        reflection.setObject(t, null);
-                        break;
-                    }
+                    Object o = get(name);
 
                     if (fieldInfo.generic.clazz.isAssignableFrom(o.getClass())) {
                         reflection.setObject(t, o);
                         break;
                     }
+                    Config config = (Config) o;
+                    if (config.isEmpty()) {
+                        reflection.setObject(t, null);
+                        break;
+                    }
 
                     try {
-                        reflection.setObject(t, ((Config) o).bind(fieldInfo.generic.clazz));
+                        reflection.setObject(t, config.bind(fieldInfo.generic.clazz));
                     } catch (ClassCastException e) {
                         throw new IllegalStateException("Cannot bind " + o.getClass() + " to " + fieldInfo.field);
                     }
