@@ -20,6 +20,8 @@ public class SoftHolder<T> implements Holder<T> {
         if (value == null) {
             value = pool.create();
             ref = new SoftReference<T>(value);
+        } else {
+            pool.reset(value);
         }
         return value;
     }

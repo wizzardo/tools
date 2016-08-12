@@ -31,15 +31,8 @@ public class PoolBuilder<T> {
 
     protected HolderSupplier<T> holderSupplier = new HolderSupplier<T>() {
         @Override
-        public Holder<T> get(Pool<T> pool, T value, final Consumer<T> resetter) {
-            return new SoftHolder<T>(pool, value) {
-                @Override
-                public T get() {
-                    T t = super.get();
-                    resetter.consume(t);
-                    return t;
-                }
-            };
+        public Holder<T> get(Pool<T> pool, T value) {
+            return new SoftHolder<T>(pool, value);
         }
     };
 
@@ -158,6 +151,6 @@ public class PoolBuilder<T> {
     }
 
     public interface HolderSupplier<T> {
-        Holder<T> get(Pool<T> pool, T value, Consumer<T> resetter);
+        Holder<T> get(Pool<T> pool, T value);
     }
 }

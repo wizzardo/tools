@@ -25,4 +25,6 @@ public interface Pool<T> {
      * @return current queue size
     **/
     int size();
+
+    T reset(T t);
 }

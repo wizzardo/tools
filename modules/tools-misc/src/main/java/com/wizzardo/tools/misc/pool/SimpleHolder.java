@@ -14,7 +14,7 @@ public class SimpleHolder<T> implements Holder<T> {
 
     @Override
     public T get() {
-        return value;
+        return pool.reset(value);
     }
 
     @Override

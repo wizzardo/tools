@@ -32,6 +32,12 @@ public class QueuedPool<T> extends AbstractQueuedPool<T> {
 
     @Override
     protected Holder<T> createHolder(T t) {
-        return holderSupplier.get(this, t, resetter);
+        return holderSupplier.get(this, t);
+    }
+
+    @Override
+    public T reset(T t) {
+        resetter.consume(t);
+        return t;
     }
 }
