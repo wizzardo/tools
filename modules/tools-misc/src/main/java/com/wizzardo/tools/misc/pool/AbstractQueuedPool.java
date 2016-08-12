@@ -48,7 +48,7 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
     }
 
     protected Holder<T> createHolder(T t) {
-        return new SimpleHolder(t);
+        return new SimpleHolder<T>(this, t);
     }
 
     public <R> R provide(Consumer<T, R> consumer) {
@@ -64,24 +64,6 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
             }
         } finally {
             release(holder);
-        }
-    }
-
-    protected class SimpleHolder implements Holder<T> {
-        final T value;
-
-        public SimpleHolder(T value) {
-            this.value = value;
-        }
-
-        @Override
-        public T get() {
-            return value;
-        }
-
-        @Override
-        public void close() {
-            release(this);
         }
     }
 
