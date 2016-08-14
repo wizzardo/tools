@@ -83,53 +83,55 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
         for (FieldInfo fieldInfo : fields) {
             FieldReflection reflection = fieldInfo.reflection;
             String name = fieldInfo.field.getName();
-            switch (reflection.getType()) {
-                case BOOLEAN:
-                    reflection.setBoolean(t, get(name, Boolean.FALSE));
-                    break;
-                case BYTE:
-                    reflection.setByte(t, get(name, (byte) 0));
-                    break;
-                case CHAR:
-                    reflection.setChar(t, get(name, (char) 0));
-                    break;
-                case DOUBLE:
-                    reflection.setDouble(t, get(name, 0.0));
-                    break;
-                case FLOAT:
-                    reflection.setFloat(t, get(name, 0.0f));
-                    break;
-                case INTEGER:
-                    reflection.setInteger(t, get(name, 0));
-                    break;
-                case LONG:
-                    reflection.setLong(t, get(name, 0l));
-                    break;
-                case SHORT:
-                    reflection.setShort(t, get(name, (short) 0));
-                    break;
-                case OBJECT: {
-                    Object o = get(name);
 
-                    if (fieldInfo.generic.clazz.isAssignableFrom(o.getClass())) {
-                        reflection.setObject(t, o);
+            try {
+                switch (reflection.getType()) {
+                    case BOOLEAN:
+                        reflection.setBoolean(t, get(name, Boolean.FALSE));
                         break;
-                    }
-                    Config config = (Config) o;
-                    if (config.isEmpty()) {
-                        reflection.setObject(t, null);
+                    case BYTE:
+                        reflection.setByte(t, get(name, (byte) 0));
                         break;
-                    }
+                    case CHAR:
+                        reflection.setChar(t, get(name, (char) 0));
+                        break;
+                    case DOUBLE:
+                        reflection.setDouble(t, get(name, 0.0));
+                        break;
+                    case FLOAT:
+                        reflection.setFloat(t, get(name, 0.0f));
+                        break;
+                    case INTEGER:
+                        reflection.setInteger(t, get(name, 0));
+                        break;
+                    case LONG:
+                        reflection.setLong(t, get(name, 0l));
+                        break;
+                    case SHORT:
+                        reflection.setShort(t, get(name, (short) 0));
+                        break;
+                    case OBJECT: {
+                        Object o = get(name);
 
-                    try {
+                        if (fieldInfo.generic.clazz.isAssignableFrom(o.getClass())) {
+                            reflection.setObject(t, o);
+                            break;
+                        }
+                        Config config = (Config) o;
+                        if (config.isEmpty()) {
+                            reflection.setObject(t, null);
+                            break;
+                        }
+
                         reflection.setObject(t, config.bind(fieldInfo.generic.clazz));
-                    } catch (ClassCastException e) {
-                        throw new IllegalStateException("Cannot bind " + o.getClass() + " to " + fieldInfo.field);
+                        break;
                     }
-                    break;
+                    default:
+                        throw new IllegalStateException("Unknown type of field " + fieldInfo.field);
                 }
-                default:
-                    throw new IllegalStateException("Unknown type of field " + fieldInfo.field);
+            } catch (ClassCastException e) {
+                Object o = get(name);
+                throw new IllegalStateException("Cannot bind '" + o + "' of class " + o.getClass() + " to " + fieldInfo.field);
             }
         }
         return t;
