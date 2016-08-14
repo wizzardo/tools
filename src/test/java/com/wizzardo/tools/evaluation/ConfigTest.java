@@ -265,4 +265,22 @@ public class ConfigTest {
         Assert.assertEquals(1, t.i);
         Assert.assertEquals(1, t.aClass.i);
     }
+
+    @Test
+    public void test_bind__should_fail() {
+        String s = "" +
+                "a.l = 1\n" +
+                "";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        try{
+            config.config("a").bind(TestClass.class);
+            Assert.assertTrue(false);
+        }catch (Exception e){
+            Assert.assertEquals(IllegalStateException.class, e.getClass());
+            Assert.assertEquals("Cannot bind '1' of class class java.lang.Integer to long " + TestClass.class.getName() + ".l", e.getMessage());
+        }
+    }
 }
