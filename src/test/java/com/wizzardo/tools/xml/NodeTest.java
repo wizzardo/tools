@@ -325,4 +325,37 @@ public class NodeTest {
         Assert.assertEquals("%{--<p>text</p>--}%", div.get(1).text());
         Assert.assertEquals("after", div.get(2).text());
     }
+
+    @Test
+    public void gsp_page() throws IOException {
+        String s = "<%@ page contentType=\"text/html;charset=UTF-8\" %>\n" +
+                "<!DOCTYPE html>\n" +
+                "<html>\n" +
+                "<head>\n" +
+                "    <title>title</title>\n" +
+                "    %{-- comment! --}%\n" +
+                "</head>" +
+                "</html>";
+        Node doc = new GspParser().parse(s);
+        Assert.assertEquals(3, doc.children().size());
+        Assert.assertEquals("%@", doc.get(0).name());
+        Assert.assertEquals("!DOCTYPE", doc.get(1).name());
+        Assert.assertEquals("html", doc.get(2).name());
+    }
+
+    @Test
+    public void gsp_page2() throws IOException {
+        String s = "<%@ page contentType=\"text/html;charset=UTF-8\" %>\n" +
+                "<!DOCTYPE html>\n" +
+                "<html>\n" +
+                "<head>\n" +
+                "    <title>title</title>\n" +
+                "</head>" +
+                "</html>";
+        Node doc = new GspParser().parse(s);
+        Assert.assertEquals(3, doc.children().size());
+        Assert.assertEquals("%@", doc.get(0).name());
+        Assert.assertEquals("!DOCTYPE", doc.get(1).name());
+        Assert.assertEquals("html", doc.get(2).name());
+    }
 }
