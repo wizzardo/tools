@@ -96,6 +96,14 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
     }
 
     @Override
+    protected boolean isSelfClosedTag(String name) {
+        if (name.equals("%@"))
+            return true;
+
+        return super.isSelfClosedTag(name);
+    }
+
+    @Override
     protected T createContext() {
         return (T) new GspParserContext();
     }
