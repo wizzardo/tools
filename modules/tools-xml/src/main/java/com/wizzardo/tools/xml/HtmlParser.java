@@ -66,8 +66,7 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
                 sb.append('>');
                 return false;
             }
-            return super.onGreaterThanSign(s, xml) || selfClosedTags.contains(xml.name().toLowerCase());
-
+            return super.onGreaterThanSign(s, xml) || isSelfClosedTag(xml.name().toLowerCase());
         }
 
         @Override
@@ -90,7 +89,10 @@ public class HtmlParser<T extends HtmlParser.HtmlParserContext> extends XmlParse
         protected void onTagName(String name) {
             inAnotherLanguageTag = anotherLanguageTags.contains(name);
         }
+    }
 
+    protected boolean isSelfClosedTag(String name) {
+        return selfClosedTags.contains(name);
     }
 
     @Override
