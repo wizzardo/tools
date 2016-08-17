@@ -41,12 +41,14 @@ public class ClosureExpression extends Expression {
         HashMap<String, Object> local = new HashMap<String, Object>(model);
         local.put("this", model);
         if (args != null) {
-            if (args.length != arg.length)
-                throw new IllegalArgumentException("wrong number of arguments! there were " + arg.length + ", but must be " + args.length);
-            for (int i = 0; i < args.length; i++) {
+            if (!(args.length == 1 && args[0].key.equals("it") && (arg == null || arg.length == 0))) {
+                if (args.length != arg.length)
+                    throw new IllegalArgumentException("wrong number of arguments! there were " + arg.length + ", but must be " + args.length);
+                for (int i = 0; i < args.length; i++) {
 //                if (!args[i].value.isAssignableFrom(arg[i].getClass()))
 //                    throw new ClassCastException("Can not cast " + args[i].getClass() + " to " + args[i].value);
-                local.put(args[i].key, arg[i]);
+                    local.put(args[i].key, arg[i]);
+                }
             }
         }
         Object ob = null;

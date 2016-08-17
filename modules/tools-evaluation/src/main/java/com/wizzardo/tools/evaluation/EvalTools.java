@@ -663,7 +663,7 @@ public class EvalTools {
                     continue;
                 closure.add(prepare(s, model, functions, imports, isTemplate));
             }
-            return closure;
+            return new ClosureHolder(closure);
         }
 
         {
@@ -924,9 +924,9 @@ public class EvalTools {
             if (m.find()) {
 //                System.out.println("find user function: " + m.group(1) + "\t from " + exp);
 //                System.out.println("available functions: " + functions);
-                UserFunction function = functions.get(m.group(1)).clone();
-                thatObject = function;
-                exp = exp.substring(function.getName().length());
+                String functionName = m.group(1);
+                thatObject = new ClosureLookup(functionName, functions);
+                exp = exp.substring(functionName.length());
             }
         }
 
@@ -1277,7 +1277,7 @@ public class EvalTools {
             @Override
             public Object execute(Object it, Map model, Expression[] args) {
                 List l = new ArrayList();
-                ClosureExpression closure = (ClosureExpression) args[0];
+                ClosureExpression closure = (ClosureExpression) args[0].get();
                 Collection c = (Collection) it;
                 for (Object ob : c) {
                     l.add(closure.get(model, ob));
@@ -1289,7 +1289,7 @@ public class EvalTools {
             @Override
             public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0];
+                ClosureExpression closure = (ClosureExpression) args[0].get();
                 for (Object ob : c) {
                     if ((Boolean) closure.get(model, ob)) {
                         return ob;
@@ -1303,7 +1303,7 @@ public class EvalTools {
             public Object execute(Object it, Map model, Expression[] args) {
                 List l = new ArrayList();
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0];
+                ClosureExpression closure = (ClosureExpression) args[0].get();
                 for (Object ob : c) {
                     if ((Boolean) closure.get(model, ob)) {
                         l.add(ob);
@@ -1316,7 +1316,7 @@ public class EvalTools {
             @Override
             public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0];
+                ClosureExpression closure = (ClosureExpression) args[0].get();
                 int i = 0;
                 for (Object ob : c) {
                     if ((Boolean) closure.get(model, ob)) {
@@ -1331,7 +1331,7 @@ public class EvalTools {
             @Override
             public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0];
+                ClosureExpression closure = (ClosureExpression) args[0].get();
                 for (Object ob : c) {
                     closure.get(model, ob);
                 }
@@ -1342,7 +1342,7 @@ public class EvalTools {
             @Override
             public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0];
+                ClosureExpression closure = (ClosureExpression) args[0].get();
                 int i = 0;
                 for (Object ob : c) {
                     closure.get(model, ob, i++);
@@ -1354,7 +1354,7 @@ public class EvalTools {
             @Override
             public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0];
+                ClosureExpression closure = (ClosureExpression) args[0].get();
                 for (Object ob : c) {
                     if (!(Boolean) closure.get(model, ob))
                         return false;
@@ -1366,7 +1366,7 @@ public class EvalTools {
             @Override
             public Object execute(Object it, Map model, Expression[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0];
+                ClosureExpression closure = (ClosureExpression) args[0].get();
                 for (Object ob : c) {
                     if ((Boolean) closure.get(model, ob))
                         return true;
@@ -1379,9 +1379,10 @@ public class EvalTools {
             public Object execute(Object it, Map model, Expression[] args) {
                 StringBuilder sb = new StringBuilder();
                 Collection c = (Collection) it;
+                Object separator = args[0].get(model);
                 for (Object ob : c) {
                     if (sb.length() != 0) {
-                        sb.append(args[0].get(model));
+                        sb.append(separator);
                     }
                     sb.append(ob);
                 }

@@ -268,6 +268,17 @@ class Function extends Expression {
                 }
             }
 
+            if (instance instanceof ClosureExpression) {
+                ClosureExpression exp = (ClosureExpression) instance;
+                return exp.get(model, arr);
+            }
+
+            if (instance instanceof UserFunction) {
+                UserFunction function = (UserFunction) instance;
+                function.setArgs(args);
+                return function.get(model);
+            }
+
             if (fieldName != null || getter != null) {
                 return getGetter(instance).get(instance);
             }
