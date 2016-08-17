@@ -267,6 +267,19 @@ public class ConfigTest {
     }
 
     @Test
+    public void test_closure() {
+        String s = "" +
+                "closure = {'bar'}\n" +
+                "foo = closure()" +
+                "";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals("bar", config.get("foo"));
+    }
+
+    @Test
     public void test_bind__should_fail() {
         String s = "" +
                 "a.l = 1\n" +
