@@ -13,6 +13,7 @@ import java.util.Map;
  */
 public class ClosureExpression extends Expression {
 
+    protected static final Pair<String, Class>[] DEFAULT_ARGS = new Pair[]{new Pair<String, Class>("it", Object.class)};
     private List<Expression> expressions = new ArrayList<Expression>();
     private Pair<String, Class>[] args;
 
@@ -40,15 +41,13 @@ public class ClosureExpression extends Expression {
     public Object get(Map<String, Object> model, Object... arg) {
         HashMap<String, Object> local = new HashMap<String, Object>(model);
         local.put("this", model);
-        if (args != null) {
-            if (!(args.length == 1 && args[0].key.equals("it") && (arg == null || arg.length == 0))) {
-                if (args.length != arg.length)
-                    throw new IllegalArgumentException("wrong number of arguments! there were " + arg.length + ", but must be " + args.length);
-                for (int i = 0; i < args.length; i++) {
+        if (!(args.length == 1 && args[0].key.equals("it") && (arg == null || arg.length == 0))) {
+            if (args.length != arg.length)
+                throw new IllegalArgumentException("wrong number of arguments! there were " + arg.length + ", but must be " + args.length);
+            for (int i = 0; i < args.length; i++) {
 //                if (!args[i].value.isAssignableFrom(arg[i].getClass()))
 //                    throw new ClassCastException("Can not cast " + args[i].getClass() + " to " + args[i].value);
-                    local.put(args[i].key, arg[i]);
-                }
+                local.put(args[i].key, arg[i]);
             }
         }
         Object ob = null;
@@ -78,8 +77,7 @@ public class ClosureExpression extends Expression {
                     this.args[i] = new Pair<String, Class>(kv[0], Object.class);
             }
         } else {
-            this.args = new Pair[1];
-            args[0] = new Pair<String, Class>("it", Object.class);
+            this.args = DEFAULT_ARGS;
         }
         return firstLine;
     }
