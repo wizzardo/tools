@@ -547,16 +547,16 @@ public class EvalToolsTest {
     public void testClosure() throws Exception {
         Map<String, Object> model = new HashMap<String, Object>();
 
-        Assert.assertTrue(EvalTools.prepare("{ it.toUpperCase() }") instanceof ClosureExpression);
+        Assert.assertTrue(EvalTools.prepare("{ it.toUpperCase() }").get() instanceof ClosureExpression);
 
         model.put("it", "upper");
-        assertEquals("UPPER", EvalTools.prepare("{ it.toUpperCase() }").get(model));
+        assertEquals("UPPER", ((ClosureExpression) EvalTools.prepare("{ it.toUpperCase() }").get()).get(model));
 
 
-        assertEquals("UP", EvalTools.prepare("{ " +
+        assertEquals("UP", ((ClosureExpression) EvalTools.prepare("{ " +
                 "it=it.substring(0,2)\n" +
                 "it.toUpperCase()\n" +
-                " }").get(model));
+                " }").get()).get(model));
         Assert.assertEquals("up", model.get("it"));
 
 
@@ -567,9 +567,17 @@ public class EvalToolsTest {
 
         model.clear();
         model.put("s", "upper");
-        assertEquals("UPPER", EvalTools.prepare("{s -> s.toUpperCase() }").get(model));
-        assertEquals("UPPER", EvalTools.prepare("{String s -> s.toUpperCase() }").get(model));
-        assertEquals("UPPER", EvalTools.prepare("{def s -> s.toUpperCase() }").get(model));
+        assertEquals("UPPER", ((ClosureExpression) EvalTools.prepare("{s -> s.toUpperCase() }").get()).get(model));
+        assertEquals("UPPER", ((ClosureExpression) EvalTools.prepare("{String s -> s.toUpperCase() }").get()).get(model));
+        assertEquals("UPPER", ((ClosureExpression) EvalTools.prepare("{def s -> s.toUpperCase() }").get()).get(model));
+
+
+        model.clear();
+        Assert.assertTrue(EvalTools.prepare("def toUpperCase = {it.toUpperCase()}\ntoUpperCase").get(model) instanceof ClosureExpression);
+
+        model.clear();
+        model.put("s", "upper");
+        assertEquals("UPPER", EvalTools.prepare("def toUpperCase = {it.toUpperCase()}\ntoUpperCase(s)").get(model));
     }
 
     @Test
