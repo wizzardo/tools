@@ -288,12 +288,31 @@ public class ConfigTest {
         Config config = new Config();
         expression.get(config);
 
-        try{
+        try {
             config.config("a").bind(TestClass.class);
             Assert.assertTrue(false);
-        }catch (Exception e){
+        } catch (Exception e) {
             Assert.assertEquals(IllegalStateException.class, e.getClass());
             Assert.assertEquals("Cannot bind '1' of class class java.lang.Integer to long " + TestClass.class.getName() + ".l", e.getMessage());
         }
+    }
+
+
+    public static class TestImport {
+        public int i;
+    }
+
+    @Test
+    public void test_imports() {
+        String s = "import com.wizzardo.tools.evaluation.ConfigTest\n" +
+                "a = new ConfigTest.TestImport()\n" +
+                "a.i = 1" +
+                "";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertTrue(config.get("a") instanceof TestImport);
+        Assert.assertEquals(1, config.get("a", new TestImport()).i);
     }
 }
