@@ -119,6 +119,22 @@ public class ConfigTest {
     }
 
     @Test
+    public void test_8() {
+        String s = "foo = 'foo'\n" +
+                "sub { bar = \"$foo\"}\n" +
+                "foobar = \"${foo}${sub.bar}\"";
+
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(3, config.size());
+        Assert.assertEquals("foo", config.get("foo"));
+        Assert.assertEquals("foo", ((Map) config.get("sub")).get("bar"));
+        Assert.assertEquals("foofoo", config.get("foobar"));
+    }
+
+    @Test
     public void test_merge_1() {
         Config configA = new Config();
         Config configB = new Config();
