@@ -14,13 +14,31 @@ import java.util.Map;
  * Created by wizzardo on 22.12.15.
  */
 public class Config extends HashMap<String, Object> implements CollectionTools.Closure<Object, ClosureExpression> {
+
+    protected Config root = this;
+
+    public Config() {
+    }
+
+    public Config(Config root) {
+        this.root = root;
+    }
+
     @Override
     public Object get(Object key) {
-        Object value = super.get(key);
-        if (value == null) {
-            put((String) key, value = new Config());
-        }
+        Object value = superGet(key);
+        if (value != null)
+            return value;
+
+        if (root != this && (value = root.superGet(key)) != null)
+            return value;
+
+        put((String) key, value = new Config(root));
         return value;
+    }
+
+    protected Object superGet(Object key) {
+        return super.get(key);
     }
 
     @Override
@@ -34,9 +52,7 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
     }
 
     public <T> T get(String key, T def) {
-        Object value = super.get(key);
-        if (value == null)
-            return def;
+        Object value = get(key);
 
         if (value instanceof Config && ((Config) value).isEmpty() && !(def instanceof Config))
             return def;
@@ -45,11 +61,9 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
     }
 
     public <T> T get(String key, Supplier<T> def) {
-        Object value = super.get(key);
-        if (value == null)
-            return def.supply();
+        Object value = get(key);
 
-        if (value instanceof Config && ((Config) value).isEmpty() && !(def instanceof Config))
+        if (value instanceof Config && ((Config) value).isEmpty())
             return def.supply();
 
         return (T) value;
