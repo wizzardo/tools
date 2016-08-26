@@ -296,6 +296,16 @@ class Function extends Expression {
                     method.setAccessible(true);
             }
             if (method == null) {
+                try {
+                    if (!methodName.equals("execute")) {
+                        thatObject = new Function(thatObject, methodName);
+                        methodName = "execute";
+                        return get(model);
+                    }
+                } catch (Exception e) {
+                    if (!e.getClass().equals(NoSuchFieldException.class))
+                        throw Unchecked.rethrow(e);
+                }
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
                 throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + getClass(instance) + " with args: " + Arrays.toString(arr));
             }
