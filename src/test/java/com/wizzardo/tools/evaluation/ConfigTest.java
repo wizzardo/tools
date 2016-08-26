@@ -135,6 +135,19 @@ public class ConfigTest {
     }
 
     @Test
+    public void test_9() {
+        String s = "a.b {\n" +
+                "foo = 'bar'\n" +
+                "}";
+
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals("bar", ((Map) ((Map) config.get("a")).get("b")).get("foo"));
+    }
+
+    @Test
     public void test_merge_1() {
         Config configA = new Config();
         Config configB = new Config();
