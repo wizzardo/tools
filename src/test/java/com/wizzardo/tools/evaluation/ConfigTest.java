@@ -148,6 +148,83 @@ public class ConfigTest {
     }
 
     @Test
+    public void test_10() {
+        String s = "a {\n" +
+                " foo = 'bar'\n" +
+                "}\n" +
+                "b {\n" +
+                "a = 'foo'\n" +
+                "}";
+
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(2, config.size());
+
+        Assert.assertEquals("foo", ((Map) config.get("b")).get("a"));
+        Assert.assertEquals("bar", ((Map) config.get("a")).get("foo"));
+    }
+
+    @Test
+    public void test_11() {
+        String s = "a {\n" +
+                " foo = 'bar'\n" +
+                "}\n" +
+                "b {\n" +
+                " a {" +
+                "foo = 'foobar'\n" +
+                "\n}\n" +
+                "}";
+
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(2, config.size());
+
+        Assert.assertEquals("foobar", ((Map) ((Map) config.get("b")).get("a")).get("foo"));
+        Assert.assertEquals("bar", ((Map) config.get("a")).get("foo"));
+    }
+
+    @Test
+    public void test_12() {
+        String s = "a {\n" +
+                " c {foo = 'bar'}\n" +
+                "}\n" +
+                "b.a.c {" +
+                "foo = 'foobar'\n" +
+                "}";
+
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(2, config.size());
+
+        Assert.assertEquals("foobar", ((Map) ((Map) ((Map) config.get("b")).get("a")).get("c")).get("foo"));
+        Assert.assertEquals("bar", ((Map) ((Map) config.get("a")).get("c")).get("foo"));
+    }
+
+    @Test
+    public void test_13() {
+        String s = "a {\n" +
+                " c {foo = 'bar'}\n" +
+                "}\n" +
+                "b.a.c.foo = 'foobar'\n" +
+                "";
+
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(2, config.size());
+
+        Assert.assertEquals("foobar", ((Map) ((Map) ((Map) config.get("b")).get("a")).get("c")).get("foo"));
+        Assert.assertEquals("bar", ((Map) ((Map) config.get("a")).get("c")).get("foo"));
+    }
+
+    @Test
     public void test_merge_1() {
         Config configA = new Config();
         Config configB = new Config();
