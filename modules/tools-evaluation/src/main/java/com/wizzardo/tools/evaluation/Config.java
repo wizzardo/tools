@@ -30,8 +30,13 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
         if (value != null)
             return value;
 
-        if (root != this && (value = root.superGet(key)) != null)
-            return value;
+        if (root != this && (value = root.superGet(key)) != null) {
+            if (value instanceof Config) {
+                return new ProxyConfig(this, (String) key, root, (Config) value);
+            } else {
+                return value;
+            }
+        }
 
         put((String) key, value = new Config(root));
         return value;
@@ -161,5 +166,47 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
             throw Unchecked.rethrow(e);
         }
         return t;
+    }
+
+    static class ProxyConfig extends Config {
+        protected Config parent;
+        protected String key;
+        protected Config proxy;
+        protected Config config;
+
+        public ProxyConfig(Config parent, String key, Config root, Config proxy) {
+            super(root);
+            this.parent = parent;
+            this.key = key;
+            this.proxy = proxy;
+        }
+
+        @Override
+        public Object get(Object key) {
+            Object o = proxy.get(key);
+            if (o instanceof Config)
+                return new ProxyConfig(this, (String) key, root, (Config) o);
+            else
+                return o;
+        }
+
+        @Override
+        public Object execute(ClosureExpression it) {
+            it.get(getConfig());
+            return config;
+        }
+
+        protected Config getConfig() {
+            if (config != null)
+                return config;
+            Config config = new Config(root);
+            parent.put(key, this.config = config);
+            return config;
+        }
+
+        @Override
+        public Object put(String key, Object value) {
+            return getConfig().put(key, value);
+        }
     }
 }
