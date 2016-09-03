@@ -76,8 +76,6 @@ class JsonUtils {
                 break;
             i++;
         }
-        if (binder == null)
-            return i;
 
         double d = 0;
         if (floatValue) {
@@ -158,6 +156,9 @@ class JsonUtils {
 
             d = (minus) ? d / Math.pow(10, degree) : d * Math.pow(10, degree);
         }
+
+        if (binder == null)
+            return i;
 
         JsonFieldSetter setter = binder.getFieldSetter();
         if (setter != null) {
