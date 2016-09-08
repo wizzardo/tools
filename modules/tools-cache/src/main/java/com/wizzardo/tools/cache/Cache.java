@@ -135,7 +135,7 @@ public class Cache<K, V> {
     }
 
     protected void onErrorDuringRefresh(Exception e) {
-        throw Unchecked.rethrow(e);
+        e.printStackTrace();
     }
 
     private void putToOutdated(Holder<K, V> h) {
