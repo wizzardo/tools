@@ -90,8 +90,8 @@ public class Cache<K, V> {
         if (holder == null)
             return null;
         holder.setRemoved();
-        onRemoveItem(holder.getKey(), holder.get());
         putToOutdated(holder);
+        onRemoveItem(holder.getKey(), holder.get());
         return holder.get();
     }
 
@@ -116,12 +116,12 @@ public class Cache<K, V> {
                     if (h != null && h.validUntil <= time) {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
                         if (map.remove(h.k, h)) {
+                            putToOutdated(h);
                             try {
                                 onRemoveItem(h.k, h.v);
                             } catch (Exception e) {
                                 onErrorDuringRefresh(e);
                             }
-                            putToOutdated(h);
                         }
                     }
                 } else
