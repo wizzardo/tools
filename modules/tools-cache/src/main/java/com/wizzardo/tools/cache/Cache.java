@@ -246,7 +246,7 @@ public class Cache<K, V> {
 
     private void updateTimingCache(final Holder<K, V> key) {
         TimingsHolder<K, V> timingsHolder = key.getTimingsHolder();
-        if (timingsHolder.ttl <= 0)
+        if (timingsHolder == null || timingsHolder.ttl <= 0)
             return;
 
         long timing = timingsHolder.ttl + System.currentTimeMillis();
