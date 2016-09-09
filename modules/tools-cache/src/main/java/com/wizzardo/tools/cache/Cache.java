@@ -15,6 +15,12 @@ public class Cache<K, V> {
         public void onEvent(Object o, Object o2) {
         }
     };
+    protected static final CacheErrorListener DEFAULT_ERROR_LISTENER = new CacheErrorListener() {
+        @Override
+        public void onError(Exception e) {
+            e.printStackTrace();
+        }
+    };
 
     protected final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
     protected final Queue<TimingsHolder<K, V>> timings = new ConcurrentLinkedQueue<TimingsHolder<K, V>>();
@@ -25,6 +31,7 @@ public class Cache<K, V> {
     protected Cache<K, V> outdated;
     protected CacheListener<? super K, ? super V> onAdd = NOOP_LISTENER;
     protected CacheListener<? super K, ? super V> onRemove = NOOP_LISTENER;
+    protected CacheErrorListener onErrorDuringRefresh = DEFAULT_ERROR_LISTENER;
 
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
         this.ttl = ttlSec * 1000;
@@ -140,7 +147,12 @@ public class Cache<K, V> {
     }
 
     protected void onErrorDuringRefresh(Exception e) {
-        e.printStackTrace();
+        onErrorDuringRefresh.onError(e);
+    }
+
+    public Cache<K, V> onErrorDuringRefresh(CacheErrorListener errorListener) {
+        this.onErrorDuringRefresh = errorListener;
+        return this;
     }
 
     private void putToOutdated(Holder<K, V> h) {
