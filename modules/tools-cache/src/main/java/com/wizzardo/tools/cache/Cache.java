@@ -8,18 +8,23 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * @author Moxa
- */
 public class Cache<K, V> {
 
-    private final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
-    private final Queue<TimingsHolder<K, V>> timings = new ConcurrentLinkedQueue<TimingsHolder<K, V>>();
-    private long ttl;
-    private Computable<? super K, ? extends V> computable;
-    private volatile boolean removeOnException = true;
-    private volatile boolean destroyed;
-    private Cache<K, V> outdated;
+    protected static final CacheListener<Object, Object> NOOP_LISTENER = new CacheListener<Object, Object>() {
+        @Override
+        public void onEvent(Object o, Object o2) {
+        }
+    };
+
+    protected final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
+    protected final Queue<TimingsHolder<K, V>> timings = new ConcurrentLinkedQueue<TimingsHolder<K, V>>();
+    protected long ttl;
+    protected Computable<? super K, ? extends V> computable;
+    protected volatile boolean removeOnException = true;
+    protected volatile boolean destroyed;
+    protected Cache<K, V> outdated;
+    protected CacheListener<? super K, ? super V> onAdd = NOOP_LISTENER;
+    protected CacheListener<? super K, ? super V> onRemove = NOOP_LISTENER;
 
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
         this.ttl = ttlSec * 1000;
@@ -156,9 +161,21 @@ public class Cache<K, V> {
     }
 
     public void onRemoveItem(K k, V v) {
+        onRemove.onEvent(k, v);
     }
 
     public void onAddItem(K k, V v) {
+        onAdd.onEvent(k, v);
+    }
+
+    public Cache<K, V> onAdd(CacheListener<? super K, ? super V> onAdd) {
+        this.onAdd = onAdd;
+        return this;
+    }
+
+    public Cache<K, V> onRemove(CacheListener<? super K, ? super V> onRemove) {
+        this.onRemove = onRemove;
+        return this;
     }
 
     private Holder<K, V> getHolderFromCache(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
