@@ -651,6 +651,9 @@ public class EvalTools {
             exp = exp.substring(1, exp.length() - 1).trim();
             ClosureExpression closure = new ClosureExpression();
             List<String> lines = getLines(exp);
+            if (lines.isEmpty())
+                return new ClosureHolder(closure);
+
             String firstLine = lines.get(0);
             firstLine = closure.parseArguments(firstLine);
             if (firstLine.length() == 0)
