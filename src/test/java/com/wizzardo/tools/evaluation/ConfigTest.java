@@ -421,4 +421,36 @@ public class ConfigTest {
         Assert.assertTrue(config.get("a") instanceof TestImport);
         Assert.assertEquals(1, config.get("a", new TestImport()).i);
     }
+
+    @Test
+    public void test_empty_closure() {
+        String s = "a {\n" +
+                "}";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(1, config.size());
+        Assert.assertTrue(config.get("a") instanceof Config);
+
+
+        s = "a {}";
+        expression = EvalTools.prepare(s);
+        config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(1, config.size());
+        Assert.assertTrue(config.get("a") instanceof Config);
+
+
+        s = "a {\n" +
+                "\n" +
+                "}";
+        expression = EvalTools.prepare(s);
+        config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(1, config.size());
+        Assert.assertTrue(config.get("a") instanceof Config);
+    }
 }
