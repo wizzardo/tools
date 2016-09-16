@@ -55,6 +55,10 @@ public class RequestArguments<T extends RequestArguments> {
         return (T) this;
     }
 
+    public ConnectionMethod method() {
+        return method;
+    }
+
     public T setMaxRetryCount(int n) {
         maxRetryCount = n;
         return self();
@@ -163,6 +167,14 @@ public class RequestArguments<T extends RequestArguments> {
         return data(data, contentType);
     }
 
+    public byte[] getData() {
+        return data;
+    }
+
+    public byte[] data() {
+        return data;
+    }
+
     public T data(byte[] data, String contentType) {
         this.data = data;
         method = ConnectionMethod.POST;
@@ -200,6 +212,15 @@ public class RequestArguments<T extends RequestArguments> {
             addParameter(entry.getKey(), entry.getValue());
         }
         return self();
+    }
+
+    public String param(String key) {
+        List<String> strings = params(key);
+        return strings == null || strings.isEmpty() ? null : strings.get(0);
+    }
+
+    public List<String> params(String key) {
+        return params.get(key);
     }
 
     public T param(String key, String value) {
@@ -300,6 +321,10 @@ public class RequestArguments<T extends RequestArguments> {
     public T header(String key, String value) {
         headers.put(key, value);
         return self();
+    }
+
+    public String header(String key) {
+        return headers.get(key);
     }
 
     public T setHostnameVerifier(HostnameVerifier hv) {
