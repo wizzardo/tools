@@ -28,15 +28,15 @@ public class Response {
         }
     };
 
-    private HttpURLConnection connection;
-    private List<Cookie> cookies;
-    private HttpSession session;
+    protected HttpURLConnection connection;
+    protected List<Cookie> cookies;
+    protected Request request;
 
-    protected Response(HttpURLConnection connection, HttpSession session) {
+    protected Response(Request request, HttpURLConnection connection) {
         this.connection = connection;
-        this.session = session;
-        if (session != null)
-            session.appendCookies(parseCookies());
+        this.request = request;
+        if (request.session != null)
+            request.session.appendCookies(parseCookies());
     }
 
     public String asString() throws IOException {
@@ -72,9 +72,10 @@ public class Response {
 
     public InputStream asStream() throws IOException {
         InputStream inputStream = connection.getResponseCode() < 400 ? connection.getInputStream() : connection.getErrorStream();
-        if ("gzip".equals(connection.getHeaderField("Content-Encoding")))
+        String encoding = connection.getHeaderField("Content-Encoding");
+        if ("gzip".equals(encoding))
             inputStream = new GZIPInputStream(inputStream);
-        else if ("deflate".equals(connection.getHeaderField("Content-Encoding")))
+        else if ("deflate".equals(encoding))
             inputStream = new DeflaterInputStream(inputStream);
         return inputStream;
     }
@@ -85,14 +86,18 @@ public class Response {
     }
 
     public List<Cookie> getCookies() {
-        if (session != null)
-            return session.getCookies(connection.getURL());
+        if (request.session != null)
+            return request.session.getCookies(connection.getURL());
         else
             return parseCookies();
     }
 
     public List<Cookie> cookies() {
         return getCookies();
+    }
+
+    public Request request() {
+        return request;
     }
 
     private List<Cookie> parseCookies() {

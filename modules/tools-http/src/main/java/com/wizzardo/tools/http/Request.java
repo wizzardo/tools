@@ -175,14 +175,14 @@ public class Request extends RequestArguments<Request> {
                 if (session == null)
                     session = new HttpSession();
 
-                Response r = new Response(c, session);
+                Response r = new Response(this, c);
                 String path = r.getHeader("Location");
                 if (!path.startsWith("http://") && !path.startsWith("https://"))
                     path = u.getProtocol() + "://" + u.getHost() + path;
 
                 return session.createRequest(path).get();
             }
-            return new Response(c, session);
+            return new Response(this, c);
         } catch (SocketTimeoutException e) {
             if (retryNumber < maxRetryCount) {
                 try {
