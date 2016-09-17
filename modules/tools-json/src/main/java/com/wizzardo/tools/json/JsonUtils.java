@@ -322,7 +322,7 @@ class JsonUtils {
         if (setter != null)
             setter.setObject(binder.getObject(), null);
         else
-            binder.add(new JsonItem(null));
+            binder.add((Object) null);
     }
 
     static int parseKey(JsonBinder binder, char[] s, int from, int to) {
