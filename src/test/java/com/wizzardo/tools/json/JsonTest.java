@@ -870,13 +870,13 @@ public class JsonTest {
         String json = new JsonObject()
                 .append("foo", "bar")
                 .append("object", new JsonObject()
-                                .append("key", "value")
+                        .append("key", "value")
                 )
                 .append("array", new JsonArray()
-                                .append(1)
-                                .append(2)
-                                .append(3)
-                                .append(null)
+                        .append(1)
+                        .append(2)
+                        .append(3)
+                        .append(null)
                 ).toString();
         Assert.assertEquals("{\"foo\":\"bar\",\"object\":{\"key\":\"value\"},\"array\":[1,2,3,null]}", json);
         Assert.assertEquals("1", new JsonItem(1).toString());
@@ -1519,5 +1519,30 @@ public class JsonTest {
 
         DateHolder dateHolder2 = JsonTools.parse(json, DateHolder.class);
         Assert.assertEquals(dateHolder.value, dateHolder2.value);
+    }
+
+
+    static class IgnoreValue {
+        int i;
+    }
+
+    @Test
+    public void test_ignore() {
+        IgnoreValue ignoreValue;
+
+        ignoreValue = JsonTools.parse("{\"i\":1, \"value\":null}", IgnoreValue.class);
+        Assert.assertEquals(1, ignoreValue.i);
+
+        ignoreValue = JsonTools.parse("{\"i\":2, \"value\":\"foo\"}", IgnoreValue.class);
+        Assert.assertEquals(2, ignoreValue.i);
+
+        ignoreValue = JsonTools.parse("{\"i\":3, \"value\":{\"foo\":\"bar\"}}", IgnoreValue.class);
+        Assert.assertEquals(3, ignoreValue.i);
+
+        ignoreValue = JsonTools.parse("{\"i\":4, \"value\":{\"foo\":1.2, \"bar\":1.3}}", IgnoreValue.class);
+        Assert.assertEquals(4, ignoreValue.i);
+
+        ignoreValue = JsonTools.parse("{\"i\":5, \"value\":[1.0,2.0,3.0]}", IgnoreValue.class);
+        Assert.assertEquals(5, ignoreValue.i);
     }
 }
