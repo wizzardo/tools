@@ -23,6 +23,21 @@ public class ExceptionDrivenStringBuilder implements Appendable {
         }
     }
 
+    public ExceptionDrivenStringBuilder replace(char a, char b) {
+        return replace(a, b, 0, length);
+    }
+
+    public ExceptionDrivenStringBuilder replace(char a, char b, int from, int to) {
+        from = Math.max(0, from);
+        to = Math.min(to, length);
+        char[] buffer = this.buffer;
+        for (int i = from; i < to; i++) {
+            if (buffer[i] == a)
+                buffer[i] = b;
+        }
+        return this;
+    }
+
     @Override
     public ExceptionDrivenStringBuilder append(CharSequence csq) {
         return append(csq, 0, csq == null ? 4 : csq.length());
