@@ -547,6 +547,9 @@ public class EvalToolsTest {
     public void testClosure() throws Exception {
         Map<String, Object> model = new HashMap<String, Object>();
 
+        Assert.assertTrue(EvalTools.prepare("{ -> 1}").get() instanceof ClosureExpression);
+        Assert.assertEquals(1, ((ClosureExpression) EvalTools.prepare("{ -> 1}").get()).get());
+
         Assert.assertTrue(EvalTools.prepare("{ it.toUpperCase() }").get() instanceof ClosureExpression);
 
         model.put("it", "upper");
