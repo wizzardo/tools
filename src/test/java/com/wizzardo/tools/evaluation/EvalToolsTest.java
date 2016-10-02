@@ -549,6 +549,7 @@ public class EvalToolsTest {
 
         Assert.assertTrue(EvalTools.prepare("{ -> 1}").get() instanceof ClosureExpression);
         Assert.assertEquals(1, ((ClosureExpression) EvalTools.prepare("{ -> 1}").get()).get());
+        Assert.assertEquals(1, EvalTools.prepare("{1}()").get());
 
         Assert.assertTrue(EvalTools.prepare("{ it.toUpperCase() }").get() instanceof ClosureExpression);
 
