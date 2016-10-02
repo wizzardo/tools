@@ -2,10 +2,7 @@ package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.collections.Pair;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author: moxa
@@ -77,6 +74,9 @@ public class ClosureExpression extends Expression {
                     this.args[i] = new Pair<String, Class>(kv[0], Object.class);
             }
         } else {
+            if (i == 0)
+                firstLine = firstLine.substring(2).trim();
+
             this.args = DEFAULT_ARGS;
         }
         return firstLine;
