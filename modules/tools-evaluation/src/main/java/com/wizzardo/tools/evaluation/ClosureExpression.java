@@ -36,7 +36,7 @@ public class ClosureExpression extends Expression {
     }
 
     public Object get(Map<String, Object> model, Object... arg) {
-        HashMap<String, Object> local = new HashMap<String, Object>(model);
+        HashMap<String, Object> local = model != null ? new HashMap<String, Object>(model) : new HashMap<String, Object>(2, 1);
         local.put("this", model);
         if (!(args.length == 1 && args[0].key.equals("it") && (arg == null || arg.length == 0))) {
             if (args.length != arg.length)
