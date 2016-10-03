@@ -11,13 +11,18 @@ import java.util.*;
 public class ClosureExpression extends Expression {
 
     protected static final Pair<String, Class>[] DEFAULT_ARGS = new Pair[]{new Pair<String, Class>("it", Object.class)};
-    private List<Expression> expressions = new ArrayList<Expression>();
-    private Pair<String, Class>[] args;
+    protected List<Expression> expressions = new ArrayList<Expression>();
+    protected Pair<String, Class>[] args;
+    protected Map<String, Object> context = Collections.emptyMap();
 
     @Override
     public void setVariable(Variable v) {
         for (Expression e : expressions)
             e.setVariable(v);
+    }
+
+    public void setContext(Map<String, Object> context) {
+        this.context = context;
     }
 
     @Override
@@ -33,6 +38,11 @@ public class ClosureExpression extends Expression {
             ob = expression.get(model);
         }
         return ob;
+    }
+
+    @Override
+    public Object get() {
+        return get(context);
     }
 
     public Object get(Map<String, Object> model, Object... arg) {

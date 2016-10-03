@@ -1,5 +1,6 @@
 package com.wizzardo.tools.evaluation;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -25,6 +26,7 @@ public class ClosureHolder extends Expression {
 
     @Override
     public Object get(Map<String, Object> model) {
+        closure.setContext(model == null ? Collections.<String, Object>emptyMap() : model);
         return closure;
     }
 }
