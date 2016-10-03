@@ -582,6 +582,13 @@ public class EvalToolsTest {
         model.clear();
         model.put("s", "upper");
         assertEquals("UPPER", EvalTools.prepare("def toUpperCase = {it.toUpperCase()}\ntoUpperCase(s)").get(model));
+
+        model.clear();
+        model.put("s", "upper");
+        ClosureExpression closure = (ClosureExpression) EvalTools.prepare("{s.toUpperCase()}").get(model);
+        assertEquals("UPPER", closure.get());
+        model.put("s", "lower");
+        assertEquals("LOWER", closure.get());
     }
 
     @Test
