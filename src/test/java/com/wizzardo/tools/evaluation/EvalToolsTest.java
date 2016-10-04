@@ -170,12 +170,12 @@ public class EvalToolsTest {
         assertEquals(true, EvalTools.evaluate("i<n&&x++<x?false:true", model));
         assertEquals(0, model.get("x"));
 
-        assertEquals("c", EvalTools.evaluate("false ? \"a\" : false ? \"b\" : \"c\"", model));
-        assertEquals("a", EvalTools.evaluate("true ? \"a\" : false ? \"b\" : \"c\"", model));
-        assertEquals("b", EvalTools.evaluate("false ? \"a\" : true ? \"b\" : \"c\"", model));
-        assertEquals("a", EvalTools.evaluate("true ? \"a\" : true ? \"b\" : \"c\"", model));
-        assertEquals("b", EvalTools.evaluate("true ? true ? \"b\" : \"c\" : \"a\"", model));
-        assertEquals("c", EvalTools.evaluate("true ? false ? \"b\" : \"c\" : \"a\"", model));
+        assertEquals("c", EvalTools.evaluate("false ? \"a\" : false ? \"b\" : \"c\"", model).toString());
+        assertEquals("a", EvalTools.evaluate("true ? \"a\" : false ? \"b\" : \"c\"", model).toString());
+        assertEquals("b", EvalTools.evaluate("false ? \"a\" : true ? \"b\" : \"c\"", model).toString());
+        assertEquals("a", EvalTools.evaluate("true ? \"a\" : true ? \"b\" : \"c\"", model).toString());
+        assertEquals("b", EvalTools.evaluate("true ? true ? \"b\" : \"c\" : \"a\"", model).toString());
+        assertEquals("c", EvalTools.evaluate("true ? false ? \"b\" : \"c\" : \"a\"", model).toString());
 
         model = new HashMap<String, Object>();
         model.put("i", 0);
@@ -288,8 +288,8 @@ public class EvalToolsTest {
 
         model = new HashMap<String, Object>();
         assertTrue(EvalTools.evaluate("def x = [:]", model) instanceof Map);
-        assertEquals("value", EvalTools.evaluate("x.key = \"value\"", model));
-        assertEquals("value", ((Map) model.get("x")).get("key"));
+        assertEquals("value", EvalTools.evaluate("x.key = \"value\"", model).toString());
+        assertEquals("value", ((Map) model.get("x")).get("key").toString());
         assertEquals(1, EvalTools.evaluate("x.key = 1", model));
         assertEquals(1, EvalTools.evaluate("x.key++", model));
         assertEquals(2, ((Map) model.get("x")).get("key"));
@@ -319,8 +319,8 @@ public class EvalToolsTest {
         assertEquals(3, EvalTools.evaluate("x[\"key\"] +=2", model));
 
         model = new HashMap<String, Object>();
-        model.put("arr", new String[1]);
-        assertEquals("ololo", EvalTools.evaluate("arr[0] = \"ololo\"", model));
+        model.put("arr", new TemplateBuilder.GString[1]);
+        assertEquals("ololo", EvalTools.evaluate("arr[0] = \"ololo\"", model).toString());
 
         model = new HashMap<String, Object>();
         assertTrue(EvalTools.evaluate("def l = []", model) instanceof List);
@@ -665,36 +665,36 @@ public class EvalToolsTest {
         model.put("b", "b");
         model.put("c", "c");
         model.put("d", "d");
-        assertEquals("abcd", EvalTools.evaluate("\"$a$b$c$d\"", model));
-        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+c}\"+d}\"", model));
-        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+c}\"}$d\"", model));
-        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+\"${c}\"}\"}$d\"", model));
-        assertEquals("abcd", EvalTools.evaluate("\"${\"${\"${\"${a}\"+b}\"+c}\"+d}\"", model));
+        assertEquals("abcd", EvalTools.evaluate("\"$a$b$c$d\"", model).toString());
+        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+c}\"+d}\"", model).toString());
+        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+c}\"}$d\"", model).toString());
+        assertEquals("abcd", EvalTools.evaluate("\"${a+\"${b+\"${c}\"}\"}$d\"", model).toString());
+        assertEquals("abcd", EvalTools.evaluate("\"${\"${\"${\"${a}\"+b}\"+c}\"+d}\"", model).toString());
 
-        assertEquals("hello world", EvalTools.evaluate("\"hello world\""));
+        assertEquals("hello world", EvalTools.evaluate("\"hello world\"").toString());
 
         model.put("world", "world?");
-        assertEquals("hello world?!", EvalTools.evaluate("\"hello $world!\"", model));
-        assertEquals("hello world?!", EvalTools.evaluate("\"hello ${world}!\"", model));
-        assertEquals("hello world?", EvalTools.evaluate("\"hello ${world}\"", model));
-        assertEquals("world?", EvalTools.evaluate("\"${world}\"", model));
-        assertEquals("world? hello!", EvalTools.evaluate("\"${world} hello!\"", model));
+        assertEquals("hello world?!", EvalTools.evaluate("\"hello $world!\"", model).toString());
+        assertEquals("hello world?!", EvalTools.evaluate("\"hello ${world}!\"", model).toString());
+        assertEquals("hello world?", EvalTools.evaluate("\"hello ${world}\"", model).toString());
+        assertEquals("world?", EvalTools.evaluate("\"${world}\"", model).toString());
+        assertEquals("world? hello!", EvalTools.evaluate("\"${world} hello!\"", model).toString());
 
         model.clear();
         Map m = new HashMap();
         m.put("b", 1);
         model.put("a", m);
-        assertEquals("b = 1", EvalTools.evaluate("\"b = $a.b\"", model));
-        assertEquals("b = 1", EvalTools.evaluate("\"b = ${a.b}\"", model));
-        assertEquals("b + 1 = 2", EvalTools.evaluate("\"b + 1 = ${a.b+1}\"", model));
-        assertEquals("a: {b=1}", EvalTools.evaluate("\"a: $a\"", model));
+        assertEquals("b = 1", EvalTools.evaluate("\"b = $a.b\"", model).toString());
+        assertEquals("b = 1", EvalTools.evaluate("\"b = ${a.b}\"", model).toString());
+        assertEquals("b + 1 = 2", EvalTools.evaluate("\"b + 1 = ${a.b+1}\"", model).toString());
+        assertEquals("a: {b=1}", EvalTools.evaluate("\"a: $a\"", model).toString());
 
         Expression e = EvalTools.prepareTemplate("a: $a");
-        assertEquals("a: {b=1}", e.get(model));
+        assertEquals("a: {b=1}", e.get(model).toString());
         assertFalse(e.hardcoded);
 
         e = EvalTools.prepareTemplate("a: hardcode");
-        assertEquals("a: hardcode", e.get(model));
+        assertEquals("a: hardcode", e.get(model).toString());
         assertTrue(e.hardcoded);
     }
 

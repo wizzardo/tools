@@ -263,8 +263,13 @@ class Function extends Expression {
 //                System.out.println(i+"\t"+args[i]);
                     if (args[i] instanceof ClosureExpression)
                         arr[i] = args[i];
-                    else
-                        arr[i] = args[i].get(model);
+                    else {
+                        Object o = args[i].get(model);
+                        if (o instanceof TemplateBuilder.GString)
+                            o = o.toString();
+
+                        arr[i] = o;
+                    }
                 }
             }
 
@@ -297,7 +302,10 @@ class Function extends Expression {
             }
             if (method == null) {
                 try {
-                    if (!methodName.equals("execute")) {
+                    if (instance instanceof TemplateBuilder.GString) {
+                        thatObject = new Function(thatObject, "toString", new Expression[0]);
+                        return get(model);
+                    } else if (!methodName.equals("execute")) {
                         thatObject = new Function(thatObject, methodName);
                         methodName = "execute";
                         return get(model);

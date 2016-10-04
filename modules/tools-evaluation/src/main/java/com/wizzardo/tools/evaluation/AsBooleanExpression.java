@@ -47,8 +47,8 @@ public class AsBooleanExpression extends Expression {
             return false;
         } else if (r instanceof Boolean) {
             return (Boolean) r;
-        } else if (r instanceof String) {
-            return ((String) r).length() > 0;
+        } else if (r instanceof String || r instanceof TemplateBuilder.GString) {
+            return r.toString().length() > 0;
         } else if (r instanceof Collection) {
             return !((Collection) r).isEmpty();
         } else if (r instanceof Map) {

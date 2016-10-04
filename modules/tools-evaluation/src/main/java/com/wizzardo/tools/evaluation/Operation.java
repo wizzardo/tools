@@ -199,10 +199,14 @@ class Operation extends Expression {
         Object ob2 = null;
         if (leftPart != null && !leftPartNotIn.contains(operator)) {
             ob1 = leftPart.get(model);
+            if (ob1 instanceof TemplateBuilder.GString)
+                ob1 = ob1.toString();
         }
 
         if (rightPart != null && !rightPartNotIn.contains(operator)) {
             ob2 = rightPart.get(model);
+            if (ob2 instanceof TemplateBuilder.GString)
+                ob2 = ob2.toString();
         }
         Object result = null;
         //System.out.println(model);
@@ -506,13 +510,16 @@ class Operation extends Expression {
                     && operation.operator() == Operator.GET) {
                 ob1 = operation.leftPart().get(model);
                 if (ob1 instanceof Map) {
+                    Object key = operation.rightPart().get(model);
+                    if (key instanceof TemplateBuilder.GString)
+                        key = key.toString();
+
                     if (operator != null) {
-                        Object key = operation.rightPart().get(model);
                         Map m = (Map) ob1;
                         return setAndReturn(ob1, new Function.MapSetter(key), m.get(key), ob2, operator);
                     }
 
-                    ((Map) ob1).put(operation.rightPart().get(model), ob2);
+                    ((Map) ob1).put(key, ob2);
                     return ob2;
                 }
                 int index = ((Number) operation.rightPart().get(model)).intValue();
