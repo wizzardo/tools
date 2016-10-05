@@ -453,4 +453,32 @@ public class ConfigTest {
         Assert.assertEquals(1, config.size());
         Assert.assertTrue(config.get("a") instanceof Config);
     }
+
+    @Test
+    public void test_closures() {
+        String s = "a = 1\n" +
+                "s = \"|${{->a}}|\"\n" +
+                "c = {a}\n" +
+                "a=2";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(Integer.valueOf(2), config.get("a", 0));
+        Assert.assertEquals("|2|", config.get("s").toString());
+    }
+
+    @Test
+    public void test_closures_2() {
+        String s = "a = 1\n" +
+                "s = \"|${a}|\"\n" +
+                "c = {a}\n" +
+                "a=2";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(Integer.valueOf(2), config.get("a", 0));
+        Assert.assertEquals("|1|", config.get("s").toString());
+    }
 }
