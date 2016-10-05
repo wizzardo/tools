@@ -130,8 +130,8 @@ public class ConfigTest {
 
         Assert.assertEquals(3, config.size());
         Assert.assertEquals("foo", config.get("foo"));
-        Assert.assertEquals("foo", ((Map) config.get("sub")).get("bar"));
-        Assert.assertEquals("foofoo", config.get("foobar"));
+        Assert.assertEquals("foo", String.valueOf(((Map) config.get("sub")).get("bar")));
+        Assert.assertEquals("foofoo", String.valueOf(config.get("foobar")));
     }
 
     @Test
