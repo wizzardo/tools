@@ -15,13 +15,28 @@ import java.util.Map;
  */
 public class Config extends HashMap<String, Object> implements CollectionTools.Closure<Object, ClosureExpression> {
 
-    protected Config root = this;
+    protected final Config parent;
+    protected final String name;
 
     public Config() {
+        this(null, null);
     }
 
-    public Config(Config root) {
-        this.root = root;
+    public Config(String name) {
+        this(null, name);
+    }
+
+    public Config(Config parent, String name) {
+        this.parent = parent;
+        this.name = name;
+    }
+
+    public Config parent() {
+        return parent;
+    }
+
+    public String name() {
+        return name;
     }
 
     @Override
@@ -30,16 +45,32 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
         if (value != null)
             return value;
 
-        if (root != this && (value = root.superGet(key)) != null) {
+        if (parent() != null && (value = root().superGet(key)) != null) {
             if (value instanceof Config) {
-                return new ProxyConfig(this, (String) key, root, (Config) value);
+                return createProxyConfig(this, (String) key, this, (Config) value);
             } else {
                 return value;
             }
         }
 
-        put((String) key, value = new Config(root));
+        put((String) key, value = createConfig(this, (String) key));
         return value;
+    }
+
+    protected Config createConfig(Config parent, String name) {
+        return new Config(parent, name);
+    }
+
+    protected Config createProxyConfig(Config main, String name, Config parent, Config proxy) {
+        return new ProxyConfig(main, name, parent, proxy);
+    }
+
+    public Config root() {
+        Config config = this;
+        while (config.parent() != null) {
+            config = config.parent();
+        }
+        return config;
     }
 
     protected Object superGet(Object key) {
@@ -168,15 +199,15 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
         return t;
     }
 
-    static class ProxyConfig extends Config {
-        protected Config parent;
-        protected String key;
-        protected Config proxy;
+    protected static class ProxyConfig extends Config {
+        protected final Config main;
+        protected final String key;
+        protected final Config proxy;
         protected Config config;
 
-        public ProxyConfig(Config parent, String key, Config root, Config proxy) {
-            super(root);
-            this.parent = parent;
+        public ProxyConfig(Config main, String key, Config parent, Config proxy) {
+            super(parent, key);
+            this.main = main;
             this.key = key;
             this.proxy = proxy;
         }
@@ -185,7 +216,7 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
         public Object get(Object key) {
             Object o = proxy.get(key);
             if (o instanceof Config)
-                return new ProxyConfig(this, (String) key, root, (Config) o);
+                return createProxyConfig(this, (String) key, this, (Config) o);
             else
                 return o;
         }
@@ -199,8 +230,9 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
         protected Config getConfig() {
             if (config != null)
                 return config;
-            Config config = new Config(root);
-            parent.put(key, this.config = config);
+
+            Config config = createConfig(parent(), name());
+            main.put(key, this.config = config);
             return config;
         }
 
