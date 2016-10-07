@@ -398,6 +398,19 @@ public class ConfigTest {
         Assert.assertEquals(1L, v.l);
     }
 
+    @Test
+    public void test_bind__should_not_fail_2() {
+        String s = "" +
+                "a.string = \"${2*2}\"\n" +
+                "";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        TestClass v = config.config("a").bind(TestClass.class);
+        Assert.assertEquals("4", v.string);
+    }
+
 
     public static class TestImport {
         public int i;
