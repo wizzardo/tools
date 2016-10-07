@@ -135,39 +135,45 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
             String name = fieldInfo.field.getName();
 
             try {
+                final Object value = get(name);
+                boolean isConfig = value instanceof Config;
+
                 switch (reflection.getType()) {
                     case BOOLEAN:
                         reflection.setBoolean(t, get(name, Boolean.FALSE));
                         break;
                     case BYTE:
-                        reflection.setByte(t, get(name, (byte) 0));
+                        reflection.setByte(t, isConfig ? (byte) 0 : ((Number) value).byteValue());
                         break;
                     case CHAR:
                         reflection.setChar(t, get(name, (char) 0));
                         break;
                     case DOUBLE:
-                        reflection.setDouble(t, get(name, 0.0));
+                        reflection.setDouble(t, isConfig ? 0.0 : ((Number) value).doubleValue());
                         break;
                     case FLOAT:
-                        reflection.setFloat(t, get(name, 0.0f));
+                        reflection.setFloat(t, isConfig ? 0.0f : ((Number) value).floatValue());
                         break;
                     case INTEGER:
-                        reflection.setInteger(t, get(name, 0));
+                        reflection.setInteger(t, isConfig ? 0 : ((Number) value).intValue());
                         break;
                     case LONG:
-                        reflection.setLong(t, get(name, 0l));
+                        reflection.setLong(t, isConfig ? 0l : ((Number) value).longValue());
                         break;
                     case SHORT:
-                        reflection.setShort(t, get(name, (short) 0));
+                        reflection.setShort(t, isConfig ? (short) 0 : ((Number) value).shortValue());
                         break;
                     case OBJECT: {
-                        Object o = get(name);
-
-                        if (fieldInfo.generic.clazz.isAssignableFrom(o.getClass())) {
-                            reflection.setObject(t, o);
+                        if (fieldInfo.generic.clazz.isAssignableFrom(value.getClass())) {
+                            reflection.setObject(t, value);
                             break;
                         }
-                        Config config = (Config) o;
+                        if (fieldInfo.generic.clazz == String.class && value instanceof TemplateBuilder.GString) {
+                            reflection.setObject(t, String.valueOf(value));
+                            break;
+                        }
+
+                        Config config = (Config) value;
                         if (config.isEmpty()) {
                             reflection.setObject(t, null);
                             break;
