@@ -386,7 +386,7 @@ public class ConfigTest {
     }
 
     @Test
-    public void test_bind__should_fail() {
+    public void test_bind__should_not_fail() {
         String s = "" +
                 "a.l = 1\n" +
                 "";
@@ -394,13 +394,8 @@ public class ConfigTest {
         Config config = new Config();
         expression.get(config);
 
-        try {
-            config.config("a").bind(TestClass.class);
-            Assert.assertTrue(false);
-        } catch (Exception e) {
-            Assert.assertEquals(IllegalStateException.class, e.getClass());
-            Assert.assertEquals("Cannot bind '1' of class class java.lang.Integer to long " + TestClass.class.getName() + ".l", e.getMessage());
-        }
+        TestClass v = config.config("a").bind(TestClass.class);
+        Assert.assertEquals(1L, v.l);
     }
 
 
