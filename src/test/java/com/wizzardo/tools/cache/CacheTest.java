@@ -275,4 +275,39 @@ public class CacheTest {
         Assert.assertEquals(0, CacheCleaner.size());
 
     }
+
+    @Test
+    public void test_statistics() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        });
+        cache.get("foo");
+
+        CacheStatistics statistics = cache.getStatistics();
+
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(0, statistics.getRemoveCount());
+        Assert.assertTrue(statistics.getGetLatency() > 0);
+        Assert.assertTrue(statistics.getPutCount() > 0);
+        Assert.assertTrue(statistics.getComputeLatency() > 0);
+        Assert.assertTrue(statistics.getRemoveLatency() == 0);
+
+        Thread.sleep(1020);
+
+        Assert.assertEquals(0, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(1, statistics.getRemoveCount());
+        Assert.assertTrue(statistics.getGetLatency() > 0);
+        Assert.assertTrue(statistics.getPutCount() > 0);
+        Assert.assertTrue(statistics.getComputeLatency() > 0);
+        Assert.assertTrue(statistics.getRemoveLatency() > 0);
+    }
 }
