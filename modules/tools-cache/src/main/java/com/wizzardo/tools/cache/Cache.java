@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Cache<K, V> {
 
@@ -21,6 +22,7 @@ public class Cache<K, V> {
             e.printStackTrace();
         }
     };
+    protected static final AtomicInteger NAME_COUNTER = new AtomicInteger(1);
 
     protected final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
     protected final Queue<TimingsHolder<K, V>> timings = new ConcurrentLinkedQueue<TimingsHolder<K, V>>();
@@ -33,16 +35,26 @@ public class Cache<K, V> {
     protected CacheListener<? super K, ? super V> onAdd = NOOP_LISTENER;
     protected CacheListener<? super K, ? super V> onRemove = NOOP_LISTENER;
     protected CacheErrorListener onErrorDuringRefresh = DEFAULT_ERROR_LISTENER;
+    protected final String name;
 
-    public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
+    public Cache(String name, long ttlSec, Computable<? super K, ? extends V> computable) {
+        this.name = name != null ? name : "Cache-" + NAME_COUNTER.incrementAndGet();
         this.ttl = ttlSec * 1000;
         this.computable = computable;
         timings.add(new TimingsHolder<K, V>(ttl));
         CacheCleaner.addCache(this);
     }
 
+    public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
+        this(null, ttlSec, computable);
+    }
+
     public Cache(long ttlSec) {
         this(ttlSec, null);
+    }
+
+    public Cache(String name, long ttlSec) {
+        this(name, ttlSec, null);
     }
 
     public Cache<K, V> allowOutdated() {
@@ -52,6 +64,10 @@ public class Cache<K, V> {
     public Cache<K, V> allowOutdated(long ttlSec) {
         outdated = new Cache<K, V>(ttlSec);
         return this;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public CacheStatistics getStatistics() {
