@@ -16,6 +16,11 @@ public class CacheStatistics {
     protected final AtomicLong removeLatency = new AtomicLong();
     protected final AtomicLong computeLatency = new AtomicLong();
     protected final AtomicInteger size = new AtomicInteger();
+    protected final String cacheName;
+
+    public CacheStatistics(String cacheName) {
+        this.cacheName = cacheName;
+    }
 
     public long getGetCount() {
         return getCount.get();
@@ -51,5 +56,9 @@ public class CacheStatistics {
 
     public int getSize() {
         return size.get();
+    }
+
+    public String getCacheName() {
+        return cacheName;
     }
 }

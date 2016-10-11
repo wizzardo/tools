@@ -26,7 +26,8 @@ public class Cache<K, V> {
 
     protected final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
     protected final Queue<TimingsHolder<K, V>> timings = new ConcurrentLinkedQueue<TimingsHolder<K, V>>();
-    protected final CacheStatistics statistics = new CacheStatistics();
+    protected final CacheStatistics statistics;
+    protected final String name;
     protected long ttl;
     protected Computable<? super K, ? extends V> computable;
     protected volatile boolean removeOnException = true;
@@ -35,12 +36,12 @@ public class Cache<K, V> {
     protected CacheListener<? super K, ? super V> onAdd = NOOP_LISTENER;
     protected CacheListener<? super K, ? super V> onRemove = NOOP_LISTENER;
     protected CacheErrorListener onErrorDuringRefresh = DEFAULT_ERROR_LISTENER;
-    protected final String name;
 
     public Cache(String name, long ttlSec, Computable<? super K, ? extends V> computable) {
         this.name = name != null ? name : "Cache-" + NAME_COUNTER.incrementAndGet();
         this.ttl = ttlSec * 1000;
         this.computable = computable;
+        statistics = new CacheStatistics(name);
         timings.add(new TimingsHolder<K, V>(ttl));
         CacheCleaner.addCache(this);
     }
