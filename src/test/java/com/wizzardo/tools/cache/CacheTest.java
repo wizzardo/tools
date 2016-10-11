@@ -310,4 +310,24 @@ public class CacheTest {
         Assert.assertTrue(statistics.getComputeLatency() > 0);
         Assert.assertTrue(statistics.getRemoveLatency() > 0);
     }
+
+    @Test
+    public void test_cache_iterable() {
+        Cache<String, String> cache;
+        cache = new Cache<String, String>(1);
+        cache = new Cache<String, String>(1);
+        cache = new Cache<String, String>(1);
+
+        Assert.assertEquals(3, CacheCleaner.size());
+
+        System.gc();
+
+        int i = 0;
+        for (Cache c : CacheCleaner.iterable()) {
+            i++;
+        }
+
+        Assert.assertEquals(1, i);
+        Assert.assertEquals(1, CacheCleaner.size());
+    }
 }
