@@ -3,6 +3,7 @@ package com.wizzardo.tools.cache;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: wizzardo
  * Date: 2/12/14
  */
-class CacheCleaner extends Thread {
+public class CacheCleaner extends Thread {
 
     private Set<WeakReference<Cache>> caches = Collections.newSetFromMap(new ConcurrentHashMap<WeakReference<Cache>, Boolean>());
     private volatile long wakeup = -1;
@@ -32,8 +33,55 @@ class CacheCleaner extends Thread {
         instance.caches.add(new WeakReference<Cache>(cache));
     }
 
-    static int size() {
+    public static int size() {
         return instance.caches.size();
+    }
+
+    public static Iterable<Cache> iterable() {
+        return new Iterable<Cache>() {
+            @Override
+            public Iterator<Cache> iterator() {
+                final Iterator<WeakReference<Cache>> iterator = instance.caches.iterator();
+                return new Iterator<Cache>() {
+                    Cache next;
+
+                    @Override
+                    public boolean hasNext() {
+                        if (next != null)
+                            return true;
+
+                        while (iterator.hasNext() && next == null) {
+                            next = iterator.next().get();
+                            if (next == null || next.isDestroyed()) {
+                                iterator.remove();
+                                if (next != null)
+                                    next = null;
+                            }
+
+                        }
+                        return next != null;
+                    }
+
+                    @Override
+                    public Cache next() {
+                        if (hasNext()) {
+                            try {
+                                return next;
+                            } finally {
+                                next = null;
+                            }
+                        } else {
+                            throw new NoSuchElementException();
+                        }
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new IllegalStateException();
+                    }
+                };
+            }
+        };
     }
 
     static void updateWakeUp(long wakeup) {
