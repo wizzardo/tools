@@ -7,16 +7,23 @@ import java.util.concurrent.atomic.AtomicLong;
  * Date: 24.11.14
  */
 public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> extends Cache<K, V> {
-    public static interface SizeProvider {
+    public interface SizeProvider {
         long size();
     }
 
     private final long limit;
     private AtomicLong size = new AtomicLong();
+    private CacheStatisticsWithHeapUsage statisticsWithHeapUsage;
 
     public MemoryLimitedCache(long limit, long ttlSec, Computable<? super K, ? extends V> computable) {
         super(ttlSec, computable);
         this.limit = limit;
+        statisticsWithHeapUsage = (CacheStatisticsWithHeapUsage) statistics;
+    }
+
+    @Override
+    protected CacheStatistics createStatistics(String name) {
+        return new CacheStatisticsWithHeapUsage(name);
     }
 
     public MemoryLimitedCache(long limit, long ttlSec) {
@@ -33,7 +40,7 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
 
     private void updateSize(V v, boolean increment) {
         long add = increment ? checkAndGetSize(v) : -checkAndGetSize(v);
-        if (size.addAndGet(add) > limit)
+        if (statisticsWithHeapUsage.update(size.addAndGet(add)) > limit)
             removeOldest();
     }
 
@@ -48,7 +55,7 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
     private long checkAndGetSize(V v) {
         long l = v.size();
         if (l < 0)
-            throw new IllegalStateException("value size must be > 0");
+            throw new IllegalStateException("value's size must be >= 0");
         return l;
     }
 
@@ -58,5 +65,22 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
 
     public long memoryUsed() {
         return size.get();
+    }
+
+    public static class CacheStatisticsWithHeapUsage extends CacheStatistics {
+        protected final AtomicLong heapUsage = new AtomicLong();
+
+        public CacheStatisticsWithHeapUsage(String cacheName) {
+            super(cacheName);
+        }
+
+        public long getHeapUsage() {
+            return heapUsage.get();
+        }
+
+        public long update(long bytes) {
+            heapUsage.set(bytes);
+            return bytes;
+        }
     }
 }
