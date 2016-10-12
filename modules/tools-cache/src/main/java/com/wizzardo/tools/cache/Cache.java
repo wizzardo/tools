@@ -41,13 +41,13 @@ public class Cache<K, V> {
         this.name = name != null ? name : "Cache-" + NAME_COUNTER.incrementAndGet();
         this.ttl = ttlSec * 1000;
         this.computable = computable;
-        statistics = createStatistics(name);
+        statistics = createStatistics();
         timings.add(new TimingsHolder<K, V>(ttl));
         CacheCleaner.addCache(this);
     }
 
-    protected CacheStatistics createStatistics(String name) {
-        return new CacheStatistics(name);
+    protected CacheStatistics createStatistics() {
+        return new CacheStatistics(this);
     }
 
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {

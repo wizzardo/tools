@@ -22,8 +22,8 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
     }
 
     @Override
-    protected CacheStatistics createStatistics(String name) {
-        return new CacheStatisticsWithHeapUsage(name);
+    protected CacheStatistics createStatistics() {
+        return new CacheStatisticsWithHeapUsage(this);
     }
 
     public MemoryLimitedCache(long limit, long ttlSec) {
@@ -74,8 +74,8 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
     public static class CacheStatisticsWithHeapUsage extends CacheStatistics {
         protected final AtomicLong heapUsage = new AtomicLong();
 
-        public CacheStatisticsWithHeapUsage(String cacheName) {
-            super(cacheName);
+        public CacheStatisticsWithHeapUsage(Cache cache) {
+            super(cache);
         }
 
         public long getHeapUsage() {

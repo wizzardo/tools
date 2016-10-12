@@ -1,5 +1,6 @@
 package com.wizzardo.tools.cache;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -17,9 +18,16 @@ public class CacheStatistics {
     protected final AtomicLong computeLatency = new AtomicLong();
     protected final AtomicInteger size = new AtomicInteger();
     protected final String cacheName;
+    protected final WeakReference<Cache> cache;
 
-    public CacheStatistics(String cacheName) {
-        this.cacheName = cacheName;
+    public CacheStatistics(Cache cache) {
+        this.cacheName = cache.getName();
+        this.cache = new WeakReference<Cache>(cache);
+    }
+
+    public boolean isValid() {
+        Cache cache = this.cache.get();
+        return cache != null && !cache.isDestroyed();
     }
 
     public long getGetCount() {
