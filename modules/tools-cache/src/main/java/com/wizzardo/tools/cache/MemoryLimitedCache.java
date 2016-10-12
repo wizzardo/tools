@@ -32,10 +32,12 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
 
     @Override
     public void onAddItem(K k, V v) {
-        if (v == null)
-            return;
-
-        updateSize(v, true);
+        try {
+            super.onAddItem(k, v);
+        } finally {
+            if (v != null)
+                updateSize(v, true);
+        }
     }
 
     private void updateSize(V v, boolean increment) {
@@ -46,10 +48,12 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
 
     @Override
     public void onRemoveItem(K k, V v) {
-        if (v == null)
-            return;
-
-        updateSize(v, false);
+        try {
+            super.onRemoveItem(k, v);
+        } finally {
+            if (v != null)
+                updateSize(v, false);
+        }
     }
 
     private long checkAndGetSize(V v) {
