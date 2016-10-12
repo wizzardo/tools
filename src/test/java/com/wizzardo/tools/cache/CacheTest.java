@@ -318,7 +318,8 @@ public class CacheTest {
         cache = new Cache<String, String>(1);
         cache = new Cache<String, String>(1);
 
-        Assert.assertEquals(3, CacheCleaner.size());
+        int before = CacheCleaner.size();
+        Assert.assertTrue(before >= 3);
 
         System.gc();
 
