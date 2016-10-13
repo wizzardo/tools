@@ -1,11 +1,9 @@
 package com.wizzardo.tools.cache;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author: wizzardo
@@ -13,11 +11,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CacheCleaner extends Thread {
 
+    public interface OnCacheAddedListener {
+        void onAdd(Cache cache);
+    }
+
     private Set<WeakReference<Cache>> caches = Collections.newSetFromMap(new ConcurrentHashMap<WeakReference<Cache>, Boolean>());
     private volatile long wakeup = -1;
     private volatile boolean sleeping = false;
 
     private final static CacheCleaner instance;
+    private final Queue<OnCacheAddedListener> listeners = new ConcurrentLinkedQueue<OnCacheAddedListener>();
 
     static {
         instance = new CacheCleaner();
@@ -31,6 +34,13 @@ public class CacheCleaner extends Thread {
 
     static void addCache(Cache cache) {
         instance.caches.add(new WeakReference<Cache>(cache));
+        for (OnCacheAddedListener listener : instance.listeners) {
+            listener.onAdd(cache);
+        }
+    }
+
+    public static void addListener(OnCacheAddedListener listener) {
+        instance.listeners.add(listener);
     }
 
     public static int size() {
