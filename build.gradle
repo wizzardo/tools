@@ -26,7 +26,13 @@ ext {
 }
 
 apply from: 'gradle/sonatype.gradle'
+apply plugin: 'jacoco'
 
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+}
 
 dependencies {
     compile project(':modules:tools-cache')
