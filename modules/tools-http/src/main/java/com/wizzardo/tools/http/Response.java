@@ -61,8 +61,11 @@ public class Response {
     }
 
     public void writeTo(OutputStream out) throws IOException {
-        byte[] buffer = new byte[10240];
         InputStream in = asStream();
+        if (in == null)
+            return;
+
+        byte[] buffer = new byte[10240];
         int r;
         while ((r = in.read(buffer)) != -1) {
             out.write(buffer, 0, r);
