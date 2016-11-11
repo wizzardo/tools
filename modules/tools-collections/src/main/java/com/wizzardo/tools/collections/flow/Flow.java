@@ -164,6 +164,14 @@ public class Flow<B> {
         return then(new FlowLast<B>(defaultSupplier));
     }
 
+    public FlowOr<B> or(B def) {
+        return then(new FlowOr<B>(def));
+    }
+
+    public FlowOr<B> or(Supplier<B> supplier) {
+        return then(new FlowOr<B>(supplier));
+    }
+
     public FlowMinWithComparator<B> min(Comparator<? super B> comparator) {
         return min((B) null, comparator);
     }
