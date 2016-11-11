@@ -1,6 +1,7 @@
 package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.Reducer;
+import com.wizzardo.tools.collections.flow.Supplier;
 
 /**
  * Created by wizzardo on 16.04.16.
@@ -11,6 +12,11 @@ public class FlowReduce<T> extends FlowProcessOnEnd<T, T> {
     public FlowReduce(T def, Reducer<T> reducer) {
         this.reducer = reducer;
         result = def;
+    }
+
+    public FlowReduce(Supplier<T> supplier, Reducer<T> reducer) {
+        this.reducer = reducer;
+        this.supplier = supplier;
     }
 
     @Override
