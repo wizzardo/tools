@@ -1,7 +1,5 @@
 package com.wizzardo.tools.collections.flow.flows;
 
-import com.wizzardo.tools.collections.flow.Supplier;
-
 import java.util.Comparator;
 
 /**
@@ -13,11 +11,6 @@ public class FlowMaxWithComparator<A> extends FlowProcessOnEnd<A, A> {
     public FlowMaxWithComparator(A def, Comparator<? super A> comparator) {
         this.comparator = comparator;
         result = def;
-    }
-
-    public FlowMaxWithComparator(Supplier<A> supplier, Comparator<? super A> comparator) {
-        this.comparator = comparator;
-        this.supplier = supplier;
     }
 
     @Override

@@ -7,11 +7,20 @@ import com.wizzardo.tools.collections.flow.Supplier;
  * Created by wizzardo on 16.04.16.
  */
 public class FlowOr<A> extends FlowProcessOnEnd<A, A> {
+    protected static final Supplier<?> NULL_SUPPLIER = new Supplier<Object>() {
+        @Override
+        public Object supply() {
+            return null;
+        }
+    };
+
+    protected Supplier<A> supplier;
 
     protected boolean processed = false;
 
     public FlowOr(A def) {
         result = def;
+        supplier = (Supplier<A>) NULL_SUPPLIER;
     }
 
     public FlowOr(Supplier<A> supplier) {
@@ -30,6 +39,11 @@ public class FlowOr<A> extends FlowProcessOnEnd<A, A> {
             super.onEnd();
         else
             onEnd(child);
+    }
+
+    protected A result() {
+        A a = this.result;
+        return a != null ? a : supplier.supply();
     }
 
     @Override

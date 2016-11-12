@@ -81,10 +81,6 @@ public class Flow<B> {
         return then(new FlowReduce<B>(def, reducer));
     }
 
-    public FlowReduce<B> reduce(Supplier<B> defaultSupplier, Reducer<B> reducer) {
-        return then(new FlowReduce<B>(defaultSupplier, reducer));
-    }
-
     public <Z, V extends Flow<Z>> Flow<Z> flatMap(Mapper<? super B, ? extends V> mapper) {
         return then(new FlowMapMerge<B, Z>(mapper));
     }
@@ -148,20 +144,12 @@ public class Flow<B> {
         return then(new FlowFirst<B>(def));
     }
 
-    public FlowFirst<B> first(Supplier<B> defaultSupplier) {
-        return then(new FlowFirst<B>(defaultSupplier));
-    }
-
     public FlowLast<B> last() {
         return last((B) null);
     }
 
     public FlowLast<B> last(B def) {
         return then(new FlowLast<B>(def));
-    }
-
-    public FlowLast<B> last(Supplier<B> defaultSupplier) {
-        return then(new FlowLast<B>(defaultSupplier));
     }
 
     public FlowOr<B> or(B def) {
@@ -180,20 +168,12 @@ public class Flow<B> {
         return then(new FlowMinWithComparator<B>(def, comparator));
     }
 
-    public FlowMinWithComparator<B> min(Supplier<B> defaultSupplier, Comparator<? super B> comparator) {
-        return then(new FlowMinWithComparator<B>(defaultSupplier, comparator));
-    }
-
     public FlowMin<B> min() {
         return min((B) null);
     }
 
     public FlowMin<B> min(B def) {
         return then(new FlowMin<B>(def));
-    }
-
-    public FlowMin<B> min(Supplier<B> defaultSupplier) {
-        return then(new FlowMin<B>(defaultSupplier));
     }
 
     public FlowMaxWithComparator<B> max(Comparator<? super B> comparator) {
@@ -204,20 +184,12 @@ public class Flow<B> {
         return then(new FlowMaxWithComparator<B>(def, comparator));
     }
 
-    public FlowMaxWithComparator<B> max(Supplier<B> defaultSupplier, Comparator<? super B> comparator) {
-        return then(new FlowMaxWithComparator<B>(defaultSupplier, comparator));
-    }
-
     public FlowMax<B> max() {
         return max((B) null);
     }
 
     public FlowMax<B> max(B def) {
         return then(new FlowMax<B>(def));
-    }
-
-    public FlowMax<B> max(Supplier<B> defaultSupplier) {
-        return then(new FlowMax<B>(defaultSupplier));
     }
 
     public <T> Flow<T> async(Mapper<B, Flow<T>> mapper) {
