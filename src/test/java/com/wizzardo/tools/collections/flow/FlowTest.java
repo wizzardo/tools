@@ -528,6 +528,18 @@ public class FlowTest {
     }
 
     @Test
+    public void test_or_7() {
+        try {
+            Flow.of(1, 2, 3)
+                    .or(-1)
+                    .get();
+            Assert.assertTrue(false);
+        } catch (IllegalStateException e) {
+            Assert.assertEquals("Should not be called directly on FlowOr", e.getMessage());
+        }
+    }
+
+    @Test
     public void test_min() {
         Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min().get());
         Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min().get());
