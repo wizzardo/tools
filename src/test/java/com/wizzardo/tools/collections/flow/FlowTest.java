@@ -422,6 +422,112 @@ public class FlowTest {
     }
 
     @Test
+    public void test_or() {
+        Assert.assertEquals(Integer.valueOf(-1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 10;
+                    }
+                })
+                .or(-1)
+                .first()
+                .get());
+    }
+
+    @Test
+    public void test_or_2() {
+        Assert.assertEquals(Integer.valueOf(-1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 10;
+                    }
+                })
+                .or(new Supplier<Integer>() {
+                    @Override
+                    public Integer supply() {
+                        return -1;
+                    }
+                })
+                .first()
+                .get());
+    }
+
+    @Test
+    public void test_or_3() {
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 0;
+                    }
+                })
+                .or(1)
+                .first()
+                .get());
+    }
+
+    @Test
+    public void test_or_4() {
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 0;
+                    }
+                })
+                .or(new Supplier<Integer>() {
+                    @Override
+                    public Integer supply() {
+                        return -1;
+                    }
+                })
+                .first()
+                .get());
+    }
+
+    @Test
+    public void test_or_5() {
+        Assert.assertEquals(Integer.valueOf(-2), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 10;
+                    }
+                })
+                .or(-1)
+                .map(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer * 2;
+                    }
+                })
+                .first()
+                .get());
+    }
+
+    @Test
+    public void test_or_6() {
+        Assert.assertEquals("2,4,6", Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 0;
+                    }
+                })
+                .or(-1)
+                .map(new Mapper<Integer, Integer>() {
+                    @Override
+                    public Integer map(Integer integer) {
+                        return integer * 2;
+                    }
+                })
+                .join(",")
+                .get());
+    }
+
+    @Test
     public void test_min() {
         Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min().get());
         Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min().get());
