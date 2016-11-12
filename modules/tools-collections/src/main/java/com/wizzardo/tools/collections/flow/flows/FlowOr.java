@@ -31,4 +31,9 @@ public class FlowOr<A> extends FlowProcessOnEnd<A, A> {
         else
             onEnd(child);
     }
+
+    @Override
+    public A get() {
+        throw new IllegalStateException("Should not be called directly on " + FlowOr.class.getSimpleName());
+    }
 }
