@@ -728,6 +728,19 @@ public class FlowTest {
     }
 
     @Test
+    public void test_map_to_null() {
+        List<String> result = Flow.of(1, 2, 3)
+                .map(new Mapper<Integer, String>() {
+                    @Override
+                    public String map(Integer integer) {
+                        return null;
+                    }
+                }).toList().get();
+
+        Assert.assertEquals(0, result.size());
+    }
+
+    @Test
     public void test_filter() {
         List<Integer> result = Flow.of(1, 2, 3, 4)
                 .filter(new Filter<Integer>() {
@@ -776,6 +789,21 @@ public class FlowTest {
     }
 
     @Test
+    public void test_of_iterator_2() {
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+
+        List<Integer> result =Flow.of(list.iterator()).toList().get();
+
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals(Integer.valueOf(1), result.get(0));
+        Assert.assertEquals(Integer.valueOf(2), result.get(1));
+        Assert.assertEquals(Integer.valueOf(3), result.get(2));
+    }
+
+    @Test
     public void test_of_flows() {
         List<Integer> result = Flow.of(Flow.of(1), Flow.of(2, 3)).toList().get();
 
@@ -783,6 +811,11 @@ public class FlowTest {
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
         Assert.assertEquals(Integer.valueOf(2), result.get(1));
         Assert.assertEquals(Integer.valueOf(3), result.get(2));
+    }
+
+    @Test
+    public void test_of_flows_2() {
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(Flow.of(1), Flow.of(2, 3)).first().get());
     }
 
     @Test
