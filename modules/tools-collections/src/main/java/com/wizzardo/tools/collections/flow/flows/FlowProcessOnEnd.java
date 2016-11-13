@@ -1,6 +1,7 @@
 package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.FlowProcessor;
+import com.wizzardo.tools.collections.flow.Supplier;
 
 /**
  * Created by wizzardo on 11/05/16.
@@ -41,5 +42,23 @@ public abstract class FlowProcessOnEnd<A, B> extends FlowProcessor<A, B> {
 
     protected B result() {
         return result;
+    }
+
+    public B orElse(B other) {
+        B b = get();
+        return b != null ? b : other;
+    }
+
+    public B orElse(Supplier<B> supplier) {
+        B b = get();
+        return b != null ? b : supplier.supply();
+    }
+
+    public <X extends Throwable> B orElseThrow(Supplier<? extends X> exceptionSupplier) throws X {
+        B b = get();
+        if (b != null)
+            return b;
+
+        throw exceptionSupplier.supply();
     }
 }
