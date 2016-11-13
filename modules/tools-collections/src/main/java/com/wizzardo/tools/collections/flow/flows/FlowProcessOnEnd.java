@@ -11,13 +11,6 @@ public abstract class FlowProcessOnEnd<A, B> extends FlowProcessor<A, B> {
     protected boolean started = false;
     protected B result;
 
-    public FlowProcessOnEnd() {
-    }
-
-    public FlowProcessOnEnd(B def) {
-        result = def;
-    }
-
     @Override
     protected void onEnd() {
         FlowProcessor<B, ?> child = this.child;

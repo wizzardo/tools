@@ -540,6 +540,20 @@ public class FlowTest {
     }
 
     @Test
+    public void test_or_8() {
+        Assert.assertEquals(null, Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 10;
+                    }
+                })
+                .or((Integer) null)
+                .first()
+                .get());
+    }
+
+    @Test
     public void test_min() {
         Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3).min().get());
         Assert.assertEquals(Integer.valueOf(1), Flow.of(3, 2, 1).min().get());
@@ -795,7 +809,7 @@ public class FlowTest {
         list.add(2);
         list.add(3);
 
-        List<Integer> result =Flow.of(list.iterator()).toList().get();
+        List<Integer> result = Flow.of(list.iterator()).toList().get();
 
         Assert.assertEquals(3, result.size());
         Assert.assertEquals(Integer.valueOf(1), result.get(0));
@@ -1363,6 +1377,19 @@ public class FlowTest {
     }
 
     @Test
+    public void test_async_limit_queue() {
+        List<String> result = Flow.of("a", "b", "c").async(1, new Mapper<String, Flow<String>>() {
+            @Override
+            public Flow<String> map(String s) {
+                return Flow.of(s.toUpperCase());
+            }
+        }).toList().get();
+
+        Assert.assertEquals(3, result.size());
+        Assert.assertTrue(result.containsAll(Arrays.asList("A", "B", "C")));
+    }
+
+    @Test
     public void test_async_non_blocking() {
         final AtomicInteger counter = new AtomicInteger();
         Flow.of("a", "b", "c")
@@ -1554,5 +1581,116 @@ public class FlowTest {
                 })
                 .join(",")
                 .get());
+    }
+
+    @Test
+    public void test_orElse() {
+        Assert.assertEquals(Integer.valueOf(-1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 10;
+                    }
+                })
+                .first()
+                .orElse(-1));
+    }
+
+    @Test
+    public void test_orElse_2() {
+        Assert.assertEquals(Integer.valueOf(-1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 10;
+                    }
+                })
+                .first()
+                .orElse(new Supplier<Integer>() {
+                    @Override
+                    public Integer supply() {
+                        return -1;
+                    }
+                }));
+    }
+
+    @Test
+    public void test_orElse_3() {
+        try {
+            Flow.of(1, 2, 3)
+                    .filter(new Filter<Integer>() {
+                        @Override
+                        public boolean allow(Integer integer) {
+                            return integer > 10;
+                        }
+                    })
+                    .first()
+                    .orElseThrow(new Supplier<RuntimeException>() {
+                        @Override
+                        public RuntimeException supply() {
+                            return new IllegalStateException("nothing found");
+                        }
+                    });
+            Assert.assertTrue(false);
+        } catch (IllegalStateException e) {
+            Assert.assertEquals("nothing found", e.getMessage());
+        }
+    }
+
+    @Test
+    public void test_orElse_4() {
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 0;
+                    }
+                })
+                .first()
+                .orElse(-1));
+    }
+
+    @Test
+    public void test_orElse_5() {
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 0;
+                    }
+                })
+                .first()
+                .orElse(new Supplier<Integer>() {
+                    @Override
+                    public Integer supply() {
+                        return -1;
+                    }
+                }));
+    }
+
+    @Test
+    public void test_orElse_6() {
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 0;
+                    }
+                })
+                .first()
+                .orElseThrow(new Supplier<RuntimeException>() {
+                    @Override
+                    public RuntimeException supply() {
+                        return new IllegalStateException("nothing found");
+                    }
+                }));
+    }
+
+    @Test
+    public void test_flow() {
+        Flow flow = new Flow();
+        //do nothing
+        flow.start();
+        flow.stop();
     }
 }
