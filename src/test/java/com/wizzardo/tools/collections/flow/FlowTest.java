@@ -535,7 +535,7 @@ public class FlowTest {
                     .get();
             Assert.assertTrue(false);
         } catch (IllegalStateException e) {
-            Assert.assertEquals("Should not be called directly on FlowOr", e.getMessage());
+            Assert.assertEquals("Parent of Or-flow cannot be cast to FlowProcessOnEnd", e.getMessage());
         }
     }
 
@@ -580,6 +580,53 @@ public class FlowTest {
                 .first()
                 .or(-1)
                 .first()
+                .get());
+    }
+
+    @Test
+    public void test_or_11() {
+        Assert.assertEquals(Integer.valueOf(1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 0;
+                    }
+                })
+                .first()
+                .or(-1)
+                .get());
+    }
+
+    @Test
+    public void test_or_12() {
+        Assert.assertEquals(Integer.valueOf(-1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 10;
+                    }
+                })
+                .first()
+                .or(-1)
+                .get());
+    }
+
+    @Test
+    public void test_or_13() {
+        Assert.assertEquals(Integer.valueOf(-1), Flow.of(1, 2, 3)
+                .filter(new Filter<Integer>() {
+                    @Override
+                    public boolean allow(Integer integer) {
+                        return integer > 10;
+                    }
+                })
+                .first()
+                .or(new Supplier<Integer>() {
+                    @Override
+                    public Integer supply() {
+                        return -1;
+                    }
+                })
                 .get());
     }
 

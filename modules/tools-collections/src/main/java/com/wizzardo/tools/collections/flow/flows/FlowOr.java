@@ -1,6 +1,7 @@
 package com.wizzardo.tools.collections.flow.flows;
 
 
+import com.wizzardo.tools.collections.flow.FlowProcessor;
 import com.wizzardo.tools.collections.flow.Supplier;
 
 /**
@@ -30,15 +31,20 @@ public class FlowOr<A> extends FlowProcessOnEnd<A, A> {
     @Override
     public void process(A a) {
         processed = true;
-        child.process(a);
+        FlowProcessor<A, ?> child = this.child;
+        if (child != null)
+            child.process(a);
     }
 
     @Override
     protected void onEnd() {
-        if (!processed)
+        if (!processed) {
             super.onEnd();
-        else
-            onEnd(child);
+        } else {
+            FlowProcessor<A, ?> child = this.child;
+            if (child != null)
+                onEnd(child);
+        }
     }
 
     protected A result() {
@@ -48,6 +54,20 @@ public class FlowOr<A> extends FlowProcessOnEnd<A, A> {
 
     @Override
     public A get() {
-        throw new IllegalStateException("Should not be called directly on " + FlowOr.class.getSimpleName());
+        if (parent instanceof FlowProcessOnEnd) {
+            A o = ((FlowProcessOnEnd<?, A>) parent).get();
+            if (o != null) {
+                return o;
+            } else {
+                o = result;
+                if (o != null) {
+                    return o;
+                } else {
+                    return supplier.supply();
+                }
+            }
+        }
+
+        throw new IllegalStateException("Parent of Or-flow cannot be cast to " + FlowProcessOnEnd.class.getSimpleName());
     }
 }
