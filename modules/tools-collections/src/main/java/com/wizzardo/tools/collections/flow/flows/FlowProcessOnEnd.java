@@ -15,7 +15,10 @@ public abstract class FlowProcessOnEnd<A, B> extends FlowProcessor<A, B> {
     protected void onEnd() {
         FlowProcessor<B, ?> child = this.child;
         if (child != null) {
-            child.process(result());
+            B result = result();
+            if (result != null)
+                child.process(result);
+
             onEnd(child);
         }
     }
