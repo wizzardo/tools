@@ -276,6 +276,7 @@ public class Cache<K, V> {
                             outdated.remove(key);
                     }
 
+                    latency = System.nanoTime() - latency;
                     statistics.putCount.incrementAndGet();
                     statistics.putLatency.addAndGet(latency);
                     updateSizeMetric();
@@ -323,6 +324,7 @@ public class Cache<K, V> {
                 onRemoveItem(old.k, old.v);
             }
         } finally {
+            latency = System.nanoTime() - latency;
             statistics.putCount.incrementAndGet();
             statistics.putLatency.addAndGet(latency);
             updateSizeMetric();
