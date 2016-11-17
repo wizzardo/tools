@@ -67,7 +67,7 @@ public class Cache<K, V> {
     }
 
     public Cache<K, V> allowOutdated(long ttlSec) {
-        outdated = new Cache<K, V>(ttlSec);
+        outdated = new Cache<K, V>(name + ".outdated", ttlSec);
         return this;
     }
 
