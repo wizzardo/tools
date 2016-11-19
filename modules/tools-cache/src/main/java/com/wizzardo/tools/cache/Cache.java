@@ -25,7 +25,7 @@ public class Cache<K, V> {
     protected static final AtomicInteger NAME_COUNTER = new AtomicInteger(1);
 
     protected final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
-    protected final ConcurrentHashMap<Long, TimingsHolder<K, V>> timings = new ConcurrentHashMap<Long, TimingsHolder<K, V>>();
+    protected final ConcurrentHashMap<Long, WeakReference<TimingsHolder<K, V>>> timings = new ConcurrentHashMap<Long, WeakReference<TimingsHolder<K, V>>>();
     protected final CacheStatistics statistics;
     protected final String name;
     protected long ttl;
@@ -36,13 +36,14 @@ public class Cache<K, V> {
     protected CacheListener<? super K, ? super V> onAdd = NOOP_LISTENER;
     protected CacheListener<? super K, ? super V> onRemove = NOOP_LISTENER;
     protected CacheErrorListener onErrorDuringRefresh = DEFAULT_ERROR_LISTENER;
+    protected TimingsHolder<K, V> timingsHolder;
 
     public Cache(String name, long ttlSec, Computable<? super K, ? extends V> computable) {
         this.name = name != null ? name : "Cache-" + NAME_COUNTER.incrementAndGet();
         this.ttl = ttlSec * 1000;
         this.computable = computable;
         statistics = createStatistics();
-        timings.put(ttl, new TimingsHolder<K, V>(ttl));
+        timings.put(ttl, new WeakReference<TimingsHolder<K, V>>(timingsHolder = new TimingsHolder<K, V>(ttl)));
         CacheCleaner.addCache(this);
     }
 
@@ -148,7 +149,14 @@ public class Cache<K, V> {
         Holder<K, V> h;
         long nextWakeUp = Long.MAX_VALUE;
 
-        for (TimingsHolder<K, V> timingsHolder : timings.values()) {
+        for (Iterator<WeakReference<TimingsHolder<K, V>>> iterator = timings.values().iterator(); iterator.hasNext(); ) {
+            WeakReference<TimingsHolder<K, V>> ref = iterator.next();
+            TimingsHolder<K, V> timingsHolder = ref.get();
+            if (timingsHolder == null) {
+                iterator.remove();
+                continue;
+            }
+
             Queue<TimingEntry<Holder<K, V>>> timings = timingsHolder.timings;
 
             while ((entry = timings.peek()) != null) {
@@ -258,7 +266,7 @@ public class Cache<K, V> {
             }
 
             long latency = System.nanoTime();
-            Holder<K, V> ft = new Holder<K, V>(key, timings.get(ttl));
+            Holder<K, V> ft = new Holder<K, V>(key, timingsHolder);
             f = map.putIfAbsent(key, ft);
             if (f == null) {
                 boolean failed = true;
@@ -356,17 +364,32 @@ public class Cache<K, V> {
         return false;
     }
 
-    private TimingsHolder<K, V> findTimingsHolder(long ttl) {
-        TimingsHolder<K, V> timingsHolder = timings.get(ttl);
-        if (timingsHolder != null)
-            return timingsHolder;
+    protected TimingsHolder<K, V> findTimingsHolder(long ttl) {
+        WeakReference<TimingsHolder<K, V>> ref = timings.get(ttl);
+        TimingsHolder<K, V> timingsHolder;
+        while (true) {
+            if (ref == null) {
+                timingsHolder = new TimingsHolder<K, V>(ttl);
+                WeakReference<TimingsHolder<K, V>> existed = timings.putIfAbsent(ttl, ref = new WeakReference<TimingsHolder<K, V>>(timingsHolder));
+                if (existed == null)
+                    return timingsHolder;
 
-        timingsHolder = new TimingsHolder<K, V>(ttl);
-        TimingsHolder<K, V> existed = timings.putIfAbsent(ttl, timingsHolder);
-        if (existed != null)
-            return existed;
+                TimingsHolder<K, V> th = existed.get();
+                if (th != null)
+                    return th;
 
-        return timingsHolder;
+                if (timings.replace(ttl, existed, ref))
+                    return timingsHolder;
+
+                ref = timings.get(ttl);
+            } else {
+                timingsHolder = ref.get();
+                if (timingsHolder != null)
+                    return timingsHolder;
+
+                ref = null;
+            }
+        }
     }
 
     private void updateTimingCache(final Holder<K, V> key) {
@@ -407,7 +430,14 @@ public class Cache<K, V> {
 
     public void removeOldest() {
         Holder<K, V> holder = null;
-        for (TimingsHolder<K, V> th : timings.values()) {
+        for (Iterator<WeakReference<TimingsHolder<K, V>>> i = timings.values().iterator(); i.hasNext(); ) {
+            WeakReference<TimingsHolder<K, V>> ref = i.next();
+            TimingsHolder<K, V> th = ref.get();
+            if (th == null) {
+                i.remove();
+                continue;
+            }
+
             Iterator<TimingEntry<Holder<K, V>>> iterator = th.timings.iterator();
             while (iterator.hasNext()) {
                 TimingEntry<Holder<K, V>> next = iterator.next();
