@@ -331,4 +331,32 @@ public class CacheTest {
         Assert.assertEquals(1, i);
         Assert.assertEquals(1, CacheCleaner.size());
     }
+
+    @Test
+    public void test_cache_timings_cleanup() {
+        Cache<String, String> cache = new Cache<String, String>(1);
+
+        Assert.assertEquals(1, cache.timings.size());
+
+        Cache.TimingsHolder<String, String> timingsHolder = cache.findTimingsHolder(2);
+        Assert.assertEquals(2, cache.timings.size());
+        System.gc();
+        Assert.assertEquals(2, cache.timings.size());
+
+        timingsHolder = null;
+        System.gc();
+        Assert.assertEquals(2, cache.timings.size());
+        cache.refresh();
+        Assert.assertEquals(1, cache.timings.size());
+
+
+        int hash = cache.findTimingsHolder(2).hashCode();
+        Assert.assertEquals(2, cache.timings.size());
+        Assert.assertEquals(hash, cache.findTimingsHolder(2).hashCode());
+        System.gc();
+        Assert.assertEquals(2, cache.timings.size());
+
+        cache.findTimingsHolder(2);
+        Assert.assertNotEquals(hash, cache.findTimingsHolder(2).hashCode());
+    }
 }
