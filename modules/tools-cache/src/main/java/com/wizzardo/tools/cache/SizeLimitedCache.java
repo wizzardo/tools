@@ -1,8 +1,5 @@
 package com.wizzardo.tools.cache;
 
-import com.wizzardo.tools.cache.Cache;
-import com.wizzardo.tools.cache.Computable;
-
 /**
  * @author: wizzardo
  * Date: 24.11.14
@@ -25,14 +22,22 @@ public class SizeLimitedCache<K, V> extends Cache<K, V> {
 
     @Override
     public void onAddItem(K k, V v) {
-        if (size() > limit)
-            removeOldest();
+        try {
+            super.onAddItem(k, v);
+        } finally {
+            if (size() > limit)
+                removeOldest();
+        }
     }
 
     @Override
     public void onRemoveItem(K k, V v) {
-        if (size() > limit)
-            removeOldest();
+        try {
+            super.onRemoveItem(k, v);
+        } finally {
+            if (size() > limit)
+                removeOldest();
+        }
     }
 
     public int limit() {
