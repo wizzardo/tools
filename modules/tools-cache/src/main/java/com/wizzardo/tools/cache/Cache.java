@@ -129,9 +129,7 @@ public class Cache<K, V> {
             return null;
         long latency = System.nanoTime();
         try {
-            holder.setRemoved();
-            putToOutdated(holder);
-            onRemoveItem(holder.getKey(), holder.get());
+            onRemoveItem(holder, true);
             return holder.get();
         } finally {
             latency = System.nanoTime() - latency;
@@ -163,10 +161,8 @@ public class Cache<K, V> {
 //                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
                         long latency = System.nanoTime();
                         if (map.remove(h.k, h)) {
-                            h.setRemoved();
-                            putToOutdated(h);
                             try {
-                                onRemoveItem(h.k, h.v);
+                                onRemoveItem(h, true);
                             } catch (Exception e) {
                                 onErrorDuringRefresh(e);
                             }
@@ -215,6 +211,14 @@ public class Cache<K, V> {
     public void clear() {
         timings.clear();
         map.clear();
+    }
+
+    protected void onRemoveItem(Holder<K, V> h, boolean putToOutdated) {
+        if (putToOutdated)
+            putToOutdated(h);
+
+        h.setRemoved();
+        onRemoveItem(h.k, h.v);
     }
 
     public void onRemoveItem(K k, V v) {
@@ -320,8 +324,7 @@ public class Cache<K, V> {
             onAddItem(key, value);
             updateTimingCache(h);
             if (old != null) {
-                old.setRemoved();
-                onRemoveItem(old.k, old.v);
+                onRemoveItem(old, false);
             }
         } finally {
             latency = System.nanoTime() - latency;
