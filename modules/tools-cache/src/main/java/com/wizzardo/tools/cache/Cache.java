@@ -25,7 +25,7 @@ public class Cache<K, V> {
     protected static final AtomicInteger NAME_COUNTER = new AtomicInteger(1);
 
     protected final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
-    protected final Queue<TimingsHolder<K, V>> timings = new ConcurrentLinkedQueue<TimingsHolder<K, V>>();
+    protected final ConcurrentHashMap<Long, TimingsHolder<K, V>> timings = new ConcurrentHashMap<Long, TimingsHolder<K, V>>();
     protected final CacheStatistics statistics;
     protected final String name;
     protected long ttl;
@@ -42,7 +42,7 @@ public class Cache<K, V> {
         this.ttl = ttlSec * 1000;
         this.computable = computable;
         statistics = createStatistics();
-        timings.add(new TimingsHolder<K, V>(ttl));
+        timings.put(ttl, new TimingsHolder<K, V>(ttl));
         CacheCleaner.addCache(this);
     }
 
@@ -150,7 +150,7 @@ public class Cache<K, V> {
         Holder<K, V> h;
         long nextWakeUp = Long.MAX_VALUE;
 
-        for (TimingsHolder<K, V> timingsHolder : timings) {
+        for (TimingsHolder<K, V> timingsHolder : timings.values()) {
             Queue<TimingEntry<Holder<K, V>>> timings = timingsHolder.timings;
 
             while ((entry = timings.peek()) != null) {
@@ -254,7 +254,7 @@ public class Cache<K, V> {
             }
 
             long latency = System.nanoTime();
-            Holder<K, V> ft = new Holder<K, V>(key, timings.peek());
+            Holder<K, V> ft = new Holder<K, V>(key, timings.get(ttl));
             f = map.putIfAbsent(key, ft);
             if (f == null) {
                 boolean failed = true;
@@ -354,13 +354,16 @@ public class Cache<K, V> {
     }
 
     private TimingsHolder<K, V> findTimingsHolder(long ttl) {
-        for (TimingsHolder<K, V> holder : timings)
-            if (holder.ttl == ttl)
-                return holder;
+        TimingsHolder<K, V> timingsHolder = timings.get(ttl);
+        if (timingsHolder != null)
+            return timingsHolder;
 
-        TimingsHolder<K, V> holder = new TimingsHolder<K, V>(ttl);
-        timings.add(holder);
-        return holder;
+        timingsHolder = new TimingsHolder<K, V>(ttl);
+        TimingsHolder<K, V> existed = timings.putIfAbsent(ttl, timingsHolder);
+        if (existed != null)
+            return existed;
+
+        return timingsHolder;
     }
 
     private void updateTimingCache(final Holder<K, V> key) {
@@ -401,7 +404,7 @@ public class Cache<K, V> {
 
     public void removeOldest() {
         Holder<K, V> holder = null;
-        for (TimingsHolder<K, V> th : timings) {
+        for (TimingsHolder<K, V> th : timings.values()) {
             Iterator<TimingEntry<Holder<K, V>>> iterator = th.timings.iterator();
             while (iterator.hasNext()) {
                 TimingEntry<Holder<K, V>> next = iterator.next();
