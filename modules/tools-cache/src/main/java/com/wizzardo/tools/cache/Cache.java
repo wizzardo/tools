@@ -149,15 +149,10 @@ public class Cache<K, V> {
         Holder<K, V> h;
         long nextWakeUp = Long.MAX_VALUE;
 
-        for (Iterator<WeakReference<TimingsHolder<K, V>>> iterator = timings.values().iterator(); iterator.hasNext(); ) {
-            WeakReference<TimingsHolder<K, V>> ref = iterator.next();
-            TimingsHolder<K, V> timingsHolder = ref.get();
-            if (timingsHolder == null) {
-                iterator.remove();
-                continue;
-            }
-
-            Queue<TimingEntry<Holder<K, V>>> timings = timingsHolder.timings;
+        TimingsHolder<K, V> th;
+        Iterator<WeakReference<TimingsHolder<K, V>>> i = timings.values().iterator();
+        while ((th = next(i)) != null) {
+            Queue<TimingEntry<Holder<K, V>>> timings = th.timings;
 
             while ((entry = timings.peek()) != null) {
                 h = entry.value.get();
@@ -430,14 +425,9 @@ public class Cache<K, V> {
 
     public void removeOldest() {
         Holder<K, V> holder = null;
-        for (Iterator<WeakReference<TimingsHolder<K, V>>> i = timings.values().iterator(); i.hasNext(); ) {
-            WeakReference<TimingsHolder<K, V>> ref = i.next();
-            TimingsHolder<K, V> th = ref.get();
-            if (th == null) {
-                i.remove();
-                continue;
-            }
-
+        TimingsHolder<K, V> th;
+        Iterator<WeakReference<TimingsHolder<K, V>>> i = timings.values().iterator();
+        while ((th = next(i)) != null) {
             Iterator<TimingEntry<Holder<K, V>>> iterator = th.timings.iterator();
             while (iterator.hasNext()) {
                 TimingEntry<Holder<K, V>> next = iterator.next();
@@ -455,6 +445,21 @@ public class Cache<K, V> {
         }
         if (holder != null)
             remove(holder.getKey());
+    }
+
+    protected <T> T next(Iterator<WeakReference<T>> iterator) {
+        if (!iterator.hasNext())
+            return null;
+
+        do {
+            T t = iterator.next().get();
+            if (t != null)
+                return t;
+
+            iterator.remove();
+        } while (iterator.hasNext());
+
+        return null;
     }
 
     static class TimingsHolder<K, V> {
