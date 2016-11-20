@@ -327,7 +327,14 @@ public class Cache<K, V> {
             onAddItem(key, value);
             updateTimingCache(h);
             if (old != null) {
-                onRemoveItem(old, false);
+                long removeLatency = System.nanoTime();
+                try {
+                    onRemoveItem(old, false);
+                } finally {
+                    removeLatency = System.nanoTime() - removeLatency;
+                    statistics.removeCount.incrementAndGet();
+                    statistics.removeLatency.addAndGet(removeLatency);
+                }
             }
         } finally {
             latency = System.nanoTime() - latency;
