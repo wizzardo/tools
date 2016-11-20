@@ -312,6 +312,194 @@ public class CacheTest {
     }
 
     @Test
+    public void test_statistics_2() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) throws InterruptedException {
+                Thread.sleep(10);
+                return s.toUpperCase();
+            }
+        });
+        cache.get("foo");
+
+        CacheStatistics statistics = cache.getStatistics();
+
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(0, statistics.getRemoveCount());
+        Assert.assertTrue(statistics.getGetLatency() > 10 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getGetLatency() < 15 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getPutLatency() > 10 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getPutLatency() < 15 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getComputeLatency() > 10 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getComputeLatency() < 15 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getRemoveLatency() == 0);
+
+        long get = statistics.getLatency.get();
+        long put = statistics.putLatency.get();
+        long compute = statistics.computeLatency.get();
+        cache.get("foo");
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(2, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(put, statistics.getPutLatency());
+        Assert.assertEquals(compute, statistics.getComputeLatency());
+        Assert.assertTrue(statistics.getGetLatency() > get);
+    }
+
+    @Test
+    public void test_statistics_3() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        }).onAdd(new CacheListener<String, String>() {
+            @Override
+            public void onEvent(String key, String value) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        cache.get("foo");
+
+        CacheStatistics statistics = cache.getStatistics();
+
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(0, statistics.getRemoveCount());
+        Assert.assertTrue(statistics.getGetLatency() > 10 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getGetLatency() < 15 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getPutLatency() > 10 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getPutLatency() < 15 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getComputeLatency() < 100 * 1000l);
+        Assert.assertTrue(statistics.getRemoveLatency() == 0);
+
+        long get = statistics.getLatency.get();
+        long put = statistics.putLatency.get();
+        long compute = statistics.computeLatency.get();
+        cache.get("foo");
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(2, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(put, statistics.getPutLatency());
+        Assert.assertEquals(compute, statistics.getComputeLatency());
+        Assert.assertTrue(statistics.getGetLatency() > get);
+    }
+
+    @Test
+    public void test_statistics_4() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        }).onRemove(new CacheListener<String, String>() {
+            @Override
+            public void onEvent(String key, String value) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        cache.get("foo");
+
+        CacheStatistics statistics = cache.getStatistics();
+
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(0, statistics.getRemoveCount());
+        Assert.assertTrue(statistics.getGetLatency() < 9 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getPutLatency() < 9 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getComputeLatency() < 100 * 1000l);
+        Assert.assertTrue(statistics.getRemoveLatency() == 0);
+
+        long get = statistics.getLatency.get();
+        long put = statistics.putLatency.get();
+        long compute = statistics.computeLatency.get();
+        long remove = statistics.removeLatency.get();
+        cache.put("foo", "bar");
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(2, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(1, statistics.getRemoveCount());
+        Assert.assertEquals(get, statistics.getGetLatency());
+        Assert.assertEquals(compute, statistics.getComputeLatency());
+        Assert.assertTrue(statistics.getRemoveLatency() > remove);
+        Assert.assertTrue(statistics.getPutLatency() > put);
+    }
+
+    @Test
+    public void test_statistics_5() throws InterruptedException {
+        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+            @Override
+            public String compute(String s) {
+                return s.toUpperCase();
+            }
+        }).onAdd(new CacheListener<String, String>() {
+            @Override
+            public void onEvent(String key, String value) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        cache.get("foo");
+
+        CacheStatistics statistics = cache.getStatistics();
+
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(0, statistics.getRemoveCount());
+        Assert.assertTrue(statistics.getGetLatency() > 10 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getGetLatency() < 15 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getPutLatency() > 10 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getPutLatency() < 15 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getComputeLatency() < 100 * 1000l);
+        Assert.assertTrue(statistics.getRemoveLatency() == 0);
+
+        cache.putIfAbsent("foo", "bar");
+        Assert.assertEquals(1, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(1, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(0, statistics.getRemoveCount());
+
+        long get = statistics.getLatency.get();
+        long put = statistics.putLatency.get();
+        long compute = statistics.computeLatency.get();
+        long remove = statistics.removeLatency.get();
+        cache.putIfAbsent("bar", "bar");
+        Assert.assertEquals(2, statistics.getSize());
+        Assert.assertEquals(1, statistics.getGetCount());
+        Assert.assertEquals(2, statistics.getPutCount());
+        Assert.assertEquals(1, statistics.getComputeCount());
+        Assert.assertEquals(0, statistics.getRemoveCount());
+        Assert.assertEquals(get, statistics.getGetLatency());
+        Assert.assertEquals(remove, statistics.getRemoveLatency());
+        Assert.assertEquals(compute, statistics.getComputeLatency());
+        Assert.assertTrue(statistics.getPutLatency() > put);
+    }
+
+    @Test
     public void test_cache_iterable() {
         Cache<String, String> cache;
         cache = new Cache<String, String>(1);
