@@ -2,20 +2,16 @@ package com.wizzardo.tools.collections;
 
 import java.util.*;
 
-/**
- * @author: moxa
- * Date: 12/17/12
- */
 public class Range implements Iterable<Integer>, List<Integer> {
     private int from, to;
 
     /**
-     * @param from- inclusive
-     * @param to    - exclusive
+     * @param from - inclusive
+     * @param to   - exclusive
      */
     public Range(int from, int to) {
         if (from > to) {
-            throw new IllegalArgumentException("from must be lower then to. " + from + " - " + to);
+            throw new IllegalArgumentException("from must be lower or equal then to. " + from + " - " + to);
         }
         this.from = from;
         this.to = to;
@@ -28,7 +24,15 @@ public class Range implements Iterable<Integer>, List<Integer> {
 
     @Override
     public boolean isEmpty() {
-        return size() > 0;
+        return size() == 0;
+    }
+
+    @Override
+    public Integer get(int index) {
+        if (from + index >= to || index < 0)
+            throw new IndexOutOfBoundsException("Index " + index + " is out of this range [" + from + ", " + to + ")");
+
+        return from + index;
     }
 
     @Override
@@ -60,6 +64,7 @@ public class Range implements Iterable<Integer>, List<Integer> {
 
             @Override
             public void remove() {
+                throw new UnsupportedOperationException();
             }
         };
     }
@@ -90,16 +95,6 @@ public class Range implements Iterable<Integer>, List<Integer> {
     }
 
     @Override
-    public boolean add(Integer integer) {
-        return false;
-    }
-
-    @Override
-    public boolean remove(Object o) {
-        return false;
-    }
-
-    @Override
     public boolean containsAll(Collection<?> c) {
         boolean b = true;
         for (Object i : c) {
@@ -112,46 +107,8 @@ public class Range implements Iterable<Integer>, List<Integer> {
     }
 
     @Override
-    public boolean addAll(Collection<? extends Integer> c) {
-        return false;
-    }
-
-    @Override
-    public boolean addAll(int index, Collection<? extends Integer> c) {
-        return false;
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public void clear() {
-    }
-
-    @Override
-    public Integer get(int index) {
-        return from + index;
-    }
-
-    @Override
-    public Integer set(int index, Integer element) {
-        return null;
-    }
-
-    @Override
-    public void add(int index, Integer element) {
-    }
-
-    @Override
-    public Integer remove(int index) {
-        return null;
+    public List<Integer> subList(int fromIndex, int toIndex) {
+        return new Range(from + fromIndex, fromIndex + toIndex);
     }
 
     @Override
@@ -165,28 +122,73 @@ public class Range implements Iterable<Integer>, List<Integer> {
         return -1;
     }
 
+    public String toString() {
+        return from + ".." + to;
+    }
+
+
     @Override
     public int lastIndexOf(Object o) {
         return indexOf(o);
     }
 
     @Override
+    public boolean add(Integer integer) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends Integer> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean addAll(int index, Collection<? extends Integer> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Integer set(int index, Integer element) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void add(int index, Integer element) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Integer remove(int index) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public ListIterator<Integer> listIterator() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ListIterator<Integer> listIterator(int index) {
-        return null;
+        throw new UnsupportedOperationException();
     }
-
-    @Override
-    public List<Integer> subList(int fromIndex, int toIndex) {
-        return new Range(from + fromIndex, fromIndex + toIndex);
-    }
-
-    public String toString() {
-        return from + ".." + to;
-    }
-
 }
