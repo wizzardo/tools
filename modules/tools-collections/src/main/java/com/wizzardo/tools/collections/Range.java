@@ -80,18 +80,16 @@ public class Range implements Iterable<Integer>, List<Integer> {
 
     @Override
     public <T> T[] toArray(T[] a) {
-        if (a.getClass().getName().equals("[Ljava.lang.Integer;")) {
-            Integer[] arr;
-            if (a.length == 0)
-                arr = new Integer[size()];
-            else
-                arr = (Integer[]) a;
-            for (int i = from; i < to; i++) {
-                arr[i - from] = i;
-            }
-            return (T[]) arr;
+        Integer[] arr;
+        if (a.length < size())
+            arr = new Integer[size()];
+        else
+            arr = (Integer[]) a;
+
+        for (int i = from; i < to; i++) {
+            arr[i - from] = i;
         }
-        return a;
+        return (T[]) arr;
     }
 
     @Override
@@ -108,7 +106,9 @@ public class Range implements Iterable<Integer>, List<Integer> {
 
     @Override
     public List<Integer> subList(int fromIndex, int toIndex) {
-        return new Range(from + fromIndex, fromIndex + toIndex);
+        if (fromIndex < 0 || toIndex < 0 || from + toIndex > to)
+            throw new IndexOutOfBoundsException();
+        return new Range(from + fromIndex, from + toIndex);
     }
 
     @Override
