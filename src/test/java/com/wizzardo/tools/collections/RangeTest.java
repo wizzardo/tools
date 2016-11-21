@@ -3,6 +3,9 @@ package com.wizzardo.tools.collections;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+
 public class RangeTest {
 
     @Test
@@ -17,11 +20,61 @@ public class RangeTest {
         Assert.assertEquals(Integer.valueOf(1), range.get(1));
         Assert.assertEquals(Integer.valueOf(2), range.get(2));
         Assert.assertEquals(1, range.indexOf(1));
+        Assert.assertEquals(1, range.lastIndexOf(1));
+        Assert.assertEquals(-1, range.indexOf(3));
 
         Assert.assertTrue(range.contains(2));
         Assert.assertFalse(range.contains(3));
+        Assert.assertFalse(range.contains(null));
+        Assert.assertTrue(range.containsAll(Arrays.asList(0, 1, 2)));
+        Assert.assertFalse(range.containsAll(Arrays.asList(0, 1, 2, 3)));
 
         Assert.assertEquals("0..3", range.toString());
+
+        Assert.assertArrayEquals(new Integer[]{0, 1, 2}, range.toArray());
+        Assert.assertArrayEquals(new Integer[]{0, 1, 2}, range.toArray(new Integer[0]));
+        Assert.assertArrayEquals(new Integer[]{0, 1, 2}, range.toArray(new Integer[3]));
+        Assert.assertArrayEquals(new Integer[]{0, 1, 2}, range.toArray(new Integer[1]));
+
+        Assert.assertTrue(new Range(0, 1).iterator().hasNext());
+        Assert.assertEquals(Integer.valueOf(0), new Range(0, 1).iterator().next());
+        Assert.assertFalse(new Range(0, 0).iterator().hasNext());
+        check(NoSuchElementException.class, "iteration has no more elements", new Runnable() {
+            @Override
+            public void run() {
+                new Range(0, 0).iterator().next();
+            }
+        });
+
+    }
+
+    @Test
+    public void test_subList() {
+        final Range range = new Range(0, 3);
+
+        Assert.assertEquals("0..3", range.subList(0, 3).toString());
+        Assert.assertEquals("0..1", range.subList(0, 1).toString());
+        Assert.assertEquals("2..3", range.subList(2, 3).toString());
+        Assert.assertEquals("0..0", range.subList(0, 0).toString());
+
+        check(IndexOutOfBoundsException.class, null, new Runnable() {
+            @Override
+            public void run() {
+                range.subList(-1, 0);
+            }
+        });
+        check(IndexOutOfBoundsException.class, null, new Runnable() {
+            @Override
+            public void run() {
+                range.subList(0, 4);
+            }
+        });
+        check(IndexOutOfBoundsException.class, null, new Runnable() {
+            @Override
+            public void run() {
+                range.subList(0, -1);
+            }
+        });
     }
 
     @Test
