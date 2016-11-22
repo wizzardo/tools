@@ -22,9 +22,12 @@ public class RangeTest {
         Assert.assertEquals(1, range.indexOf(1));
         Assert.assertEquals(1, range.lastIndexOf(1));
         Assert.assertEquals(-1, range.indexOf(3));
+        Assert.assertEquals(-1, range.indexOf(-1));
+        Assert.assertEquals(-1, range.indexOf(""));
 
         Assert.assertTrue(range.contains(2));
         Assert.assertFalse(range.contains(3));
+        Assert.assertFalse(range.contains(-1));
         Assert.assertFalse(range.contains(null));
         Assert.assertTrue(range.containsAll(Arrays.asList(0, 1, 2)));
         Assert.assertFalse(range.containsAll(Arrays.asList(0, 1, 2, 3)));
