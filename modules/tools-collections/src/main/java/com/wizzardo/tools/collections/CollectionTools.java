@@ -37,28 +37,10 @@ public class CollectionTools {
         return l;
     }
 
-    public static <T> List<T> grep(Iterable<T> c, Object expression) {
-        List<T> l = new ArrayList<T>();
-        for (T t : c) {
-            if (t.equals(expression))
-                l.add(t);
-        }
-        return l;
-    }
-
     public static <T> List<T> grep(Iterable<T> c, Closure<Boolean, ? super T> closure) {
         List<T> l = new ArrayList<T>();
         for (T t : c) {
             if (closure.execute(t))
-                l.add(t);
-        }
-        return l;
-    }
-
-    public static <T> List<T> grep(Iterable<T> c, Range r) {
-        List<T> l = new ArrayList<T>();
-        for (T t : c) {
-            if (r.contains(t))
                 l.add(t);
         }
         return l;

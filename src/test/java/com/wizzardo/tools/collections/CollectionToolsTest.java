@@ -13,6 +13,11 @@ import java.util.regex.Pattern;
 public class CollectionToolsTest {
 
     @Test
+    public void collection_tools() {
+        Assert.assertNotNull(new CollectionTools());
+    }
+
+    @Test
     public void each() {
         List<Integer> list = new ArrayList<Integer>() {{
             add(1);
@@ -177,8 +182,15 @@ public class CollectionToolsTest {
                 return it % 2 == 0;
             }
         });
-
         Assert.assertEquals((Integer) 2, result);
+
+        result = CollectionTools.find(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it > 5;
+            }
+        });
+        Assert.assertEquals(null, result);
     }
 
     @Test
@@ -199,6 +211,14 @@ public class CollectionToolsTest {
         Assert.assertEquals(2, list.size());
         Assert.assertEquals((Integer) 1, list.get(0));
         Assert.assertEquals((Integer) 3, list.get(1));
+
+        result = CollectionTools.remove(list, new CollectionTools.Closure<Boolean, Integer>() {
+            @Override
+            public Boolean execute(Integer it) {
+                return it > 5;
+            }
+        });
+        Assert.assertEquals(null, result);
     }
 
     @Test
@@ -260,7 +280,7 @@ public class CollectionToolsTest {
         });
         Assert.assertEquals(true, result);
 
-        result = CollectionTools.every(list, new CollectionTools.Closure<Boolean, Integer>() {
+        result = CollectionTools.any(list, new CollectionTools.Closure<Boolean, Integer>() {
             @Override
             public Boolean execute(Integer it) {
                 return it > 5;
@@ -305,5 +325,17 @@ public class CollectionToolsTest {
         Assert.assertEquals(2, groups.size());
         Assert.assertEquals(2, groups.get(true).size());
         Assert.assertEquals(3, groups.get(false).size());
+    }
+
+    @Test
+    public void times() {
+        final AtomicInteger counter = new AtomicInteger();
+        CollectionTools.times(3, new CollectionTools.VoidClosure<Integer>() {
+            @Override
+            public void execute(Integer integer) {
+                counter.addAndGet(integer);
+            }
+        });
+        Assert.assertEquals(3, counter.get());
     }
 }
