@@ -26,7 +26,7 @@ public class PairTest {
         Assert.assertFalse(new Pair<Integer, Integer>(1, 2).equals(new Pair<Integer, Integer>(null, 1)));
         Assert.assertFalse(new Pair<Integer, Integer>(1, 2).equals(new Pair<Integer, Integer>(1, 1)));
 
-        Assert.assertFalse(new Pair<Integer, Integer>(1, null).equals(new Pair<Integer, Integer>(1, null)));
+        Assert.assertTrue(new Pair<Integer, Integer>(1, null).equals(new Pair<Integer, Integer>(1, null)));
         Assert.assertFalse(new Pair<Integer, Integer>(1, null).equals(new Pair<Integer, Integer>(1, 2)));
         Assert.assertFalse(new Pair<Integer, Integer>(1, 2).equals(new Pair<Integer, Integer>(1, null)));
         Assert.assertFalse(new Pair<Integer, Integer>(1, 2).equals(new Pair<Integer, Integer>(1, 1)));
