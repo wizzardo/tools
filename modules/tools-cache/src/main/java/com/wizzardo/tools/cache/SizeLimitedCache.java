@@ -9,7 +9,11 @@ public class SizeLimitedCache<K, V> extends Cache<K, V> {
     private final int limit;
 
     public SizeLimitedCache(int limit, long ttlSec, Computable<? super K, ? extends V> computable) {
-        super(ttlSec, computable);
+        this(null, limit, ttlSec, computable);
+    }
+
+    public SizeLimitedCache(String name, int limit, long ttlSec, Computable<? super K, ? extends V> computable) {
+        super(name, ttlSec, computable);
         if (limit <= 0)
             throw new IllegalArgumentException("limit must be > 0");
 

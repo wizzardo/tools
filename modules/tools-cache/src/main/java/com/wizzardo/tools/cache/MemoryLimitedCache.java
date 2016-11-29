@@ -16,7 +16,11 @@ public class MemoryLimitedCache<K, V extends MemoryLimitedCache.SizeProvider> ex
     private CacheStatisticsWithHeapUsage statisticsWithHeapUsage;
 
     public MemoryLimitedCache(long limit, long ttlSec, Computable<? super K, ? extends V> computable) {
-        super(ttlSec, computable);
+        this(null, limit, ttlSec, computable);
+    }
+
+    public MemoryLimitedCache(String name, long limit, long ttlSec, Computable<? super K, ? extends V> computable) {
+        super(name, ttlSec, computable);
         this.limit = limit;
         statisticsWithHeapUsage = (CacheStatisticsWithHeapUsage) statistics;
     }
