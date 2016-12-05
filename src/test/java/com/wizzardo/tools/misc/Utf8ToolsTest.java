@@ -1,12 +1,12 @@
 package com.wizzardo.tools.misc;
 
+import com.wizzardo.tools.interfaces.Supplier;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 
 /**
  * Created by wizzardo on 30.03.15.

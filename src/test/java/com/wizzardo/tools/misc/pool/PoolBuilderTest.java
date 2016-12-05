@@ -1,6 +1,7 @@
 package com.wizzardo.tools.misc.pool;
 
-import com.wizzardo.tools.misc.Supplier;
+import com.wizzardo.tools.interfaces.Mapper;
+import com.wizzardo.tools.interfaces.Supplier;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -88,10 +89,14 @@ public class PoolBuilderTest {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Integer value = pool.provide(new Pool.Consumer<Integer, Integer>() {
+                Integer value = pool.provide(new Mapper<Integer, Integer>() {
                     @Override
-                    public Integer consume(Integer integer) throws Exception {
-                        Thread.sleep(100);
+                    public Integer map(Integer integer)  {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         return integer;
                     }
                 });

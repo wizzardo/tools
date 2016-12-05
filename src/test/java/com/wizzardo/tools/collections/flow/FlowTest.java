@@ -1,6 +1,7 @@
 package com.wizzardo.tools.collections.flow;
 
 import com.wizzardo.tools.collections.flow.flows.FlowProcessOnEnd;
+import com.wizzardo.tools.interfaces.*;
 import org.junit.Assert;
 import org.junit.Test;
 
