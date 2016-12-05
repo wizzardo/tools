@@ -1,5 +1,6 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.misc.DateIso8601;
 import com.wizzardo.tools.misc.Unchecked;
@@ -366,7 +367,7 @@ public class Binder {
             classToSerializer(src.getClass()).serialize(src, sb, null);
         }
     };
-    public final static Fields.Mapper<Field, JsonFieldInfo> JSON_FIELD_INFO_MAPPER = new Fields.Mapper<Field, JsonFieldInfo>() {
+    public final static Mapper<Field, JsonFieldInfo> JSON_FIELD_INFO_MAPPER = new Mapper<Field, JsonFieldInfo>() {
         @Override
         public JsonFieldInfo map(Field field) {
             if (!fieldsNames.contains(field.getName()))

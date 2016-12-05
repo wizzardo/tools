@@ -1,7 +1,7 @@
 package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.collections.CollectionTools;
-import com.wizzardo.tools.misc.Supplier;
+import com.wizzardo.tools.interfaces.Supplier;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.FieldInfo;
 import com.wizzardo.tools.reflection.FieldReflection;

@@ -1,5 +1,6 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.reflection.Fields;
 
 import java.lang.reflect.Field;

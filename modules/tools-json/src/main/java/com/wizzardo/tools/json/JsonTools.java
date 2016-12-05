@@ -1,11 +1,10 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.misc.Consumer;
+import com.wizzardo.tools.interfaces.Supplier;
+import com.wizzardo.tools.interfaces.Consumer;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.misc.Supplier;
 import com.wizzardo.tools.misc.UTF8;
 import com.wizzardo.tools.misc.pool.*;
-import com.wizzardo.tools.reflection.Generic;
 import com.wizzardo.tools.reflection.StringReflection;
 
 import java.io.OutputStream;

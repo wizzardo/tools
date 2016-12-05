@@ -1,6 +1,7 @@
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.misc.Supplier;
+
+import com.wizzardo.tools.interfaces.Supplier;
 
 import java.util.ArrayList;
 import java.util.List;
