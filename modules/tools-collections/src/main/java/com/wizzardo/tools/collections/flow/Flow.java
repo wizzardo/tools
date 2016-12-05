@@ -1,6 +1,7 @@
 package com.wizzardo.tools.collections.flow;
 
 import com.wizzardo.tools.collections.flow.flows.*;
+import com.wizzardo.tools.interfaces.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;

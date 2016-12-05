@@ -1,6 +1,9 @@
 package com.wizzardo.tools.collections.flow;
 
 import com.wizzardo.tools.collections.flow.flows.*;
+import com.wizzardo.tools.interfaces.Consumer;
+import com.wizzardo.tools.interfaces.Filter;
+import com.wizzardo.tools.interfaces.Mapper;
 
 import java.util.LinkedHashMap;
 import java.util.List;

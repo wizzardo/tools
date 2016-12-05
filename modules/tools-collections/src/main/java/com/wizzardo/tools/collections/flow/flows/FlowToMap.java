@@ -2,7 +2,7 @@ package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.FlowGroup;
 import com.wizzardo.tools.collections.flow.FlowProcessor;
-import com.wizzardo.tools.collections.flow.Mapper;
+import com.wizzardo.tools.interfaces.Mapper;
 
 import java.util.Map;
 

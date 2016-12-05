@@ -2,8 +2,8 @@ package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.FlowGroup;
 import com.wizzardo.tools.collections.flow.FlowGrouping;
-import com.wizzardo.tools.collections.flow.Mapper;
-import com.wizzardo.tools.collections.flow.Supplier;
+import com.wizzardo.tools.interfaces.Mapper;
+import com.wizzardo.tools.interfaces.Supplier;
 
 import java.util.Map;
 

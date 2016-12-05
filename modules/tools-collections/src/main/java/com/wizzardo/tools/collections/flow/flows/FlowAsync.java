@@ -2,7 +2,7 @@ package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.Flow;
 import com.wizzardo.tools.collections.flow.FlowProcessor;
-import com.wizzardo.tools.collections.flow.Mapper;
+import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.util.concurrent.*;

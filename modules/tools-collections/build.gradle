@@ -1,5 +1,6 @@
 dependencies {
     compile project(':modules:tools-exception')
+    compile project(':modules:tools-interfaces')
 }
 archivesBaseName = "tools-collections"
 ext {

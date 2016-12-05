@@ -1,6 +1,6 @@
 package com.wizzardo.tools.collections.flow.flows;
 
-import com.wizzardo.tools.collections.flow.BiConsumer;
+import com.wizzardo.tools.interfaces.BiConsumer;
 
 /**
  * Created by wizzardo on 16.04.16.

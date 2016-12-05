@@ -1,6 +1,6 @@
 package com.wizzardo.tools.collections.flow.flows;
 
-import com.wizzardo.tools.collections.flow.Filter;
+import com.wizzardo.tools.interfaces.Filter;
 import com.wizzardo.tools.collections.flow.FlowProcessor;
 
 /**

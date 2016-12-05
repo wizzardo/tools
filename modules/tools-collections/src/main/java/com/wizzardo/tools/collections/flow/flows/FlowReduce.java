@@ -1,6 +1,6 @@
 package com.wizzardo.tools.collections.flow.flows;
 
-import com.wizzardo.tools.collections.flow.Reducer;
+import com.wizzardo.tools.interfaces.Reducer;
 
 /**
  * Created by wizzardo on 16.04.16.

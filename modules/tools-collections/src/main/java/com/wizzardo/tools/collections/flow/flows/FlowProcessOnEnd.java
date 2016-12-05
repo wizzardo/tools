@@ -1,7 +1,7 @@
 package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.FlowProcessor;
-import com.wizzardo.tools.collections.flow.Supplier;
+import com.wizzardo.tools.interfaces.Supplier;
 
 /**
  * Created by wizzardo on 11/05/16.
