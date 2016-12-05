@@ -1,5 +1,8 @@
 package com.wizzardo.tools.reflection;
 
+import com.wizzardo.tools.interfaces.Consumer;
+import com.wizzardo.tools.interfaces.Mapper;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -120,13 +123,5 @@ public class Fields<T extends FieldInfo> implements Iterable<T> {
             }
         }
         return fields;
-    }
-
-    public interface Mapper<A, B> {
-        B map(A a);
-    }
-
-    public interface Consumer<T> {
-        void consume(T t);
     }
 }
