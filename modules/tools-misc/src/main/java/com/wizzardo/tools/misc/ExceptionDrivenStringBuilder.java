@@ -1,5 +1,8 @@
 package com.wizzardo.tools.misc;
 
+import com.wizzardo.tools.interfaces.Consumer;
+import com.wizzardo.tools.interfaces.Supplier;
+
 /**
  * @author: wizzardo
  * Date: 8/24/14

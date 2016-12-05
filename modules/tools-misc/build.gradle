@@ -1,5 +1,6 @@
 dependencies {
     compile project(':modules:tools-reflection')
+    compile project(':modules:tools-interfaces')
 }
 
 archivesBaseName = "tools-misc"

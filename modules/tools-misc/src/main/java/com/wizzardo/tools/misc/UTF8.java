@@ -1,5 +1,7 @@
 package com.wizzardo.tools.misc;
 
+import com.wizzardo.tools.interfaces.Supplier;
+
 import java.util.Arrays;
 
 /**

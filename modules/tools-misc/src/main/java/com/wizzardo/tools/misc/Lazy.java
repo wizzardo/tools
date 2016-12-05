@@ -1,5 +1,7 @@
 package com.wizzardo.tools.misc;
 
+import com.wizzardo.tools.interfaces.Supplier;
+
 /**
  * Created by wizzardo on 06/07/16.
  */

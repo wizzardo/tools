@@ -1,7 +1,8 @@
 package com.wizzardo.tools.misc.pool;
 
-import com.wizzardo.tools.misc.Consumer;
-import com.wizzardo.tools.misc.Supplier;
+
+import com.wizzardo.tools.interfaces.Consumer;
+import com.wizzardo.tools.interfaces.Supplier;
 
 import java.util.LinkedList;
 import java.util.Queue;

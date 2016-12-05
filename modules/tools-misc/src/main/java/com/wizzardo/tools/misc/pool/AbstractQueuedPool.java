@@ -1,5 +1,6 @@
 package com.wizzardo.tools.misc.pool;
 
+import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.util.Queue;
@@ -51,14 +52,14 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
         return new SimpleHolder<T>(this, t);
     }
 
-    public <R> R provide(Consumer<T, R> consumer) {
+    public <R> R provide(Mapper<T, R> consumer) {
         Holder<T> holder = poll();
         if (holder == null)
             holder = createHolder(create());
 
         try {
             try {
-                return consumer.consume(holder.get());
+                return consumer.map(holder.get());
             } catch (Exception e) {
                 throw Unchecked.rethrow(e);
             }

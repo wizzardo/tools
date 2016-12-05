@@ -1,6 +1,7 @@
 package com.wizzardo.tools.misc.event;
 
-import com.wizzardo.tools.misc.Consumer;
+
+import com.wizzardo.tools.interfaces.Consumer;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;

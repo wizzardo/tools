@@ -1,5 +1,7 @@
 package com.wizzardo.tools.misc;
 
+import com.wizzardo.tools.interfaces.Mapper;
+
 import java.lang.ref.SoftReference;
 import java.util.concurrent.Callable;
 
