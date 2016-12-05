@@ -1,4 +1,4 @@
-package com.wizzardo.tools.misc;
+package com.wizzardo.tools.interfaces;
 
 /**
  * Created by wizzardo on 20.02.16.

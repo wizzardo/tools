@@ -1,4 +1,4 @@
-package com.wizzardo.tools.collections.flow;
+package com.wizzardo.tools.interfaces;
 
 /**
  * Created by wizzardo on 15.11.15.

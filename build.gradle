@@ -51,6 +51,7 @@ dependencies {
     compile project(':modules:tools-helpers')
     compile project(':modules:tools-http')
     compile project(':modules:tools-image')
+    compile project(':modules:tools-interfaces')
     compile project(':modules:tools-io')
     compile project(':modules:tools-json')
     compile project(':modules:tools-math')
