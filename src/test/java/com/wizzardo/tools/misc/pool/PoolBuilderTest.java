@@ -89,7 +89,7 @@ public class PoolBuilderTest {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Integer value = pool.provide(new Mapper<Integer, Integer>() {
+                Integer value = pool.provide(new Pool.UnsafeMapper<Integer, Integer>() {
                     @Override
                     public Integer map(Integer integer)  {
                         try {
