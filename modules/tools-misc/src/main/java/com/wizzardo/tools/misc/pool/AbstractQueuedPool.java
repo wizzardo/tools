@@ -52,17 +52,15 @@ public abstract class AbstractQueuedPool<T> implements Pool<T> {
         return new SimpleHolder<T>(this, t);
     }
 
-    public <R> R provide(Mapper<T, R> consumer) {
+    public <R> R provide(UnsafeMapper<T, R> consumer) {
         Holder<T> holder = poll();
         if (holder == null)
             holder = createHolder(create());
 
         try {
-            try {
-                return consumer.map(holder.get());
-            } catch (Exception e) {
-                throw Unchecked.rethrow(e);
-            }
+            return consumer.map(holder.get());
+        } catch (Exception e) {
+            throw Unchecked.rethrow(e);
         } finally {
             release(holder);
         }

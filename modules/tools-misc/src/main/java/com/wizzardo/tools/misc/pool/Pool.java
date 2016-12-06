@@ -1,7 +1,5 @@
 package com.wizzardo.tools.misc.pool;
 
-import com.wizzardo.tools.interfaces.Mapper;
-
 /**
  * Created by wizzardo on 18.06.15.
  */
@@ -17,7 +15,11 @@ public interface Pool<T> {
 
     void release(Holder<T> t);
 
-    <R> R provide(Mapper<T, R> mapper);
+    <R> R provide(UnsafeMapper<T, R> mapper);
+
+    interface UnsafeMapper<A, B> {
+        B map(A a) throws Exception;
+    }
 
     /**
      * @return current queue size
