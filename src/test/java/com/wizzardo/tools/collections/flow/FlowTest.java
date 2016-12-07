@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by wizzardo on 10.11.15.
@@ -1770,5 +1771,36 @@ public class FlowTest {
         //do nothing
         flow.start();
         flow.stop();
+    }
+
+    @Test
+    public void test_consumer() {
+        final AtomicReference<String> result = new AtomicReference<String>();
+        Consumer<Integer> consumer = Flow.consumer(new Consumer<Flow<Integer>>() {
+            @Override
+            public void consume(Flow<Integer> flow) {
+                flow
+                        .join(",")
+                        .each(new Consumer<String>() {
+                            @Override
+                            public void consume(String s) {
+                                result.set(s);
+                            }
+                        });
+            }
+        });
+
+        consumer.consume(1);
+        consumer.consume(2);
+        consumer.consume(3);
+        consumer.consume(null);
+        Assert.assertEquals("1,2,3", result.get());
+
+        try {
+            consumer.consume(null);
+            Assert.assertTrue(false);
+        } catch (IllegalStateException e) {
+            Assert.assertEquals("Flow has already ended", e.getMessage());
+        }
     }
 }
