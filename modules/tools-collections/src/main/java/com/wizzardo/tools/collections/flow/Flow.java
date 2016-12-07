@@ -298,6 +298,10 @@ public class Flow<B> {
         return FlowStart.of(flows);
     }
 
+    public static <T> Consumer<T> consumer(Consumer<Flow<T>> configurator) {
+        return FlowStart.consumer(configurator);
+    }
+
     public static Flow<Integer> of(int[] array) {
         return FlowStart.of(array);
     }

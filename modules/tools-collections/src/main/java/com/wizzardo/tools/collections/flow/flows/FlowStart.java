@@ -2,6 +2,7 @@ package com.wizzardo.tools.collections.flow.flows;
 
 import com.wizzardo.tools.collections.flow.Flow;
 import com.wizzardo.tools.collections.flow.FlowProcessor;
+import com.wizzardo.tools.interfaces.Consumer;
 import com.wizzardo.tools.interfaces.Supplier;
 
 import java.util.Iterator;
@@ -245,6 +246,36 @@ public abstract class FlowStart<T> extends Flow<T> {
                         break;
                     child.process(t);
                 }
+            }
+        };
+    }
+
+    static class FlowWithConsumer<B> extends FlowStart<B> {
+        void process(B b) {
+            if (b == null) {
+                if (!stop) {
+                    stop = true;
+                    onEnd();
+                } else {
+                    throw new IllegalStateException("Flow has already ended");
+                }
+            } else {
+                child.process(b);
+            }
+        }
+
+        @Override
+        protected void process() {
+        }
+    }
+
+    public static <T> Consumer<T> consumer(Consumer<Flow<T>> configurator) {
+        final FlowWithConsumer<T> flow = new FlowWithConsumer<T>();
+        configurator.consume(flow);
+        return new Consumer<T>() {
+            @Override
+            public void consume(T t) {
+                flow.process(t);
             }
         };
     }
