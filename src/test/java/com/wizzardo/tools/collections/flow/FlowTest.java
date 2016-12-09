@@ -1803,4 +1803,18 @@ public class FlowTest {
             Assert.assertEquals("Flow has already ended", e.getMessage());
         }
     }
+
+    @Test
+    public void test_of_single() {
+        Assert.assertEquals("abc", Flow.ofSingle(new char[]{'a', 'b', 'c'})
+                .map(new Mapper<char[], String>() {
+                    @Override
+                    public String map(char[] chars) {
+                        return new String(chars);
+                    }
+                })
+                .first()
+                .get()
+        );
+    }
 }
