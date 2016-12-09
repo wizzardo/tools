@@ -286,6 +286,10 @@ public class Flow<B> {
         return FlowStart.of(t);
     }
 
+    public static <T> Flow<T> ofSingle(T t) {
+        return FlowStart.ofSingle(t);
+    }
+
     public static <T> Flow<T> of(Supplier<T> supplier) {
         return FlowStart.of(supplier);
     }

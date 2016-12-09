@@ -72,6 +72,10 @@ public abstract class FlowStart<T> extends Flow<T> {
     }
 
     public static <T> Flow<T> of(final T t) {
+        return ofSingle(t);
+    }
+
+    public static <T> Flow<T> ofSingle(final T t) {
         return new FlowStart<T>() {
             @Override
             protected void process() {
