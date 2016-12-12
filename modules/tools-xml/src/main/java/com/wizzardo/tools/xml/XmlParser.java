@@ -90,7 +90,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 i++;
             }
             if (attributeName != null && attributeName.length() > 0) {
-                xml.attribute(attributeName, "");
+                xml.attribute(attributeName, null);
             }
             String t;
             if (sb.length() > 0 && !(t = trimRight(sb).toString()).equals(xml.name)) {
@@ -137,7 +137,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
         }
 
         protected void onSpaceSign(char[] s, Node xml) {
-            if (comment) {
+            if (comment || inString) {
                 sb.append(s[i]);
                 return;
             }
@@ -152,8 +152,9 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             } else if (attribute) {
                 attributeName = sb.toString().trim();
                 if (attributeName.length() > 0) {
-                    xml.attribute(attributeName, "");
+                    xml.attribute(attributeName, null);
                 }
+                attributeName = null;
                 sb.setLength(0);
                 attribute = false;
             } else if (inTag && !inString && sb.length() > 0 && attributeName != null && !attributeName.isEmpty()) {
@@ -280,8 +281,12 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 inString = !inString;
             }
             if (!inString) {
-                xml.attribute(attributeName, sb.toString());
-                attributeName = null;
+                if (attributeName != null) {
+                    xml.attribute(attributeName, sb.toString());
+                    attributeName = null;
+                } else {
+                    xml.attribute("\"" + sb.append('"').toString(), null);
+                }
                 sb.setLength(0);
                 attribute = false;
             }
