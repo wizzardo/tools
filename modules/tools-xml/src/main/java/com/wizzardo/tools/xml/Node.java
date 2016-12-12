@@ -173,9 +173,10 @@ public class Node {
                 }
             }
             for (Map.Entry<String, String> attr : attributes.entrySet()) {
-                if (attr.getKey().endsWith("id") || attr.getKey().endsWith("class"))
+                String key = attr.getKey();
+                if (key != null && (key.endsWith("id") || key.endsWith("class")))
                     continue;
-                sb.append("[").append(attr.getKey()).append("=").append(attr.getValue()).append("]");
+                sb.append("[").append(key).append("=").append(attr.getValue()).append("]");
             }
         }
         if (children != null)
