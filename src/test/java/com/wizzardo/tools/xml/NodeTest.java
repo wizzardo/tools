@@ -199,6 +199,34 @@ public class NodeTest {
     }
 
     @Test
+    public void html_doctype() throws IOException {
+        String s = "<!DOCTYPE html>";
+        Node doc = new HtmlParser().parse(s);
+        Assert.assertEquals(1, doc.children().size());
+        Assert.assertEquals("!DOCTYPE", doc.get(0).name());
+        Assert.assertEquals(1, doc.get(0).attributes().size());
+        Assert.assertEquals(true, doc.get(0).attributes().containsKey("html"));
+        Assert.assertEquals(null, doc.get(0).attributes().get("html"));
+    }
+
+    @Test
+    public void html_doctype2() throws IOException {
+        String s = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n";
+        Node doc = new HtmlParser().parse(s);
+        Assert.assertEquals(1, doc.children().size());
+        Assert.assertEquals("!DOCTYPE", doc.get(0).name());
+        Assert.assertEquals(4, doc.get(0).attributes().size());
+        Assert.assertEquals(true, doc.get(0).attributes().containsKey("HTML"));
+        Assert.assertEquals(null, doc.get(0).attributes().get("HTML"));
+        Assert.assertEquals(true, doc.get(0).attributes().containsKey("PUBLIC"));
+        Assert.assertEquals(null, doc.get(0).attributes().get("PUBLIC"));
+        Assert.assertEquals(true, doc.get(0).attributes().containsKey("\"-//W3C//DTD HTML 4.01//EN\""));
+        Assert.assertEquals(null, doc.get(0).attributes().get("\"-//W3C//DTD HTML 4.01//EN\""));
+        Assert.assertEquals(true, doc.get(0).attributes().containsKey("\"http://www.w3.org/TR/html4/strict.dtd\""));
+        Assert.assertEquals(null, doc.get(0).attributes().get("\"http://www.w3.org/TR/html4/strict.dtd\""));
+    }
+
+    @Test
     public void gsp_1() throws IOException {
         String s = "<div><g:textField name=\"${it.key}\" placeholder=\"${[].collect({it})}\"/></div>";
         Node root = new GspParser().parse(s);
