@@ -903,35 +903,35 @@ public class JsonTest {
             public void run() {
                 Assert.assertNull(JsonTools.parse("[[]]", List.class));
             }
-        }, IllegalArgumentException.class, "this binder only for collections and arrays! not for class java.lang.Object");
+        }, IllegalArgumentException.class, "JsonArray expected to parse into class java.lang.Object, but JsonObject appeared");
 
         testException(new Runnable() {
             @Override
             public void run() {
                 new JavaArrayBinder(new JsonGeneric(List.class)).setTemporaryKey("key");
             }
-        }, UnsupportedOperationException.class, "arrays has no keys");
+        }, UnsupportedOperationException.class, "JsonArray can not have any keys");
 
         testException(new Runnable() {
             @Override
             public void run() {
                 new JsonArrayBinder().setTemporaryKey("key");
             }
-        }, UnsupportedOperationException.class, "arrays has no keys");
+        }, UnsupportedOperationException.class, "JsonArray can not have any keys");
 
         testException(new Runnable() {
             @Override
             public void run() {
                 new JavaArrayBinder(new JsonGeneric(List.class)).add(new JsonItem(null));
             }
-        }, UnsupportedOperationException.class, "only raw objects are supported");
+        }, UnsupportedOperationException.class, "Adding JsonItem is not supported while parsing into " + List.class.toString());
 
         testException(new Runnable() {
             @Override
             public void run() {
                 new JavaObjectBinder(new JsonGeneric(StringHolder.class)).add(new JsonItem(null));
             }
-        }, UnsupportedOperationException.class, "only raw objects are supported");
+        }, UnsupportedOperationException.class, "Adding JsonItem is not supported while parsing into " + StringHolder.class.toString());
 
         testException(new Runnable() {
             @Override

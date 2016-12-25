@@ -32,7 +32,7 @@ class JavaArrayBinder implements JsonBinder {
         } else if (serializer == Binder.SerializerType.COLLECTION) {
             l = Binder.createCollection(clazz);
         } else {
-            throw new IllegalArgumentException("this binder only for collections and arrays! not for " + clazz);
+            throw new IllegalArgumentException("JsonArray expected to parse into " + clazz + ", but JsonObject appeared");
         }
 
         if (generic.typesCount() == 1)
@@ -69,7 +69,7 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public void add(JsonItem value) {
-        throw new UnsupportedOperationException("only raw objects are supported");
+        throw new UnsupportedOperationException("Adding JsonItem is not supported while parsing into " + clazz);
     }
 
     @Override
@@ -115,7 +115,7 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public void setTemporaryKey(String key) {
-        throw new UnsupportedOperationException("arrays has no keys");
+        throw new UnsupportedOperationException("JsonArray can not have any keys");
     }
 
 }

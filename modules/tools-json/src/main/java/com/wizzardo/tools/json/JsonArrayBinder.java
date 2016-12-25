@@ -41,6 +41,6 @@ class JsonArrayBinder implements JsonBinder {
 
     @Override
     public void setTemporaryKey(String key) {
-        throw new UnsupportedOperationException("arrays has no keys");
+        throw new UnsupportedOperationException("JsonArray can not have any keys");
     }
 }

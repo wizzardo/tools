@@ -38,7 +38,7 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public void add(JsonItem value) {
-        throw new UnsupportedOperationException("only raw objects are supported");
+        throw new UnsupportedOperationException("Adding JsonItem is not supported while parsing into " + clazz);
     }
 
     @Override
