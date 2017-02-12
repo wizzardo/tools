@@ -90,6 +90,9 @@ public class Request extends RequestArguments<Request> {
     protected Response execute(int retryNumber) throws IOException {
         try {
             String url = this.url;
+            if (!url.toLowerCase().startsWith("http"))
+                url = "http://" + url;
+
             if (data != null || (method != ConnectionMethod.PUT && method != ConnectionMethod.POST)) {
                 url = createURL(url, params);
             }
