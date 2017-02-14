@@ -503,11 +503,33 @@ public class ConfigTest {
 
     @Test
     public void test_comment_2() {
-        String s = "a = 1 // this is a comment\n";
+        String s = "a = 1 // this is a comment a = 2";
         Expression expression = EvalTools.prepare(s);
         Config config = new Config();
         expression.get(config);
 
         Assert.assertEquals(Integer.valueOf(1), config.get("a", 0));
+    }
+
+    @Test
+    public void test_comment_3() {
+        String s = "a = 1 /* this is a comment \n a = 2*/";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(Integer.valueOf(1), config.get("a", 0));
+    }
+
+    @Test
+    public void test_comment_4() {
+        String s = "b = 'this // is not a comment'\n" +
+                "c = '/*also just a string*/'";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals("this // is not a comment", config.get("b", ""));
+        Assert.assertEquals("/*also just a string*/", config.get("c", ""));
     }
 }
