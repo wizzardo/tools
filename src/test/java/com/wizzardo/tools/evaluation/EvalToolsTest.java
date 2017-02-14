@@ -8,10 +8,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -594,6 +592,9 @@ public class EvalToolsTest {
     @Test
     public void testCollections() throws Exception {
         Map<String, Object> model = new HashMap<String, Object>();
+
+        model.put("l", Arrays.asList(1, 2, 3));
+        assertEquals("1-2-3", EvalTools.evaluate("l.join('-')", model).toString());
 
         model.clear();
         EvalTools.evaluate("def l = ['a','b','c']", model);
