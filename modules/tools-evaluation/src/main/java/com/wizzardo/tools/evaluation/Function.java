@@ -245,8 +245,8 @@ class Function extends Expression {
             if (safeNavigation && instance == null)
                 return null;
 
-            if (!metaChecked) {
-                chechMeta(instance);
+            if (!metaChecked && instance != null) {
+                checkMeta(instance instanceof Class ? (Class) instance : instance.getClass());
                 metaChecked = true;
             }
             if (metaMethod != null) {
@@ -414,24 +414,20 @@ class Function extends Expression {
         return null;
     }
 
-    private boolean chechMeta(Object instance) {
-        if (args != null && instance != null) {
+    private boolean checkMeta(Class clazz) {
+        if (args != null && clazz != null) {
             Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>> methods;
-            Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
             CollectionTools.Closure3<Object, Object, Map, Expression[]> closure = null;
-            while (clazz != null && ((methods = metaMethods.get(clazz)) == null || (closure = methods.get(methodName)) == null)) {
-                clazz = clazz.getSuperclass();
+            if ((methods = metaMethods.get(clazz)) != null && (closure = methods.get(methodName)) != null) {
+                metaMethod = closure;
+                return true;
             }
+            closure = findMeta(clazz.getInterfaces());
             if (closure != null) {
                 metaMethod = closure;
                 return true;
             }
-            Class[] classes = instance.getClass().getInterfaces();
-            closure = findMeta(classes);
-            if (closure != null) {
-                metaMethod = closure;
-                return true;
-            }
+            return checkMeta(clazz.getSuperclass());
         }
         return false;
     }
