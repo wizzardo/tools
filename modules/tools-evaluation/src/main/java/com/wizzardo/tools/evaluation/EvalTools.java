@@ -518,7 +518,7 @@ public class EvalTools {
 
                 if (brackets == 0) {
                     if (c == ';' || c == '\n') {
-                        String value = sb.toString().trim();
+                        String value = cleanLine(sb.toString());
                         if (value.length() > 0)
                             list.add(value);
                         sb.setLength(0);
@@ -533,11 +533,19 @@ public class EvalTools {
             last = c;
             sb.append(c);
         }
-        String value = sb.toString().trim();
+        String value = cleanLine(sb.toString());
         if (value.length() > 0)
             list.add(value);
 
         return list;
+    }
+
+    static String cleanLine(String line){
+        int comment = line.indexOf("//");
+        if (comment != -1 && !inString(line, 0, comment)) {
+            line = line.substring(0, comment);
+        }
+        return line.trim();
     }
 
     public static Expression prepareTemplate(String exp) {
@@ -585,7 +593,17 @@ public class EvalTools {
             return null;
         }
         //remove comments
-        exp = exp.replaceAll("/\\*.*\\*/", "\n");
+        int comment = -1;
+        do {
+            comment = exp.indexOf("/*", comment + 1);
+            if (comment != -1 && !inString(exp, 0, comment)) {
+                int commentEnd = exp.indexOf("*/", comment);
+                if (commentEnd == -1)
+                    throw new IllegalStateException("Cannot find end of comment block for exp '" + exp + "'");
+
+                exp = exp.substring(0, comment) + exp.substring(commentEnd + 2);
+            }
+        } while (comment != -1);
 
         if (!isTemplate) {
             exp = exp.trim();
@@ -690,8 +708,8 @@ public class EvalTools {
                                 inner.add(prepare(line, model, functions, imports, isTemplate));
                             }
                             closure.add(inner);
-                        } else if (statements.size() > 1) {
-                            closure.add(prepare(s.statement, model, functions, imports, isTemplate));
+                        } else if (statements.size() > 1 || !lines.get(0).equals(s.statement)) {
+                            closure.add(prepare(lines.get(0), model, functions, imports, isTemplate));
                         }
                         break;
                     }
