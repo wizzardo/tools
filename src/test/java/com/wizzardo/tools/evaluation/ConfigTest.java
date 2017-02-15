@@ -489,4 +489,25 @@ public class ConfigTest {
         Assert.assertEquals(Integer.valueOf(2), config.get("a", 0));
         Assert.assertEquals("|1|", config.get("s").toString());
     }
+
+    @Test
+    public void test_comment_1() {
+        String s = "a = 1\n" +
+                "// a = 2\n";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(Integer.valueOf(1), config.get("a", 0));
+    }
+
+    @Test
+    public void test_comment_2() {
+        String s = "a = 1 // this is a comment\n";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(Integer.valueOf(1), config.get("a", 0));
+    }
 }
