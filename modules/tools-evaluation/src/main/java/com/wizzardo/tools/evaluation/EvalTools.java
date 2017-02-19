@@ -285,8 +285,8 @@ public class EvalTools {
         return exp.startsWith("{") && exp.endsWith("}");
     }
 
-    static List<String> getLines(String exp) {
-        return getLines(exp, false);
+    static List<String> getBlocks(String exp) {
+        return getBlocks(exp, false);
     }
 
     static class Statement {
@@ -307,7 +307,7 @@ public class EvalTools {
         public Expression prepare(Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
             switch (type) {
                 case IF: {
-                    List<String> args = getLines(statement, true);
+                    List<String> args = getBlocks(statement, true);
                     if (args.size() > 1)
                         throw new IllegalStateException("more then one statement in condition: " + statement);
 
@@ -494,7 +494,7 @@ public class EvalTools {
         }
     }
 
-    static List<String> getLines(String exp, boolean ignoreNewLine) {
+    static List<String> getBlocks(String exp, boolean ignoreNewLine) {
         List<String> list = new ArrayList<String>();
 
         StringBuilder sb = new StringBuilder();
@@ -540,10 +540,16 @@ public class EvalTools {
         return list;
     }
 
-    static String cleanLine(String line){
-        int comment = line.indexOf("//");
-        if (comment != -1 && !inString(line, 0, comment)) {
-            line = line.substring(0, comment);
+    static String cleanLine(String line) {
+        int comment = -1;
+        while ((comment = line.indexOf("//", comment + 1)) != -1) {
+            if (!inString(line, 0, comment)) {
+                int end = line.indexOf("\n", comment);
+                if (end == -1)
+                    line = line.substring(0, comment);
+                else
+                    line = line.substring(0, comment) + line.substring(end);
+            }
         }
         return line.trim();
     }
@@ -668,7 +674,7 @@ public class EvalTools {
         if (isClosure(exp)) {
             exp = exp.substring(1, exp.length() - 1).trim();
             ClosureExpression closure = new ClosureExpression();
-            List<String> lines = getLines(exp);
+            List<String> lines = getBlocks(exp);
             if (lines.isEmpty())
                 return new ClosureHolder(closure);
 
@@ -699,7 +705,7 @@ public class EvalTools {
                         break;
 
                     case BLOCK: {
-                        List<String> lines = getLines(s.statement);
+                        List<String> lines = getBlocks(s.statement);
                         if (lines.size() > 1) {
                             ClosureExpression inner = new ClosureExpression();
                             for (String line : lines) {

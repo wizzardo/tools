@@ -708,30 +708,30 @@ public class EvalToolsTest {
         List<String> l;
 
         s = "ololo";
-        l = EvalTools.getLines(s);
+        l = EvalTools.getBlocks(s);
         Assert.assertEquals(1, l.size());
         Assert.assertEquals(s, l.get(0));
 
         s = "int i = 1; i++;";
-        l = EvalTools.getLines(s);
+        l = EvalTools.getBlocks(s);
         Assert.assertEquals(2, l.size());
         Assert.assertEquals("int i = 1", l.get(0));
         Assert.assertEquals("i++", l.get(1));
 
         s = "String s = \"abc;\"";
-        l = EvalTools.getLines(s);
+        l = EvalTools.getBlocks(s);
         Assert.assertEquals(1, l.size());
         Assert.assertEquals(s, l.get(0));
 
         s = "int i = 1; i++; \n i=\";;\n\n\".length()";
-        l = EvalTools.getLines(s);
+        l = EvalTools.getBlocks(s);
         Assert.assertEquals(3, l.size());
         Assert.assertEquals("int i = 1", l.get(0));
         Assert.assertEquals("i++", l.get(1));
         Assert.assertEquals("i=\";;\n\n\".length()", l.get(2));
 
         s = "def a = new A(); a.foo = 'FOO'; a.foo";
-        l = EvalTools.getLines(s);
+        l = EvalTools.getBlocks(s);
         Assert.assertEquals(3, l.size());
         Assert.assertEquals("def a = new A()", l.get(0));
         Assert.assertEquals("a.foo = 'FOO'", l.get(1));
