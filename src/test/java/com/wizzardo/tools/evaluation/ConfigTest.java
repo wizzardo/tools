@@ -493,22 +493,26 @@ public class ConfigTest {
     @Test
     public void test_comment_1() {
         String s = "a = 1\n" +
-                "// a = 2\n";
+                "// a = 2\n" +
+                "b = 3";
         Expression expression = EvalTools.prepare(s);
         Config config = new Config();
         expression.get(config);
 
         Assert.assertEquals(Integer.valueOf(1), config.get("a", 0));
+        Assert.assertEquals(Integer.valueOf(3), config.get("b", 0));
     }
 
     @Test
     public void test_comment_2() {
-        String s = "a = 1 // this is a comment a = 2";
+        String s = "a = 1 // this is a comment a = 2\n" +
+                "b = 3";
         Expression expression = EvalTools.prepare(s);
         Config config = new Config();
         expression.get(config);
 
         Assert.assertEquals(Integer.valueOf(1), config.get("a", 0));
+        Assert.assertEquals(Integer.valueOf(3), config.get("b", 0));
     }
 
     @Test
@@ -531,5 +535,18 @@ public class ConfigTest {
 
         Assert.assertEquals("this // is not a comment", config.get("b", ""));
         Assert.assertEquals("/*also just a string*/", config.get("c", ""));
+    }
+
+    @Test
+    public void test_comment_5() {
+        String s = "a {\n" +
+                "// comment\n" +
+                "b = 1" +
+                "}";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        Assert.assertEquals(Integer.valueOf(1), config.config("a").get("b", 0));
     }
 }
