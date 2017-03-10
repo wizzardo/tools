@@ -34,6 +34,11 @@ public class JsonGeneric<T> extends Generic<T, JsonFields, JsonGeneric> {
         serializer = Binder.classToSerializer(clazz);
     }
 
+    public JsonGeneric(Type c, Map<String, JsonGeneric> types, Map<Class, Generic<T, JsonFields, JsonGeneric>> cyclicDependencies) {
+        super(c, types, cyclicDependencies);
+        serializer = Binder.classToSerializer(clazz);
+    }
+
     @Override
     public JsonFields getFields() {
         if (fields != null)
@@ -76,5 +81,10 @@ public class JsonGeneric<T> extends Generic<T, JsonFields, JsonGeneric> {
     @Override
     protected JsonGeneric create(Type c, Map<String, JsonGeneric> types) {
         return new JsonGeneric(c, types);
+    }
+
+    @Override
+    protected JsonGeneric create(Type c, Map<String, JsonGeneric> types, Map<Class, Generic<T, JsonFields, JsonGeneric>> cyclicDependencies) {
+        return new JsonGeneric(c, types, cyclicDependencies);
     }
 }

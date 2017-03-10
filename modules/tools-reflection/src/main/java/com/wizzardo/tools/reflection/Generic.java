@@ -1,6 +1,7 @@
 package com.wizzardo.tools.reflection;
 
 import java.lang.reflect.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
     protected Map<String, G> types;
     protected F fields;
     protected final G[] typeParameters;
+    protected Generic[] interfaces;
 
     public Generic(Type c) {
         this(c, (Map) null);
@@ -46,6 +48,10 @@ public class Generic<T, F extends Fields, G extends Generic> {
     }
 
     protected Generic(Type c, Map<String, G> types) {
+        this(c, types, new HashMap<Class, Generic<T, F, G>>());
+    }
+
+    protected Generic(Type c, Map<String, G> types, Map<Class, Generic<T, F, G>> cyclicDependencies) {
         if (c instanceof ParameterizedType) {
             ParameterizedType type = (ParameterizedType) c;
             clazz = (Class) type.getRawType();
@@ -55,14 +61,16 @@ public class Generic<T, F extends Fields, G extends Generic> {
             this.types = new HashMap<String, G>();
             this.typeParameters = createArray(args.length);
             for (int i = 0; i < args.length; i++) {
-                this.typeParameters[i] = create(args[i], types);
+                this.typeParameters[i] = create(args[i], types, cyclicDependencies);
                 this.types.put(variables[i].getName(), this.typeParameters[i]);
             }
 
             if (clazz.getGenericSuperclass() != null)
-                parent = create(clazz.getGenericSuperclass(), this.types);
+                parent = create(clazz.getGenericSuperclass(), this.types, cyclicDependencies);
             else
                 parent = null;
+
+            types = this.types;
         } else if (c instanceof TypeVariable) {
             if (types != null) {
                 G g = types.get(((TypeVariable) c).getName());
@@ -88,13 +96,29 @@ public class Generic<T, F extends Fields, G extends Generic> {
                 parent = null;
                 return;
             }
+            Generic<T, F, G> cd = cyclicDependencies.get(cl);
+            if (cd != null) {
+                clazz = cd.clazz;
+                parent = cd.parent;
+                interfaces = cd.interfaces;
+                typeParameters = cd.typeParameters;
+                return;
+            }
 
             clazz = cl;
             this.typeParameters = createArray(0);
             if (!clazz.isEnum() && clazz.getGenericSuperclass() != null)
-                parent = create(clazz.getGenericSuperclass(), types);
+                parent = create(clazz.getGenericSuperclass(), types, cyclicDependencies);
             else
                 parent = null;
+
+            cyclicDependencies.put(cl, this);
+        }
+
+        Type[] interfaces = clazz.getGenericInterfaces();
+        this.interfaces = new Generic[interfaces.length];
+        for (int i = 0; i < interfaces.length; i++) {
+            this.interfaces[i] = create(interfaces[i], types, cyclicDependencies);
         }
     }
 
@@ -114,8 +138,40 @@ public class Generic<T, F extends Fields, G extends Generic> {
         return typeParameters.length;
     }
 
+    public int getTypesCount() {
+        return typesCount();
+    }
+
     public G type(int i) {
         return typeParameters[i];
+    }
+
+    public G getType(int i) {
+        return type(i);
+    }
+
+    public G type(String name) {
+        return types.get(name);
+    }
+
+    public G getType(String name) {
+        return type(name);
+    }
+
+    public Map<String, G> types() {
+        return Collections.unmodifiableMap(types);
+    }
+
+    public Map<String, G> getTypes() {
+        return types();
+    }
+
+    public int getInterfacesCount() {
+        return interfaces.length;
+    }
+
+    public Generic getInterface(int i) {
+        return interfaces[i];
     }
 
     @Override
@@ -156,6 +212,10 @@ public class Generic<T, F extends Fields, G extends Generic> {
 
     protected G create(Type c, Map<String, G> types) {
         return (G) new Generic(c, types);
+    }
+
+    protected G create(Type c, Map<String, G> types, Map<Class, Generic<T, F, G>> cyclicDependencies) {
+        return (G) new Generic(c, types, cyclicDependencies);
     }
 
     public G parent() {
