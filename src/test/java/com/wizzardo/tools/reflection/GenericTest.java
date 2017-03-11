@@ -3,6 +3,7 @@ package com.wizzardo.tools.reflection;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Map;
@@ -126,5 +127,59 @@ public class GenericTest {
         Assert.assertTrue(map.containsKey("array"));
         Assert.assertTrue(map.containsKey("list"));
         Assert.assertTrue(map == generic.getFields());
+    }
+
+    @Test
+    public void interfacesTest() {
+        Generic generic = new Generic(String.class);
+        Assert.assertEquals(String.class, generic.clazz);
+        Assert.assertEquals(3, generic.interfaces.length);
+
+        for (int i = 0; i < generic.interfaces.length; i++) {
+            Generic g = generic.interfaces[i];
+            if (g.clazz == Serializable.class)
+                continue;
+
+            if (g.clazz == CharSequence.class)
+                continue;
+
+            if (g.clazz == Comparable.class) {
+                Assert.assertEquals(1, g.typesCount());
+                Generic type = g.type(0);
+                Assert.assertEquals(String.class, type.clazz);
+                Assert.assertSame(generic.interfaces, type.interfaces);
+                continue;
+            }
+
+            Assert.assertTrue(false);
+        }
+    }
+
+
+    public interface SuperInterface<T> {
+        T get();
+    }
+
+    public interface ParentInterface<A> extends SuperInterface<A> {
+        A get();
+    }
+
+    public interface ChildInterface extends ParentInterface<String> {
+    }
+
+    @Test
+    public void interfacesTest_2() {
+        Generic generic = new Generic(ChildInterface.class);
+        Assert.assertEquals(ChildInterface.class, generic.clazz);
+        Assert.assertEquals(1, generic.interfaces.length);
+
+        Generic parent = generic.interfaces[0];
+        Assert.assertEquals(ParentInterface.class, parent.clazz);
+        Assert.assertEquals(String.class, parent.type(0).clazz);
+        Assert.assertEquals(1, parent.interfaces.length);
+
+        Generic supr = parent.interfaces[0];
+        Assert.assertEquals(SuperInterface.class, supr.clazz);
+        Assert.assertEquals(String.class, supr.type(0).clazz);
     }
 }
