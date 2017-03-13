@@ -1,9 +1,7 @@
 package com.wizzardo.tools.reflection;
 
 import java.lang.reflect.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author: wizzardo
@@ -15,7 +13,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
     protected Map<String, G> types;
     protected F fields;
     protected final G[] typeParameters;
-    protected Generic[] interfaces;
+    protected final Generic[] interfaces;
 
     public Generic(Type c) {
         this(c, (Map) null);
@@ -26,14 +24,15 @@ public class Generic<T, F extends Fields, G extends Generic> {
         parent = null;
         if (generics == null) {
             typeParameters = createArray(0);
-            return;
-        }
-        typeParameters = createArray(generics.length);
-        for (int i = 0; i < generics.length; i++) {
-            typeParameters[i] = create(generics[i]);
+        } else {
+            typeParameters = createArray(generics.length);
+            for (int i = 0; i < generics.length; i++) {
+                typeParameters[i] = create(generics[i]);
+            }
         }
 
         types = getTypes(c, typeParameters);
+        interfaces = getInterfaces(clazz, types, new HashMap<Class, Generic<T, F, G>>());
     }
 
     public Generic(Class<T> c, G... generics) {
@@ -45,6 +44,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
             typeParameters = generics;
 
         types = getTypes(c, typeParameters);
+        interfaces = getInterfaces(clazz, types, new HashMap<Class, Generic<T, F, G>>());
     }
 
     protected Generic(Type c, Map<String, G> types) {
@@ -94,6 +94,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
                 typeParameters = createArray(1);
                 typeParameters[0] = create(cl.getComponentType());
                 parent = null;
+                interfaces = new Generic[0];
                 return;
             }
             Generic<T, F, G> cd = cyclicDependencies.get(cl);
@@ -115,11 +116,16 @@ public class Generic<T, F extends Fields, G extends Generic> {
             cyclicDependencies.put(cl, this);
         }
 
+        interfaces = getInterfaces(clazz, types, cyclicDependencies);
+    }
+
+    protected Generic[] getInterfaces(Class<T> clazz, Map<String, G> types, Map<Class, Generic<T, F, G>> cyclicDependencies) {
         Type[] interfaces = clazz.getGenericInterfaces();
-        this.interfaces = new Generic[interfaces.length];
+        Generic[] result = new Generic[interfaces.length];
         for (int i = 0; i < interfaces.length; i++) {
-            this.interfaces[i] = create(interfaces[i], types, cyclicDependencies);
+            result[i] = create(interfaces[i], types, cyclicDependencies);
         }
+        return result;
     }
 
     private Map<String, G> getTypes(Class<T> c, G[] generics) {
