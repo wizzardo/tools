@@ -227,4 +227,32 @@ public class Generic<T, F extends Fields, G extends Generic> {
     public G parent() {
         return parent;
     }
+
+    public List<GenericMethod> methods() {
+        List<GenericMethod> methods = new ArrayList<GenericMethod>();
+
+        fillMethods(methods, this);
+
+        return methods;
+    }
+
+    protected void fillMethods(List<GenericMethod> methods, Generic generic) {
+        Method[] declaredMethods = generic.clazz.getDeclaredMethods();
+        for (Method method : declaredMethods) {
+            Generic returnType = new Generic(method.getGenericReturnType(), generic.types);
+            Type[] genericParameterTypes = method.getGenericParameterTypes();
+            Generic[] args = new Generic[genericParameterTypes.length];
+            for (int i = 0; i < genericParameterTypes.length; i++) {
+                args[i] = new Generic(genericParameterTypes[i], generic.types);
+            }
+            methods.add(new GenericMethod(method.getName(), returnType, args));
+        }
+
+        for (Generic g : generic.interfaces) {
+            fillMethods(methods, g);
+        }
+
+        if (generic.parent != null)
+            fillMethods(methods, generic.parent);
+    }
 }

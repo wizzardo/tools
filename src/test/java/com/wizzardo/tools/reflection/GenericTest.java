@@ -182,4 +182,15 @@ public class GenericTest {
         Assert.assertEquals(SuperInterface.class, supr.clazz);
         Assert.assertEquals(String.class, supr.type(0).clazz);
     }
+
+    @Test
+    public void methodsTest() {
+        Generic generic = new Generic(ChildInterface.class);
+        List<GenericMethod> methods = generic.methods();
+
+        GenericMethod method = methods.get(0);
+        Assert.assertEquals("get", method.name);
+        Assert.assertEquals(String.class, method.returnType.clazz);
+        Assert.assertEquals(0, method.getArgumentsCount());
+    }
 }
