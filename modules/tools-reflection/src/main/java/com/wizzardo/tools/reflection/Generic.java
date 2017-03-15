@@ -73,7 +73,13 @@ public class Generic<T, F extends Fields, G extends Generic> {
             types = this.types;
         } else if (c instanceof TypeVariable) {
             if (types != null) {
-                G g = types.get(((TypeVariable) c).getName());
+                TypeVariable variable = (TypeVariable) c;
+                G g = types.get(variable.getName());
+                if (g == null) {
+                    Type type = variable.getBounds()[0];
+                    g = create(type, types, cyclicDependencies);
+                }
+
                 clazz = g.clazz;
                 parent = (G) g.parent;
                 typeParameters = (G[]) g.typeParameters;
