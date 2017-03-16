@@ -191,6 +191,6 @@ public class GenericTest {
         GenericMethod method = methods.get(0);
         Assert.assertEquals("get", method.name);
         Assert.assertEquals(String.class, method.returnType.clazz);
-        Assert.assertEquals(0, method.getArgumentsCount());
+        Assert.assertEquals(0, method.args.size());
     }
 }
