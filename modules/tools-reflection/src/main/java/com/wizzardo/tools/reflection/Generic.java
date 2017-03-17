@@ -15,6 +15,10 @@ public class Generic<T, F extends Fields, G extends Generic> {
     protected final G[] typeParameters;
     protected final Generic[] interfaces;
 
+    public static <T> Generic<T, Fields, Generic> of(Class<T> clazz) {
+        return new Generic<T, Fields, Generic>(clazz);
+    }
+
     public Generic(Type c) {
         this(c, (Map) null);
     }
@@ -247,11 +251,11 @@ public class Generic<T, F extends Fields, G extends Generic> {
         for (Method method : declaredMethods) {
             Generic returnType = new Generic(method.getGenericReturnType(), generic.types);
             Type[] genericParameterTypes = method.getGenericParameterTypes();
-            Generic[] args = new Generic[genericParameterTypes.length];
-            for (int i = 0; i < genericParameterTypes.length; i++) {
-                args[i] = new Generic(genericParameterTypes[i], generic.types);
+            List<Generic> args = new ArrayList<Generic>(genericParameterTypes.length);
+            for (Type genericParameterType : genericParameterTypes) {
+                args.add(new Generic(genericParameterType, generic.types));
             }
-            methods.add(new GenericMethod(method.getName(), returnType, args));
+            methods.add(new GenericMethod(method.getName(), returnType, Collections.unmodifiableList(args)));
         }
 
         for (Generic g : generic.interfaces) {

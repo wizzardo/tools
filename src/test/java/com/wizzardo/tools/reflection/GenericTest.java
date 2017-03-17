@@ -185,7 +185,7 @@ public class GenericTest {
 
     @Test
     public void methodsTest() {
-        Generic generic = new Generic(ChildInterface.class);
+        Generic<ChildInterface, Fields, Generic> generic = Generic.of(ChildInterface.class);
         List<GenericMethod> methods = generic.methods();
 
         GenericMethod method = methods.get(0);
