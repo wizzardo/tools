@@ -36,7 +36,10 @@ public class Generic<T, F extends Fields, G extends Generic> {
         }
 
         types = getTypes(c, typeParameters);
-        interfaces = getInterfaces(clazz, types, new HashMap<Class, Generic<T, F, G>>());
+
+        Type[] interfaces = clazz.getGenericInterfaces();
+        this.interfaces = createInterfaces(interfaces);
+        initInterfaces(this.interfaces, interfaces, types, new HashMap<Type, Generic<T, F, G>>());
     }
 
     public Generic(Class<T> c, G... generics) {
@@ -48,14 +51,17 @@ public class Generic<T, F extends Fields, G extends Generic> {
             typeParameters = generics;
 
         types = getTypes(c, typeParameters);
-        interfaces = getInterfaces(clazz, types, new HashMap<Class, Generic<T, F, G>>());
+
+        Type[] interfaces = clazz.getGenericInterfaces();
+        this.interfaces = createInterfaces(interfaces);
+        initInterfaces(this.interfaces, interfaces, types, new HashMap<Type, Generic<T, F, G>>());
     }
 
     protected Generic(Type c, Map<String, G> types) {
-        this(c, types, new HashMap<Class, Generic<T, F, G>>());
+        this(c, types, new HashMap<Type, Generic<T, F, G>>());
     }
 
-    protected Generic(Type c, Map<String, G> types, Map<Class, Generic<T, F, G>> cyclicDependencies) {
+    protected Generic(Type c, Map<String, G> types, Map<Type, Generic<T, F, G>> cyclicDependencies) {
         if (c instanceof ParameterizedType) {
             ParameterizedType type = (ParameterizedType) c;
             clazz = (Class) type.getRawType();
@@ -87,6 +93,9 @@ public class Generic<T, F extends Fields, G extends Generic> {
                 clazz = g.clazz;
                 parent = (G) g.parent;
                 typeParameters = (G[]) g.typeParameters;
+                interfaces = g.interfaces;
+                this.types = g.types;
+                return;
             } else {
                 clazz = (Class<T>) Object.class;
                 parent = null;
@@ -126,16 +135,19 @@ public class Generic<T, F extends Fields, G extends Generic> {
             cyclicDependencies.put(cl, this);
         }
 
-        interfaces = getInterfaces(clazz, types, cyclicDependencies);
+        Type[] interfaces = clazz.getGenericInterfaces();
+        this.interfaces = createInterfaces(interfaces);
+        initInterfaces(this.interfaces, interfaces, types, cyclicDependencies);
     }
 
-    protected Generic[] getInterfaces(Class<T> clazz, Map<String, G> types, Map<Class, Generic<T, F, G>> cyclicDependencies) {
-        Type[] interfaces = clazz.getGenericInterfaces();
-        Generic[] result = new Generic[interfaces.length];
+    protected Generic[] createInterfaces(Type[] interfaces) {
+        return new Generic[interfaces.length];
+    }
+
+    protected void initInterfaces(Generic[] result, Type[] interfaces, Map<String, G> types, Map<Type, Generic<T, F, G>> cyclicDependencies) {
         for (int i = 0; i < interfaces.length; i++) {
             result[i] = create(interfaces[i], types, cyclicDependencies);
         }
-        return result;
     }
 
     private Map<String, G> getTypes(Class<T> c, G[] generics) {
@@ -230,7 +242,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
         return (G) new Generic(c, types);
     }
 
-    protected G create(Type c, Map<String, G> types, Map<Class, Generic<T, F, G>> cyclicDependencies) {
+    protected G create(Type c, Map<String, G> types, Map<Type, Generic<T, F, G>> cyclicDependencies) {
         return (G) new Generic(c, types, cyclicDependencies);
     }
 
