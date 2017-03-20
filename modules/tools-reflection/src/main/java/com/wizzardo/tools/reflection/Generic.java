@@ -3,6 +3,8 @@ package com.wizzardo.tools.reflection;
 import java.lang.reflect.*;
 import java.util.*;
 
+import static com.wizzardo.tools.reflection.Misc.*;
+
 /**
  * @author: wizzardo
  * Date: 2/21/14
@@ -204,7 +206,15 @@ public class Generic<T, F extends Fields, G extends Generic> {
 
     @Override
     public String toString() {
-        return clazz.getSimpleName();
+        if (typesCount() == 0)
+            return clazz.getSimpleName();
+
+        return join(new StringBuilder(32)
+                        .append(clazz.getSimpleName())
+                        .append('<'),
+                typeParameters, ",")
+                .append('>')
+                .toString();
     }
 
     public G getGenericType(Field f) {
@@ -267,7 +277,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
             for (Type genericParameterType : genericParameterTypes) {
                 args.add(new Generic(genericParameterType, generic.types));
             }
-            methods.add(new GenericMethod(method.getName(), returnType, Collections.unmodifiableList(args)));
+            methods.add(new GenericMethod(method, returnType, Collections.unmodifiableList(args)));
         }
 
         for (Generic g : generic.interfaces) {
