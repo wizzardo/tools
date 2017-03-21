@@ -189,7 +189,7 @@ public class GenericTest {
         List<GenericMethod> methods = generic.methods();
 
         GenericMethod method = methods.get(0);
-        Assert.assertEquals("get", method.name);
+        Assert.assertEquals("get", method.method.getName());
         Assert.assertEquals(String.class, method.returnType.clazz);
         Assert.assertEquals(0, method.args.size());
     }
