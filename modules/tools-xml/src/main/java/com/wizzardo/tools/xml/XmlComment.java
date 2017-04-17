@@ -14,7 +14,7 @@ public class XmlComment extends TextNode {
     }
 
     protected String ownText() {
-        return "<!-- " + text + " -->";
+        return "<!--" + text + "-->";
     }
 
     @Override

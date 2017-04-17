@@ -10,6 +10,7 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
         protected int brackets = 0;
         protected boolean inStringInGroovy = false;
         protected char quote = 0;
+        protected boolean comment;
 
         @Override
         protected boolean onChar(char[] s, Node xml) {
