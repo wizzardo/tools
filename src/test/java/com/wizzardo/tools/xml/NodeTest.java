@@ -95,7 +95,7 @@ public class NodeTest {
         Assert.assertEquals(0, div.attributes().size());
         Assert.assertEquals(1, div.children().size());
         Assert.assertEquals(true, div.children().get(0).isComment());
-        Assert.assertEquals("<!-- <comment> -->", div.children().get(0).ownText());
+        Assert.assertEquals("<!--<comment>-->", div.children().get(0).ownText());
     }
 
     @Test
@@ -111,9 +111,9 @@ public class NodeTest {
         Assert.assertEquals(1, div.children().size());
         Assert.assertEquals(true, div.children().get(0).isComment());
         Assert.assertEquals("" +
-                "<!-- [if IE]>\n" +
+                "<!--[if IE]>\n" +
                 "        According to the conditional comment this is IE<br />\n" +
-                "    <![endif] -->", div.children().get(0).ownText());
+                "    <![endif]-->", div.children().get(0).ownText());
     }
 
     @Test
@@ -351,6 +351,22 @@ public class NodeTest {
         Assert.assertEquals(3, div.children().size());
         Assert.assertEquals("before", div.get(0).text());
         Assert.assertEquals("%{--<p>text</p>--}%", div.get(1).text());
+        Assert.assertEquals("after", div.get(2).text());
+    }
+
+    @Test
+    public void gsp_html_comment() throws IOException {
+        String s = "<div>\n" +
+                "    before\n" +
+                "    <!--<p>text</p>-->\n" +
+                "    after\n" +
+                "</div>";
+        Node root = new GspParser().parse(s);
+        Node div = root.children().get(0);
+        Assert.assertEquals("div", div.name());
+        Assert.assertEquals(3, div.children().size());
+        Assert.assertEquals("before", div.get(0).text());
+        Assert.assertEquals("<!--<p>text</p>-->", div.get(1).text());
         Assert.assertEquals("after", div.get(2).text());
     }
 
