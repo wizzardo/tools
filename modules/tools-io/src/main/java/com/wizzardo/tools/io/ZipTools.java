@@ -194,27 +194,20 @@ public class ZipTools {
         return unzip(zipFile, outDir, null);
     }
 
-    public static List<File> unzip(File zipFile, File outDir, ZipEntryFilter filter) {
-        ZipInputStream zip = null;
-        outDir.mkdirs();
-        List<File> l = new ArrayList<File>();
-        try {
-            zip = new ZipInputStream(new FileInputStream(zipFile));
-            ZipEntry entry;
+    public static List<File> unzip(File zipFile, final File outDir, ZipEntryFilter filter) {
+        final List<File> l = new ArrayList<File>();
+        unzip(zipFile, new ZipEntryConsumer() {
             byte[] b = new byte[1024 * 50];
-            while ((entry = zip.getNextEntry()) != null) {
-                File outFile = new File(outDir, entry.getName());
-                if (entry.isDirectory())
-                    continue;
 
-                if (filter != null && !filter.accept(entry))
-                    continue;
-
+            @Override
+            public void consume(String name, InputStream in) {
+                File outFile = new File(outDir, name);
                 outFile.getParentFile().mkdirs();
 
-                FileOutputStream out = new FileOutputStream(outFile);
+                FileOutputStream out = null;
                 try {
-                    IOTools.copy(zip, out, b);
+                    out = new FileOutputStream(outFile);
+                    IOTools.copy(in, out, b);
                     l.add(outFile);
                 } catch (IOException ex) {
                     outFile.delete();
@@ -223,12 +216,37 @@ public class ZipTools {
                     IOTools.close(out);
                 }
             }
+        }, filter);
+        return l;
+    }
+
+    public interface ZipEntryConsumer {
+        void consume(String name, InputStream in);
+    }
+
+    public static void unzip(File zipFile, ZipEntryConsumer consumer) {
+        unzip(zipFile, consumer, null);
+    }
+
+    public static void unzip(File zipFile, ZipEntryConsumer consumer, ZipEntryFilter filter) {
+        ZipInputStream zip = null;
+        try {
+            zip = new ZipInputStream(new FileInputStream(zipFile));
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (entry.isDirectory())
+                    continue;
+
+                if (filter != null && !filter.accept(entry))
+                    continue;
+
+                consumer.consume(entry.getName(), zip);
+            }
         } catch (IOException ex) {
             throw Unchecked.rethrow(ex);
         } finally {
             IOTools.close(zip);
         }
-        return l;
     }
 
     public static boolean isZip(File f) {
