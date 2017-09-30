@@ -287,20 +287,22 @@ public abstract class Expression {
         m = number.matcher(exp);
         if (m.matches()) {
             if (m.groupCount() > 1 && m.group(2).length() > 0) {
+                String value = removeUnderscores(m.group(1));
                 if ("d".equals(m.group(2))) {
-                    return Double.valueOf(m.group(1));
+                    return Double.valueOf(value);
                 } else if ("f".equals(m.group(2))) {
-                    return Float.valueOf(m.group(1));
+                    return Float.valueOf(value);
                 } else if ("l".equals(m.group(2))) {
-                    return Long.valueOf(m.group(1));
+                    return Long.valueOf(value);
                 } else if ("b".equals(m.group(2))) {
-                    return Byte.valueOf(m.group(1));
+                    return Byte.valueOf(value);
                 }
             } else {
+                String value = removeUnderscores(exp);
                 try {
-                    return Integer.valueOf(exp);
+                    return Integer.valueOf(value);
                 } catch (NumberFormatException e) {
-                    return Double.valueOf(exp);
+                    return Double.valueOf(value);
                 }
             }
         }
@@ -311,8 +313,13 @@ public abstract class Expression {
         return null;
     }
 
+    static String removeUnderscores(String s){
+        return underscore.matcher(s).replaceAll("");
+    }
+
     private static final Pattern string = Pattern.compile("\"(.*)\"|\'(.*)\'");
-    private static final Pattern number = Pattern.compile("(\\d+\\.?\\d*)([dflb]?)");
+    private static final Pattern number = Pattern.compile("([\\d_]+\\.?[\\d_]*)([dflb]?)");
+    private static final Pattern underscore = Pattern.compile("_");
     private static final Pattern bool = Pattern.compile("true|false", Pattern.CASE_INSENSITIVE);
 
     @Override

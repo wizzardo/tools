@@ -34,6 +34,8 @@ public class EvalToolsTest {
         assertEquals(1, EvalTools.evaluate("java.lang.Math.abs(-1)"));
 
         assertEquals(1, EvalTools.evaluate("(1)"));
+        assertEquals(1000, EvalTools.evaluate("(1_000)"));
+        assertEquals(1000.0, EvalTools.evaluate("(1_000.000_)"));
         assertEquals(1, EvalTools.evaluate("((1))"));
         assertEquals(2, EvalTools.evaluate("1+1"));
         assertEquals(2.0, EvalTools.evaluate("1+1.0"));
