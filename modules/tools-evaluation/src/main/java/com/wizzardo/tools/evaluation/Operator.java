@@ -7,7 +7,7 @@ package com.wizzardo.tools.evaluation;
 import java.util.HashMap;
 import java.util.Map;
 
-enum Operator {
+public enum Operator {
 
     PLUS("+", Operator.Requirement.BOTH, 1, false),
     PLUS2("++", Operator.Requirement.ANY, 3, false),
@@ -38,10 +38,10 @@ enum Operator {
     COLON(":", Operator.Requirement.BOTH, 4, true),
     GET("%get%", Operator.Requirement.BOTH, 0, false);
     private static final Map<String, Operator> operators = new HashMap<String, Operator>();
-    final public String text;
-    final public Operator.Requirement requirement;
-    final public int priority;
-    final public boolean logical;
+    public final String text;
+    public final Operator.Requirement requirement;
+    public final int priority;
+    public final boolean logical;
 
     static {
         for (Operator op : Operator.values()) {
@@ -49,7 +49,7 @@ enum Operator {
         }
     }
 
-    private Operator(String text, Operator.Requirement requirement, int priority, boolean logical) {
+    Operator(String text, Operator.Requirement requirement, int priority, boolean logical) {
         this.text = text;
         this.requirement = requirement;
         this.priority = priority;
@@ -61,7 +61,7 @@ enum Operator {
         return operators.get(text);
     }
 
-    public static enum Requirement {
+    public enum Requirement {
 
         LEFT, RIGHR, BOTH, ANY;
     }

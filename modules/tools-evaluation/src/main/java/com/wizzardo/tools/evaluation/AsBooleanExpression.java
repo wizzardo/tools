@@ -42,6 +42,10 @@ public class AsBooleanExpression extends Expression {
         return result;
     }
 
+    public Expression getCondition() {
+        return condition;
+    }
+
     public static Boolean toBoolean(Object r) {
         if (r == null) {
             return false;

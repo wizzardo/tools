@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * @author Moxa
  */
-class Operation extends Expression {
+public class Operation extends Expression {
 
     private Expression leftPart;
     private Expression rightPart;

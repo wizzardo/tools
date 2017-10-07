@@ -25,8 +25,6 @@ public abstract class Expression {
             hardcoded = true;
         }};
 
-        protected Expression inner;
-        protected boolean parsed = false;
         protected Variable variable;
 
         private Holder() {
@@ -34,6 +32,11 @@ public abstract class Expression {
 
         public Holder(String exp) {
             this.exp = exp;
+            Object result = parse(exp);
+            if (result != null) {
+                hardcoded = true;
+                this.result = result;
+            }
         }
 
         public Holder(String exp, boolean hardcoded) {
@@ -48,13 +51,15 @@ public abstract class Expression {
             this.result = clazz;
         }
 
-        public Holder(Expression inner) {
-            this.inner = inner;
-        }
-
         public Holder(Object result) {
             hardcoded = true;
             this.result = result;
+        }
+
+        public Holder(String exp, Object result) {
+            hardcoded = true;
+            this.result = result;
+            this.exp = exp;
         }
 
         @Override
@@ -62,12 +67,7 @@ public abstract class Expression {
             if (hardcoded) {
                 return String.valueOf(result);
             }
-            if (exp != null) {
-                return exp;
-            }
-            if (inner != null) {
-                return inner.toString();
-            }
+
             return super.toString();
         }
 
@@ -82,16 +82,11 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            if (inner != null) {
-                return new Holder(inner.clone());
+            if (hardcoded) {
+                return new Holder(exp, result);
             }
-            if (exp != null) {
-                if (hardcoded) {
-                    return new Holder(result);
-                }
-                return new Holder(exp);
-            }
-            return null;
+
+            return new Holder(exp);
         }
 
         @Override
@@ -102,20 +97,9 @@ public abstract class Expression {
             if (variable != null)
                 return variable.get();
 
-            if (exp != null) {
-                if (!parsed) {
-                    Object result = parse(exp);
-                    parsed = true;
-                    if (result != null) {
-                        hardcoded = true;
-                        this.result = result;
-                        return result;
-                    }
-                }
+            if (exp != null)
                 return model.get(exp);
-            } else if (inner != null) {
-                return inner.get(model);
-            }
+
             return null;
         }
 
@@ -313,7 +297,7 @@ public abstract class Expression {
         return null;
     }
 
-    static String removeUnderscores(String s){
+    static String removeUnderscores(String s) {
         return underscore.matcher(s).replaceAll("");
     }
 
