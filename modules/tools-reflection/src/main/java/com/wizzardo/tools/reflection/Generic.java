@@ -108,6 +108,15 @@ public class Generic<T, F extends Fields, G extends Generic> {
             clazz = (Class<T>) Array.class;
             typeParameters = createArray(1);
             typeParameters[0] = create(((GenericArrayType) c).getGenericComponentType());
+        } else if (c instanceof WildcardType) {
+            WildcardType wildcardType = (WildcardType) c;
+            Type type = wildcardType.getLowerBounds().length > 0 ? wildcardType.getLowerBounds()[0] : wildcardType.getUpperBounds()[0];
+            Generic<T, F, G> g = create(type);
+            clazz = g.clazz;
+            typeParameters = g.typeParameters;
+            parent = g.parent;
+            interfaces = g.interfaces;
+            return;
         } else {
             Class cl = (Class) c;
             if (cl.isArray()) {

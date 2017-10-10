@@ -193,4 +193,28 @@ public class GenericTest {
         Assert.assertEquals(String.class, method.returnType.clazz);
         Assert.assertEquals(0, method.args.size());
     }
+
+    public static class WildcardTypeTestPojo {
+        List<? super Number> superNumbers;
+        List<? extends Number> extendsNumbers;
+    }
+
+    @Test
+    public void wildcardTypeTest() {
+        Fields<FieldInfo> fields = new Fields<FieldInfo>(WildcardTypeTestPojo.class);
+        Assert.assertEquals(2,fields.size());
+
+        FieldInfo fieldInfo;
+        fieldInfo = fields.get("superNumbers");
+        Assert.assertEquals(List.class, fieldInfo.generic.clazz);
+        Assert.assertEquals(1, fieldInfo.generic.typesCount());
+        Assert.assertEquals(Number.class, fieldInfo.generic.type(0).clazz);
+        Assert.assertEquals(0, fieldInfo.generic.type(0).typesCount());
+
+        fieldInfo = fields.get("extendsNumbers");
+        Assert.assertEquals(List.class, fieldInfo.generic.clazz);
+        Assert.assertEquals(1, fieldInfo.generic.typesCount());
+        Assert.assertEquals(Number.class, fieldInfo.generic.type(0).clazz);
+        Assert.assertEquals(0, fieldInfo.generic.type(0).typesCount());
+    }
 }
