@@ -147,6 +147,7 @@ public class FieldReflectionFactoryTest {
         modifiersField.setAccessible(true);
         modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
 
-        new FieldReflectionFactory().create(field, true).setObject(null, enabled ? UnsafeTools.getUnsafe() : null);
+        field.setAccessible(true);
+        field.set(null, enabled ? UnsafeTools.getUnsafe() : null);
     }
 }
