@@ -154,6 +154,15 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
         return item == null ? def : item.asString();
     }
 
+    public <T extends Enum<T>> Enum<T> getAsEnum(String key, Class<T> cl) {
+        return getAsEnum(key, cl, null);
+    }
+
+    public <T extends Enum<T>> Enum<T> getAsEnum(String key, Class<T> cl, T def) {
+        JsonItem item = get(key);
+        return item == null ? def : item.asEnum(cl);
+    }
+
     public Long getAsLong(String key) {
         return getAsLong(key, null);
     }
