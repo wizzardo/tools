@@ -415,7 +415,7 @@ class JsonUtils {
         return i + 1;
     }
 
-    public static <T extends Enum<T>> Enum<T> asEnum(Class<T> cl, String name) {
+    public static <T extends Enum<T>> T asEnum(Class<T> cl, String name) {
         return Enum.valueOf(cl, name);
     }
 }

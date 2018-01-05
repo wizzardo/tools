@@ -230,7 +230,7 @@ public class JsonItem {
         return def;
     }
 
-    public <T extends Enum<T>> Enum<T> asEnum(Class<T> cl) {
+    public <T extends Enum<T>> T asEnum(Class<T> cl) {
         return JsonUtils.asEnum(cl, asString());
     }
 
