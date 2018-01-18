@@ -5,7 +5,7 @@ allprojects {
     targetCompatibility = 1.6
 
     group = 'com.wizzardo.tools'
-    version = '0.19'
+    version = '0.20-SNAPSHOT'
 
     repositories {
         mavenCentral()
