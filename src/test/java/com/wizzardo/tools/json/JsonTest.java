@@ -1581,12 +1581,30 @@ public class JsonTest {
     }
 
     @Test
-    public void test_pairs() {
+    public void test_generic() {
         TestPairs a = new TestPairs();
         a.list.add(Pair.of(1, new StringHolder("qwe")));
         String serialized = JsonTools.serialize(a);
 
         TestPairs b = JsonTools.parse(serialized, TestPairs.class);
+        Assert.assertNotSame(a, b);
+        Assert.assertNotSame(a.list, b.list);
+        Assert.assertEquals(a.list.size(), b.list.size());
+        Assert.assertEquals(1, b.list.size());
+        Assert.assertEquals(a.list.get(0), b.list.get(0));
+    }
+
+    static class TestPairs2 {
+        List<Pair<SomeEnum, StringHolder>> list = new ArrayList<Pair<SomeEnum, StringHolder>>();
+    }
+
+    @Test
+    public void test_generic_2() {
+        TestPairs2 a = new TestPairs2();
+        a.list.add(Pair.of(SomeEnum.ONE, new StringHolder("qwe")));
+        String serialized = JsonTools.serialize(a);
+
+        TestPairs2 b = JsonTools.parse(serialized, TestPairs2.class);
         Assert.assertNotSame(a, b);
         Assert.assertNotSame(a.list, b.list);
         Assert.assertEquals(a.list.size(), b.list.size());

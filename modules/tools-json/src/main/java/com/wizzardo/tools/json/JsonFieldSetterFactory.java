@@ -41,7 +41,7 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
         boolean b = isUnsafeAvailable(f) && getObject && putObject;
         if (b) {
             if (cl.isEnum())
-                return new UnsafeEnumSetter(f);
+                return new UnsafeEnumSetter(f, cl);
 
             if (cl == Boolean.class)
                 return new UnsafeBoxedSetter(f, StringConverter.TO_BOOLEAN);
@@ -71,7 +71,7 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
                 return new UnsafeBoxedSetter(f, StringConverter.TO_DATE);
         } else {
             if (cl.isEnum())
-                return new ReflectionEnumSetter(f);
+                return new ReflectionEnumSetter(f, cl);
 
             if (cl == Boolean.class)
                 return new ReflectionBoxedSetter(f, StringConverter.TO_BOOLEAN);
@@ -194,15 +194,16 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
     }
 
     public static class ReflectionEnumSetter extends ObjectReflectionGetterSetter implements JsonFieldSetter {
+        final Class type;
 
-        ReflectionEnumSetter(Field f) {
+        ReflectionEnumSetter(Field f, Class type) {
             super(f);
+            this.type = type;
         }
 
         @Override
         public void setString(Object object, String value) {
-            Class cl = field.getType();
-            setObject(object, JsonUtils.asEnum(cl, value));
+            setObject(object, JsonUtils.asEnum(type, value));
         }
     }
 
@@ -266,15 +267,16 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
     }
 
     public static class UnsafeEnumSetter extends ObjectUnsafeGetterSetter implements JsonFieldSetter {
+        final Class type;
 
-        UnsafeEnumSetter(Field f) {
+        UnsafeEnumSetter(Field f, Class type) {
             super(f);
+            this.type = type;
         }
 
         @Override
         public void setString(Object object, String value) {
-            Class cl = field.getType();
-            setObject(object, JsonUtils.asEnum(cl, value));
+            setObject(object, JsonUtils.asEnum(type, value));
         }
     }
 
