@@ -198,6 +198,9 @@ public class Generic<T, F extends Fields, G extends Generic> {
     }
 
     public Map<String, G> types() {
+        if (types == null)
+            return Collections.emptyMap();
+
         return Collections.unmodifiableMap(types);
     }
 
@@ -241,7 +244,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
         if (fields != null)
             return fields;
 
-        fields = (F) new Fields(clazz);
+        fields = (F) new Fields(this);
         return fields;
     }
 

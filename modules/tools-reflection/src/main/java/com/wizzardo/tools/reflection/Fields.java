@@ -1,7 +1,6 @@
 package com.wizzardo.tools.reflection;
 
 import com.wizzardo.tools.interfaces.Consumer;
-import com.wizzardo.tools.interfaces.Mapper;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -14,12 +13,16 @@ public class Fields<T extends FieldInfo> implements Iterable<T> {
 
     protected static final int SYNTHETIC = 0x00001000;
     protected static final FieldReflectionFactory FIELD_REFLECTION_FACTORY = new FieldReflectionFactory();
-    protected static final Mapper<Field, FieldInfo> DEFAULT_MAPPER = new Mapper<Field, FieldInfo>() {
+    protected static final FieldMapper<FieldInfo, Generic> DEFAULT_MAPPER = new FieldMapper<FieldInfo, Generic>() {
         @Override
-        public FieldInfo<FieldReflection, Generic> map(Field field) {
-            return new FieldInfo<FieldReflection, Generic>(field, FIELD_REFLECTION_FACTORY.create(field));
+        public FieldInfo<FieldReflection, Generic> map(Field field, Generic generic) {
+            return new FieldInfo<FieldReflection, Generic>(field, FIELD_REFLECTION_FACTORY.create(field), generic.types);
         }
     };
+
+    public interface FieldMapper<R, G extends Generic> {
+        R map(Field field, G generic);
+    }
 
     protected final Map<String, T> map;
     protected final T[] array;
@@ -31,11 +34,19 @@ public class Fields<T extends FieldInfo> implements Iterable<T> {
     }
 
     public Fields(Class clazz) {
-        this(clazz, (Mapper<Field, T>) DEFAULT_MAPPER);
+        this(clazz, (FieldMapper<T, Generic>) DEFAULT_MAPPER);
     }
 
-    public Fields(Class clazz, Mapper<Field, T> mapper) {
-        Map<String, T> fields = readFields(clazz, new LinkedHashMap<String, T>(), mapper);
+    public Fields(Class clazz, FieldMapper<T, Generic> mapper) {
+        this(Generic.of(clazz), mapper);
+    }
+
+    public Fields(Generic generic) {
+        this(generic, (FieldMapper<T, Generic>) DEFAULT_MAPPER);
+    }
+
+    public <G extends Generic> Fields(G g, FieldMapper<T, G> mapper) {
+        Map<String, T> fields = readFields(g, new LinkedHashMap<String, T>(), mapper);
         this.map = new LinkedHashMap<String, T>(fields.size(), 1);
         this.map.putAll(fields);
         array = fill(map.values(), createArray(map.size()));
@@ -98,17 +109,21 @@ public class Fields<T extends FieldInfo> implements Iterable<T> {
         return getFields(clazz, DEFAULT_MAPPER);
     }
 
-    public static <T extends FieldInfo> Fields<T> getFields(Class clazz, Mapper<Field, T> mapper) {
+    public static Fields<FieldInfo> of(Class clazz) {
+        return getFields(clazz, DEFAULT_MAPPER);
+    }
+
+    public static <T extends FieldInfo> Fields<T> getFields(Class clazz, FieldMapper<T, Generic> mapper) {
         return new Fields<T>(clazz, mapper);
     }
 
-    protected <T extends FieldInfo> Map<String, T> readFields(Class clazz, Map<String, T> fields, Mapper<Field, T> mapper) {
-        if (clazz == null)
+    protected <T extends FieldInfo, G extends Generic> Map<String, T> readFields(G generic, Map<String, T> fields, FieldMapper<T, G> mapper) {
+        if (generic == null)
             return fields;
 
-        readFields(clazz.getSuperclass(), fields, mapper);
+        readFields((G) generic.parent, fields, mapper);
 
-        Field[] ff = clazz.getDeclaredFields();
+        Field[] ff = generic.clazz.getDeclaredFields();
         for (Field field : ff) {
             if (!Modifier.isTransient(field.getModifiers())
                     && !Modifier.isStatic(field.getModifiers())
@@ -119,7 +134,7 @@ public class Fields<T extends FieldInfo> implements Iterable<T> {
                     ) {
                 field.setAccessible(true);
 
-                fields.put(field.getName(), mapper.map(field));
+                fields.put(field.getName(), mapper.map(field, generic));
             }
         }
         return fields;

@@ -1,5 +1,6 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.collections.Pair;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.reflection.Generic;
 import org.junit.Assert;
@@ -522,6 +523,35 @@ public class JsonTest {
 
     static class StringHolder {
         String value;
+
+        StringHolder() {
+        }
+
+        StringHolder(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return "StringHolder{" +
+                    "value='" + value + '\'' +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            StringHolder that = (StringHolder) o;
+
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return value != null ? value.hashCode() : 0;
+        }
     }
 
     @Test
@@ -1544,5 +1574,23 @@ public class JsonTest {
 
         ignoreValue = JsonTools.parse("{\"i\":5, \"value\":[1.0,2.0,3.0]}", IgnoreValue.class);
         Assert.assertEquals(5, ignoreValue.i);
+    }
+
+    static class TestPairs {
+        List<Pair<Integer, StringHolder>> list = new ArrayList<Pair<Integer, StringHolder>>();
+    }
+
+    @Test
+    public void test_pairs() {
+        TestPairs a = new TestPairs();
+        a.list.add(Pair.of(1, new StringHolder("qwe")));
+        String serialized = JsonTools.serialize(a);
+
+        TestPairs b = JsonTools.parse(serialized, TestPairs.class);
+        Assert.assertNotSame(a, b);
+        Assert.assertNotSame(a.list, b.list);
+        Assert.assertEquals(a.list.size(), b.list.size());
+        Assert.assertEquals(1, b.list.size());
+        Assert.assertEquals(a.list.get(0), b.list.get(0));
     }
 }

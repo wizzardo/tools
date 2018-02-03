@@ -1,9 +1,8 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.reflection.Fields;
+import com.wizzardo.tools.reflection.Generic;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
@@ -18,11 +17,15 @@ public class JsonFields extends Fields<JsonFieldInfo> {
         super(clazz);
     }
 
-    public JsonFields(Class clazz, Mapper<Field, JsonFieldInfo> mapper) {
+    public JsonFields(Class clazz, FieldMapper<JsonFieldInfo, Generic> mapper) {
         super(clazz, mapper);
     }
 
-    JsonFieldInfo[] fields(){
+    public JsonFields(JsonGeneric clazz, FieldMapper<JsonFieldInfo, JsonGeneric> mapper) {
+        super(clazz, mapper);
+    }
+
+    JsonFieldInfo[] fields() {
         return array;
     }
 

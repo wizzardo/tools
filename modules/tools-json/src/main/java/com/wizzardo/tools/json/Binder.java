@@ -367,15 +367,21 @@ public class Binder {
             classToSerializer(src.getClass()).serialize(src, sb, null);
         }
     };
-    public final static Mapper<Field, JsonFieldInfo> JSON_FIELD_INFO_MAPPER = new Mapper<Field, JsonFieldInfo>() {
+    public final static Fields.FieldMapper<JsonFieldInfo, JsonGeneric> JSON_FIELD_INFO_MAPPER = new Fields.FieldMapper<JsonFieldInfo, JsonGeneric>() {
         @Override
-        public JsonFieldInfo map(Field field) {
+        public JsonFieldInfo map(Field field, JsonGeneric generic) {
             if (!fieldsNames.contains(field.getName()))
                 fieldsNames.append(field.getName(), field.getName());
-            if (field.getGenericType() != field.getType())
-                return new JsonFieldInfo(field, JSON_FIELD_SETTER_FACTORY.create(field, true), genericSerializer);
-            else
-                return new JsonFieldInfo(field, JSON_FIELD_SETTER_FACTORY.create(field, true), getReturnType(field));
+            field.setAccessible(true);
+            Class<?> type = field.getType();
+            Map<String, JsonGeneric> types = generic.types();
+            if (field.getGenericType() != type && field.getGenericType() instanceof TypeVariable) {
+                Generic g = types.get(((TypeVariable) field.getGenericType()).getName());
+                if (g != null)
+                    type = g.clazz;
+            }
+
+            return new JsonFieldInfo(field, JSON_FIELD_SETTER_FACTORY.create(field, type), types, classToSerializer(type));
         }
     };
     public final static Serializer simpleBoxedSerializer = new ArrayBoxedSerializer(simpleSerializer);
@@ -423,8 +429,23 @@ public class Binder {
                 if (fields != null)
                     return fields;
 
-                fields = new JsonFields(clazz, JSON_FIELD_INFO_MAPPER);
+                fields = new JsonFields(new JsonGeneric(clazz), JSON_FIELD_INFO_MAPPER);
                 cachedFields.put(clazz, fields);
+            }
+        }
+        return fields;
+    }
+
+    public static JsonFields getFields(JsonGeneric generic) {
+        JsonFields fields = cachedFields.get(generic.clazz);
+        if (fields == null) {
+            synchronized (generic.clazz) {
+                fields = cachedFields.get(generic.clazz);
+                if (fields != null)
+                    return fields;
+
+                fields = new JsonFields(generic, JSON_FIELD_INFO_MAPPER);
+                cachedFields.put(generic.clazz, fields);
             }
         }
         return fields;
@@ -439,6 +460,9 @@ public class Binder {
     }
 
     static Serializer classToSerializer(Class clazz) {
+        if (clazz == Object.class)
+            return genericSerializer;
+
         Serializer serializer = serializers.get(clazz);
         if (serializer != null)
             return serializer;

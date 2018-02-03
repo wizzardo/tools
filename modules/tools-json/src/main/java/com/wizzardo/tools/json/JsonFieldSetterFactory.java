@@ -31,7 +31,13 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
     @Override
     public JsonFieldSetter create(Field f) {
-        Class cl = f.getType();
+        return create(f, f.getType());
+    }
+
+    public JsonFieldSetter create(Field f, Class cl) {
+        if (f.getType() != cl && f.getType() != Object.class)
+            throw new IllegalArgumentException();
+
         boolean b = isUnsafeAvailable(f) && getObject && putObject;
         if (b) {
             if (cl.isEnum())

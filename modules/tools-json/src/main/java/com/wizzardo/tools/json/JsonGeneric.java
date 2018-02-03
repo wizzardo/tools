@@ -44,7 +44,7 @@ public class JsonGeneric<T> extends Generic<T, JsonFields, JsonGeneric> {
         if (fields != null)
             return fields;
 
-        fields = Binder.getFields(clazz);
+        fields = Binder.getFields(this);
         return fields;
     }
 
