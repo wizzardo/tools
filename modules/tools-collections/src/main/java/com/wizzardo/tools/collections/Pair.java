@@ -5,12 +5,21 @@ package com.wizzardo.tools.collections;
  * Date: 12/11/12
  */
 public class Pair<K, V> {
-    public K key;
-    public V value;
+    public final K key;
+    public final V value;
+
+    private Pair() {
+        value = null;
+        key = null;
+    }
 
     public Pair(K key, V value) {
         this.key = key;
         this.value = value;
+    }
+
+    public static <K, V> Pair<K, V> of(K k, V v) {
+        return new Pair<K, V>(k, v);
     }
 
     @Override
