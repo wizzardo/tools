@@ -299,4 +299,22 @@ public class Generic<T, F extends Fields, G extends Generic> {
         if (generic.parent != null)
             fillMethods(methods, generic.parent);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Generic<?, ?, ?> generic = (Generic<?, ?, ?>) o;
+
+        if (!clazz.equals(generic.clazz)) return false;
+        return Arrays.equals(typeParameters, generic.typeParameters);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = clazz.hashCode();
+        result = 31 * result + Arrays.hashCode(typeParameters);
+        return result;
+    }
 }

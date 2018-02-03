@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Binder {
 
     protected static final JsonFieldSetterFactory JSON_FIELD_SETTER_FACTORY = new JsonFieldSetterFactory();
-    private static Map<Class, JsonFields> cachedFields = new ConcurrentHashMap<Class, JsonFields>();
+    private static Map<JsonGeneric, JsonFields> cachedFields = new ConcurrentHashMap<JsonGeneric, JsonFields>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
     private static Map<Class, Serializer> serializers = new ConcurrentHashMap<Class, Serializer>();
     static CharTree<String> fieldsNames = new CharTree<String>();
@@ -160,7 +160,11 @@ public class Binder {
     public final static Serializer intNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
         @Override
         public void serialize(Object object, Appender appender, JsonGeneric generic) {
-            appender.append(((Number) object).intValue());
+            try {
+                appender.append(((Number) object).intValue());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     };
     public final static Serializer longNumberSerializer = new Serializer(SerializerType.NUMBER_BOOLEAN) {
@@ -422,30 +426,19 @@ public class Binder {
     }
 
     public static JsonFields getFields(Class clazz) {
-        JsonFields fields = cachedFields.get(clazz);
-        if (fields == null) {
-            synchronized (clazz) {
-                fields = cachedFields.get(clazz);
-                if (fields != null)
-                    return fields;
-
-                fields = new JsonFields(new JsonGeneric(clazz), JSON_FIELD_INFO_MAPPER);
-                cachedFields.put(clazz, fields);
-            }
-        }
-        return fields;
+        return getFields(new JsonGeneric(clazz));
     }
 
     public static JsonFields getFields(JsonGeneric generic) {
-        JsonFields fields = cachedFields.get(generic.clazz);
+        JsonFields fields = cachedFields.get(generic);
         if (fields == null) {
             synchronized (generic.clazz) {
-                fields = cachedFields.get(generic.clazz);
+                fields = cachedFields.get(generic);
                 if (fields != null)
                     return fields;
 
                 fields = new JsonFields(generic, JSON_FIELD_INFO_MAPPER);
-                cachedFields.put(generic.clazz, fields);
+                cachedFields.put(generic, fields);
             }
         }
         return fields;
