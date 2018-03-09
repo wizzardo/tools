@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/wizzardo/tools.svg?branch=master)](https://travis-ci.org/wizzardo/tools)
 [![codecov](https://codecov.io/gh/wizzardo/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/wizzardo/tools)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.wizzardo.tools/tools/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.wizzardo.tools/tools/badge.svg)
 
 
 Tools
@@ -24,13 +25,13 @@ maven:
 <dependency>
     <groupId>com.wizzardo.tools</groupId>
     <artifactId>tools</artifactId>
-    <version>0.18</version>
+    <version>0.19</version>
 </dependency>
 ```
 
 gradle:
 ```
-compile 'com.wizzardo.tools:tools:0.18'
+compile 'com.wizzardo.tools:tools:0.19'
 ```
 
 License
