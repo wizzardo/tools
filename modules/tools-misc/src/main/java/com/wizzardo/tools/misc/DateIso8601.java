@@ -10,6 +10,9 @@ import java.util.*;
  */
 public class DateIso8601 {
 
+    private static int[] daysToMonth365 = new int[]{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
+    private static int[] daysToMonth366 = new int[]{0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366};
+    private static final int LEAP_YEARS_BEFORE_1970 = 1970 / 4 - 1970 / 100 + 1970 / 400;
     private static final TimeZone Z = TimeZone.getTimeZone("GMT");
     private static volatile TimeZone defaultTimezone = TimeZone.getDefault();
     private static final int HOUR = 1000 * 60 * 60;
@@ -36,21 +39,19 @@ public class DateIso8601 {
      * @param s should be in format YYYY-MM-DDTHH:mm:ss.sssZ
      */
     public Date parse(String s) {
-        //YYYY-MM-DDTHH:mm:ss.sssZ
-        Calendar calendar = new GregorianCalendar();
         int length = s.length();
         char[] chars = StringReflection.chars(s);
         int i = length == chars.length ? 0 : StringReflection.offset(s);
-
-
-        calendar.set(Calendar.YEAR, getInt4(chars, i));
+        int year, month, day;
+        year = getInt4(chars, i);
         i = 4;
         char c = chars[i];
         if (c == '-') {
             i++;
             c = chars[i];
         }
-        calendar.set(Calendar.MONTH, getInt2(chars, i, c) - 1);
+
+        month = getInt2(chars, i, c);
         i += 2;
 
         c = chars[i];
@@ -59,26 +60,24 @@ public class DateIso8601 {
             c = chars[i];
         }
 
-        calendar.set(Calendar.DAY_OF_MONTH, getInt2(chars, i, c));
+        day = getInt2(chars, i, c);
         i += 2;
 
         if (i >= length) {
-            calendar.setTimeZone(Z);
-            clearTime(calendar);
-            return calendar.getTime();
+            return new Date(dateToMillis(year, month, day));
         }
 
+        int hour, minute = 0, second = 0;
+        int millisecond = 0;
+
         checkOr(chars[i], 'T', ' ');
-        calendar.set(Calendar.HOUR_OF_DAY, getInt2(chars, i + 1));
+        hour = getInt2(chars, i + 1);
 
         i += 3;
 
         if (i >= length) {
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-            calendar.set(Calendar.MILLISECOND, 0);
-            calendar.setTimeZone(tz);
-            return calendar.getTime();
+            long timeStamp = getTimeStamp(year, month, day, hour, 0, 0, 0);
+            return new Date(timeStamp - tz.getOffset(timeStamp));
         }
 
         c = chars[i];
@@ -87,14 +86,12 @@ public class DateIso8601 {
             c = chars[i];
         }
         if (isInt(c)) {
-            calendar.set(Calendar.MINUTE, getInt2(chars, i, c));
+            minute = getInt2(chars, i, c);
             i += 2;
 
             if (i >= length) {
-                calendar.set(Calendar.SECOND, 0);
-                calendar.set(Calendar.MILLISECOND, 0);
-                calendar.setTimeZone(tz);
-                return calendar.getTime();
+                long timeStamp = getTimeStamp(year, month, day, hour, minute, 0, 0);
+                return new Date(timeStamp - tz.getOffset(timeStamp));
             }
 
             c = chars[i];
@@ -104,13 +101,12 @@ public class DateIso8601 {
             }
 
             if (isInt(c)) {
-                calendar.set(Calendar.SECOND, getInt2(chars, i, c));
+                second = getInt2(chars, i, c);
                 i += 2;
 
                 if (i >= length) {
-                    calendar.set(Calendar.MILLISECOND, 0);
-                    calendar.setTimeZone(tz);
-                    return calendar.getTime();
+                    long timeStamp = getTimeStamp(year, month, day, hour, minute, second, 0);
+                    return new Date(timeStamp - tz.getOffset(timeStamp));
                 }
 
                 c = chars[i];
@@ -119,28 +115,19 @@ public class DateIso8601 {
                     c = chars[i];
                 }
                 if (isInt(c)) {
-                    calendar.set(Calendar.MILLISECOND, getInt3(chars, i, c));
+                    millisecond = getInt3(chars, i, c);
                     i += 3;
-                } else
-                    calendar.set(Calendar.MILLISECOND, 0);
-            } else {
-                calendar.set(Calendar.SECOND, 0);
-                calendar.set(Calendar.MILLISECOND, 0);
+                }
             }
-        } else {
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-            calendar.set(Calendar.MILLISECOND, 0);
         }
 
 
         if (i == length) {
-            calendar.setTimeZone(tz);
-            return calendar.getTime();
+            long timeStamp = getTimeStamp(year, month, day, hour, minute, second, millisecond);
+            return new Date(timeStamp - tz.getOffset(timeStamp));
         }
         if (chars[i] == 'Z') {
-            calendar.setTimeZone(Z);
-            return calendar.getTime();
+            return new Date(getTimeStamp(year, month, day, hour, minute, second, millisecond));
         }
 
         c = chars[i];
@@ -151,8 +138,7 @@ public class DateIso8601 {
         int hours = getInt2(chars, i + 1);
         i += 3;
         if (i >= length) {
-            calendar.setTimeZone(new SimpleTimeZone(hours * HOUR * (plus ? 1 : -1)));
-            return calendar.getTime();
+            return new Date(getTimeStamp(year, month, day, hour - hours * (plus ? 1 : -1), minute, second, millisecond));
         }
         c = chars[i];
         if (c == ':') {
@@ -161,9 +147,7 @@ public class DateIso8601 {
         }
 
         int minutes = getInt2(chars, i, c);
-        calendar.setTimeZone(new SimpleTimeZone((int) (hours * HOUR + minutes * MINUTE) * (plus ? 1 : -1)));
-
-        return calendar.getTime();
+        return new Date(getTimeStamp(year, month, day, hour - hours * (plus ? 1 : -1), minute - minutes * (plus ? 1 : -1), second, millisecond));
     }
 
     private static int getInt(char c) {
@@ -213,14 +197,6 @@ public class DateIso8601 {
         i = i * 10 + getInt(chars[offset + 1]);
         i = i * 10 + getInt(chars[offset + 2]);
         return i * 10 + getInt(chars[offset + 3]);
-    }
-
-    private static void clearTime(Calendar c) {
-        c.set(Calendar.HOUR_OF_DAY, 0);
-        c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
-        c.setTimeZone(Z);
     }
 
     public static String format(Date date) {
@@ -347,36 +323,39 @@ public class DateIso8601 {
             chars[offset] = '0';
     }
 
-    private static class SimpleTimeZone extends TimeZone {
-        private int rawOffset;
+    static int daysToYear(int year) {
+        return (year - 1970) * 365 + year / 4 - year / 100 + year / 400 - LEAP_YEARS_BEFORE_1970 - (year % 4 == 0 ? 1 : 0) + (year % 100 == 0 && year % 400 != 0 ? 1 : 0);
+    }
 
-        private SimpleTimeZone(int rawOffset) {
-            this.rawOffset = rawOffset;
-        }
+    public static long getTimeStamp(int year, int month, int day, int hour, int minute, int second, int milliseconds) {
+        long timestamp = dateToMillis(year, month, day) + timeToMillis(hour, minute, second);
+        return timestamp + milliseconds;
+    }
 
-        @Override
-        public int getOffset(int era, int year, int month, int day, int dayOfWeek, int milliseconds) {
-            throw new UnsupportedOperationException("Not implemented yet.");
-        }
+    public static boolean isLeapYear(int year) {
+        if (year < 1 || year > 9999)
+            throw new IllegalArgumentException("Bad year: " + year);
 
-        @Override
-        public void setRawOffset(int offsetMillis) {
-            rawOffset = offsetMillis;
-        }
-
-        @Override
-        public int getRawOffset() {
-            return rawOffset;
-        }
-
-        @Override
-        public boolean useDaylightTime() {
+        if (year % 4 != 0)
             return false;
-        }
 
-        @Override
-        public boolean inDaylightTime(Date date) {
-            return false;
+        if (year % 100 == 0)
+            return year % 400 == 0;
+
+        return true;
+    }
+
+    public static long dateToMillis(int year, int month, int day) {
+        if (year >= 1 && year <= 9999 && month >= 1 && month <= 12) {
+            int[] daysToMonth = isLeapYear(year) ? daysToMonth366 : daysToMonth365;
+            if (day >= 1 && day <= daysToMonth[month] - daysToMonth[month - 1]) {
+                return (daysToYear(year) + daysToMonth[month - 1] + day - 1) * 86400000L;
+            }
         }
+        throw new IllegalArgumentException();
+    }
+
+    public static long timeToMillis(int hour, int minute, int second) {
+        return (hour * 3600L + minute * 60L + second) * 1000;
     }
 }

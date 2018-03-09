@@ -40,7 +40,25 @@ public class DateIso8601Test {
         assertEquals(create(2007, 4, 5, 0, 0, 0, 0), new DateIso8601(tz).parse("20070405"));
     }
 
+    @Test
+    public void test_2() {
+        TimeZone tz = TimeZone.getTimeZone("Europe/Berlin");
+        TimeZone gmt = TimeZone.getTimeZone("GMT");
+        for (int i = 1900; i <= 2100; i++) {
+            assertEquals(create(i, 1, 5, 14, 30, 10, 123, tz), new DateIso8601(tz).parse(i + "-01-05T14:30:10.123"));
+            assertEquals(create(i, 7, 5, 14, 30, 10, 123, tz), new DateIso8601(tz).parse(i + "-07-05T14:30:10.123"));
+            assertEquals(create(i, 1, 5, 14, 30, 10, 123), new DateIso8601(gmt).parse(i + "-01-05T14:30:10.123"));
+            assertEquals(create(i, 7, 5, 14, 30, 10, 123), new DateIso8601(gmt).parse(i + "-07-05T14:30:10.123"));
+            assertEquals(create(i, 1, 5, 14, 30, 10, 123), new DateIso8601(tz).parse(i + "-01-05T14:30:10.123Z"));
+            assertEquals(create(i, 7, 5, 14, 30, 10, 123), new DateIso8601(tz).parse(i + "-07-05T14:30:10.123Z"));
+        }
+    }
+
     private Date create(int year, int month, int day, int hours, int minutes, int seconds, int milliseconds) {
+        return create(year, month, day, hours, minutes, seconds, milliseconds, TimeZone.getTimeZone("GMT"));
+    }
+
+    private Date create(int year, int month, int day, int hours, int minutes, int seconds, int milliseconds, TimeZone tz) {
         Calendar c = GregorianCalendar.getInstance();
         c.set(Calendar.YEAR, year);
         c.set(Calendar.MONTH, month - 1);
@@ -49,7 +67,7 @@ public class DateIso8601Test {
         c.set(Calendar.MINUTE, minutes);
         c.set(Calendar.SECOND, seconds);
         c.set(Calendar.MILLISECOND, milliseconds);
-        c.setTimeZone(TimeZone.getTimeZone("GMT"));
+        c.setTimeZone(tz);
         return c.getTime();
     }
 
