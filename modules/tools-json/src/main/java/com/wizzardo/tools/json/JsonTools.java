@@ -96,15 +96,15 @@ public class JsonTools {
     }
 
     public static <T> T parse(String s, Class<T> clazz) {
-        return parse(s, new JsonGeneric<T>(clazz));
+        return parse(s, Binder.getGeneric(clazz));
     }
 
     public static <T> T parse(String s, Class<T> clazz, Class... generic) {
-        return parse(s, new JsonGeneric<T>(clazz, generic));
+        return parse(s, Binder.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(String s, Class<T> clazz, JsonGeneric... generic) {
-        return parse(s, new JsonGeneric<T>(clazz, generic));
+        return parse(s, Binder.getGeneric(clazz, generic));
     }
 
     public static JsonItem parse(byte[] bytes) {
@@ -116,27 +116,35 @@ public class JsonTools {
     }
 
     public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz) {
-        return parse(new String(bytes, from, length, UTF_8), new JsonGeneric<T>(clazz));
+        return parse(new String(bytes, from, length, UTF_8), Binder.getGeneric(clazz));
     }
 
     public static <T> T parse(byte[] bytes, Class<T> clazz) {
-        return parse(new String(bytes, UTF_8), new JsonGeneric<T>(clazz));
+        return parse(bytes, 0, bytes.length, clazz);
     }
 
     public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, Class... generic) {
-        return parse(new String(bytes, from, length, UTF_8), new JsonGeneric<T>(clazz, generic));
+        return parse(new String(bytes, from, length, UTF_8), Binder.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(byte[] bytes, Class<T> clazz, Class... generic) {
-        return parse(new String(bytes, UTF_8), new JsonGeneric<T>(clazz, generic));
+        return parse(bytes, 0, bytes.length, clazz, generic);
     }
 
     public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, JsonGeneric... generic) {
-        return parse(new String(bytes, from, length, UTF_8), new JsonGeneric<T>(clazz, generic));
+        return parse(new String(bytes, from, length, UTF_8), Binder.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(byte[] bytes, Class<T> clazz, JsonGeneric... generic) {
-        return parse(new String(bytes, UTF_8), new JsonGeneric<T>(clazz, generic));
+        return parse(bytes, 0, bytes.length, clazz, generic);
+    }
+
+    public static <T> T parse(char[] s, Class<T> clazz, Class... generic) {
+        return parse(s, 0, s.length, Binder.getGeneric(clazz, generic));
+    }
+
+    public static <T> T parse(char[] s, Class<T> clazz, JsonGeneric... generic) {
+        return parse(s, 0, s.length, Binder.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(String s, JsonGeneric<T> generic) {
@@ -150,14 +158,6 @@ public class JsonTools {
 
     public static JsonItem parse(char[] s) {
         return new JsonItem(parse(s, 0, s.length, null));
-    }
-
-    public static <T> T parse(char[] s, Class<T> clazz, Class... generic) {
-        return parse(s, 0, s.length, new JsonGeneric<T>(clazz, generic));
-    }
-
-    public static <T> T parse(char[] s, Class<T> clazz, JsonGeneric... generic) {
-        return parse(s, 0, s.length, new JsonGeneric<T>(clazz, generic));
     }
 
     public static <T> T parse(char[] s, int from, int to, JsonGeneric<T> generic) {

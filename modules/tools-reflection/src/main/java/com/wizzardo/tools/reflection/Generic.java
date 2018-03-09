@@ -15,10 +15,16 @@ public class Generic<T, F extends Fields, G extends Generic> {
     protected Map<String, G> types;
     protected F fields;
     protected final G[] typeParameters;
-    protected final Generic[] interfaces;
+    protected Generic[] interfaces;
 
     public static <T> Generic<T, Fields, Generic> of(Class<T> clazz) {
         return new Generic<T, Fields, Generic>(clazz);
+    }
+
+    protected Generic(Class c, G parent, G[] typeParameters) {
+        this.clazz = c;
+        this.parent = parent;
+        this.typeParameters = typeParameters;
     }
 
     public Generic(Type c) {
@@ -40,7 +46,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
         types = getTypes(c, typeParameters);
 
         Type[] interfaces = clazz.getGenericInterfaces();
-        this.interfaces = createInterfaces(interfaces);
+        this.interfaces = createArray(interfaces.length);
         initInterfaces(this.interfaces, interfaces, types, new HashMap<Type, Generic<T, F, G>>());
     }
 
@@ -55,7 +61,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
         types = getTypes(c, typeParameters);
 
         Type[] interfaces = clazz.getGenericInterfaces();
-        this.interfaces = createInterfaces(interfaces);
+        this.interfaces = createArray(interfaces.length);
         initInterfaces(this.interfaces, interfaces, types, new HashMap<Type, Generic<T, F, G>>());
     }
 
@@ -147,12 +153,8 @@ public class Generic<T, F extends Fields, G extends Generic> {
         }
 
         Type[] interfaces = clazz.getGenericInterfaces();
-        this.interfaces = createInterfaces(interfaces);
+        this.interfaces = createArray(interfaces.length);
         initInterfaces(this.interfaces, interfaces, types, cyclicDependencies);
-    }
-
-    protected Generic[] createInterfaces(Type[] interfaces) {
-        return new Generic[interfaces.length];
     }
 
     protected void initInterfaces(Generic[] result, Type[] interfaces, Map<String, G> types, Map<Type, Generic<T, F, G>> cyclicDependencies) {
@@ -162,7 +164,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
     }
 
     private Map<String, G> getTypes(Class<T> c, G[] generics) {
-        TypeVariable<Class<T>>[] variables = clazz.getTypeParameters();
+        TypeVariable<Class<T>>[] variables = c.getTypeParameters();
         if (variables.length == 0 || generics.length == 0)
             return null;
 

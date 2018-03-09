@@ -53,7 +53,12 @@ public class JavaMapBinder extends JavaObjectBinder {
     }
 
     protected void put(StringConverter keyConverter, Object value) {
-        that.put(keyConverter.convert(tempKey), value);
+        that.put(keyConverter.convert(tempKeyName), value);
+    }
+
+    @Override
+    public void setTemporaryKey(String key) {
+        tempKeyName = key;
     }
 
     @Override

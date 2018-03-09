@@ -1,5 +1,7 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.CharTree;
+import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.reflection.Generic;
 
 import java.lang.reflect.Field;
@@ -13,6 +15,16 @@ import java.util.Map;
 public class JsonGeneric<T> extends Generic<T, JsonFields, JsonGeneric> {
 
     public final Binder.Serializer serializer;
+    protected CharTree<Pair<String, JsonFieldInfo>> fieldsTree;
+
+    public static <T, G extends JsonGeneric> JsonGeneric<T> copyWithoutTypesAndInterfaces(JsonGeneric<T> generic, G... generics) {
+        return new JsonGeneric<T>(generic.clazz, generic.parent, generics, generic.serializer);
+    }
+
+    protected JsonGeneric(Class c, JsonGeneric parent, JsonGeneric[] typeParameters, Binder.Serializer serializer) {
+        super(c, parent, typeParameters);
+        this.serializer = serializer;
+    }
 
     public JsonGeneric(Type c) {
         super(c);
@@ -86,5 +98,16 @@ public class JsonGeneric<T> extends Generic<T, JsonFields, JsonGeneric> {
     @Override
     protected JsonGeneric create(Type c, Map<String, JsonGeneric> types, Map<Type, Generic<T, JsonFields, JsonGeneric>> cyclicDependencies) {
         return new JsonGeneric(c, types, cyclicDependencies);
+    }
+
+    public CharTree<Pair<String, JsonFieldInfo>> getFieldsTree() {
+        if (fieldsTree != null)
+            return fieldsTree;
+
+        fieldsTree = new CharTree<Pair<String, JsonFieldInfo>>();
+        for (JsonFieldInfo info : fields.fields()) {
+            fieldsTree.append(info.field.getName(), Pair.of(info.field.getName(), info));
+        }
+        return fieldsTree;
     }
 }

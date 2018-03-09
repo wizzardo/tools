@@ -1,4 +1,4 @@
-package com.wizzardo.tools.collections;
+package com.wizzardo.tools.misc;
 
 /**
  * @author: moxa

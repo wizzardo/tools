@@ -1,8 +1,8 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.misc.DateIso8601;
+import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.FieldReflection;
 import com.wizzardo.tools.reflection.Fields;
@@ -22,7 +22,29 @@ public class Binder {
     private static Map<JsonGeneric, JsonFields> cachedFields = new ConcurrentHashMap<JsonGeneric, JsonFields>();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
     private static Map<Class, Serializer> serializers = new ConcurrentHashMap<Class, Serializer>();
-    static CharTree<String> fieldsNames = new CharTree<String>();
+    private static Map<Class, JsonGeneric> cachedJsonGenerics = new ConcurrentHashMap<Class, JsonGeneric>();
+    static CharTree<Pair<String, JsonFieldInfo>> fieldsNames = new CharTree<Pair<String, JsonFieldInfo>>();
+
+    static <T> JsonGeneric<T> getGeneric(Class<T> clazz) {
+        JsonGeneric<T> jsonGeneric = cachedJsonGenerics.get(clazz);
+        if (jsonGeneric != null)
+            return jsonGeneric;
+
+        cachedJsonGenerics.put(clazz, jsonGeneric = new JsonGeneric<T>(clazz));
+        return jsonGeneric;
+    }
+
+    static <T> JsonGeneric<T> getGeneric(Class<T> clazz, Class... generic) {
+        JsonGeneric[] generics = new JsonGeneric[generic.length];
+        for (int i = 0; i < generic.length; i++) {
+            generics[i] = getGeneric(generic[i]);
+        }
+        return getGeneric(clazz, generics);
+    }
+
+    static <T> JsonGeneric<T> getGeneric(Class<T> clazz, JsonGeneric... generic) {
+        return JsonGeneric.copyWithoutTypesAndInterfaces(getGeneric(clazz), generic);
+    }
 
     public static abstract class Serializer {
         static char[] nullArray = new char[]{'n', 'u', 'l', 'l'};
@@ -375,7 +397,7 @@ public class Binder {
         @Override
         public JsonFieldInfo map(Field field, JsonGeneric generic) {
             if (!fieldsNames.contains(field.getName()))
-                fieldsNames.append(field.getName(), field.getName());
+                fieldsNames.append(field.getName(), Pair.of(field.getName(), (JsonFieldInfo) null));
             field.setAccessible(true);
             Class<?> type = field.getType();
             Map<String, JsonGeneric> types = generic.types();
@@ -572,11 +594,19 @@ public class Binder {
         Constructor c = cachedConstructors.get(clazz);
         if (c == null) {
             if (clazz == List.class)
-                c = initDefaultConstructor(List.class, ArrayList.class);
-            else if (clazz == Set.class)
-                c = initDefaultConstructor(Set.class, HashSet.class);
-            else
-                c = initDefaultConstructor(clazz);
+                return new ArrayList();
+            if (clazz == Set.class)
+                return new HashSet();
+            if (clazz == ArrayList.class)
+                return new ArrayList();
+            if (clazz == HashSet.class)
+                return new HashSet();
+            if (clazz == LinkedList.class)
+                return new LinkedList();
+            if (clazz == TreeSet.class)
+                return new TreeSet();
+
+            c = initDefaultConstructor(clazz);
         }
         return (Collection) createInstance(c);
     }
@@ -585,9 +615,13 @@ public class Binder {
         Constructor c = cachedConstructors.get(clazz);
         if (c == null) {
             if (clazz == Map.class)
-                c = initDefaultConstructor(Map.class, HashMap.class);
-            else
-                c = initDefaultConstructor(clazz);
+                return new HashMap();
+            if (clazz == HashMap.class)
+                return new HashMap();
+            if (clazz == TreeMap.class)
+                return new TreeMap();
+
+            c = initDefaultConstructor(clazz);
         }
         return (Map) createInstance(c);
     }

@@ -1,6 +1,6 @@
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.collections.Pair;
+import com.wizzardo.tools.misc.Pair;
 
 import java.util.*;
 

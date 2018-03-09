@@ -1,5 +1,8 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.CharTree;
+import com.wizzardo.tools.misc.Pair;
+
 import java.util.Map;
 
 /**
@@ -11,26 +14,25 @@ class JavaObjectBinder implements JsonBinder {
     protected Class clazz;
     protected JsonGeneric generic;
     protected JsonFields fields;
-    protected String tempKey;
+    protected JsonFieldInfo tempKey;
+    protected String tempKeyName;
+    protected CharTree<Pair<String, JsonFieldInfo>> fieldsTree;
 
-    public JavaObjectBinder(JsonGeneric generic) {
+    public JavaObjectBinder(JsonGeneric<?> generic) {
         this.clazz = generic.clazz;
         this.generic = generic;
         object = createInstance(clazz);
         fields = generic.getFields();
+        fieldsTree = generic.getFieldsTree();
     }
 
     protected Object createInstance(Class clazz) {
         return Binder.createObject(clazz);
     }
 
-    private JsonFieldInfo getField() {
-        return fields.get(tempKey);
-    }
-
     @Override
     public void add(Object value) {
-        JsonFieldInfo fieldInfo = getField();
+        JsonFieldInfo fieldInfo = tempKey;
         if (fieldInfo == null)
             return;
         fieldInfo.reflection.setObject(object, value);
@@ -48,7 +50,7 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public JsonBinder getObjectBinder() {
-        JsonFieldInfo info = getField();
+        JsonFieldInfo info = tempKey;
         if (info == null)
             return null;
 
@@ -60,7 +62,7 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public JsonBinder getArrayBinder() {
-        JsonFieldInfo info = getField();
+        JsonFieldInfo info = tempKey;
         if (info == null)
             return null;
 
@@ -73,14 +75,24 @@ class JavaObjectBinder implements JsonBinder {
 
     @Override
     public void setTemporaryKey(String key) {
-        tempKey = key;
+        tempKeyName = key;
+        tempKey = null;
+    }
+
+    @Override
+    public void setTemporaryKey(Pair<String, JsonFieldInfo> pair) {
+        tempKeyName = pair.key;
+        tempKey = pair.value;
     }
 
     @Override
     public JsonFieldSetter getFieldSetter() {
-        JsonFieldInfo f = getField();
-        if (f != null)
-            return f.reflection;
-        return null;
+        JsonFieldInfo f = tempKey;
+        return f != null ? f.reflection : null;
+    }
+
+    @Override
+    public CharTree.CharTreeNode<Pair<String, JsonFieldInfo>> getFieldsTree() {
+        return fieldsTree.getRoot();
     }
 }

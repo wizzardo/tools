@@ -1,5 +1,7 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.CharTree;
+import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.reflection.field.Type;
 
 import java.lang.reflect.Array;
@@ -100,6 +102,11 @@ class JavaArrayBinder implements JsonBinder {
     }
 
     @Override
+    public CharTree.CharTreeNode<Pair<String, JsonFieldInfo>> getFieldsTree() {
+        return null;
+    }
+
+    @Override
     public JsonBinder getObjectBinder() {
         JsonGeneric type = generic.type(0);
         if (Map.class.isAssignableFrom(type.clazz))
@@ -115,6 +122,11 @@ class JavaArrayBinder implements JsonBinder {
 
     @Override
     public void setTemporaryKey(String key) {
+        throw new UnsupportedOperationException("JsonArray can not have any keys");
+    }
+
+    @Override
+    public void setTemporaryKey(Pair<String, JsonFieldInfo> pair) {
         throw new UnsupportedOperationException("JsonArray can not have any keys");
     }
 

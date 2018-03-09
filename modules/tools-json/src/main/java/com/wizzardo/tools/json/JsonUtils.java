@@ -1,6 +1,7 @@
 package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.CharTree;
+import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.reflection.FieldReflection;
 
 /**
@@ -336,12 +337,24 @@ class JsonUtils {
             from++;
         }
 
-        CharTree.CharTreeNode<String> node = Binder.fieldsNames.getRoot();
+        CharTree.CharTreeNode<Pair<String, JsonFieldInfo>> node = binder == null ? null : binder.getFieldsTree();
 
         int rightBorder;
         boolean escape = false;
         boolean needDecoding = false;
         if (quote == 0) {
+            if (node != null)
+                for (; i < to; i++) {
+                    ch = s[i];
+                    if (ch <= ' ' || ch == ':' || ch == '}') break;
+
+                    if (ch == '\\')
+                        needDecoding = true;
+
+                    node = node.next(ch);
+                    if (node == null)
+                        break; // continue in next loop
+                }
             for (; i < to; i++) {
                 ch = s[i];
                 if (ch <= ' ' || ch == ':' || ch == '}') break;
@@ -400,13 +413,17 @@ class JsonUtils {
         if (binder == null)
             return i + 1;
 
-        String value = null;
+        String value;
         if (!needDecoding) {
-            if (node != null)
-                value = node.getValue();
+            if (node != null) {
+                Pair<String, JsonFieldInfo> v = node.getValue();
+                if (v != null) {
+                    binder.setTemporaryKey(v);
+                    return i + 1;
+                }
+            }
 
-            if (value == null)
-                value = new String(s, from, rightBorder - from);
+            value = new String(s, from, rightBorder - from);
         } else
             value = JsonTools.unescape(s, from, rightBorder);
 

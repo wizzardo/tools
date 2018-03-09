@@ -1,8 +1,7 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.collections.Pair;
+import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.reflection.Generic;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -1033,7 +1032,7 @@ public class JsonTest {
         Assert.assertEquals(1, JsonUtils.parseValue(null, "1   ".toCharArray(), 0, 4, ' '));
         Assert.assertEquals(4, JsonUtils.parseKey(null, "k  : ".toCharArray(), 0, 5));
 
-        Binder.fieldsNames.append("k\\\"ey", "k\\\"ey");
+        Binder.fieldsNames.append("k\\\"ey", Pair.of("k\\\"ey", (JsonFieldInfo) null));
         Assert.assertEquals(8, JsonUtils.parseKey(null, "'k\\\"ey':value".toCharArray(), 0, 15));
 
         testException(new Runnable() {

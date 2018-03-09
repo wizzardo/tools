@@ -1,4 +1,4 @@
-package com.wizzardo.tools.collections;
+package com.wizzardo.tools.misc;
 
 import org.junit.Assert;
 import org.junit.Test;
