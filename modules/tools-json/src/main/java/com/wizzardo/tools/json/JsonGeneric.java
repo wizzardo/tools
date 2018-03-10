@@ -4,8 +4,7 @@ import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.reflection.Generic;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Map;
 
 
@@ -28,27 +27,31 @@ public class JsonGeneric<T> extends Generic<T, JsonFields, JsonGeneric> {
 
     public JsonGeneric(Type c) {
         super(c);
-        serializer = Binder.classToSerializer(clazz);
+        serializer = createSerializer(c);
     }
 
     public JsonGeneric(Class<T> c, Class... generics) {
         super(c, generics);
-        serializer = Binder.classToSerializer(clazz);
+        serializer = createSerializer(c);
     }
 
     public JsonGeneric(Class<T> c, JsonGeneric... generics) {
         super(c, generics);
-        serializer = Binder.classToSerializer(clazz);
+        serializer = createSerializer(c);
     }
 
     protected JsonGeneric(Type c, Map<String, JsonGeneric> types) {
         super(c, types);
-        serializer = Binder.classToSerializer(clazz);
+        serializer = createSerializer(c);
     }
 
     public JsonGeneric(Type c, Map<String, JsonGeneric> types, Map<Type, Generic<T, JsonFields, JsonGeneric>> cyclicDependencies) {
         super(c, types, cyclicDependencies);
-        serializer = Binder.classToSerializer(clazz);
+        serializer = createSerializer(c);
+    }
+
+    protected Binder.Serializer createSerializer(Type c) {
+        return Binder.classToSerializer(clazz == Array.class && !(c instanceof GenericArrayType) ? (Class) c : clazz);
     }
 
     @Override

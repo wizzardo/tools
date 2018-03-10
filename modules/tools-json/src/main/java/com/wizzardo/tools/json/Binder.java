@@ -390,7 +390,7 @@ public class Binder {
     public final static Serializer genericSerializer = new Serializer(SerializerType.OBJECT) {
         @Override
         public void serialize(Object src, Appender sb, JsonGeneric generic) {
-            classToSerializer(src.getClass()).serialize(src, sb, null);
+            getGeneric(src.getClass()).serializer.serialize(src, sb, null);
         }
     };
     public final static Fields.FieldMapper<JsonFieldInfo, JsonGeneric> JSON_FIELD_INFO_MAPPER = new Fields.FieldMapper<JsonFieldInfo, JsonGeneric>() {
@@ -448,7 +448,7 @@ public class Binder {
     }
 
     public static JsonFields getFields(Class clazz) {
-        return getFields(new JsonGeneric(clazz));
+        return getGeneric(clazz).getFields();
     }
 
     public static JsonFields getFields(JsonGeneric generic) {
@@ -671,13 +671,13 @@ public class Binder {
             return;
         }
 
-        classToSerializer(src.getClass()).serialize(src, sb, null);
+        getGeneric(src.getClass()).serializer.serialize(src, sb, null);
     }
 
     private static void toJSON(String name, Object src, Appender sb) {
         Serializer serializer;
         if (src != null)
-            serializer = classToSerializer(src.getClass());
+            serializer = getGeneric(src.getClass()).serializer;
         else
             serializer = nullSerializer;
         appendName(name, sb, true);
@@ -729,7 +729,7 @@ public class Binder {
             serializer = generic.type(0).serializer;
             inner = generic.type(0);
         } else if (getArrayType(arr.getClass()) != Object.class)
-            serializer = classToSerializer(getArrayType(arr.getClass()));
+            serializer = getGeneric(getArrayType(arr.getClass())).serializer;
 
         sb.append('[');
         if (serializer != null)
