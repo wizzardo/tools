@@ -212,57 +212,94 @@ public class DateIso8601 {
     }
 
     public static char[] formatToChars(Date date, TimeZone timeZone) {
-        Calendar calendar = new GregorianCalendar(timeZone);
-        calendar.setTime(date);
+        long timestamp = date.getTime();
+        int offset = timeZone.getOffset(timestamp);
+        timestamp += offset;
+        int days = (int) (timestamp / 86400000L);
+
+        int year;
+        int month;
+        int day;
+        int hour;
+        int minute;
+        int second;
+        int milliseconds;
+
+        if (timestamp >= 0) {
+            year = days / 365 + 1970;
+            if (days < daysToYear(year))
+                year--;
+
+            days -= daysToYear(year);
+
+            month = days / 31;
+            day = days - daysToMonth(year, month) + 1;
+            if (day <= 0)
+                day = days - daysToMonth(year, month - 1) + 1;
+            else
+                month++;
+
+            milliseconds = (int) (timestamp - (timestamp / 86400000L) * 86400000L);
+            hour = milliseconds / 3600000;
+            milliseconds -= hour * 3600000;
+            minute = milliseconds / 60000;
+            milliseconds -= minute * 60000;
+            second = milliseconds / 1000;
+            milliseconds -= second * 1000;
+        } else {
+            year = days / 365 + 1970;
+            timestamp = -timestamp;
+            int dd = days - daysToYear(year);
+            if (dd <= 0 || dd >= (isLeapYear(year) ? 366 : 365))
+                dd = days - daysToYear(--year);
+
+            days = dd;
+
+            month = days / 31;
+            day = days - daysToMonth(year, month);
+            if (day <= 0)
+                day = days - daysToMonth(year, month - 1);
+            else
+                month++;
+
+            milliseconds = 24 * 3600000 - (int) (timestamp - (timestamp / 86400000L) * 86400000L);
+            hour = milliseconds / 3600000;
+            milliseconds -= hour * 3600000;
+            minute = milliseconds / 60000;
+            milliseconds -= minute * 60000;
+            second = milliseconds / 1000;
+            milliseconds -= second * 1000;
+        }
+
 
         char[] chars;
-        int offset = calendar.get(Calendar.DST_OFFSET) + calendar.get(Calendar.ZONE_OFFSET);
         if (offset == 0)
             chars = new char[24]; // YYYY-MM-DDTHH:mm:ss.SSSZ
         else
             chars = new char[28]; // YYYY-MM-DDTHH:mm:ss.SSS+HHmm
 
-        int t;
-        int i = 0;
+        append4(chars, year, 0);
+        chars[4] = '-';
+        append2(chars, month, 5);
+        chars[7] = '-';
+        append2(chars, day, 8);
+        chars[10] = 'T';
 
-        t = calendar.get(Calendar.YEAR);
-        append4(chars, t, i);
-        i += 4;
-        chars[i++] = '-';
-
-        t = calendar.get(Calendar.MONTH) + 1;
-        append2(chars, t, i);
-        i += 2;
-        chars[i++] = '-';
-
-        t = calendar.get(Calendar.DATE);
-        append2(chars, t, i);
-        i += 2;
-        chars[i++] = 'T';
-
-        t = calendar.get(Calendar.HOUR_OF_DAY);
-        append2(chars, t, i);
-        i += 2;
-        chars[i++] = ':';
-        t = calendar.get(Calendar.MINUTE);
-        append2(chars, t, i);
-        i += 2;
-        chars[i++] = ':';
-        t = calendar.get(Calendar.SECOND);
-        append2(chars, t, i);
-        i += 2;
-        chars[i++] = '.';
-        t = calendar.get(Calendar.MILLISECOND);
-        append3(chars, t, i);
-        i += 3;
+        append2(chars, hour, 11);
+        chars[13] = ':';
+        append2(chars, minute, 14);
+        chars[16] = ':';
+        append2(chars, second, 17);
+        chars[19] = '.';
+        append3(chars, milliseconds, 20);
         if (offset == 0)
-            chars[i] = 'Z';
+            chars[23] = 'Z';
         else {
-            chars[i] = offset < 0 ? '-' : '+';
+            chars[23] = offset < 0 ? '-' : '+';
             int h = offset / HOUR;
             int m = (offset - h * HOUR) / MINUTE;
-            append2(chars, h, i + 1);
-            append2(chars, m, i + 3);
+            append2(chars, h, 24);
+            append2(chars, m, 26);
         }
 
         return chars;
@@ -347,12 +384,20 @@ public class DateIso8601 {
 
     public static long dateToMillis(int year, int month, int day) {
         if (year >= 1 && year <= 9999 && month >= 1 && month <= 12) {
-            int[] daysToMonth = isLeapYear(year) ? daysToMonth366 : daysToMonth365;
+            int[] daysToMonth = daysToMonth(year);
             if (day >= 1 && day <= daysToMonth[month] - daysToMonth[month - 1]) {
                 return (daysToYear(year) + daysToMonth[month - 1] + day - 1) * 86400000L;
             }
         }
         throw new IllegalArgumentException();
+    }
+
+    private static int[] daysToMonth(int year) {
+        return isLeapYear(year) ? daysToMonth366 : daysToMonth365;
+    }
+
+    private static int daysToMonth(int year, int month) {
+        return daysToMonth(year)[month];
     }
 
     public static long timeToMillis(int hour, int minute, int second) {

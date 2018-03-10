@@ -73,12 +73,31 @@ public class DateIso8601Test {
 
     @Test
     public void testFormat() {
-        String s = "2007-04-05T14:30:10.123Z";
+        TimeZone timeZone = TimeZone.getTimeZone("Europe/Berlin");
+        assertEquals("1900-01-01T14:30:10.123Z", format(new DateIso8601().parse("1900-01-01T14:30:10.123Z")));
+        assertEquals("1900-12-31T14:30:10.123Z", format(new DateIso8601().parse("1900-12-31T14:30:10.123Z")));
+        assertEquals("2007-12-31T14:30:10.123Z", format(new DateIso8601().parse("2007-12-31T14:30:10.123Z")));
+        assertEquals("2007-01-01T14:30:10.123Z", format(new DateIso8601().parse("2007-01-01T14:30:10.123Z")));
+        assertEquals("2007-04-05T19:00:10.123+0200", format(new DateIso8601().parse("2007-04-05T14:30:10.123-0230"), timeZone));
 
+        String s = "2007-04-05T14:30:10.123Z";
         assertEquals(s, format(new DateIso8601().parse(s)));
 
         s = "2007-04-05T14:30:10.123-0230";
         assertEquals("2007-04-05T17:00:10.123Z", format(new DateIso8601().parse(s)));
-        assertEquals("2007-04-05T19:00:10.123+0200", format(new DateIso8601().parse(s), TimeZone.getTimeZone("Europe/Berlin")));
+        assertEquals("2007-04-05T19:00:10.123+0200", format(new DateIso8601().parse(s), timeZone));
+
+        for (int i = 1900; i <= 2100; i++) {
+            assertEquals(i + "-01-01T14:30:10.123Z", format(new DateIso8601().parse(i + "-01-01T14:30:10.123Z")));
+            assertEquals(i + "-12-31T14:30:10.123Z", format(new DateIso8601().parse(i + "-12-31T14:30:10.123Z")));
+            assertEquals(i + "-06-15T14:30:10.123Z", format(new DateIso8601().parse(i + "-06-15T14:30:10.123Z")));
+            assertEquals(i + "-02-28T14:30:10.123Z", format(new DateIso8601().parse(i + "-02-28T14:30:10.123Z")));
+
+            Date date = new DateIso8601().parse(i + "-02-05T23:30:10.123Z");
+            if (timeZone.inDaylightTime(date))
+                assertEquals(i + "-02-06T01:30:10.123+0200", format(date, timeZone));
+            else
+                assertEquals(i + "-02-06T00:30:10.123+0100", format(date, timeZone));
+        }
     }
 }
