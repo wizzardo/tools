@@ -3,6 +3,8 @@ package com.wizzardo.tools.misc;
 import com.wizzardo.tools.interfaces.Consumer;
 import com.wizzardo.tools.interfaces.Supplier;
 
+import java.util.Date;
+
 /**
  * @author: wizzardo
  * Date: 8/24/14
@@ -122,6 +124,19 @@ public class ExceptionDrivenStringBuilder implements Appendable {
 
     public ExceptionDrivenStringBuilder append(Object ob) {
         return append(String.valueOf(ob));
+    }
+
+    public ExceptionDrivenStringBuilder append(Date date) {
+        try {
+            length = DateIso8601.formatToChars(date, buffer, length);
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            ensureCapacity(length + 28);
+            return append(date);
+        } catch (IndexOutOfBoundsException ex) {
+            ensureCapacity(length + 28);
+            return append(date);
+        }
+        return this;
     }
 
     public ExceptionDrivenStringBuilder append(int i) {

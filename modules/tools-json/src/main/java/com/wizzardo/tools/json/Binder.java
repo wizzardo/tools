@@ -344,7 +344,7 @@ public class Binder {
         @Override
         public void serialize(Object object, Appender appender, JsonGeneric generic) {
             appender.append('"');
-            appender.append(DateIso8601.formatToChars((Date) object));
+            appender.append((Date) object);
             appender.append('"');
         }
     };

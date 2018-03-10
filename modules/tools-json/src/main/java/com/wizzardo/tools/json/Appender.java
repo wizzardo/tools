@@ -1,15 +1,13 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.misc.NumberToChars;
-import com.wizzardo.tools.misc.UTF8Writer;
-import com.wizzardo.tools.misc.Unchecked;
+import com.wizzardo.tools.misc.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.Date;
 
 /**
  * @author: wizzardo
@@ -36,6 +34,8 @@ abstract class Appender {
     public abstract void append(long s);
 
     public abstract void append(boolean s);
+
+    public abstract void append(Date d);
 
     public void append(float s) {
         append(String.valueOf(s));
@@ -77,6 +77,7 @@ abstract class Appender {
 
     private static class StringBuilderAppender extends Appender {
         private StringBuilder sb;
+        protected char[] buffer = new char[28];
 
         StringBuilderAppender() {
             this(new StringBuilder());
@@ -119,6 +120,12 @@ abstract class Appender {
         @Override
         public void append(boolean s) {
             sb.append(s);
+        }
+
+        @Override
+        public void append(Date d) {
+            int l = DateIso8601.formatToChars(d, buffer, 0);
+            sb.append(buffer, 0, l);
         }
 
         @Override
@@ -184,6 +191,11 @@ abstract class Appender {
         }
 
         @Override
+        public void append(Date d) {
+            sb.append(d);
+        }
+
+        @Override
         public void append(float s) {
             sb.append(s);
         }
@@ -205,7 +217,7 @@ abstract class Appender {
 
     private static class WriterAppender<T extends Writer> extends Appender {
         protected T out;
-        protected char[] buffer = new char[20];
+        protected char[] buffer = new char[28];
 
         WriterAppender(T out) {
             this.out = out;
@@ -229,6 +241,12 @@ abstract class Appender {
                 append(CHARS_TRUE, 0, 4);
             else
                 append(CHARS_FALSE, 0, 5);
+        }
+
+        @Override
+        public void append(Date d) {
+            int l = DateIso8601.formatToChars(d, buffer, 0);
+            append(buffer, 0, l);
         }
 
         @Override

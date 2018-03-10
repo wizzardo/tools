@@ -212,9 +212,27 @@ public class DateIso8601 {
     }
 
     public static char[] formatToChars(Date date, TimeZone timeZone) {
-        long timestamp = date.getTime();
-        int offset = timeZone.getOffset(timestamp);
-        timestamp += offset;
+        char[] chars;
+        int offset = timeZone.getOffset(date.getTime());
+        if (offset == 0)
+            chars = new char[24]; // YYYY-MM-DDTHH:mm:ss.SSSZ
+        else
+            chars = new char[28]; // YYYY-MM-DDTHH:mm:ss.SSS+HHmm
+
+        formatToChars(date, offset, chars, 0);
+        return chars;
+    }
+
+    public static int formatToChars(Date date, int timezoneOffset, char[] chars, int offset) {
+        return formatToChars(date.getTime(), timezoneOffset, chars, offset);
+    }
+
+    public static int formatToChars(Date date, char[] chars, int offset) {
+        return formatToChars(date.getTime(), 0, chars, offset);
+    }
+
+    public static int formatToChars(long timestamp, int timezoneOffset, char[] chars, int offset) {
+        timestamp += timezoneOffset;
         int days = (int) (timestamp / 86400000L);
 
         int year;
@@ -271,38 +289,31 @@ public class DateIso8601 {
             milliseconds -= second * 1000;
         }
 
+        append4(chars, year, offset);
+        chars[offset + 4] = '-';
+        append2(chars, month, offset + 5);
+        chars[offset + 7] = '-';
+        append2(chars, day, offset + 8);
+        chars[offset + 10] = 'T';
 
-        char[] chars;
-        if (offset == 0)
-            chars = new char[24]; // YYYY-MM-DDTHH:mm:ss.SSSZ
-        else
-            chars = new char[28]; // YYYY-MM-DDTHH:mm:ss.SSS+HHmm
-
-        append4(chars, year, 0);
-        chars[4] = '-';
-        append2(chars, month, 5);
-        chars[7] = '-';
-        append2(chars, day, 8);
-        chars[10] = 'T';
-
-        append2(chars, hour, 11);
-        chars[13] = ':';
-        append2(chars, minute, 14);
-        chars[16] = ':';
-        append2(chars, second, 17);
-        chars[19] = '.';
-        append3(chars, milliseconds, 20);
-        if (offset == 0)
-            chars[23] = 'Z';
-        else {
-            chars[23] = offset < 0 ? '-' : '+';
-            int h = offset / HOUR;
-            int m = (offset - h * HOUR) / MINUTE;
-            append2(chars, h, 24);
-            append2(chars, m, 26);
+        append2(chars, hour, offset + 11);
+        chars[offset + 13] = ':';
+        append2(chars, minute, offset + 14);
+        chars[offset + 16] = ':';
+        append2(chars, second, offset + 17);
+        chars[offset + 19] = '.';
+        append3(chars, milliseconds, offset + 20);
+        if (timezoneOffset == 0) {
+            chars[offset + 23] = 'Z';
+            return offset + 24;
+        } else {
+            chars[offset + 23] = timezoneOffset < 0 ? '-' : '+';
+            int h = timezoneOffset / HOUR;
+            int m = (timezoneOffset - h * HOUR) / MINUTE;
+            append2(chars, h, offset + 24);
+            append2(chars, m, offset + 26);
+            return offset + 28;
         }
-
-        return chars;
     }
 
 
