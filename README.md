@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/wizzardo/tools.svg?branch=master)](https://travis-ci.org/wizzardo/tools)
 [![codecov](https://codecov.io/gh/wizzardo/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/wizzardo/tools)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.wizzardo.tools/tools/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.wizzardo.tools/tools/badge.svg)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.wizzardo.tools/tools/badge.svg)](https://mvnrepository.com/artifact/com.wizzardo.tools/tools/latest)
 
 
 Tools
@@ -32,6 +32,25 @@ maven:
 gradle:
 ```
 compile 'com.wizzardo.tools:tools:0.19'
+
+// or by module:
+
+def tools_version = "0.19"
+compile "com.wizzardo.tools:tools-cache:${tools_version}"
+compile "com.wizzardo.tools:tools-collections:${tools_version}"
+compile "com.wizzardo.tools:tools-evaluation:${tools_version}"
+compile "com.wizzardo.tools:tools-exception:${tools_version}"
+compile "com.wizzardo.tools:tools-helpers:${tools_version}"
+compile "com.wizzardo.tools:tools-http:${tools_version}"
+compile "com.wizzardo.tools:tools-image:${tools_version}"
+compile "com.wizzardo.tools:tools-interfaces:${tools_version}"
+compile "com.wizzardo.tools:tools-io:${tools_version}"
+compile "com.wizzardo.tools:tools-json:${tools_version}"
+compile "com.wizzardo.tools:tools-math:${tools_version}"
+compile "com.wizzardo.tools:tools-misc:${tools_version}"
+compile "com.wizzardo.tools:tools-reflection:${tools_version}"
+compile "com.wizzardo.tools:tools-security:${tools_version}"
+compile "com.wizzardo.tools:tools-xml:${tools_version}"
 ```
 
 License
