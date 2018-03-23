@@ -10,6 +10,7 @@ import java.util.List;
 public class CharTree<V> {
 
     private CharTreeNode<V> root;
+    protected int size;
 
     public CharTree() {
     }
@@ -43,9 +44,16 @@ public class CharTree<V> {
             temp = next.next(b);
             p = b;
         }
+        if (temp.value == null)
+            size++;
+        
         temp.value = value;
 
         return this;
+    }
+
+    public int size() {
+        return size;
     }
 
     public boolean contains(String name) {
