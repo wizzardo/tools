@@ -102,6 +102,14 @@ public class Flow<B> {
         return then(new FlowSkip<B>(number));
     }
 
+    public Flow<B> skipWhile(Filter<? super B> skipWhile) {
+        return then(new FlowSkipWhile<B>(skipWhile));
+    }
+
+    public Flow<B> skipUntil(Filter<? super B> skipUntil) {
+        return then(new FlowSkipUntil<B>(skipUntil));
+    }
+
     public Flow<B> limit(int number) {
         return then(new FlowLimit<B>(number));
     }
