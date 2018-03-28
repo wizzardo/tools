@@ -15,7 +15,7 @@ import java.util.zip.GZIPInputStream;
  * @author: wizzardo
  * Date: 3/1/14
  */
-public class Response {
+public class Response implements Closeable {
     private static ThreadLocal<SimpleDateFormat> dateFormatThreadLocal = new ThreadLocal<SimpleDateFormat>() {
         @Override
         public SimpleDateFormat get() {
@@ -71,6 +71,22 @@ public class Response {
             out.write(buffer, 0, r);
         }
         out.flush();
+    }
+
+    public interface Consumer<T> {
+        void accept(T t);
+    }
+
+    public void readLines(Consumer<String> consumer) throws IOException {
+        InputStream in = asStream();
+        if (in == null)
+            return;
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+        String line;
+        while ((line = br.readLine()) != null) {
+            consumer.accept(line);
+        }
     }
 
     public InputStream asStream() throws IOException {
@@ -188,5 +204,9 @@ public class Response {
 
     public int getContentLength() throws IOException {
         return connection.getContentLength();
+    }
+
+    public void close() {
+        connection.disconnect();
     }
 }
