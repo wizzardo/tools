@@ -29,6 +29,8 @@ public class RequestArguments<T extends RequestArguments> {
     protected byte[] data;
     protected HostnameVerifier hostnameVerifier;
     protected SSLSocketFactory sslFactory;
+    protected int connectTimeout;
+    protected int readTimeout;
 
     public Request createRequest(String url) {
         Request request = new Request(url)
@@ -40,6 +42,8 @@ public class RequestArguments<T extends RequestArguments> {
                 .setSSLSocketFactory(sslFactory)
                 .setHostnameVerifier(hostnameVerifier)
                 .method(method)
+                .connectTimeout(connectTimeout)
+                .readTimeout(readTimeout)
                 .setUrlEncoding(charsetForEncoding);
 
         request.data = data;
@@ -337,6 +341,21 @@ public class RequestArguments<T extends RequestArguments> {
         return self();
     }
 
+    public T timeout(int ms) {
+        this.connectTimeout = ms;
+        this.readTimeout = ms;
+        return self();
+    }
+
+    public T readTimeout(int ms) {
+        this.readTimeout = ms;
+        return self();
+    }
+
+    public T connectTimeout(int ms) {
+        this.connectTimeout = ms;
+        return self();
+    }
 
     public T setContentType(String contentType) {
         return addHeader("Content-Type", contentType);

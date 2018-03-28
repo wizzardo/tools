@@ -103,6 +103,8 @@ public class Request extends RequestArguments<Request> {
             } else {
                 c = (HttpURLConnection) u.openConnection();
             }
+            c.setConnectTimeout(connectTimeout);
+            c.setReadTimeout(readTimeout);
             c.setInstanceFollowRedirects(false);
             c.setRequestMethod(method.toString());
             for (Map.Entry<String, String> header : headers.entrySet()) {
