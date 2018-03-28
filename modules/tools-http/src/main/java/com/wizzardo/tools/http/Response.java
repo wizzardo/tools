@@ -89,6 +89,27 @@ public class Response implements Closeable {
         }
     }
 
+    public interface Reducer<R, T> {
+        R reduce(R result, T value);
+    }
+
+    public <R> R reduceLines(R r, final Reducer<R, String> reducer) throws IOException {
+        class Reference<T> {
+            T value;
+        }
+
+        final Reference<R> reference = new Reference<R>();
+        reference.value = r;
+
+        readLines(new Consumer<String>() {
+            @Override
+            public void accept(String s) {
+                reference.value = reducer.reduce(reference.value, s);
+            }
+        });
+        return reference.value;
+    }
+
     public InputStream asStream() throws IOException {
         InputStream inputStream = connection.getResponseCode() < 400 ? connection.getInputStream() : connection.getErrorStream();
         String encoding = connection.getHeaderField("Content-Encoding");
