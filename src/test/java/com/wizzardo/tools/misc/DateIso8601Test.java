@@ -110,6 +110,7 @@ public class DateIso8601Test {
         c.setTime(create(1900, 1, 1, 3, 4, 5, 6));
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        simpleDateFormat.setTimeZone(timeZone);
 
         for (int i = 0; i < 365 * 200; i++) {
             assertEquals(simpleDateFormat.format(c.getTime()), DateIso8601.format(c.getTime(), timeZone));
