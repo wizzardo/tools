@@ -254,8 +254,16 @@ public class DateIso8601 {
             day = days - daysToMonth(year, month) + 1;
             if (day <= 0)
                 day = days - daysToMonth(year, month - 1) + 1;
-            else
+            else {
                 month++;
+                if (day > 28) {
+                    int temp = days - daysToMonth(year, month) + 1;
+                    if (temp > 0) {
+                        day = temp;
+                        month++;
+                    }
+                }
+            }
 
             milliseconds = (int) (timestamp - (timestamp / 86400000L) * 86400000L);
             hour = milliseconds / 3600000;
@@ -277,8 +285,16 @@ public class DateIso8601 {
             day = days - daysToMonth(year, month);
             if (day <= 0)
                 day = days - daysToMonth(year, month - 1);
-            else
+            else {
                 month++;
+                if (day > 28) {
+                    int temp = days - daysToMonth(year, month);
+                    if (temp > 0) {
+                        day = temp;
+                        month++;
+                    }
+                }
+            }
 
             milliseconds = 24 * 3600000 - (int) (timestamp - (timestamp / 86400000L) * 86400000L);
             hour = milliseconds / 3600000;

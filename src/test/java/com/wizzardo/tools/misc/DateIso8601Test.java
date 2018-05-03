@@ -2,6 +2,7 @@ package com.wizzardo.tools.misc;
 
 import org.junit.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -98,6 +99,21 @@ public class DateIso8601Test {
                 assertEquals(i + "-02-06T01:30:10.123+0200", format(date, timeZone));
             else
                 assertEquals(i + "-02-06T00:30:10.123+0100", format(date, timeZone));
+        }
+    }
+
+    @Test
+    public void testFormatComplex() {
+        TimeZone timeZone = TimeZone.getTimeZone("Europe/Berlin");
+        Calendar c = GregorianCalendar.getInstance();
+        c.setTimeZone(timeZone);
+        c.setTime(create(1900, 1, 1, 3, 4, 5, 6));
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+
+        for (int i = 0; i < 365 * 200; i++) {
+            assertEquals(simpleDateFormat.format(c.getTime()), DateIso8601.format(c.getTime(), timeZone));
+            c.add(Calendar.DATE, 1);
         }
     }
 }
