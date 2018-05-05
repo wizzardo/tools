@@ -44,6 +44,10 @@ public class EventBus<E> {
         return this;
     }
 
+    public void trigger(E event) {
+        trigger(event, null);
+    }
+
     public void trigger(E event, Object data) {
         List<Listener<? super E, Object>> list = getListeners(event, false);
         if (list == null)
