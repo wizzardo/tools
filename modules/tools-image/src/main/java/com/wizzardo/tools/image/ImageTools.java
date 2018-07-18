@@ -4,8 +4,6 @@
  */
 package com.wizzardo.tools.image;
 
-import com.sun.image.codec.jpeg.JPEGCodec;
-import com.sun.image.codec.jpeg.JPEGImageDecoder;
 import com.wizzardo.tools.io.FileTools;
 
 import javax.imageio.ImageIO;
@@ -113,8 +111,7 @@ public class ImageTools {
     }
 
     public static BufferedImage readAndConvertFromCMYK(InputStream in, ICC_Profile cmykProfile) throws IOException {
-        JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
-        BufferedImage src = decoder.decodeAsBufferedImage();
+        BufferedImage src = ImageIO.read(in);
         WritableRaster srcRaster = src.getRaster();
         //prepare result image
         BufferedImage result = new BufferedImage(srcRaster.getWidth(), srcRaster.getHeight(), BufferedImage.TYPE_INT_RGB);
