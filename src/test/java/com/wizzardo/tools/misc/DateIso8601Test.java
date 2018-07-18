@@ -75,10 +75,15 @@ public class DateIso8601Test {
     @Test
     public void testFormat() {
         TimeZone timeZone = TimeZone.getTimeZone("Europe/Berlin");
+        assertEquals("1900-10-19T00:00:00.000Z", format(new DateIso8601().parse("1900-10-19")));
+        assertEquals("1901-01-01T00:00:00.000Z", format(new DateIso8601().parse("1901-01-01")));
+        assertEquals("1901-01-01T23:59:59.999Z", format(new DateIso8601().parse("1901-01-01T23:59:59.999Z")));
         assertEquals("1900-01-01T14:30:10.123Z", format(new DateIso8601().parse("1900-01-01T14:30:10.123Z")));
         assertEquals("1900-12-31T14:30:10.123Z", format(new DateIso8601().parse("1900-12-31T14:30:10.123Z")));
         assertEquals("2007-12-31T14:30:10.123Z", format(new DateIso8601().parse("2007-12-31T14:30:10.123Z")));
         assertEquals("2007-01-01T14:30:10.123Z", format(new DateIso8601().parse("2007-01-01T14:30:10.123Z")));
+        assertEquals("2007-01-01T23:59:59.999Z", format(new DateIso8601().parse("2007-01-01T23:59:59.999Z")));
+        assertEquals("2007-01-01T00:00:00.000Z", format(new DateIso8601().parse("2007-01-01")));
         assertEquals("2007-04-05T19:00:10.123+0200", format(new DateIso8601().parse("2007-04-05T14:30:10.123-0230"), timeZone));
 
         String s = "2007-04-05T14:30:10.123Z";

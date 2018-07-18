@@ -244,6 +244,26 @@ public class DateIso8601 {
         int milliseconds;
 
         if (timestamp >= 0) {
+            milliseconds = (int) (timestamp - (timestamp / 86400000L) * 86400000L);
+        } else {
+            timestamp = -timestamp;
+
+            milliseconds = -(int) (timestamp - (timestamp / 86400000L) * 86400000L);
+            if (milliseconds < 0) {
+                milliseconds = 24 * 3600000 + milliseconds;
+                days--;
+            }
+        }
+
+        hour = milliseconds / 3600000;
+        milliseconds -= hour * 3600000;
+        minute = milliseconds / 60000;
+        milliseconds -= minute * 60000;
+        second = milliseconds / 1000;
+        milliseconds -= second * 1000;
+
+
+        if (timestamp >= 0) {
             year = days / 365 + 1970;
             if (days < daysToYear(year))
                 year--;
@@ -264,17 +284,8 @@ public class DateIso8601 {
                     }
                 }
             }
-
-            milliseconds = (int) (timestamp - (timestamp / 86400000L) * 86400000L);
-            hour = milliseconds / 3600000;
-            milliseconds -= hour * 3600000;
-            minute = milliseconds / 60000;
-            milliseconds -= minute * 60000;
-            second = milliseconds / 1000;
-            milliseconds -= second * 1000;
         } else {
             year = days / 365 + 1970;
-            timestamp = -timestamp;
             int dd = days - daysToYear(year);
             if (dd <= 0 || dd >= (isLeapYear(year) ? 366 : 365))
                 dd = days - daysToYear(--year);
@@ -295,14 +306,6 @@ public class DateIso8601 {
                     }
                 }
             }
-
-            milliseconds = 24 * 3600000 - (int) (timestamp - (timestamp / 86400000L) * 86400000L);
-            hour = milliseconds / 3600000;
-            milliseconds -= hour * 3600000;
-            minute = milliseconds / 60000;
-            milliseconds -= minute * 60000;
-            second = milliseconds / 1000;
-            milliseconds -= second * 1000;
         }
 
         append4(chars, year, offset);
