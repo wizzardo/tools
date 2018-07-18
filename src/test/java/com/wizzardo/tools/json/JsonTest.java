@@ -2,6 +2,9 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.core.StringContains;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -859,7 +862,7 @@ public class JsonTest {
         Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonArray());
         Assert.assertEquals(true, JsonTools.parse("{key:[]}").asJsonObject().get("key").isJsonArray());
 
-        testException(new Runnable() {
+        testExceptionContains(new Runnable() {
             @Override
             public void run() {
                 Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonArray());
@@ -868,7 +871,7 @@ public class JsonTest {
 
         Assert.assertEquals(false, JsonTools.parse("{key:value}").asJsonObject().get("key").isJsonObject());
         Assert.assertEquals(true, JsonTools.parse("{key:{}}").asJsonObject().get("key").isJsonObject());
-        testException(new Runnable() {
+        testExceptionContains(new Runnable() {
             @Override
             public void run() {
                 Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonObject());
@@ -1466,12 +1469,12 @@ public class JsonTest {
         Assert.assertEquals(TreeMap.class, Binder.createMap(TreeMap.class).getClass());
 
 
-        testException(new Runnable() {
+        testExceptionContains(new Runnable() {
             @Override
             public void run() {
                 Binder.createCollection(CustomList.class);
             }
-        }, IllegalAccessException.class, "Class com.wizzardo.tools.json.Binder can not access a member of class " +
+        }, IllegalAccessException.class, "com.wizzardo.tools.json.Binder ",
                 "com.wizzardo.tools.json.JsonTest$CustomList with modifiers \"private\"");
         testException(new Runnable() {
             @Override
@@ -1519,6 +1522,22 @@ public class JsonTest {
                 e.printStackTrace();
             Assert.assertEquals(exceptionClass, e.getClass());
             Assert.assertEquals(message, e.getMessage());
+            exception = true;
+        }
+        assert exception;
+    }
+
+    private void testExceptionContains(Runnable closure, Class exceptionClass, String... message) {
+        boolean exception = false;
+        try {
+            closure.run();
+        } catch (Exception e) {
+            if (!e.getClass().equals(exceptionClass))
+                e.printStackTrace();
+            Assert.assertEquals(exceptionClass, e.getClass());
+            for (String s : message) {
+                Assert.assertThat("Message doesn't contain expected string", e.getMessage(), new StringContains(s));
+            }
             exception = true;
         }
         assert exception;
