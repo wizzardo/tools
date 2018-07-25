@@ -39,58 +39,45 @@ public class DateIso8601 {
      * @param s should be in format YYYY-MM-DDTHH:mm:ss.sssZ
      */
     public Date parse(String s) {
-        int length = s.length();
-        char[] chars = StringReflection.chars(s);
-        int i = length == chars.length ? 0 : StringReflection.offset(s);
-        int year, month, day;
-        year = getInt4(chars, i);
-        i = 4;
-        char c = chars[i];
-        if (c == '-') {
-            i++;
+        try {
+            int length = s.length();
+            char[] chars = StringReflection.chars(s);
+            int i = length == chars.length ? 0 : StringReflection.offset(s);
+            int year, month, day;
+            year = getInt4(chars, i);
+            i = 4;
+            char c = chars[i];
+            if (c == '-') {
+                i++;
+                c = chars[i];
+            }
+
+            month = getInt2(chars, i, c);
+            i += 2;
+
             c = chars[i];
-        }
+            if (c == '-') {
+                i++;
+                c = chars[i];
+            }
 
-        month = getInt2(chars, i, c);
-        i += 2;
-
-        c = chars[i];
-        if (c == '-') {
-            i++;
-            c = chars[i];
-        }
-
-        day = getInt2(chars, i, c);
-        i += 2;
-
-        if (i >= length) {
-            return new Date(dateToMillis(year, month, day));
-        }
-
-        int hour, minute = 0, second = 0;
-        int millisecond = 0;
-
-        checkOr(chars[i], 'T', ' ');
-        hour = getInt2(chars, i + 1);
-
-        i += 3;
-
-        if (i >= length) {
-            long timeStamp = getTimeStamp(year, month, day, hour, 0, 0, 0);
-            return new Date(timeStamp - tz.getOffset(timeStamp));
-        }
-
-        c = chars[i];
-        if (c == ':') {
-            i++;
-            c = chars[i];
-        }
-        if (isInt(c)) {
-            minute = getInt2(chars, i, c);
+            day = getInt2(chars, i, c);
             i += 2;
 
             if (i >= length) {
-                long timeStamp = getTimeStamp(year, month, day, hour, minute, 0, 0);
+                return new Date(dateToMillis(year, month, day));
+            }
+
+            int hour, minute = 0, second = 0;
+            int millisecond = 0;
+
+            checkOr(chars[i], 'T', ' ');
+            hour = getInt2(chars, i + 1);
+
+            i += 3;
+
+            if (i >= length) {
+                long timeStamp = getTimeStamp(year, month, day, hour, 0, 0, 0);
                 return new Date(timeStamp - tz.getOffset(timeStamp));
             }
 
@@ -99,55 +86,72 @@ public class DateIso8601 {
                 i++;
                 c = chars[i];
             }
-
             if (isInt(c)) {
-                second = getInt2(chars, i, c);
+                minute = getInt2(chars, i, c);
                 i += 2;
 
                 if (i >= length) {
-                    long timeStamp = getTimeStamp(year, month, day, hour, minute, second, 0);
+                    long timeStamp = getTimeStamp(year, month, day, hour, minute, 0, 0);
                     return new Date(timeStamp - tz.getOffset(timeStamp));
                 }
 
                 c = chars[i];
-                if (c == '.') {
+                if (c == ':') {
                     i++;
                     c = chars[i];
                 }
+
                 if (isInt(c)) {
-                    millisecond = getInt3(chars, i, c);
-                    i += 3;
+                    second = getInt2(chars, i, c);
+                    i += 2;
+
+                    if (i >= length) {
+                        long timeStamp = getTimeStamp(year, month, day, hour, minute, second, 0);
+                        return new Date(timeStamp - tz.getOffset(timeStamp));
+                    }
+
+                    c = chars[i];
+                    if (c == '.') {
+                        i++;
+                        c = chars[i];
+                    }
+                    if (isInt(c)) {
+                        millisecond = getInt3(chars, i, c);
+                        i += 3;
+                    }
                 }
             }
-        }
 
 
-        if (i == length) {
-            long timeStamp = getTimeStamp(year, month, day, hour, minute, second, millisecond);
-            return new Date(timeStamp - tz.getOffset(timeStamp));
-        }
-        if (chars[i] == 'Z') {
-            return new Date(getTimeStamp(year, month, day, hour, minute, second, millisecond));
-        }
+            if (i == length) {
+                long timeStamp = getTimeStamp(year, month, day, hour, minute, second, millisecond);
+                return new Date(timeStamp - tz.getOffset(timeStamp));
+            }
+            if (chars[i] == 'Z') {
+                return new Date(getTimeStamp(year, month, day, hour, minute, second, millisecond));
+            }
 
-        c = chars[i];
-        boolean plus = c == '+';
-        if (!plus)
-            check(c, '-');
-
-        int hours = getInt2(chars, i + 1);
-        i += 3;
-        if (i >= length) {
-            return new Date(getTimeStamp(year, month, day, hour - hours * (plus ? 1 : -1), minute, second, millisecond));
-        }
-        c = chars[i];
-        if (c == ':') {
-            i++;
             c = chars[i];
-        }
+            boolean plus = c == '+';
+            if (!plus)
+                check(c, '-');
 
-        int minutes = getInt2(chars, i, c);
-        return new Date(getTimeStamp(year, month, day, hour - hours * (plus ? 1 : -1), minute - minutes * (plus ? 1 : -1), second, millisecond));
+            int hours = getInt2(chars, i + 1);
+            i += 3;
+            if (i >= length) {
+                return new Date(getTimeStamp(year, month, day, hour - hours * (plus ? 1 : -1), minute, second, millisecond));
+            }
+            c = chars[i];
+            if (c == ':') {
+                i++;
+                c = chars[i];
+            }
+
+            int minutes = getInt2(chars, i, c);
+            return new Date(getTimeStamp(year, month, day, hour - hours * (plus ? 1 : -1), minute - minutes * (plus ? 1 : -1), second, millisecond));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Cannot parse date '" + s + "'", e);
+        }
     }
 
     private static int getInt(char c) {
