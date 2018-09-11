@@ -4,7 +4,7 @@ package com.wizzardo.tools.misc.pool;
 import com.wizzardo.tools.interfaces.Consumer;
 import com.wizzardo.tools.interfaces.Supplier;
 
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,7 +44,7 @@ public class PoolBuilder<T> {
             ThreadLocal<Queue<Holder<T>>> queue = new ThreadLocal<Queue<Holder<T>>>() {
                 @Override
                 protected Queue<Holder<T>> initialValue() {
-                    return new LinkedList<Holder<T>>();
+                    return new ArrayDeque<Holder<T>>();
                 }
             };
 
