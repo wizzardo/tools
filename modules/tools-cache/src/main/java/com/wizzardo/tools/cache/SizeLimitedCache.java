@@ -44,6 +44,19 @@ public class SizeLimitedCache<K, V> extends Cache<K, V> {
         }
     }
 
+
+    @Override
+    public SizeLimitedCache<K, V> onAdd(CacheListener<? super K, ? super V> onAdd) {
+        super.onAdd(onAdd);
+        return this;
+    }
+
+    @Override
+    public SizeLimitedCache<K, V> onRemove(CacheListener<? super K, ? super V> onRemove) {
+        super.onRemove(onRemove);
+        return this;
+    }
+
     public int limit() {
         return limit;
     }
