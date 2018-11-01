@@ -1,9 +1,8 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.Appender;
 import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.hamcrest.core.StringContains;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,6 +23,11 @@ import static org.junit.Assert.*;
  * Date: 1/18/13
  */
 public class JsonTest {
+
+    @Test
+    public void serialize_empty_object() {
+        Assert.assertEquals("{}", JsonTools.serialize(new Object()));
+    }
 
     @Test
     public void parse() {

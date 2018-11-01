@@ -1,9 +1,6 @@
 package com.wizzardo.tools.json;
 
-import com.wizzardo.tools.misc.CharTree;
-import com.wizzardo.tools.misc.DateIso8601;
-import com.wizzardo.tools.misc.Pair;
-import com.wizzardo.tools.misc.Unchecked;
+import com.wizzardo.tools.misc.*;
 import com.wizzardo.tools.reflection.FieldReflection;
 import com.wizzardo.tools.reflection.Fields;
 import com.wizzardo.tools.reflection.Generic;
@@ -390,7 +387,11 @@ public class Binder {
     public final static Serializer genericSerializer = new Serializer(SerializerType.OBJECT) {
         @Override
         public void serialize(Object src, Appender sb, JsonGeneric generic) {
-            getGeneric(src.getClass()).serializer.serialize(src, sb, null);
+            Class<?> clazz = src.getClass();
+            if (clazz == Object.class)
+                objectSerializer.serialize(src, sb, null);
+            else
+                getGeneric(clazz).serializer.serialize(src, sb, null);
         }
     };
     public final static Fields.FieldMapper<JsonFieldInfo, JsonGeneric> JSON_FIELD_INFO_MAPPER = new Fields.FieldMapper<JsonFieldInfo, JsonGeneric>() {
