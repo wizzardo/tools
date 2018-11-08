@@ -101,7 +101,7 @@ public class UTF8 {
                 }
             }
 
-            while (l <= max) {
+            while (l <= ll && off < limit) {
                 int c = chars[off++];
                 if (c < 128) {
                     bytes[l++] = (byte) c;
