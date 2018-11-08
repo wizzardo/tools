@@ -1,7 +1,11 @@
 package com.wizzardo.tools.misc;
 
 import com.wizzardo.tools.interfaces.Consumer;
+import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.interfaces.Supplier;
+import com.wizzardo.tools.misc.pool.Holder;
+import com.wizzardo.tools.misc.pool.Pool;
+import com.wizzardo.tools.misc.pool.PoolBuilder;
 
 import java.util.Date;
 
@@ -9,7 +13,35 @@ import java.util.Date;
  * @author: wizzardo
  * Date: 8/24/14
  */
-public class ExceptionDrivenStringBuilder implements Appendable {
+public class ExceptionDrivenStringBuilder implements Appendable, CharSequence {
+
+    public static final Pool<ExceptionDrivenStringBuilder> SHARED_POOL = new PoolBuilder<ExceptionDrivenStringBuilder>()
+            .queue(PoolBuilder.<ExceptionDrivenStringBuilder>createThreadLocalQueueSupplier())
+            .supplier(new Supplier<ExceptionDrivenStringBuilder>() {
+                @Override
+                public ExceptionDrivenStringBuilder supply() {
+                    return new ExceptionDrivenStringBuilder();
+                }
+            })
+            .resetter(new Consumer<ExceptionDrivenStringBuilder>() {
+                @Override
+                public void consume(ExceptionDrivenStringBuilder sb) {
+                    sb.clear();
+                }
+            })
+            .build();
+
+
+    public static <R> R withBuilder(Mapper<ExceptionDrivenStringBuilder, R> consumer) {
+        Holder<ExceptionDrivenStringBuilder> holder = ExceptionDrivenStringBuilder.SHARED_POOL.holder();
+        try {
+            ExceptionDrivenStringBuilder builder = holder.get();
+            return consumer.map(builder);
+        } finally {
+            holder.close();
+        }
+    }
+
     private static final char[] CHARS_TRUE = new char[]{'t', 'r', 'u', 'e'};
     private static final char[] CHARS_FALSE = new char[]{'f', 'a', 'l', 's', 'e'};
     private static final char[] CHARS_NULL = new char[]{'n', 'u', 'l', 'l'};
@@ -188,6 +220,69 @@ public class ExceptionDrivenStringBuilder implements Appendable {
 
     public int length() {
         return length;
+    }
+
+    @Override
+    public char charAt(int index) {
+        if (index < 0)
+            throw new StringIndexOutOfBoundsException(index);
+        if (index > length)
+            throw new StringIndexOutOfBoundsException("index > length()");
+
+        return buffer[index];
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+        if (start < 0)
+            throw new StringIndexOutOfBoundsException(start);
+        if (end < 0)
+            throw new StringIndexOutOfBoundsException(end);
+        if (end > length)
+            throw new StringIndexOutOfBoundsException("end > length()");
+        if (start > end)
+            throw new StringIndexOutOfBoundsException("start > end");
+
+        return new String(buffer, start, end - start);
+    }
+
+    public ExceptionDrivenStringBuilder replace(int start, int end, String str) {
+        if (start < 0)
+            throw new StringIndexOutOfBoundsException(start);
+        if (start > length)
+            throw new StringIndexOutOfBoundsException("start > length()");
+        if (start > end)
+            throw new StringIndexOutOfBoundsException("start > end");
+
+        if (end > length)
+            end = length;
+
+        int len = str.length();
+        int newLength = length + len - (end - start);
+        ensureCapacity(newLength);
+
+        System.arraycopy(buffer, end, buffer, start + len, length - end);
+        str.getChars(0, len, buffer, start);
+        length = newLength;
+        return this;
+    }
+
+    public int lastIndexOf(String str) {
+        return lastIndexOf(str, length);
+    }
+
+    public int lastIndexOf(String str, int fromIndex) {
+        int length = str.length();
+        outer:
+        for (int i = fromIndex - length; i >= 0; i--) {
+            for (int j = 0; j < length; j++) {
+                if (str.charAt(j) != buffer[i + j])
+                    continue outer;
+            }
+            return i;
+        }
+
+        return -1;
     }
 
     /**
