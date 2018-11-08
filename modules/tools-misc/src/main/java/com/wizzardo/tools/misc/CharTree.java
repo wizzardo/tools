@@ -27,27 +27,31 @@ public class CharTree<V> {
         return append(reverse(s.toCharArray()), value);
     }
 
-    public CharTree<V> append(char[] chars, V value) {
+    public synchronized CharTree<V> append(char[] chars, V value) {
         if (root == null)
             root = new SingleCharTreeNode<V>();
 
-        char b = chars[0];
-        root = root.append(b);
-        CharTreeNode<V> temp = root.next(b);
-        CharTreeNode<V> prev = root;
-        char p = b;
-        for (int i = 1; i < chars.length; i++) {
-            b = chars[i];
-            CharTreeNode<V> next = temp.append(b);
-            prev.set(p, next);
-            prev = next;
-            temp = next.next(b);
-            p = b;
+        try {
+            char b = chars[0];
+            root = root.append(b);
+            CharTreeNode<V> temp = root.next(b);
+            CharTreeNode<V> prev = root;
+            char p = b;
+            for (int i = 1; i < chars.length; i++) {
+                b = chars[i];
+                CharTreeNode<V> next = temp.append(b);
+                prev.set(p, next);
+                prev = next;
+                temp = next.next(b);
+                p = b;
+            }
+            if (temp.value == null)
+                size++;
+
+            temp.value = value;
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot append '" + new String(chars) + "'", e);
         }
-        if (temp.value == null)
-            size++;
-        
-        temp.value = value;
 
         return this;
     }
