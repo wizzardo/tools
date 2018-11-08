@@ -2,6 +2,7 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.misc.Pair;
+import com.wizzardo.tools.misc.StringConverter;
 import com.wizzardo.tools.reflection.field.Type;
 
 import java.lang.reflect.Array;

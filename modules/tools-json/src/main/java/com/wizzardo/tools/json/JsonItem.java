@@ -1,7 +1,10 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.interfaces.Mapper;
+import com.wizzardo.tools.misc.Appender;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
-import com.wizzardo.tools.misc.pool.Holder;
+import com.wizzardo.tools.misc.StringConverter;
+import com.wizzardo.tools.misc.TextTools;
 
 import java.util.Date;
 
@@ -231,7 +234,7 @@ public class JsonItem {
     }
 
     public <T extends Enum<T>> T asEnum(Class<T> cl) {
-        return JsonUtils.asEnum(cl, asString());
+        return TextTools.asEnum(cl, asString());
     }
 
     public JsonObject asJsonObject() {
@@ -290,15 +293,14 @@ public class JsonItem {
     }
 
     public String toString() {
-        Holder<ExceptionDrivenStringBuilder> holder = JsonTools.builderPool.holder();
-        try {
-            ExceptionDrivenStringBuilder builder = holder.get();
-            Appender sb = Appender.create(builder);
-            toJson(sb);
-            return sb.toString();
-        } finally {
-            holder.close();
-        }
+        return ExceptionDrivenStringBuilder.withBuilder(new Mapper<ExceptionDrivenStringBuilder, String>() {
+            @Override
+            public String map(ExceptionDrivenStringBuilder builder) {
+                Appender sb = Appender.create(builder);
+                toJson(sb);
+                return sb.toString();
+            }
+        });
     }
 
     void toJson(Appender sb) {

@@ -1,6 +1,5 @@
-package com.wizzardo.tools.json;
+package com.wizzardo.tools.misc;
 
-import com.wizzardo.tools.misc.DateIso8601;
 import com.wizzardo.tools.reflection.field.Type;
 
 import java.util.Date;
@@ -8,76 +7,76 @@ import java.util.Date;
 /**
  * Created by wizzardo on 02.03.15.
  */
-abstract class StringConverter<T> {
+public abstract class StringConverter<T> {
 
-    final Type type;
+    public final Type type;
 
-    static final StringConverter TO_INTEGER = new StringConverter<Integer>(Type.INTEGER) {
+    public static final StringConverter TO_INTEGER = new StringConverter<Integer>(Type.INTEGER) {
         @Override
-        Integer convert(String s) {
+        public Integer convert(String s) {
             return toInteger(s);
         }
     };
 
-    static final StringConverter TO_LONG = new StringConverter<Long>(Type.LONG) {
+    public static final StringConverter TO_LONG = new StringConverter<Long>(Type.LONG) {
         @Override
-        Long convert(String s) {
+        public Long convert(String s) {
             return toLong(s);
         }
     };
 
-    static final StringConverter TO_BOOLEAN = new StringConverter<Boolean>(Type.BOOLEAN) {
+    public static final StringConverter TO_BOOLEAN = new StringConverter<Boolean>(Type.BOOLEAN) {
         @Override
-        Boolean convert(String s) {
+        public Boolean convert(String s) {
             return toBoolean(s);
         }
     };
 
-    static final StringConverter TO_SHORT = new StringConverter<Short>(Type.SHORT) {
+    public static final StringConverter TO_SHORT = new StringConverter<Short>(Type.SHORT) {
         @Override
-        Short convert(String s) {
+        public Short convert(String s) {
             return toShort(s);
         }
     };
 
-    static final StringConverter TO_BYTE = new StringConverter<Byte>(Type.BYTE) {
+    public static final StringConverter TO_BYTE = new StringConverter<Byte>(Type.BYTE) {
         @Override
-        Byte convert(String s) {
+        public Byte convert(String s) {
             return toByte(s);
         }
     };
 
-    static final StringConverter TO_FLOAT = new StringConverter<Float>(Type.FLOAT) {
+    public static final StringConverter TO_FLOAT = new StringConverter<Float>(Type.FLOAT) {
         @Override
-        Float convert(String s) {
+        public Float convert(String s) {
             return toFloat(s);
         }
     };
 
-    static final StringConverter TO_DOUBLE = new StringConverter<Double>(Type.DOUBLE) {
+    public static final StringConverter TO_DOUBLE = new StringConverter<Double>(Type.DOUBLE) {
         @Override
-        Double convert(String s) {
+        public Double convert(String s) {
             return toDouble(s);
         }
     };
 
-    static final StringConverter TO_DATE = new StringConverter<Date>(Type.OBJECT) {
+    public static final StringConverter TO_DATE = new StringConverter<Date>(Type.OBJECT) {
         @Override
-        Date convert(String s) {
+        public Date convert(String s) {
             return toDate(s);
         }
     };
 
-    static final StringConverter TO_STRING = new StringConverter<String>(Type.OBJECT) {
+    public static final StringConverter TO_STRING = new StringConverter<String>(Type.OBJECT) {
         @Override
-        String convert(String s) {
+        public String convert(String s) {
             return s;
         }
     };
 
-    static final StringConverter TO_CHARACTER = new StringConverter<Character>(Type.CHAR) {
+    public static final StringConverter TO_CHARACTER = new StringConverter<Character>(Type.CHAR) {
         @Override
-        Character convert(String s) {
+        public Character convert(String s) {
             if (s.length() > 1) {
                 return (char) Integer.parseInt(s);
             } else
@@ -89,9 +88,9 @@ abstract class StringConverter<T> {
         this.type = type;
     }
 
-    abstract T convert(String s);
+    public abstract T convert(String s);
 
-    static StringConverter getConverter(Class clazz) {
+    public static StringConverter getConverter(Class clazz) {
         if (clazz == String.class || clazz == Object.class)
             return TO_STRING;
         if (clazz == Integer.class)
@@ -116,35 +115,35 @@ abstract class StringConverter<T> {
         return null;
     }
 
-    static Integer toInteger(String s) {
+    public static Integer toInteger(String s) {
         return Integer.valueOf(s);
     }
 
-    static Long toLong(String s) {
+    public static Long toLong(String s) {
         return Long.valueOf(s);
     }
 
-    static Byte toByte(String s) {
+    public static Byte toByte(String s) {
         return Byte.valueOf(s);
     }
 
-    static Short toShort(String s) {
+    public static Short toShort(String s) {
         return Short.valueOf(s);
     }
 
-    static Boolean toBoolean(String s) {
+    public static Boolean toBoolean(String s) {
         return Boolean.valueOf(s);
     }
 
-    static Float toFloat(String s) {
+    public static Float toFloat(String s) {
         return Float.valueOf(s);
     }
 
-    static Double toDouble(String s) {
+    public static Double toDouble(String s) {
         return Double.valueOf(s);
     }
 
-    static Date toDate(String s) {
+    public static Date toDate(String s) {
         return new DateIso8601().parse(s);
     }
 }

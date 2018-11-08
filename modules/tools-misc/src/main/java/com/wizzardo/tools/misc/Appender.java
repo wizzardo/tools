@@ -1,10 +1,7 @@
-package com.wizzardo.tools.json;
-
-import com.wizzardo.tools.misc.*;
+package com.wizzardo.tools.misc;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Date;
@@ -13,7 +10,7 @@ import java.util.Date;
  * @author: wizzardo
  * Date: 16.09.14
  */
-abstract class Appender {
+public abstract class Appender {
 
     private static final char[] CHARS_TRUE = new char[]{'t', 'r', 'u', 'e'};
     private static final char[] CHARS_FALSE = new char[]{'f', 'a', 'l', 's', 'e'};
@@ -55,23 +52,23 @@ abstract class Appender {
         append(chars, 0, chars.length);
     }
 
-    static Appender create() {
+    public static Appender create() {
         return new StringBuilderAppender();
     }
 
-    static Appender create(StringBuilder sb) {
+    public static Appender create(StringBuilder sb) {
         return new StringBuilderAppender(sb);
     }
 
-    static Appender create(ExceptionDrivenStringBuilder sb) {
+    public static Appender create(ExceptionDrivenStringBuilder sb) {
         return new ExceptionDrivenStringBuilderAppender(sb);
     }
 
-    static Appender create(OutputStream out) {
+    public static Appender create(OutputStream out) {
         return new UTF8WriterAppender(out);
     }
 
-    static Appender create(Writer out) {
+    public static Appender create(Writer out) {
         return new WriterAppender(out);
     }
 

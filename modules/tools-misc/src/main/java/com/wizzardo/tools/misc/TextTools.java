@@ -103,4 +103,8 @@ public class TextTools {
         }
         return l;
     }
+
+    public static <T extends Enum<T>> T asEnum(Class<T> cl, String name) {
+        return Enum.valueOf(cl, name);
+    }
 }

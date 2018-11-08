@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import java.util.Date;
 
-import static com.wizzardo.tools.json.StringConverter.*;
+import static com.wizzardo.tools.misc.StringConverter.*;
 
 /**
  * Created by wizzardo on 07.03.15.

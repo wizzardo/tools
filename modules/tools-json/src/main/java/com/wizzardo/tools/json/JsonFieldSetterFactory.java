@@ -1,5 +1,7 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.misc.StringConverter;
+import com.wizzardo.tools.misc.TextTools;
 import com.wizzardo.tools.reflection.FieldReflection;
 import com.wizzardo.tools.reflection.FieldReflectionFactory;
 import com.wizzardo.tools.reflection.field.*;
@@ -203,7 +205,7 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
         @Override
         public void setString(Object object, String value) {
-            setObject(object, JsonUtils.asEnum(type, value));
+            setObject(object, TextTools.asEnum(type, value));
         }
     }
 
@@ -276,7 +278,7 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
         @Override
         public void setString(Object object, String value) {
-            setObject(object, JsonUtils.asEnum(type, value));
+            setObject(object, TextTools.asEnum(type, value));
         }
     }
 

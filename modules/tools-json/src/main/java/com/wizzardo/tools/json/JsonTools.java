@@ -1,10 +1,10 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.interfaces.Supplier;
-import com.wizzardo.tools.interfaces.Consumer;
+import com.wizzardo.tools.misc.Appender;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import com.wizzardo.tools.misc.UTF8;
-import com.wizzardo.tools.misc.pool.*;
 import com.wizzardo.tools.reflection.StringReflection;
 
 import java.io.OutputStream;
@@ -74,22 +74,6 @@ public class JsonTools {
         UNESCAPES['/'] = '/';
         UNESCAPES['u'] = 128;
     }
-
-    public static final Pool<ExceptionDrivenStringBuilder> builderPool = new PoolBuilder<ExceptionDrivenStringBuilder>()
-            .queue(PoolBuilder.<ExceptionDrivenStringBuilder>createThreadLocalQueueSupplier())
-            .supplier(new Supplier<ExceptionDrivenStringBuilder>() {
-                @Override
-                public ExceptionDrivenStringBuilder supply() {
-                    return new ExceptionDrivenStringBuilder();
-                }
-            })
-            .resetter(new Consumer<ExceptionDrivenStringBuilder>() {
-                @Override
-                public void consume(ExceptionDrivenStringBuilder sb) {
-                    sb.clear();
-                }
-            })
-            .build();
 
     public static JsonItem parse(String s) {
         return new JsonItem(parse(s, (JsonGeneric<Object>) null));
@@ -178,37 +162,35 @@ public class JsonTools {
     /**
      * @return bytes array with UTF-8 json representation of the object
      */
-    public static byte[] serializeToBytes(Object src) {
-        Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
-        try {
-            ExceptionDrivenStringBuilder builder = holder.get();
-            serialize(src, builder);
-            return builder.toBytes();
-        } finally {
-            holder.close();
-        }
+    public static byte[] serializeToBytes(final Object src) {
+        return ExceptionDrivenStringBuilder.withBuilder(new Mapper<ExceptionDrivenStringBuilder, byte[]>() {
+            @Override
+            public byte[] map(ExceptionDrivenStringBuilder builder) {
+                serialize(src, builder);
+                return builder.toBytes();
+            }
+        });
     }
 
-    public static void serialize(Object src, Supplier<byte[]> bytesSupplier, UTF8.BytesConsumer bytesConsumer) {
-        Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
-        try {
-            ExceptionDrivenStringBuilder builder = holder.get();
-            serialize(src, builder);
-            builder.toBytes(bytesSupplier, bytesConsumer);
-        } finally {
-            holder.close();
-        }
+    public static void serialize(final Object src, final Supplier<byte[]> bytesSupplier, final UTF8.BytesConsumer bytesConsumer) {
+        ExceptionDrivenStringBuilder.withBuilder(new Mapper<ExceptionDrivenStringBuilder, Void>() {
+            @Override
+            public Void map(ExceptionDrivenStringBuilder builder) {
+                serialize(src, builder);
+                builder.toBytes(bytesSupplier, bytesConsumer);
+                return null;
+            }
+        });
     }
 
-    public static String serialize(Object src) {
-        Holder<ExceptionDrivenStringBuilder> holder = builderPool.holder();
-        try {
-            ExceptionDrivenStringBuilder builder = holder.get();
-            serialize(src, builder);
-            return builder.toString();
-        } finally {
-            holder.close();
-        }
+    public static String serialize(final Object src) {
+        return ExceptionDrivenStringBuilder.withBuilder(new Mapper<ExceptionDrivenStringBuilder, String>() {
+            @Override
+            public String map(ExceptionDrivenStringBuilder builder) {
+                serialize(src, builder);
+                return builder.toString();
+            }
+        });
     }
 
     public static void serialize(Object src, ExceptionDrivenStringBuilder out) {
