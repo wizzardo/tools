@@ -22,6 +22,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
     }
 
     protected Generic(Class c, G parent, G[] typeParameters) {
+        init();
         this.clazz = c;
         this.parent = parent;
         this.typeParameters = typeParameters;
@@ -31,7 +32,11 @@ public class Generic<T, F extends Fields, G extends Generic> {
         this(c, (Map) null);
     }
 
+    protected void init() {
+    }
+
     public Generic(Class<T> c, Class... generics) {
+        init();
         clazz = c;
         parent = null;
         if (generics == null) {
@@ -51,6 +56,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
     }
 
     public Generic(Class<T> c, G... generics) {
+        init();
         clazz = c;
         parent = null;
         if (generics == null)
@@ -70,6 +76,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
     }
 
     protected Generic(Type c, Map<String, G> types, Map<Type, Generic<T, F, G>> cyclicDependencies) {
+        init();
         if (c instanceof ParameterizedType) {
             ParameterizedType type = (ParameterizedType) c;
             clazz = (Class) type.getRawType();

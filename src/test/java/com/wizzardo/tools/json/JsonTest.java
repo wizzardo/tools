@@ -3,6 +3,7 @@ package com.wizzardo.tools.json;
 import com.wizzardo.tools.misc.Appender;
 import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
+import com.wizzardo.tools.reflection.Fields;
 import org.hamcrest.core.StringContains;
 import org.junit.Assert;
 import org.junit.Test;
@@ -972,7 +973,7 @@ public class JsonTest {
         testException(new Runnable() {
             @Override
             public void run() {
-                Binder.getField(IntPrimitiveClass.class, "i").serializer.serialize(null, null, null);
+                Binder.getField(IntPrimitiveClass.class, "i").serializer.serialize(null, null, null, null);
             }
         }, IllegalStateException.class, "PrimitiveSerializer can serialize only primitives");
     }
@@ -1474,11 +1475,11 @@ public class JsonTest {
 
 
         testExceptionContains(new Runnable() {
-            @Override
-            public void run() {
-                Binder.createCollection(CustomList.class);
-            }
-        }, IllegalAccessException.class, "com.wizzardo.tools.json.Binder ",
+                                  @Override
+                                  public void run() {
+                                      Binder.createCollection(CustomList.class);
+                                  }
+                              }, IllegalAccessException.class, "com.wizzardo.tools.json.Binder ",
                 "com.wizzardo.tools.json.JsonTest$CustomList with modifiers \"private\"");
         testException(new Runnable() {
             @Override
@@ -1632,5 +1633,29 @@ public class JsonTest {
         Assert.assertEquals(a.list.size(), b.list.size());
         Assert.assertEquals(1, b.list.size());
         Assert.assertEquals(a.list.get(0), b.list.get(0));
+    }
+
+    @Test
+    public void test_custom_context_custom_fields() {
+        SerializationContext context = new SerializationContext();
+        context.setJsonFieldInfoMapper(new Fields.FieldMapper<JsonFieldInfo, JsonGeneric>() {
+            @Override
+            public JsonFieldInfo map(Field field, JsonGeneric generic) {
+                if (field.getName().equals("i"))
+                    return Binder.JSON_FIELD_INFO_MAPPER.map(field, generic);
+                return null;
+            }
+        });
+        Assert.assertEquals("{\"i\":0}", JsonTools.serialize(new SimpleClass(), context));
+    }
+
+    @Test
+    public void test_invalidDataType() {
+        testException(new Runnable() {
+            @Override
+            public void run() {
+                JsonTools.parse("{'inner': 'asdfasdf'}", SerializeTest.class);
+            }
+        }, IllegalStateException.class, "Can not set 'asdfasdf' (class java.lang.String) to com.wizzardo.tools.json.JsonTest$SerializeTestInner com.wizzardo.tools.json.JsonTest$SerializeTest.inner");
     }
 }

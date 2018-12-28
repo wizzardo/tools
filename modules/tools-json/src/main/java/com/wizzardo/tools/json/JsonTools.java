@@ -80,15 +80,15 @@ public class JsonTools {
     }
 
     public static <T> T parse(String s, Class<T> clazz) {
-        return parse(s, Binder.getGeneric(clazz));
+        return parse(s, Binder.DEFAULT_SERIALIZATION_CONTEXT.getGeneric(clazz));
     }
 
     public static <T> T parse(String s, Class<T> clazz, Class... generic) {
-        return parse(s, Binder.getGeneric(clazz, generic));
+        return parse(s, Binder.DEFAULT_SERIALIZATION_CONTEXT.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(String s, Class<T> clazz, JsonGeneric... generic) {
-        return parse(s, Binder.getGeneric(clazz, generic));
+        return parse(s, Binder.DEFAULT_SERIALIZATION_CONTEXT.getGeneric(clazz, generic));
     }
 
     public static JsonItem parse(byte[] bytes) {
@@ -100,7 +100,7 @@ public class JsonTools {
     }
 
     public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz) {
-        return parse(new String(bytes, from, length, UTF_8), Binder.getGeneric(clazz));
+        return parse(new String(bytes, from, length, UTF_8), Binder.DEFAULT_SERIALIZATION_CONTEXT.getGeneric(clazz));
     }
 
     public static <T> T parse(byte[] bytes, Class<T> clazz) {
@@ -108,7 +108,7 @@ public class JsonTools {
     }
 
     public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, Class... generic) {
-        return parse(new String(bytes, from, length, UTF_8), Binder.getGeneric(clazz, generic));
+        return parse(new String(bytes, from, length, UTF_8), Binder.DEFAULT_SERIALIZATION_CONTEXT.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(byte[] bytes, Class<T> clazz, Class... generic) {
@@ -116,7 +116,7 @@ public class JsonTools {
     }
 
     public static <T> T parse(byte[] bytes, int from, int length, Class<T> clazz, JsonGeneric... generic) {
-        return parse(new String(bytes, from, length, UTF_8), Binder.getGeneric(clazz, generic));
+        return parse(new String(bytes, from, length, UTF_8), Binder.DEFAULT_SERIALIZATION_CONTEXT.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(byte[] bytes, Class<T> clazz, JsonGeneric... generic) {
@@ -124,11 +124,11 @@ public class JsonTools {
     }
 
     public static <T> T parse(char[] s, Class<T> clazz, Class... generic) {
-        return parse(s, 0, s.length, Binder.getGeneric(clazz, generic));
+        return parse(s, 0, s.length, Binder.DEFAULT_SERIALIZATION_CONTEXT.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(char[] s, Class<T> clazz, JsonGeneric... generic) {
-        return parse(s, 0, s.length, Binder.getGeneric(clazz, generic));
+        return parse(s, 0, s.length, Binder.DEFAULT_SERIALIZATION_CONTEXT.getGeneric(clazz, generic));
     }
 
     public static <T> T parse(String s, JsonGeneric<T> generic) {
@@ -163,54 +163,85 @@ public class JsonTools {
      * @return bytes array with UTF-8 json representation of the object
      */
     public static byte[] serializeToBytes(final Object src) {
+        return serializeToBytes(src, Binder.DEFAULT_SERIALIZATION_CONTEXT);
+    }
+
+    public static void serialize(final Object src, final Supplier<byte[]> bytesSupplier, final UTF8.BytesConsumer bytesConsumer) {
+        serialize(src, bytesSupplier, bytesConsumer, Binder.DEFAULT_SERIALIZATION_CONTEXT);
+    }
+
+    public static String serialize(final Object src) {
+        return serialize(src, Binder.DEFAULT_SERIALIZATION_CONTEXT);
+    }
+
+    public static void serialize(Object src, ExceptionDrivenStringBuilder out) {
+        serialize(src, out, Binder.DEFAULT_SERIALIZATION_CONTEXT);
+    }
+
+    public static void serialize(Object src, OutputStream out) {
+        serialize(src, out, Binder.DEFAULT_SERIALIZATION_CONTEXT);
+    }
+
+    public static void serialize(Object src, Writer out) {
+        serialize(src, out, Binder.DEFAULT_SERIALIZATION_CONTEXT);
+    }
+
+    public static void serialize(Object src, StringBuilder out) {
+        serialize(src, out, Binder.DEFAULT_SERIALIZATION_CONTEXT);
+    }
+
+    /**
+     * @return bytes array with UTF-8 json representation of the object
+     */
+    public static byte[] serializeToBytes(final Object src, final SerializationContext context) {
         return ExceptionDrivenStringBuilder.withBuilder(new Mapper<ExceptionDrivenStringBuilder, byte[]>() {
             @Override
             public byte[] map(ExceptionDrivenStringBuilder builder) {
-                serialize(src, builder);
+                serialize(src, builder, context);
                 return builder.toBytes();
             }
         });
     }
 
-    public static void serialize(final Object src, final Supplier<byte[]> bytesSupplier, final UTF8.BytesConsumer bytesConsumer) {
+    public static void serialize(final Object src, final Supplier<byte[]> bytesSupplier, final UTF8.BytesConsumer bytesConsumer, final SerializationContext context) {
         ExceptionDrivenStringBuilder.withBuilder(new Mapper<ExceptionDrivenStringBuilder, Void>() {
             @Override
             public Void map(ExceptionDrivenStringBuilder builder) {
-                serialize(src, builder);
+                serialize(src, builder, context);
                 builder.toBytes(bytesSupplier, bytesConsumer);
                 return null;
             }
         });
     }
 
-    public static String serialize(final Object src) {
+    public static String serialize(final Object src, final SerializationContext context) {
         return ExceptionDrivenStringBuilder.withBuilder(new Mapper<ExceptionDrivenStringBuilder, String>() {
             @Override
             public String map(ExceptionDrivenStringBuilder builder) {
-                serialize(src, builder);
+                serialize(src, builder, context);
                 return builder.toString();
             }
         });
     }
 
-    public static void serialize(Object src, ExceptionDrivenStringBuilder out) {
-        Binder.toJSON(src, Appender.create(out));
+    public static void serialize(Object src, ExceptionDrivenStringBuilder out, SerializationContext context) {
+        Binder.toJSON(src, Appender.create(out), context);
     }
 
-    public static void serialize(Object src, OutputStream out) {
+    public static void serialize(Object src, OutputStream out, SerializationContext context) {
         Appender appender = Appender.create(out);
-        Binder.toJSON(src, appender);
+        Binder.toJSON(src, appender, context);
         appender.flush();
     }
 
-    public static void serialize(Object src, Writer out) {
+    public static void serialize(Object src, Writer out, SerializationContext context) {
         Appender appender = Appender.create(out);
-        Binder.toJSON(src, appender);
+        Binder.toJSON(src, appender, context);
         appender.flush();
     }
 
-    public static void serialize(Object src, StringBuilder out) {
-        Binder.toJSON(src, Appender.create(out));
+    public static void serialize(Object src, StringBuilder out, SerializationContext context) {
+        Binder.toJSON(src, Appender.create(out), context);
     }
 
     public static String unescape(char[] chars, int from, int to) {
