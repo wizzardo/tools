@@ -11,7 +11,7 @@ import java.util.Iterator;
  * Created by wizzardo on 16.04.16.
  */
 public abstract class FlowStart<T> extends Flow<T> {
-    boolean stop = false;
+    protected boolean stop = false;
 
     @Override
     protected void start() {
