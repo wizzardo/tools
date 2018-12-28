@@ -524,46 +524,64 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
         @Override
         public void setString(Object object, String value) {
+            if (field.getType() != String.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
 
         @Override
         public void setInteger(Object object, int value) {
+            if (field.getType() != Integer.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
 
         @Override
         public void setLong(Object object, long value) {
+            if (field.getType() != Long.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
 
         @Override
         public void setByte(Object object, byte value) {
+            if (field.getType() != Byte.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
 
         @Override
         public void setShort(Object object, short value) {
+            if (field.getType() != Short.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
 
         @Override
         public void setFloat(Object object, float value) {
+            if (field.getType() != Float.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
 
         @Override
         public void setDouble(Object object, double value) {
+            if (field.getType() != Double.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
 
         @Override
         public void setChar(Object object, char value) {
+            if (field.getType() != Character.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
 
         @Override
         public void setBoolean(Object object, boolean value) {
+            if (field.getType() != Boolean.class && field.getType() != Object.class)
+                throw new IllegalArgumentException();
             setObject(object, value);
         }
     }
