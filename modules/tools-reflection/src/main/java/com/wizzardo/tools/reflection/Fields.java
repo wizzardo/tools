@@ -131,10 +131,12 @@ public class Fields<T extends FieldInfo> implements Iterable<T> {
 //                                    && !Modifier.isFinal(field.getModifiers())
 //                                    && !Modifier.isPrivate(field.getModifiers())
 //                                    && !Modifier.isProtected(field.getModifiers())
-                    ) {
+            ) {
                 field.setAccessible(true);
 
-                fields.put(field.getName(), mapper.map(field, generic));
+                T t = mapper.map(field, generic);
+                if (t != null)
+                    fields.put(field.getName(), t);
             }
         }
         return fields;
