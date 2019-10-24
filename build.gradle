@@ -32,6 +32,10 @@ ext {
 apply from: 'gradle/sonatype.gradle'
 apply plugin: 'jacoco'
 
+jacoco {
+    toolVersion = "0.8.5"
+}
+
 task codeCoverageReport(type: JacocoReport) {
     executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
 
