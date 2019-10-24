@@ -7,6 +7,10 @@ allprojects {
     group = 'com.wizzardo.tools'
     version = '0.23-SNAPSHOT'
 
+    javadoc {
+        options.tags = [ "author:" ]
+    }
+
     repositories {
         mavenCentral()
     }

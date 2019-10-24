@@ -25,7 +25,7 @@ public class UUID {
      * pseudo random number generator.
      *
      * Source code was got from sources of java 
-     * @return  a randomly generated <tt>UUID</tt>.
+     * @return  a randomly generated UUID.
      */
     public static byte[] randomUUID() {
         SecureRandom ng = numberGenerator;
