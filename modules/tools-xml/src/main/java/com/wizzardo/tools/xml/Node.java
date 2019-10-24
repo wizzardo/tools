@@ -61,7 +61,7 @@ public class Node {
     }
 
     public Set<String> attributesNames() {
-        return attributes.keySet();
+        return attributes == null ? Collections.<String>emptySet() : attributes.keySet();
     }
 
     public Map<String, String> attributes() {
