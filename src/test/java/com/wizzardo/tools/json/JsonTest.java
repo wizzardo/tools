@@ -881,7 +881,7 @@ public class JsonTest {
             public void run() {
                 Assert.assertEquals(null, JsonTools.parse("{key:value}").asJsonObject().get("key").asJsonObject());
             }
-        }, ClassCastException.class, "java.lang.String cannot be cast to com.wizzardo.tools.json.JsonObject");
+        }, ClassCastException.class, "java.lang.String cannot be cast to", "com.wizzardo.tools.json.JsonObject");
 
 
         Assert.assertEquals("1", JsonTools.parse("{key:1}").asJsonObject().get("key").getAs(String.class));
