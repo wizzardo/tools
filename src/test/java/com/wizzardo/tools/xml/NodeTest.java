@@ -139,12 +139,12 @@ public class NodeTest {
         b = div.children().get(0);
         Assert.assertEquals(1, b.children().size());
         Assert.assertEquals(2, b.getLineNumber());
-        Assert.assertEquals(3, b.children().get(0).getLineNumber());
+        Assert.assertEquals(2, b.children().get(0).getLineNumber());
 
         b = div.children().get(1);
         Assert.assertEquals(1, b.children().size());
         Assert.assertEquals(5, b.getLineNumber());
-        Assert.assertEquals(8, b.children().get(0).getLineNumber());
+        Assert.assertEquals(5, b.children().get(0).getLineNumber());
 
         b = div.children().get(2);
         Assert.assertEquals(true, b.isComment());
@@ -196,6 +196,28 @@ public class NodeTest {
                 "       a+=i;" +
                 "   }\n", script.text());
 
+    }
+
+    @Test
+    public void html_4() throws IOException {
+        String s = "<div>pre <b>data</b> post</div>";
+        Node root = new HtmlParser().parse(s);
+        Node div = root.children().get(0);
+        Assert.assertEquals(0, div.attributes().size());
+        Assert.assertEquals(3, div.children().size());
+
+        Node child;
+
+        child = div.children().get(0);
+        Assert.assertTrue(child instanceof TextNode);
+        Assert.assertEquals("pre ", child.textOwn());
+
+        child = div.children().get(1);
+        Assert.assertEquals("data", child.text());
+
+        child = div.children().get(2);
+        Assert.assertTrue(child instanceof TextNode);
+        Assert.assertEquals(" post", child.textOwn());
     }
 
     @Test
@@ -349,9 +371,9 @@ public class NodeTest {
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(3, div.children().size());
-        Assert.assertEquals("before", div.get(0).text());
+        Assert.assertEquals("\n    before\n    ", div.get(0).text());
         Assert.assertEquals("%{--<p>text</p>--}%", div.get(1).text());
-        Assert.assertEquals("after", div.get(2).text());
+        Assert.assertEquals("\n    after\n", div.get(2).text());
     }
 
     @Test
@@ -365,9 +387,9 @@ public class NodeTest {
         Node div = root.children().get(0);
         Assert.assertEquals("div", div.name());
         Assert.assertEquals(3, div.children().size());
-        Assert.assertEquals("before", div.get(0).text());
+        Assert.assertEquals("\n    before\n    ", div.get(0).text());
         Assert.assertEquals("<!--<p>text</p>-->", div.get(1).text());
-        Assert.assertEquals("after", div.get(2).text());
+        Assert.assertEquals("\n    after\n", div.get(2).text());
     }
 
     @Test

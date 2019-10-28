@@ -55,9 +55,9 @@ public class GspParser<T extends GspParser.GspParserContext> extends HtmlParser<
             }
 
             if (!comment && ch == '%' && i < s.length - 3 && s[i + 1] == '{' && s[i + 2] == '-' && s[i + 3] == '-') {
-                String t;
-                if (!inString && !(t = trimRight(sb).toString().trim()).isEmpty()) {
-                    xml.add(new TextNode(t));
+                if (!inString) {
+                    if (!isEmpty(sb))
+                        xml.add(new TextNode(sb.toString()));
                     sb.setLength(0);
                 }
 

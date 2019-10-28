@@ -144,7 +144,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             if (name) {
                 name = false;
                 if (!end) {
-                    xml.name(sb.toString());
+                    xml.name(trim(sb).toString());
                     onTagName(xml.name);
                     sb.setLength(0);
                     attribute = true;
@@ -165,7 +165,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             }
             if (!inString && inTag) {
                 attribute = true;
-            } else if (sb.length() != 0) {
+            } else {
                 sb.append(s[i]);
             }
         }
@@ -207,6 +207,7 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
             inTag = false;
             if (name) {
                 name = false;
+                trim(sb);
                 if (!end) {
                     xml.name(sb.toString());
                     onTagName(xml.name);
@@ -244,8 +245,8 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 sb.setLength(0);
                 attribute = false;
             }
-            if (checkClose && sb.length() > 0) {
-                xml.add(addLineNumber(new TextNode(trimRight(sb).toString())));
+            if (checkClose && trim(sb).length() > 0) {
+                xml.add(addLineNumber(new TextNode(sb.toString())));
                 sb.setLength(0);
             }
             end = true;
@@ -257,8 +258,8 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
                 sb.append(s[i]);
                 return;
             }
-            if (sb.length() > 0) {
-                xml.add(addLineNumber(new TextNode(trimRight(sb).toString())));
+            if (trim(sb).length() > 0) {
+                xml.add(addLineNumber(new TextNode(sb.toString())));
                 sb.setLength(0);
             }
             if (xml.name() != null)
@@ -344,5 +345,31 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
         if (l != sb.length())
             sb.setLength(l);
         return sb;
+    }
+
+    protected static StringBuilder trimLeft(StringBuilder sb) {
+        int l = sb.length();
+        int i = 0;
+        while (i < l && sb.charAt(i) <= ' ') {
+            i++;
+        }
+        if (i != 0)
+            sb.replace(0, i, "");
+        return sb;
+    }
+
+    protected static StringBuilder trim(StringBuilder sb) {
+        trimRight(sb);
+        trimLeft(sb);
+        return sb;
+    }
+
+    protected static boolean isEmpty(StringBuilder sb) {
+        int l = sb.length();
+        int i = 0;
+        while (i < l && sb.charAt(i) <= ' ') {
+            i++;
+        }
+        return i == l;
     }
 }
