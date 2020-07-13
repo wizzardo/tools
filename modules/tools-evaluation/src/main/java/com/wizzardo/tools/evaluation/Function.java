@@ -15,23 +15,24 @@ import java.util.Map;
 /**
  * @author Moxa
  */
-class Function extends Expression {
+public class Function extends Expression {
 
-    private Expression thatObject;
-    private Method method;
-    private Constructor constructor;
-    private Field field;
-    private Getter getter;
-    private Setter setter;
-    private String methodName;
-    private Expression[] args;
-    private String fieldName;
-    private boolean hardcodeChecked = false;
-    private boolean metaChecked = false;
-    private boolean safeNavigation = false;
-    private CollectionTools.Closure3<Object, Object, Map, Expression[]> metaMethod;
+    protected static final Expression[] EMPTY_ARGS = new Expression[0];
+    protected static Map<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>> metaMethods = new HashMap<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>>();
 
-    private static Map<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>> metaMethods = new HashMap<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>>();
+    protected Expression thatObject;
+    protected Method method;
+    protected Constructor constructor;
+    protected Field field;
+    protected Getter getter;
+    protected Setter setter;
+    protected String methodName;
+    protected Expression[] args;
+    protected String fieldName;
+    protected boolean hardcodeChecked = false;
+    protected boolean metaChecked = false;
+    protected boolean safeNavigation = false;
+    protected CollectionTools.Closure3<Object, Object, Map, Expression[]> metaMethod;
 
     public Function(Expression thatObject, Method method, Expression[] args) {
         this.thatObject = thatObject;
@@ -250,7 +251,7 @@ class Function extends Expression {
                 metaChecked = true;
             }
             if (metaMethod != null) {
-                return metaMethod.execute(instance, model, args);
+                return metaMethod.execute(instance, model, args != null ? args : EMPTY_ARGS);
             }
 
             if (args != null) {
@@ -415,7 +416,7 @@ class Function extends Expression {
     }
 
     private boolean checkMeta(Class clazz) {
-        if (args != null && clazz != null) {
+        if (clazz != null) {
             Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>> methods;
             CollectionTools.Closure3<Object, Object, Map, Expression[]> closure = null;
             if ((methods = metaMethods.get(clazz)) != null && (closure = methods.get(methodName)) != null) {
@@ -564,7 +565,7 @@ class Function extends Expression {
                     if (!(c.getParameterTypes()[i].equals(argsClasses[i])
                             || (boxing.containsKey(c.getParameterTypes()[i]) && boxing.get(c.getParameterTypes()[i]).equals(argsClasses[i]))
                             || (boxing.containsKey(c.getParameterTypes()[i]) && boxing.containsValue(argsClasses[i])))
-                            ) {
+                    ) {
 //                        System.out.println(m.getParameterTypes()[i] + "\t" + (argsClasses[i]));
                         continue outer;
                     }
