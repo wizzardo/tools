@@ -13,6 +13,7 @@ include ':modules:tools-cache',
         ':modules:tools-misc',
         ':modules:tools-reflection',
         ':modules:tools-security',
-        ':modules:tools-xml'
+        ':modules:tools-xml',
+        ':modules:tools-yaml'
 
 

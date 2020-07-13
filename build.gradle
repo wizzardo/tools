@@ -67,6 +67,7 @@ dependencies {
     compile project(':modules:tools-reflection')
     compile project(':modules:tools-security')
     compile project(':modules:tools-xml')
+    compile project(':modules:tools-yaml')
 
     testCompile 'junit:junit:4.11'
     testCompile 'com.google.code.gson:gson:2.2.4'

@@ -1,0 +1,11 @@
+dependencies {
+    compile project(':modules:tools-reflection')
+    compile project(':modules:tools-misc')
+}
+
+archivesBaseName = "tools-yaml"
+ext {
+    descriptionString = 'yaml tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+
