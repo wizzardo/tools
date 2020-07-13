@@ -25,4 +25,6 @@ interface JsonBinder {
     JsonFieldSetter getFieldSetter();
 
     CharTree.CharTreeNode<Pair<String, JsonFieldInfo>> getFieldsTree();
+
+    void reset();
 }

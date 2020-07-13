@@ -21,9 +21,9 @@ class JavaObjectBinder implements JsonBinder {
     public JavaObjectBinder(JsonGeneric<?> generic) {
         this.clazz = generic.clazz;
         this.generic = generic;
-        object = createInstance(clazz);
         fields = generic.getFields();
         fieldsTree = generic.getFieldsTree();
+        reset();
     }
 
     protected Object createInstance(Class clazz) {
@@ -94,5 +94,10 @@ class JavaObjectBinder implements JsonBinder {
     @Override
     public CharTree.CharTreeNode<Pair<String, JsonFieldInfo>> getFieldsTree() {
         return fieldsTree.getRoot();
+    }
+
+    @Override
+    public void reset() {
+        object = createInstance(clazz);
     }
 }

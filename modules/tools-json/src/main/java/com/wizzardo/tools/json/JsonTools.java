@@ -244,38 +244,44 @@ public class JsonTools {
         Binder.toJSON(src, Appender.create(out), context);
     }
 
-    public static String unescape(char[] chars, int from, int to) {
-        StringBuilder sb = new StringBuilder(to - from);
-        char ch;
-        int i = from;
-        while (i < to) {
-            ch = chars[i];
-            if (ch == '\\') {
-                sb.append(chars, from, i - from);
-                i++;
-                if (to <= i)
-                    throw new IndexOutOfBoundsException("unexpected end");
+    public static String unescape(final char[] chars, final int offset, final int to) {
+        return ExceptionDrivenStringBuilder.withBuilder(new Mapper<ExceptionDrivenStringBuilder, String>() {
+            @Override
+            public String map(ExceptionDrivenStringBuilder sb) {
+                char ch;
+                int i = offset;
+                int from = offset;
 
-                ch = UNESCAPES[chars[i]];
-                if (ch == 0) {
-                    throw new IllegalStateException("unexpected escaped char: " + chars[i]);
-                } else if (ch == 128) {
-                    if (to < i + 5)
-                        throw new IndexOutOfBoundsException("can't decode unicode character");
-                    i += 4;
-                    sb.append(decodeUtf(chars, i));
-                } else {
-                    sb.append(ch);
+                while (i < to) {
+                    ch = chars[i];
+                    if (ch == '\\') {
+                        sb.append(chars, from, i - from);
+                        i++;
+                        if (to <= i)
+                            throw new IndexOutOfBoundsException("unexpected end");
+
+                        ch = UNESCAPES[chars[i]];
+                        if (ch == 0) {
+                            throw new IllegalStateException("unexpected escaped char: " + chars[i]);
+                        } else if (ch == 128) {
+                            if (to < i + 5)
+                                throw new IndexOutOfBoundsException("can't decode unicode character");
+                            i += 4;
+                            sb.append(decodeUtf(chars, i));
+                        } else {
+                            sb.append(ch);
+                        }
+                        from = i + 1;
+                    }
+                    i++;
                 }
-                from = i + 1;
-            }
-            i++;
-        }
 
-        if (from < to) {
-            sb.append(chars, from, to - from);
-        }
-        return sb.toString();
+                if (from < to) {
+                    sb.append(chars, from, to - from);
+                }
+                return sb.toString();
+            }
+        });
     }
 
     public static String escape(String s) {

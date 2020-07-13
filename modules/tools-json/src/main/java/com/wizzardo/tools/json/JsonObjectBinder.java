@@ -12,7 +12,7 @@ class JsonObjectBinder implements JsonBinder {
     private String tempKey;
 
     public JsonObjectBinder() {
-        this.json = new JsonObject();
+        reset();
     }
 
     public void add(Object value) {
@@ -56,5 +56,10 @@ class JsonObjectBinder implements JsonBinder {
     @Override
     public CharTree.CharTreeNode<Pair<String, JsonFieldInfo>> getFieldsTree() {
         return Binder.fieldsNames.getRoot();
+    }
+
+    @Override
+    public void reset() {
+        this.json = new JsonObject();
     }
 }

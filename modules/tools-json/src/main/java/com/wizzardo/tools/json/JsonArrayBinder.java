@@ -11,7 +11,7 @@ class JsonArrayBinder implements JsonBinder {
     private JsonArray json;
 
     public JsonArrayBinder() {
-        this.json = new JsonArray();
+        reset();
     }
 
     public void add(Object value) {
@@ -35,6 +35,11 @@ class JsonArrayBinder implements JsonBinder {
     @Override
     public CharTree.CharTreeNode<Pair<String, JsonFieldInfo>> getFieldsTree() {
         return null;
+    }
+
+    @Override
+    public void reset() {
+        this.json = new JsonArray();
     }
 
     @Override

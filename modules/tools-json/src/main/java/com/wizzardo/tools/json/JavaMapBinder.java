@@ -26,6 +26,12 @@ public class JavaMapBinder extends JavaObjectBinder {
         valueSetter = getValueSetter(type.clazz);
     }
 
+    @Override
+    public void reset() {
+        super.reset();
+        that = (Map) object;
+    }
+
     protected JsonFieldSetter getValueSetter(Class classValue) {
         final StringConverter valueConverter = StringConverter.getConverter(classValue);
         if (valueConverter == null || keyConverter == null)

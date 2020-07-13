@@ -21,6 +21,7 @@ class JavaArrayBinder implements JsonBinder {
     private Class clazz;
     private JsonGeneric generic;
     private JsonFieldSetter valueSetter;
+    private JsonBinder objectBinder;
 
     public JavaArrayBinder(JsonGeneric generic) {
         if (generic != null)
@@ -30,13 +31,7 @@ class JavaArrayBinder implements JsonBinder {
 
         this.clazz = generic.clazz;
         serializer = Binder.classToSerializer(clazz).type;
-        if (serializer == Binder.SerializerType.ARRAY) {
-            l = new ArrayList();
-        } else if (serializer == Binder.SerializerType.COLLECTION) {
-            l = Binder.createCollection(clazz);
-        } else {
-            throw new IllegalArgumentException("JsonArray expected to parse into " + clazz + ", but JsonObject appeared");
-        }
+        reset();
 
         if (generic.typesCount() == 1)
             valueSetter = getValueSetter(generic.type(0).clazz);
@@ -108,12 +103,28 @@ class JavaArrayBinder implements JsonBinder {
     }
 
     @Override
-    public JsonBinder getObjectBinder() {
-        JsonGeneric type = generic.type(0);
-        if (Map.class.isAssignableFrom(type.clazz))
-            return new JavaMapBinder(type);
+    public void reset() {
+        if (serializer == Binder.SerializerType.ARRAY) {
+            l = new ArrayList();
+        } else if (serializer == Binder.SerializerType.COLLECTION) {
+            l = Binder.createCollection(clazz);
+        } else {
+            throw new IllegalArgumentException("JsonArray expected to parse into " + clazz + ", but JsonObject appeared");
+        }
+    }
 
-        return new JavaObjectBinder(type);
+    @Override
+    public JsonBinder getObjectBinder() {
+        if (objectBinder != null) {
+            objectBinder.reset();
+        } else {
+            JsonGeneric type = generic.type(0);
+            if (Map.class.isAssignableFrom(type.clazz))
+                objectBinder = new JavaMapBinder(type);
+            else
+                objectBinder = new JavaObjectBinder(type);
+        }
+        return objectBinder;
     }
 
     @Override

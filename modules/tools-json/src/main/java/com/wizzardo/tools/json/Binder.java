@@ -35,6 +35,7 @@ public class Binder {
                     classToSerializer(type));
         }
     };
+    protected static final Object[] EMPTY_ARRAY = new Object[0];
     public static SerializationContext DEFAULT_SERIALIZATION_CONTEXT = new SerializationContext();
     protected static final JsonFieldSetterFactory JSON_FIELD_SETTER_FACTORY = new JsonFieldSetterFactory();
     private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
@@ -629,7 +630,7 @@ public class Binder {
 
     private static Object createInstance(Constructor c) {
         try {
-            return c.newInstance();
+            return c.newInstance(EMPTY_ARRAY);
         } catch (IllegalAccessException e) {
             throw Unchecked.rethrow(e);
         } catch (InstantiationException e) {
