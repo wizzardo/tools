@@ -339,22 +339,43 @@ public class XmlParser<T extends XmlParser.XmlParserContext> {
 
     protected static StringBuilder trimRight(StringBuilder sb) {
         int l = sb.length();
-        while (l > 0 && sb.charAt(l - 1) <= ' ') {
-            l--;
+        if (l == 0)
+            return sb;
+
+        int i = l - 1;
+        boolean rn = false;
+        while (i >= 0 && sb.charAt(i) <= ' ') {
+            rn |= sb.charAt(i) == '\r' | sb.charAt(i) == '\n';
+            i--;
         }
-        if (l != sb.length())
-            sb.setLength(l);
+
+        i++;
+        if (i != l) {
+            sb.setLength(i);
+            if (!rn && i != 0)
+                sb.append(' ');
+        }
         return sb;
     }
 
     protected static StringBuilder trimLeft(StringBuilder sb) {
         int l = sb.length();
         int i = 0;
+        boolean rn = false;
         while (i < l && sb.charAt(i) <= ' ') {
+            rn |= sb.charAt(i) == '\r' | sb.charAt(i) == '\n';
             i++;
+
+        }
+        if (i == sb.length()) {
+            sb.setLength(0);
+            return sb;
         }
         if (i != 0)
-            sb.replace(0, i, "");
+            if (rn)
+                sb.replace(0, i, "");
+            else
+                sb.replace(0, i, " ");
         return sb;
     }
 
