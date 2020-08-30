@@ -1221,4 +1221,28 @@ public class EvalToolsTest {
         String s = "a = 1/*a=2*/";
         Assert.assertEquals(1, EvalTools.prepare(s).get(model));
     }
+
+    @Test
+    public void test_access_static_field() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        String s = "def a = System.out";
+        Assert.assertEquals(System.out, EvalTools.prepare(s).get(model));
+        Assert.assertEquals(System.out, model.get("a"));
+    }
+
+    @Test
+    public void test_optional_parenthesis() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        model.put("l", Arrays.asList(1, 2, 3));
+        assertEquals("1-2-3", EvalTools.evaluate("l.join '-'", model).toString());
+    }
+
+    @Test
+    public void test_optional_parenthesis_2() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression expression = EvalTools.prepare("[1, 2, 3].collect { it * 2 }", model);
+        assertEquals("[2, 4, 6]", String.valueOf(expression.get(model)));
+    }
 }

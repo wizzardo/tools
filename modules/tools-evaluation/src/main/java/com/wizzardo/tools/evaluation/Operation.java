@@ -544,7 +544,7 @@ public class Operation extends Expression {
             if (rightPart != null && rightPart instanceof Function)
                 function = (Function) rightPart;
 
-            if (function != null) {
+            if (function != null && leftPart == null) {
                 Object thatObject = function.getThatObject().get(model);
                 Function.Getter getter = function.getGetter(thatObject);
                 Function.Setter setter = function.getSetter(thatObject);

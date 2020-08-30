@@ -99,12 +99,14 @@ public class EvalTools {
     protected static LinkedList<String> getParts(String s) {
         LinkedList<String> l = new LinkedList<String>();
         boolean inString = false;
+        boolean spaceSeparator = false;
         char quote = 0;
         char[] chars = s.toCharArray();
         int from = 0;
         int brackets = 0;
         int squareBrackets = 0;
         int curlyBraces = 0;
+        loop:
         for (int i = 0; i < chars.length; i++) {
             if (!inString) {
                 switch (chars[i]) {
@@ -112,6 +114,17 @@ public class EvalTools {
                     case '\'': {
                         quote = chars[i];
                         inString = true;
+                        break;
+                    }
+                    case ' ': {
+                        if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
+                            spaceSeparator = true;
+                            l.add(trim(chars, from, i));
+                            from = i + 1;
+
+                            break loop;
+                        }
+
                         break;
                     }
                     case '(': {
@@ -181,7 +194,10 @@ public class EvalTools {
             }
         }
         if (from != chars.length) {
-            l.add(trim(chars, from, chars.length));
+            if (spaceSeparator)
+                l.add("(" + trim(chars, from, chars.length) + ")");
+            else
+                l.add(trim(chars, from, chars.length));
         }
         return l;
     }
