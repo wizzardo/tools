@@ -1048,6 +1048,9 @@ public class EvalTools {
                         args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
                     }
                 }
+                if (methodName == null)
+                    methodName = "execute";
+
                 if (thatObject instanceof UserFunction) {
                     UserFunction function = (UserFunction) thatObject;
                     function.setArgs(args);
