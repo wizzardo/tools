@@ -1658,4 +1658,18 @@ public class JsonTest {
             }
         }, IllegalStateException.class, "Can not set 'asdfasdf' (class java.lang.String) to com.wizzardo.tools.json.JsonTest$SerializeTestInner com.wizzardo.tools.json.JsonTest$SerializeTest.inner");
     }
+
+    static class TestPropertyAnnotation {
+        @JsonProperty("Custom Key")
+        String key;
+    }
+
+    @Test
+    public void test_property_annotation() {
+        TestPropertyAnnotation obj = new TestPropertyAnnotation();
+        obj.key = "value";
+
+        Assert.assertEquals("{\"Custom Key\":\"value\"}", JsonTools.serialize(obj));
+        Assert.assertEquals("value", JsonTools.parse("{\"Custom Key\":\"value\"}", TestPropertyAnnotation.class).key);
+    }
 }

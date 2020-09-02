@@ -18,10 +18,16 @@ public class JsonFieldInfo extends FieldInfo<JsonFieldSetter, JsonGeneric> {
     }
 
     protected void prepareName(boolean firstField) {
+        String fieldName = field.getName();
+
+        JsonProperty annotation = field.getAnnotation(JsonProperty.class);
+        if (annotation != null)
+            fieldName = annotation.value();
+
         if (firstField)
-            preparedFieldName = "{\"" + field.getName() + "\":";
+            preparedFieldName = "{\"" + fieldName + "\":";
         else
-            preparedFieldName = ",\"" + field.getName() + "\":";
+            preparedFieldName = ",\"" + fieldName + "\":";
     }
 
     public String getPreparedFieldName() {

@@ -174,7 +174,12 @@ public class JsonGeneric<T> extends Generic<T, JsonFields, JsonGeneric> {
 
         fieldsTree = new CharTree<Pair<String, JsonFieldInfo>>();
         for (JsonFieldInfo info : fields.fields()) {
-            fieldsTree.append(info.field.getName(), Pair.of(info.field.getName(), info));
+            String fieldName = info.field.getName();
+            JsonProperty annotation = info.field.getAnnotation(JsonProperty.class);
+            if (annotation != null)
+                fieldName = annotation.value();
+
+            fieldsTree.append(fieldName, Pair.of(fieldName, info));
         }
         return fieldsTree;
     }
