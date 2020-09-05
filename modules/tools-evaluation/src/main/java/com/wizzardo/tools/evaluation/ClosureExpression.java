@@ -3,12 +3,13 @@ package com.wizzardo.tools.evaluation;
 import com.wizzardo.tools.misc.Pair;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * @author: moxa
  * Date: 8/11/13
  */
-public class ClosureExpression extends Expression {
+public class ClosureExpression extends Expression implements Runnable, Callable {
 
     protected static final Pair<String, Class>[] DEFAULT_ARGS = new Pair[]{new Pair<String, Class>("it", Object.class)};
     protected List<Expression> expressions = new ArrayList<Expression>();
@@ -94,5 +95,15 @@ public class ClosureExpression extends Expression {
 
     public boolean isEmpty() {
         return expressions.isEmpty();
+    }
+
+    @Override
+    public void run() {
+        get();
+    }
+
+    @Override
+    public Object call() throws Exception {
+        return get();
     }
 }
