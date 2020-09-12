@@ -1056,8 +1056,17 @@ public class EvalTools {
     }
 
     protected static Expression prioritize(List<Operation> operations) {
+        if (operations.size() == 1)
+            return operations.get(0);
+
         Expression eh = null;
-        Operation operation;
+        Operation operation = operations.get(0);
+
+        if (operation.operator().priority == Operator.EQUAL.priority) {
+            operation.rightPart(prioritize(operations.subList(1, operations.size())));
+            return operation;
+        }
+
         while (operations.size() > 0) {
             operation = null;
             int n = 0;

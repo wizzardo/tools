@@ -414,11 +414,11 @@ public class EvalToolsTest {
         Map<String, Object> model = new HashMap<String, Object>();
 
         model.put("x", 2);
-        EvalTools.prepare(exp).get(model);
+        assertEquals("even", EvalTools.prepare(exp).get(model));
         assertEquals("even", model.get("a"));
 
         model.put("x", 1);
-        EvalTools.prepare(exp).get(model);
+        assertEquals("odd", EvalTools.prepare(exp).get(model));
         assertEquals("odd", model.get("a"));
     }
 
