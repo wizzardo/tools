@@ -228,6 +228,10 @@ public class Operation extends Expression {
                 result = divide(ob1, ob2);
                 break;
             }
+            case MOD: {
+                result = modulo(ob1, ob2);
+                break;
+            }
             case PLUS_EQUAL:
             case MINUS_EQUAL:
             case MULTIPLY_EQUAL:
@@ -861,6 +865,34 @@ public class Operation extends Expression {
             return ((Number) ob1).byteValue() / ((Number) ob2).byteValue();
         }
         return ((Number) ob1).doubleValue() / ((Number) ob2).doubleValue();
+    }
+
+    private static Object modulo(Object ob1, Object ob2) {
+        if (ob1 instanceof Double || ob2 instanceof Double) {
+            return ((Number) ob1).doubleValue() % ((Number) ob2).doubleValue();
+        }
+        if (ob1 instanceof Float || ob2 instanceof Float) {
+            return ((Number) ob1).floatValue() % ((Number) ob2).floatValue();
+        }
+        if (EvalTools.defaultEvaluatingStrategy == EvalTools.EvaluatingStrategy.DOUBLE) {
+            return ((Number) ob1).doubleValue() % ((Number) ob2).doubleValue();
+        }
+        if (EvalTools.defaultEvaluatingStrategy == EvalTools.EvaluatingStrategy.FLOAT) {
+            return ((Number) ob1).floatValue() % ((Number) ob2).floatValue();
+        }
+        if (ob1 instanceof Long || ob2 instanceof Long) {
+            return ((Number) ob1).longValue() % ((Number) ob2).longValue();
+        }
+        if (ob1 instanceof Integer || ob2 instanceof Integer) {
+            return ((Number) ob1).intValue() % ((Number) ob2).intValue();
+        }
+        if (ob1 instanceof Short || ob2 instanceof Short) {
+            return ((Number) ob1).shortValue() % ((Number) ob2).shortValue();
+        }
+        if (ob1 instanceof Byte || ob2 instanceof Byte) {
+            return ((Number) ob1).byteValue() % ((Number) ob2).byteValue();
+        }
+        return ((Number) ob1).doubleValue() % ((Number) ob2).doubleValue();
     }
 
     private static Object increment(Object ob1) {

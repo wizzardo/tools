@@ -15,6 +15,7 @@ public enum Operator {
     MINUS2("--", Operator.Requirement.ANY, 3, false),
     MULTIPLY("*", Operator.Requirement.BOTH, 2, false),
     DIVIDE("/", Operator.Requirement.BOTH, 2, false),
+    MOD("%", Operator.Requirement.BOTH, 2, false),
     EQUAL("=", Operator.Requirement.BOTH, -2, false),
     APPEND("<<", Operator.Requirement.BOTH, -2, false),
     EQUAL2("==", Operator.Requirement.BOTH, 0, true),
