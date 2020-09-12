@@ -40,6 +40,10 @@ public class EvalToolsTest {
         assertEquals(2, EvalTools.evaluate("1+1"));
         assertEquals(2.0, EvalTools.evaluate("1+1.0"));
         assertEquals(5, EvalTools.evaluate("1+1+3"));
+        assertEquals(0x12b3, EvalTools.evaluate("0x12b3"));
+        assertEquals(15, EvalTools.evaluate("0b1111"));
+        assertEquals(83, EvalTools.evaluate("0123"));
+        assertEquals(0f, EvalTools.evaluate("0f"));
         assertEquals("olo123", EvalTools.evaluate("\"olo\"+1+(1+1)+3"));
         assertEquals("olo123", EvalTools.evaluate("'olo'+1+(1+1)+3"));
         assertEquals("OLO123", EvalTools.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()"));
@@ -392,7 +396,7 @@ public class EvalToolsTest {
 
     @Test
     public void testClone() throws Exception {
-        String exp = "1+\"ololo\".substring(2)";
+        String exp = "1+\"ololo\"";
         Expression eh = EvalTools.prepare(exp);
         Object ob1 = eh.get(null);
         Object ob2 = eh.get(null);
@@ -401,6 +405,21 @@ public class EvalToolsTest {
         Object ob3 = eh.get(null);
         assertTrue(ob1 != ob3);
         assertTrue(ob1.equals(ob3));
+    }
+
+    @Test
+    public void testTernary() throws Exception {
+        String exp = "def a = x % 2 == 0 ? 'even' : 'odd'";
+
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        model.put("x", 2);
+        EvalTools.prepare(exp).get(model);
+        assertEquals("even", model.get("a"));
+
+        model.put("x", 1);
+        EvalTools.prepare(exp).get(model);
+        assertEquals("odd", model.get("a"));
     }
 
     @Test
@@ -1230,6 +1249,20 @@ public class EvalToolsTest {
         Assert.assertEquals(System.out, model.get("a"));
     }
 
+    public static class Calc {
+        public static float sum(float a, float b, String message) {
+            return a + b;
+        }
+    }
+
+    @Test
+    public void test_mixed_arg_types() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        String s = "def r = com.wizzardo.tools.evaluation.EvalToolsTest.Calc.sum(1, 2, 'message')";
+        Assert.assertEquals(3.0f, EvalTools.prepare(s).get(model));
+        Assert.assertEquals(3.0f, model.get("r"));
+    }
+
     @Test
     public void test_optional_parenthesis() {
         Map<String, Object> model = new HashMap<String, Object>();
@@ -1245,4 +1278,29 @@ public class EvalToolsTest {
         Expression expression = EvalTools.prepare("[1, 2, 3].collect { it * 2 }", model);
         assertEquals("[2, 4, 6]", String.valueOf(expression.get(model)));
     }
+
+    @Test
+    public void test_define_variable_with_type() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression expression = EvalTools.prepare("String s = 'test'", model);
+        assertEquals("test", String.valueOf(expression.get(model)));
+        assertEquals("test", model.get("s"));
+    }
+
+    public static class Executer {
+        public static void exec(Runnable runnable) {
+            runnable.run();
+        }
+    }
+
+    @Test
+    public void test_closure_as_runnable() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression expression = EvalTools.prepare("com.wizzardo.tools.evaluation.EvalToolsTest.Executer.exec({def a = 1})", model);
+        expression.get(model);
+        assertEquals(1, model.get("a"));
+    }
+
 }

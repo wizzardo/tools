@@ -268,17 +268,33 @@ public abstract class Expression {
         if (m.matches()) {
             return m.group(1) == null ? m.group(2).replace("\\'", "'") : m.group(1).replace("\\\"", "\"");
         }
+
+        m = numberOx.matcher(exp);
+        if (m.matches()) {
+            if (m.groupCount() > 1 && m.group(1) != null) {
+                String value = removeUnderscores(m.group(2));
+                String prefix = m.group(1);
+                if ("0x".equalsIgnoreCase(prefix))
+                    return Integer.valueOf(value, 16);
+                if ("0b".equalsIgnoreCase(prefix))
+                    return Integer.valueOf(value, 2);
+                if ("0".equals(prefix) && !value.toLowerCase().endsWith("f"))
+                    return Integer.valueOf(value, 8);
+            }
+        }
+
         m = number.matcher(exp);
         if (m.matches()) {
             if (m.groupCount() > 1 && m.group(2).length() > 0) {
+                char suffix = m.group(2).charAt(0);
                 String value = removeUnderscores(m.group(1));
-                if ("d".equals(m.group(2))) {
+                if (suffix == 'd' || suffix == 'D') {
                     return Double.valueOf(value);
-                } else if ("f".equals(m.group(2))) {
+                } else if (suffix == 'f' || suffix == 'F') {
                     return Float.valueOf(value);
-                } else if ("l".equals(m.group(2))) {
+                } else if (suffix == 'l' || suffix == 'L') {
                     return Long.valueOf(value);
-                } else if ("b".equals(m.group(2))) {
+                } else if (suffix == 'b' || suffix == 'B') {
                     return Byte.valueOf(value);
                 }
             } else {
@@ -302,7 +318,8 @@ public abstract class Expression {
     }
 
     private static final Pattern string = Pattern.compile("\"(.*)\"|\'(.*)\'");
-    private static final Pattern number = Pattern.compile("([\\d_]+\\.?[\\d_]*)([dflb]?)");
+    private static final Pattern number = Pattern.compile("([\\d_]+\\.?[\\d_]*)([dflbDFLB]?)");
+    private static final Pattern numberOx = Pattern.compile("(0[xbXB]?)([\\d_abcdefABCDEF]+)");
     private static final Pattern underscore = Pattern.compile("_");
     private static final Pattern bool = Pattern.compile("true|false", Pattern.CASE_INSENSITIVE);
 

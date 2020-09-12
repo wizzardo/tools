@@ -319,17 +319,17 @@ public class Function extends Expression {
                 throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + getClass(instance) + " with args: " + Arrays.toString(arr));
             }
             Object result = method.invoke(instance, arr);
-            if (!hardcodeChecked && (hardcoded = thatObject.hardcoded)) {
-                hardcodeChecked = true;
-                if (args != null)
-                    for (Expression arg : args) {
-                        hardcoded = arg.hardcoded;
-                        if (!hardcoded)
-                            break;
-                    }
-            }
-            if (hardcoded)
-                this.result = result;
+//            if (!hardcodeChecked && (hardcoded = thatObject.hardcoded)) {
+//                hardcodeChecked = true;
+//                if (args != null)
+//                    for (Expression arg : args) {
+//                        hardcoded = arg.hardcoded;
+//                        if (!hardcoded)
+//                            break;
+//                    }
+//            }
+//            if (hardcoded)
+//                this.result = result;
             return result;
         } catch (Exception e) {
             throw Unchecked.rethrow(e);
@@ -362,6 +362,15 @@ public class Function extends Expression {
             method = findMethod(clazz, methodName, 0);
             if (method != null)
                 return getter = new MethodGetter(method);
+        }
+
+        if (instance.getClass().isArray() && fieldName.equals("length")) {
+            return new Getter() {
+                @Override
+                public Object get(Object instance) {
+                    return Array.getLength(instance);
+                }
+            };
         }
 
         throw Unchecked.rethrow(new NoSuchFieldException(fieldName));
@@ -523,6 +532,8 @@ public class Function extends Expression {
                 for (int i = 0; i < m.getParameterTypes().length; i++) {
                     arg = argsClasses[i];
                     param = m.getParameterTypes()[i];
+                    if (arg == param || !param.isAssignableFrom(arg))
+                        continue;
                     if (param == char.class && arg == Character.class)
                         continue;
                     if (param == boolean.class && arg == Boolean.class)
@@ -542,8 +553,8 @@ public class Function extends Expression {
         return null;
     }
 
-    private Constructor findConstructor(Class clazz, Object[] args) {
-        Class[] argsClasses = null;
+    private <T> Constructor<T> findConstructor(Class<T> clazz, Object[] args) {
+        Class<?>[] argsClasses = null;
         if (args != null) {
             argsClasses = new Class[args.length];
             for (int i = 0; i < args.length; i++) {
@@ -558,13 +569,14 @@ public class Function extends Expression {
         }
         outer:
         for (Constructor c : clazz.getConstructors()) {
-            if (((c.getParameterTypes().length == 0 && argsClasses == null)
-                    || c.getParameterTypes().length == argsClasses.length)) {
+            Class<?>[] parameterTypes = c.getParameterTypes();
+            if (((parameterTypes.length == 0 && argsClasses == null) || parameterTypes.length == argsClasses.length)) {
 //                System.out.println("check args");
-                for (int i = 0; i < c.getParameterTypes().length; i++) {
-                    if (!(c.getParameterTypes()[i].equals(argsClasses[i])
-                            || (boxing.containsKey(c.getParameterTypes()[i]) && boxing.get(c.getParameterTypes()[i]).equals(argsClasses[i]))
-                            || (boxing.containsKey(c.getParameterTypes()[i]) && boxing.containsValue(argsClasses[i])))
+                for (int i = 0; i < parameterTypes.length; i++) {
+                    Class<?> type = parameterTypes[i];
+                    if (!(type.isAssignableFrom(argsClasses[i])
+                            || (boxing.containsKey(type) && boxing.get(type).equals(argsClasses[i]))
+                            || (boxing.containsKey(type) && boxing.containsValue(argsClasses[i])))
                     ) {
 //                        System.out.println(m.getParameterTypes()[i] + "\t" + (argsClasses[i]));
                         continue outer;
@@ -619,7 +631,20 @@ public class Function extends Expression {
 
     @Override
     public String toString() {
-        return "function for: " + thatObject + " ." + (method == null ? methodName : method.getName()) + "(" + Arrays.toString(args) + ")";
+        StringBuilder sb = new StringBuilder("function for: ");
+        sb.append(thatObject);
+        sb.append(".");
+        sb.append(method == null ? methodName : method.getName());
+        sb.append("(");
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(args[i]);
+            }
+        }
+        sb.append(")");
+        return sb.toString();
     }
 
     public Field getField() {

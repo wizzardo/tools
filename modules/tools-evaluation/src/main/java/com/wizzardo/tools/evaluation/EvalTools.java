@@ -30,7 +30,7 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("def +([a-z]+[a-zA-Z_\\d]*)$");
+    private static final Pattern DEF = Pattern.compile("(def|[a-zA-Z_]+[a-zA-Z_\\d\\.]*) +([a-zA-Z_]+[a-zA-Z_\\d]*)$");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
 
     protected static int countOpenBrackets(String s, int from, int to) {
@@ -759,8 +759,8 @@ public class EvalTools {
             {
                 Matcher m = DEF.matcher(exp);
                 if (m.find()) {
-                    model.put(m.group(1), null);
-                    return new Expression.Holder(m.group(1));
+                    model.put(m.group(2), null);
+                    return new Expression.Holder(m.group(2));
                 }
             }
         }
@@ -825,45 +825,7 @@ public class EvalTools {
                     operation.rightPart(prepare(exp.substring(last), model, functions, imports, isTemplate));
                 }
 
-                Expression eh = null;
-                while (operations.size() > 0) {
-                    operation = null;
-                    int n = 0;
-                    for (int i = 0; i < operations.size(); i++) {
-                        if (operation == null || operations.get(i).operator().priority > operation.operator().priority) {
-                            operation = operations.get(i);
-                            n = i;
-                        }
-                    }
-                    if (operation.operator() == Operator.TERNARY) {
-                        int ternaryIndex = n;
-                        operation = null;
-                        n = 0;
-                        for (int i = 0; i < ternaryIndex; i++) {
-                            if (operation == null || operations.get(i).operator().priority > operation.operator().priority) {
-                                operation = operations.get(i);
-                                n = i;
-                            }
-                        }
-                        if (operation == null) {
-                            operation = operations.get(0);
-                        }
-                    }
-
-                    if (operation.operator() == Operator.TERNARY) {
-                        operation.rightPart(operations.remove(n + 1));
-                    }
-
-                    //System.out.println("operation: " + operation);
-                    if (n > 0) {
-                        operations.get(n - 1).rightPart(operation);
-                    }
-                    if (n < operations.size() - 1) {
-                        operations.get(n + 1).leftPart(operation);
-                    }
-                    eh = operations.remove(n);
-                }
-                return eh;
+                return prioritize(operations);
             }
         }
 
@@ -1091,6 +1053,49 @@ public class EvalTools {
         }
 
         return thatObject;
+    }
+
+    protected static Expression prioritize(List<Operation> operations) {
+        Expression eh = null;
+        Operation operation;
+        while (operations.size() > 0) {
+            operation = null;
+            int n = 0;
+            for (int i = 0; i < operations.size(); i++) {
+                if (operation == null || operations.get(i).operator().priority > operation.operator().priority) {
+                    operation = operations.get(i);
+                    n = i;
+                }
+            }
+            if (operation.operator() == Operator.TERNARY) {
+                int ternaryIndex = n;
+                operation = null;
+                n = 0;
+                for (int i = 0; i < ternaryIndex; i++) {
+                    if (operation == null || operations.get(i).operator().priority > operation.operator().priority) {
+                        operation = operations.get(i);
+                        n = i;
+                    }
+                }
+                if (operation == null) {
+                    operation = operations.get(0);
+                }
+            }
+
+            if (operation.operator() == Operator.TERNARY) {
+                operation.rightPart(operations.remove(n + 1));
+            }
+
+            //System.out.println("operation: " + operation);
+            if (n > 0) {
+                operations.get(n - 1).rightPart(operation);
+            }
+            if (n < operations.size() - 1) {
+                operations.get(n + 1).leftPart(operation);
+            }
+            eh = operations.remove(n);
+        }
+        return eh;
     }
 
     protected static boolean isLineCommented(String s) {
