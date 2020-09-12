@@ -106,4 +106,16 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
     public Object call() throws Exception {
         return get();
     }
+
+    public int getParametersCount() {
+        return args.length;
+    }
+
+    public Pair<String, Class> getParameter(int i) {
+        return args[i];
+    }
+
+    public String getParameterName(int i) {
+        return args[i].key;
+    }
 }
