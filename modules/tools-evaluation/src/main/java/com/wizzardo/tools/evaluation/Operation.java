@@ -806,10 +806,10 @@ public class Operation extends Expression {
     }
 
     private static boolean e(Object ob1, Object ob2) {
-        if (ob1 == null || ob2 == null)
-            return false;
         if (ob1 == ob2)
             return true;
+        if (ob1 == null || ob2 == null)
+            return false;
         return ob1.equals(ob2);
     }
 

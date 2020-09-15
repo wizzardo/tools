@@ -30,7 +30,7 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("(def|[a-zA-Z_]+[a-zA-Z_\\d\\.]*) +([a-zA-Z_]+[a-zA-Z_\\d]*)$");
+    private static final Pattern DEF = Pattern.compile("(def|[a-zA-Z_]+[a-zA-Z_\\d\\.<>\\[\\]]*) +([a-zA-Z_]+[a-zA-Z_\\d]*)$");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
 
     protected static int countOpenBrackets(String s, int from, int to) {
@@ -350,14 +350,20 @@ public class EvalTools {
         Matcher m = IF_FOR_WHILE.matcher(s);
         int start = 0;
         int to = s.length();
-        while (m.find(start)) {
+        int searchOffset = 0;
+        while (m.find(searchOffset)) {
+            if(countOpenBrackets(s, start, m.start()) != 0){
+                searchOffset = m.end();
+                continue;
+            }
+
             if (m.start() != start) {
                 statements.add(new Statement(s.substring(start, m.start())));
             }
 
             Statement statement = new Statement();
             start = getBlock(s, m.start(), to, statement);
-
+            searchOffset = start;
             statements.add(statement.bodyStatement);
         }
         if (start != to) {
@@ -1174,7 +1180,7 @@ public class EvalTools {
         Matcher m = COMMA.matcher(argsRaw);
         int last = 0;
         while (m.find()) {
-            if (countOpenBrackets(argsRaw, last, m.start()) == 0) {
+            if (countOpenBrackets(argsRaw, last, m.start()) == 0 && !inString(argsRaw, last, m.start())) {
                 l.add(argsRaw.substring(last, m.start()).trim());
                 last = m.end();
             }

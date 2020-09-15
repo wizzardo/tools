@@ -26,6 +26,7 @@ public class IfExpression extends Expression {
     @Override
     public void setVariable(Variable v) {
         condition.setVariable(v);
+        thenStatement.setVariable(v);
         if (elseStatement != null)
             elseStatement.setVariable(v);
     }
