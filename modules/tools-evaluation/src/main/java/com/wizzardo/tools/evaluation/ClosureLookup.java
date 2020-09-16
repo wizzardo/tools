@@ -26,19 +26,28 @@ public class ClosureLookup extends Expression {
 
     @Override
     public Object get(Map<String, Object> model) {
-        if(model == null)
+        if (model == null)
             return lookupInFunctions();
 
         Object localFunction = model.get(functionName);
-        if (localFunction != null && localFunction instanceof Expression) {
+        if (localFunction instanceof Expression) {
             return localFunction;
-        } else {
-            return lookupInFunctions();
         }
+
+        localFunction = lookupInFunctions();
+        if (localFunction instanceof Expression) {
+            return localFunction;
+        }
+
+        return model.get("this");
     }
 
     private Object lookupInFunctions() {
-        UserFunction function = functions.get(functionName).clone();
+        UserFunction userFunction = functions.get(functionName);
+        if (userFunction == null)
+            return null;
+
+        UserFunction function = userFunction.clone();
         function.setUserFunctions(functions);
         return function;
     }

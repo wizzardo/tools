@@ -565,7 +565,21 @@ public class Operation extends Expression {
             if (v != null)
                 return setAndReturn(null, v, ob1, ob2, operator);
 
-            return setAndReturn(model, new Function.MapSetter(leftPart != null ? leftPart.raw() : rightPart.raw()), ob1, ob2, operator);
+            if (operator == Operator.EQUAL && leftPart instanceof Expression.VariableOrFieldOfThis) {
+                Expression.VariableOrFieldOfThis that = (VariableOrFieldOfThis) leftPart;
+                Object instance = that.thisHolder.get(model);
+                if (instance != null) {
+                    Function.Setter setter = that.function.getSetter(instance);
+                    if (setter != null)
+                        return setAndReturn(instance, setter, null, ob2, operator);
+
+                }
+            }
+
+            String key = leftPart != null ? leftPart.raw() : rightPart.raw();
+//            if (model.containsKey(key))
+            return setAndReturn(model, new Function.MapSetter(key), ob1, ob2, operator);
+
         }
         return null;
     }
@@ -575,6 +589,8 @@ public class Operation extends Expression {
         if (leftPart != null) {
             if (leftPart instanceof Holder)
                 return ((Holder) leftPart).variable;
+            if (leftPart instanceof VariableOrFieldOfThis)
+                return ((VariableOrFieldOfThis) leftPart).variable;
         } else if (rightPart != null && rightPart instanceof Holder)
             return ((Holder) rightPart).variable;
         return null;

@@ -105,6 +105,43 @@ public abstract class Expression {
 
     }
 
+    public static class VariableOrFieldOfThis extends Expression {
+
+        public final Expression thisHolder;
+        public final Function function;
+        protected Variable variable;
+
+        public VariableOrFieldOfThis(String exp) {
+            this.exp = exp;
+            thisHolder = new Expression.Holder("this");
+            function = new Function(thisHolder, exp);
+        }
+
+        @Override
+        public void setVariable(Variable v) {
+            if (exp.equals(v.getName()))
+                variable = v;
+        }
+
+        @Override
+        public Expression clone() {
+            return new VariableOrFieldOfThis(exp);
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+            if (variable != null)
+                return variable.get();
+
+//            if (model.containsKey(exp))
+            return model.get(exp);
+
+//            return function.get(model);
+        }
+
+    }
+
+
     public static class MapExpression extends Expression {
         protected Map<String, Expression> map;
 

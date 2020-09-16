@@ -352,7 +352,7 @@ public class EvalTools {
         int to = s.length();
         int searchOffset = 0;
         while (m.find(searchOffset)) {
-            if(countOpenBrackets(s, start, m.start()) != 0){
+            if (countOpenBrackets(s, start, m.start()) != 0) {
                 searchOffset = m.end();
                 continue;
             }
@@ -953,7 +953,7 @@ public class EvalTools {
 
 
             if (thatObject == null && parts.size() == 1 && parts.get(0).equals(exp)) {
-                thatObject = new Expression.Holder(parts.remove(0));
+                thatObject = new Expression.VariableOrFieldOfThis(parts.remove(0));
                 continue;
             }
             if (thatObject == null) {
@@ -1464,6 +1464,18 @@ public class EvalTools {
                     throw new MissingMethodException(it.getClass(), "multiply", args);
 
                 return Operation.multiply(it, args[0].get(model));
+            }
+        });
+
+        Function.setMethod(Object.class, "with", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+            @Override
+            public Object execute(Object it, Map model, Expression[] args) {
+                if (args.length != 1 || args[0].getClass() != ClosureHolder.class)
+                    throw new MissingMethodException(it.getClass(), "with", args);
+
+                ClosureExpression closure = (ClosureExpression) args[0].get();
+                closure.getAgainst(model, it);
+                return it;
             }
         });
     }

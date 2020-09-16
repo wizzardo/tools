@@ -42,13 +42,22 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
     }
 
     @Override
+    public String toString() {
+        return expressions.toString();
+    }
+
+    @Override
     public Object get() {
         return get(context);
     }
 
-    public Object get(Map<String, Object> model, Object... arg) {
+    public Object get(Map<String, Object> model, Object... args) {
+        return getAgainst(model, model, args);
+    }
+
+    public Object getAgainst(Map<String, Object> model, Object thisObject, Object... arg) {
         HashMap<String, Object> local = model != null ? new HashMap<String, Object>(model) : new HashMap<String, Object>(2, 1);
-        local.put("this", model);
+        local.put("this", thisObject);
         if (!(args.length == 1 && args[0].key.equals("it") && (arg == null || arg.length == 0))) {
             if (args.length != arg.length)
                 throw new IllegalArgumentException("wrong number of arguments! there were " + arg.length + ", but must be " + args.length);

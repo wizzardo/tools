@@ -5,12 +5,11 @@
 package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.collections.CollectionTools;
+import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Moxa
@@ -28,6 +27,7 @@ public class Function extends Expression {
     protected Setter setter;
     protected String methodName;
     protected Expression[] args;
+    protected List<Mapper<Object[], Object[]>> argsMappers;
     protected String fieldName;
     protected boolean hardcodeChecked = false;
     protected boolean metaChecked = false;
@@ -255,23 +255,11 @@ public class Function extends Expression {
             }
 
             if (args != null) {
-                if ((arr = tempArray.get()) == null) {
-                    arr = new Object[args.length];
-                    tempArray.set(arr);
-                }
-//            System.out.println("try resolve args:");
-                for (int i = 0; i < arr.length; i++) {
-//                System.out.println(i+"\t"+args[i]);
-                    if (args[i] instanceof ClosureExpression)
-                        arr[i] = args[i];
-                    else {
-                        Object o = args[i].get(model);
-                        if (o instanceof TemplateBuilder.GString)
-                            o = o.toString();
+                arr = resolveArgs(model);
+            }
 
-                        arr[i] = o;
-                    }
-                }
+            if (thatObject instanceof ClosureLookup && !(instance instanceof Expression)) {
+                methodName = ((ClosureLookup) thatObject).functionName;
             }
 
             if (instance instanceof ClosureExpression) {
@@ -295,28 +283,39 @@ public class Function extends Expression {
 //            System.out.println(Arrays.toString(arr));
                 return constructor.newInstance(arr);
             } else if (method == null) {
-                method = findMethod(getClass(instance), methodName, arr);
+                argsMappers = new ArrayList<Mapper<Object[], Object[]>>(args == null ? 0 : args.length);
+                method = findMethod(getClass(instance), methodName, arr, argsMappers);
                 if (method == null && instance.getClass() == Class.class)
-                    method = findMethod(instance.getClass(), methodName, arr);
+                    method = findMethod(instance.getClass(), methodName, arr, argsMappers);
                 if (method != null && Modifier.isPublic(method.getModifiers()))
                     method.setAccessible(true);
+
             }
             if (method == null) {
-                try {
-                    if (instance instanceof TemplateBuilder.GString) {
-                        thatObject = new Function(thatObject, "toString", new Expression[0]);
+                if (instance instanceof TemplateBuilder.GString) {
+                    thatObject = new Function(thatObject, "toString", new Expression[0]);
+                    return get(model);
+                } else if (!methodName.equals("execute")) {
+                    thatObject = new Function(thatObject, methodName);
+                    String methodNameHolder = methodName;
+                    methodName = "execute";
+                    try {
                         return get(model);
-                    } else if (!methodName.equals("execute")) {
-                        thatObject = new Function(thatObject, methodName);
-                        methodName = "execute";
-                        return get(model);
+                    } catch (Exception e) {
+                        if (!e.getClass().equals(NoSuchFieldException.class))
+                            throw Unchecked.rethrow(e);
+                        else
+                            methodName = methodNameHolder;
                     }
-                } catch (Exception e) {
-                    if (!e.getClass().equals(NoSuchFieldException.class))
-                        throw Unchecked.rethrow(e);
                 }
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
                 throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + getClass(instance) + " with args: " + Arrays.toString(arr));
+            }
+
+            if (!argsMappers.isEmpty()) {
+                for (Mapper<Object[], Object[]> mapper : argsMappers) {
+                    arr = mapper.map(arr);
+                }
             }
             Object result = method.invoke(instance, arr);
 //            if (!hardcodeChecked && (hardcoded = thatObject.hardcoded)) {
@@ -334,6 +333,28 @@ public class Function extends Expression {
         } catch (Exception e) {
             throw Unchecked.rethrow(e);
         }
+    }
+
+    protected Object[] resolveArgs(Map<String, Object> model) {
+        Object[] arr;
+        if ((arr = tempArray.get()) == null) {
+            arr = new Object[args.length];
+            tempArray.set(arr);
+        }
+//            System.out.println("try resolve args:");
+        for (int i = 0; i < arr.length; i++) {
+//                System.out.println(i+"\t"+args[i]);
+            if (args[i] instanceof ClosureExpression)
+                arr[i] = args[i];
+            else {
+                Object o = args[i].get(model);
+                if (o instanceof TemplateBuilder.GString)
+                    o = o.toString();
+
+                arr[i] = o;
+            }
+        }
+        return arr;
     }
 
     public Getter getGetter(Object instance) {
@@ -461,15 +482,17 @@ public class Function extends Expression {
         return clazz;
     }
 
-    private Method findMethod(Class clazz, String method, Object[] args) {
-        Class[] argsClasses = null;
+    private Method findMethod(Class clazz, String method, Object[] args, List<Mapper<Object[], Object[]>> argsMappers) {
+        Class[] argsClasses;
         if (args != null) {
             argsClasses = new Class[args.length];
             for (int i = 0; i < args.length; i++) {
                 if (args[i] != null)
                     argsClasses[i] = args[i].getClass();
             }
-        }
+        } else
+            argsClasses = new Class[0];
+
         try {
             return clazz.getMethod(method, argsClasses);
         } catch (NoSuchMethodException e) {
@@ -479,7 +502,7 @@ public class Function extends Expression {
         if (m == null)
             m = findBoxedMatch(clazz, method, argsClasses);
         if (m == null)
-            m = findNumberMatch(clazz, method, argsClasses);
+            m = findNumberMatch(clazz, method, argsClasses, argsMappers);
         return m;
     }
 
@@ -522,22 +545,38 @@ public class Function extends Expression {
         return null;
     }
 
-    private Method findNumberMatch(Class clazz, String method, Class[] argsClasses) {
+    private Method findNumberMatch(Class clazz, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
         Class<?> arg;
         Class<?> param;
         outer:
         for (Method m : clazz.getMethods()) {
-            if (m.getName().equals(method) && ((m.getParameterTypes().length == 0 && argsClasses == null) || m.getParameterTypes().length == argsClasses.length)) {
-//                System.out.println("check args");
-                for (int i = 0; i < m.getParameterTypes().length; i++) {
+            final Class<?>[] parameterTypes = m.getParameterTypes();
+            if (m.getName().equals(method) && ((parameterTypes.length == 0 && argsClasses == null) || parameterTypes.length == argsClasses.length ||
+                    (m.isVarArgs() && parameterTypes.length <= argsClasses.length + 1))) {
+                if (!argsMappers.isEmpty())
+                    argsMappers.clear();
+
+                for (int i = 0; i < argsClasses.length; i++) {
                     arg = argsClasses[i];
-                    param = m.getParameterTypes()[i];
+
+                    if (i >= parameterTypes.length - 1 && m.isVarArgs()) {
+                        param = parameterTypes[parameterTypes.length - 1].getComponentType();
+                    } else {
+                        param = parameterTypes[i];
+                    }
+
                     if (arg == param || param.isAssignableFrom(arg))
                         continue;
                     if (param == char.class && arg == Character.class)
                         continue;
                     if (param == boolean.class && arg == Boolean.class)
                         continue;
+                    if (arg == ClosureExpression.class && param.isInterface() && param.getMethods().length == 1) {
+                        final int index = i;
+                        final Class<?> samInterface = param;
+                        argsMappers.add(wrapClosureArgAsProxy(index, samInterface));
+                        continue;
+                    }
                     int a = indexOfClass(arg, Boxed);
                     if (a < 0)
                         continue outer;
@@ -547,10 +586,68 @@ public class Function extends Expression {
                     if (p < a)
                         continue outer;
                 }
+
+                if (m.isVarArgs()) {
+                    argsMappers.add(new Mapper<Object[], Object[]>() {
+                        @Override
+                        public Object[] map(Object[] objects) {
+                            int varArgSize = (objects == null ? 0 : objects.length) - (parameterTypes.length - 1);
+                            int argsSize = parameterTypes.length;
+
+                            Object[] args = new Object[argsSize];
+                            Object vararg = Array.newInstance(parameterTypes[parameterTypes.length - 1].getComponentType(), varArgSize);
+
+
+                            if (argsSize > 1) {
+                                System.arraycopy(objects, 0, args, 0, argsSize - 1);
+                            }
+                            if (varArgSize > 0) {
+                                System.arraycopy(objects, argsSize - 1, vararg, 0, varArgSize);
+                            }
+
+                            args[argsSize - 1] = vararg;
+
+                            return args;
+                        }
+                    });
+//                    for (int i = parameterTypes.length-1; i < ar; i++) {
+//
+//                    }
+                }
                 return m;
             }
         }
+
+        if (!argsMappers.isEmpty())
+            argsMappers.clear();
+
         return null;
+    }
+
+    private Mapper<Object[], Object[]> wrapClosureArgAsProxy(final int index, final Class<?> samInterface) {
+        return new Mapper<Object[], Object[]>() {
+            @Override
+            public Object[] map(Object[] objects) {
+                final ClosureExpression closure = (ClosureExpression) objects[index];
+                final Variable[] closureArgs = new Variable[closure.getParametersCount()];
+                for (int j = 0; j < closureArgs.length; j++) {
+                    closure.setVariable(closureArgs[j] = new Variable(closure.getParameterName(j), null));
+                }
+                objects[index] = Proxy.newProxyInstance(
+                        samInterface.getClassLoader(),
+                        new Class[]{samInterface},
+                        new InvocationHandler() {
+                            @Override
+                            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                                for (int j = 0; j < closureArgs.length; j++) {
+                                    closureArgs[j].set(args[j]);
+                                }
+                                return closure.get();
+                            }
+                        });
+                return objects;
+            }
+        };
     }
 
     private <T> Constructor<T> findConstructor(Class<T> clazz, Object[] args) {

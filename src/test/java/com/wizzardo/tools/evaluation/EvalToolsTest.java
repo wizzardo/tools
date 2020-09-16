@@ -4,6 +4,7 @@
  */
 package com.wizzardo.tools.evaluation;
 
+import com.wizzardo.tools.interfaces.Mapper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -1303,4 +1304,67 @@ public class EvalToolsTest {
         assertEquals(1, model.get("a"));
     }
 
+
+    public static class TestVarArg {
+        public static String concat(String... strings) {
+            StringBuilder sb = new StringBuilder();
+            for (String string : strings) {
+                sb.append(string);
+            }
+            return sb.toString();
+        }
+    }
+
+    @Test
+    public void test_vararg() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("", EvalTools.prepare("def s = com.wizzardo.tools.evaluation.EvalToolsTest.TestVarArg.concat()").get(model));
+        Assert.assertEquals("", model.get("s"));
+
+        Assert.assertEquals("test", EvalTools.prepare("def s = com.wizzardo.tools.evaluation.EvalToolsTest.TestVarArg.concat('test')").get(model));
+        Assert.assertEquals("test", model.get("s"));
+
+        String s = "def s = com.wizzardo.tools.evaluation.EvalToolsTest.TestVarArg.concat('test ','message')";
+        Assert.assertEquals("test message", EvalTools.prepare(s).get(model));
+        Assert.assertEquals("test message", model.get("s"));
+    }
+
+    public static class TestClosureAsSAM {
+        private String value;
+
+        public TestClosureAsSAM(String value) {
+            this.value = value;
+        }
+
+        public <T> T map(Mapper<String, T> mapper) {
+            return mapper.map(value);
+        }
+    }
+
+    @Test
+    public void test_sam() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("t", new TestClosureAsSAM("test"));
+        String s = "def s = t.map { it.toUpperCase() }";
+        Assert.assertEquals("TEST", EvalTools.prepare(s).get(model));
+        Assert.assertEquals("TEST", model.get("s"));
+    }
+
+    public static class StringHolder {
+        public String value;
+
+        @Override
+        public String toString() {
+            return value;
+        }
+    }
+
+    @Test
+    public void test_with() {
+        Map<String, Object> model = new HashMap<String, Object>();
+//        Assert.assertEquals("[1]", EvalTools.prepare("[].with { add(1) }").get(model).toString());
+
+        model.put("holder", new StringHolder());
+        Assert.assertEquals("123", EvalTools.prepare("holder.with { value = '123' }").get(model).toString());
+    }
 }
