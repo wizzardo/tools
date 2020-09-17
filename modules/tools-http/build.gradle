@@ -1,6 +1,7 @@
 dependencies {
     compile project(':modules:tools-exception')
     compile project(':modules:tools-security')
+    compile project(':modules:tools-reflection')
 }
 
 archivesBaseName = "tools-http"

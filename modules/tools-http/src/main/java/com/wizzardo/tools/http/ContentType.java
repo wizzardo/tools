@@ -8,6 +8,7 @@ public enum ContentType {
     BINARY("application/octet-stream"),
     JSON("application/json"),
     XML("application/xml"),
+    TEXT("text/plain"),
     JPG("image/jpeg"),
     PNG("image/png"),
     GIF("image/gif"),;

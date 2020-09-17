@@ -77,6 +77,11 @@ public class Request extends RequestArguments<Request> {
         return execute();
     }
 
+    public Response patch() throws IOException {
+        setMethod(ConnectionMethod.PATCH);
+        return execute();
+    }
+
     protected Request setSession(HttpSession session) {
         this.session = session;
         return this;
@@ -118,7 +123,7 @@ public class Request extends RequestArguments<Request> {
                 HttpsURLConnection https = (HttpsURLConnection) c;
                 https.setSSLSocketFactory(sslFactory);
             }
-            if (method == ConnectionMethod.POST || method == ConnectionMethod.PUT) {
+            if (method == ConnectionMethod.POST || method == ConnectionMethod.PUT || method == ConnectionMethod.PATCH) {
                 c.setDoOutput(true);
                 if (!multipart) {
                     if (data == null) {

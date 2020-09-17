@@ -1,5 +1,6 @@
 package com.wizzardo.tools.reflection;
 
+import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.field.*;
 import sun.misc.Unsafe;
 
@@ -109,6 +110,15 @@ public class FieldReflectionFactory {
         }
 
         return null;
+    }
+
+    public void removeFinalModifier(Field field) {
+        try {
+            FieldReflection modifiers = create(Field.class, "modifiers", true);
+            modifiers.setInteger(field, field.getModifiers() & ~Modifier.FINAL);
+        } catch (NoSuchFieldException e) {
+            throw Unchecked.rethrow(e);
+        }
     }
 
     protected boolean isUnsafeAvailable(Field field) {
