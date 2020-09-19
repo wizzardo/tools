@@ -571,7 +571,7 @@ public class Function extends Expression {
                         continue;
                     if (param == boolean.class && arg == Boolean.class)
                         continue;
-                    if (arg == ClosureExpression.class && param.isInterface() && param.getMethods().length == 1) {
+                    if (arg == ClosureExpression.class && isSAMInterface(param)) {
                         final int index = i;
                         final Class<?> samInterface = param;
                         argsMappers.add(wrapClosureArgAsProxy(index, samInterface));
@@ -622,6 +622,36 @@ public class Function extends Expression {
             argsMappers.clear();
 
         return null;
+    }
+
+    private boolean isSAMInterface(Class<?> param) {
+        if (!param.isInterface())
+            return false;
+
+        Method[] methods = param.getMethods();
+        int count = 0;
+        for (int i = 0; i < methods.length; i++) {
+            Method method = methods[i];
+            if ((method.getModifiers() & Modifier.ABSTRACT) == 0)
+                continue;
+            if (method.getName().equals("equals") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0].equals(Object.class))
+                continue;
+            if (method.getName().equals("hashCode") && method.getParameterTypes().length == 0)
+                continue;
+            if (method.getName().equals("toString") && method.getParameterTypes().length == 0)
+                continue;
+            if (method.getName().equals("clone") && method.getParameterTypes().length == 0)
+                continue;
+            if (method.getName().equals("finalize") && method.getParameterTypes().length == 0)
+                continue;
+
+            count++;
+
+            if (count > 1)
+                return false;
+        }
+
+        return true;
     }
 
     private Mapper<Object[], Object[]> wrapClosureArgAsProxy(final int index, final Class<?> samInterface) {
