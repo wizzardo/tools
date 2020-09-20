@@ -7,7 +7,9 @@ package com.wizzardo.tools.evaluation;
 import com.wizzardo.tools.collections.CollectionTools;
 import com.wizzardo.tools.misc.Unchecked;
 
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +21,7 @@ public class EvalTools {
     static final String CONSTRUCTOR = "%constructor%";
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
-    private static final Pattern CLEAN_CLASS = Pattern.compile("([a-z]+\\.)*(\\b[A-Z][a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*");
+    private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*)(\\[)?");
     private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern());
     private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
     private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*" + "\\)");
@@ -334,6 +336,15 @@ public class EvalTools {
                         return new IfExpression(condition, then);
                     else
                         return new IfExpression(condition, then, elseExpression);
+                }
+                case WHILE: {
+                    List<String> args = getBlocks(statement, true);
+                    if (args.size() > 1)
+                        throw new IllegalStateException("more then one statement in condition: " + statement);
+
+                    AsBooleanExpression condition = new AsBooleanExpression(EvalTools.prepare(args.get(0), model, functions, imports));
+                    Expression then = bodyStatement != null ? bodyStatement.prepare(model, functions, imports) : EvalTools.prepare(body, model, functions, imports);
+                    return new WhileExpression(condition, then);
                 }
                 default:
                     throw new IllegalStateException("not implemented yet");
@@ -728,6 +739,9 @@ public class EvalTools {
 
                     case BLOCK: {
                         List<String> lines = getBlocks(s.statement);
+                        if (lines.isEmpty())
+                            continue;
+
                         if (lines.size() > 1) {
                             ClosureExpression inner = new ClosureExpression();
                             for (String line : lines) {
@@ -862,16 +876,25 @@ public class EvalTools {
 
         Expression thatObject = null;
         String methodName = null;
+        Class arrayClass = null;
         {
             Matcher m = NEW.matcher(exp);
             if (m.find()) {
-                Class clazz = findClass(m.group().substring(4), imports);
+                Class clazz = findClass(m.group(1), imports);
+
                 if (clazz != null) {
-                    thatObject = new Expression.Holder(clazz);
-                    exp = exp.substring(m.end());
-                    methodName = CONSTRUCTOR;
+                    if (m.group(5) != null) {
+                        thatObject = new Expression.Holder(Array.class);
+                        methodName = "newInstance";
+                        arrayClass = clazz;
+                        exp = exp.substring(m.end() - 1);
+                    } else {
+                        thatObject = new Expression.Holder(clazz);
+                        methodName = CONSTRUCTOR;
+                        exp = exp.substring(m.end());
+                    }
                 } else
-                    Unchecked.rethrow(new ClassNotFoundException("Can not find class '" + m.group().substring(4) + "'"));
+                    Unchecked.rethrow(new ClassNotFoundException("Can not find class '" + m.group(1) + "'"));
             }
         }
 
@@ -887,13 +910,14 @@ public class EvalTools {
             String s = exp;
             Matcher m = CLASS.matcher(exp);
             while (m.find()) {
-                String className;
-                if (m.start(3) >= 0)
-                    className = exp.substring(0, m.start(3)) + "$" + exp.substring(m.start(3) + 1, m.end(3));
-                else
-                    className = m.group();
-
+                String className = m.group(1);
                 Class clazz = findClass(className, imports);
+                if (clazz == null) {
+                    int lastDot = className.lastIndexOf('.');
+                    if (lastDot != -1)
+                        clazz = findClass(className.substring(0, lastDot) + "$" + className.substring(lastDot + 1));
+                }
+
                 if (clazz != null) {
                     thatObject = new Expression.Holder(clazz);
                     exp = exp.substring(m.end());
@@ -911,18 +935,21 @@ public class EvalTools {
         if (thatObject == null) {
             Matcher m = CAST.matcher(exp);
             while (m.find()) {
-                if (m.start(4) >= 0) {
+                if (m.start(6) >= 0) {
                     //remove generics
-                    exp = exp.substring(0, m.start(4)) + exp.substring(m.end(4));
+                    exp = exp.substring(0, m.start(6)) + exp.substring(m.end(6));
                     m = CAST.matcher(exp);
                     continue;
                 }
-                String className = m.group();
-                if (m.start(3) >= 0)
-                    className = exp.substring(1, m.start(3)) + "$" + exp.substring(m.start(3) + 1, m.end(3));
-                else
-                    className = className.substring(1, className.length() - 1);
+
+                String className = m.group(1);
                 Class clazz = findClass(className, imports);
+                if (clazz == null) {
+                    int lastDot = className.lastIndexOf('.');
+                    if (lastDot != -1)
+                        clazz = findClass(className.substring(0, lastDot) + "$" + className.substring(lastDot + 1));
+                }
+
                 if (clazz != null) {
                     exp = exp.substring(m.end());
                     return new Expression.CastExpression(clazz, prepare(exp, model, functions, imports, isTemplate));
@@ -1041,7 +1068,15 @@ public class EvalTools {
             } else if (parts.get(0).startsWith("[") && parts.get(0).endsWith("]")) {
                 String argsRaw = parts.remove(0);
                 argsRaw = argsRaw.substring(1, argsRaw.length() - 1);
-                thatObject = new Operation(thatObject, prepare(argsRaw, model, functions, imports, isTemplate), Operator.GET);
+                if (arrayClass == null)
+                    thatObject = new Operation(thatObject, prepare(argsRaw, model, functions, imports, isTemplate), Operator.GET);
+                else {
+                    Expression[] args = new Expression[2];
+                    args[0] = new Expression.Holder(arrayClass);
+                    args[1] = prepare(argsRaw, model, functions, imports, isTemplate);
+                    thatObject = new Function(thatObject, methodName, args);
+                    arrayClass = null;
+                }
 
                 //execute closure
             } else if (parts.size() == 1) {
@@ -1122,51 +1157,133 @@ public class EvalTools {
         return findClass(s, null);
     }
 
+    private static Map<ClassKey, Class> javaClassesCache = new ConcurrentHashMap<ClassKey, Class>();
+    private static Set<ClassKey> notFoundClassesCache = Collections.newSetFromMap(new ConcurrentHashMap<ClassKey, Boolean>());
+
+    private static class ClassKey {
+        final String pack;
+        final String name;
+
+        private ClassKey(String pack, String name) {
+            this.pack = pack;
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ClassKey classKey = (ClassKey) o;
+
+            if (!pack.equals(classKey.pack)) return false;
+            return name.equals(classKey.name);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = pack.hashCode();
+            result = 31 * result + name.hashCode();
+            return result;
+        }
+    }
+
     private static Class findClass(String s, List<String> imports) {
-        try {
-            return ClassLoader.getSystemClassLoader().loadClass(s);
-        } catch (ClassNotFoundException ignored) {
+        ClassKey key;
+        Class aClass;
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+
+        key = new ClassKey("", s);
+        if (!notFoundClassesCache.contains(key)) {
+            try {
+                return classLoader.loadClass(s);
+            } catch (ClassNotFoundException ignored) {
+                notFoundClassesCache.add(key);
+            }
         }
-        try {
-            return ClassLoader.getSystemClassLoader().loadClass("java.lang." + s);
-        } catch (ClassNotFoundException ignored) {
+
+        key = new ClassKey("java.lang.", s);
+        aClass = javaClassesCache.get(key);
+        if (aClass != null)
+            return aClass;
+        if (!notFoundClassesCache.contains(key)) {
+            try {
+                aClass = classLoader.loadClass("java.lang." + s);
+                javaClassesCache.put(key, aClass);
+                return aClass;
+            } catch (ClassNotFoundException ignored) {
+                notFoundClassesCache.add(key);
+            }
         }
-        try {
-            return ClassLoader.getSystemClassLoader().loadClass("java.util." + s);
-        } catch (ClassNotFoundException ignored) {
+
+        key = new ClassKey("java.util.", s);
+        aClass = javaClassesCache.get(key);
+        if (aClass != null)
+            return aClass;
+        if (!notFoundClassesCache.contains(key)) {
+            try {
+                aClass = classLoader.loadClass("java.util." + s);
+                javaClassesCache.put(key, aClass);
+                return aClass;
+            } catch (ClassNotFoundException ignored) {
+                notFoundClassesCache.add(key);
+            }
         }
+
+        if (s.equals("byte"))
+            return byte.class;
+        if (s.equals("int"))
+            return int.class;
+        if (s.equals("short"))
+            return short.class;
+        if (s.equals("long"))
+            return long.class;
+        if (s.equals("float"))
+            return float.class;
+        if (s.equals("double"))
+            return double.class;
+        if (s.equals("char"))
+            return char.class;
+        if (s.equals("boolean"))
+            return boolean.class;
+
         if (imports != null) {
             for (String imp : imports) {
-                if (imp.endsWith("." + s))
+                if (imp.length() - 1 - s.length() > 0 && imp.charAt(imp.length() - 1 - s.length()) == '.' && imp.endsWith(s)) {
                     try {
-                        return ClassLoader.getSystemClassLoader().loadClass(imp);
+                        return classLoader.loadClass(imp);
                     } catch (ClassNotFoundException ignored) {
                     }
+                }
                 if (imp.endsWith(".*")) {
-                    try {
-                        return ClassLoader.getSystemClassLoader().loadClass(imp.substring(0, imp.length() - 1) + s);
-                    } catch (ClassNotFoundException ignored) {
+                    key = new ClassKey(imp, s);
+                    if (!notFoundClassesCache.contains(key)) {
+                        try {
+                            return classLoader.loadClass(imp.substring(0, imp.length() - 1) + s);
+                        } catch (ClassNotFoundException ignored) {
+                            notFoundClassesCache.add(key);
+                        }
                     }
                 }
             }
             if (s.contains("$")) {
-                String mainClass = s.substring(0, s.indexOf('$'));
+                String mainClass = "." + s.substring(0, s.indexOf('$'));
                 String subClass = s.substring(s.indexOf('$') + 1);
                 for (String imp : imports) {
-                    if (imp.endsWith("." + mainClass))
+                    if (imp.endsWith(mainClass))
                         try {
-                            return ClassLoader.getSystemClassLoader().loadClass(imp + "$" + subClass);
+                            return classLoader.loadClass(imp + "$" + subClass);
                         } catch (ClassNotFoundException ignored) {
                         }
                 }
             }
             if (s.contains(".")) {
-                String mainClass = s.substring(0, s.indexOf('.'));
+                String mainClass = "." + s.substring(0, s.indexOf('.'));
                 String subClass = s.substring(s.indexOf('.') + 1);
                 for (String imp : imports) {
-                    if (imp.endsWith("." + mainClass))
+                    if (imp.endsWith(mainClass))
                         try {
-                            return ClassLoader.getSystemClassLoader().loadClass(imp + "$" + subClass);
+                            return classLoader.loadClass(imp + "$" + subClass);
                         } catch (ClassNotFoundException ignored) {
                         }
                 }
