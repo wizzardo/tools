@@ -1281,6 +1281,16 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_new_array() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        assertEquals("[0]", Arrays.toString((byte[]) EvalTools.prepare("new byte[1]", model).get(model)));
+
+        model.put("n", 3);
+        assertEquals("[0, 0, 0]", Arrays.toString((int[]) EvalTools.prepare("new int[n]", model).get(model)));
+    }
+
+    @Test
     public void test_define_variable_with_type() {
         Map<String, Object> model = new HashMap<String, Object>();
 
@@ -1352,6 +1362,7 @@ public class EvalToolsTest {
 
     public static class StringHolder {
         public String value;
+        public int l;
 
         @Override
         public String toString() {
@@ -1362,9 +1373,12 @@ public class EvalToolsTest {
     @Test
     public void test_with() {
         Map<String, Object> model = new HashMap<String, Object>();
-//        Assert.assertEquals("[1]", EvalTools.prepare("[].with { add(1) }").get(model).toString());
+        Assert.assertEquals("[1]", EvalTools.prepare("[].with { add(1) }").get(model).toString());
 
         model.put("holder", new StringHolder());
-        Assert.assertEquals("123", EvalTools.prepare("holder.with { value = '123' }").get(model).toString());
+        Assert.assertEquals("123", EvalTools.prepare("holder.with { " +
+                "value = '123';" +
+                "l = value.length();" +
+                " }").get(model).toString());
     }
 }

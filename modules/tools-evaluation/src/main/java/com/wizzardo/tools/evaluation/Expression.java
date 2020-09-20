@@ -113,7 +113,7 @@ public abstract class Expression {
 
         public VariableOrFieldOfThis(String exp) {
             this.exp = exp;
-            thisHolder = new Expression.Holder("this");
+            thisHolder = new Expression.Holder("delegate");
             function = new Function(thisHolder, exp);
         }
 

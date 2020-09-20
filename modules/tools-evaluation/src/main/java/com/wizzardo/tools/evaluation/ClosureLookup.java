@@ -39,7 +39,7 @@ public class ClosureLookup extends Expression {
             return localFunction;
         }
 
-        return model.get("this");
+        return model.get("delegate");
     }
 
     private Object lookupInFunctions() {
