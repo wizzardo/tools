@@ -22,7 +22,7 @@ public class EvalTools {
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
     private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*)(\\[)?");
-    private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern());
+    private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*");
     private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
     private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*" + "\\)");
     private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
@@ -32,7 +32,7 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("(def|[a-zA-Z_]+[a-zA-Z_\\d\\.<>\\[\\]]*) +([a-zA-Z_]+[a-zA-Z_\\d]*)$");
+    private static final Pattern DEF = Pattern.compile("(def|[a-zA-Z_]+[a-zA-Z_\\d\\.\\<,\\>\\[\\]]*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=)");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
 
     protected static int countOpenBrackets(String s, int from, int to) {
@@ -779,8 +779,12 @@ public class EvalTools {
             {
                 Matcher m = DEF.matcher(exp);
                 if (m.find()) {
-                    model.put(m.group(2), null);
-                    return new Expression.Holder(m.group(2));
+                    if (m.group(3).equals("=")) {
+                        exp = m.replaceFirst("def $2 =");
+                    } else {
+                        model.put(m.group(2), null);
+                        return new Expression.Holder(m.group(2));
+                    }
                 }
             }
         }
@@ -813,13 +817,15 @@ public class EvalTools {
 
 //                System.out.println(m.group());
                 if (countOpenBrackets(exp, last, m.start()) == 0 && !inString(exp, last, m.start())) {
-                    exps.add(exp.substring(last, m.start()).trim());
-//                    lastExpressionHolder = new ExpressionHolder(exp.substring(last, m.start()));
-                    lastExpressionHolder = prepare(exp.substring(last, m.start()), model, functions, imports, isTemplate);
+                    String subexpression = exp.substring(last, m.start()).trim();
+                    if (subexpression.startsWith("new ") && (m.group().equals("<") || m.group().equals(">"))) {
+                        continue;
+                    }
+                    exps.add(subexpression);
+                    lastExpressionHolder = prepare(subexpression, model, functions, imports, isTemplate);
                     if (operation != null) {
                         //complete last operation
                         operation.end(m.start());
-//                        operation.rightPart(new ExpressionHolder(exp.substring(last, operation.end())));
                         operation.rightPart(lastExpressionHolder);
                     }
                     operation = new Operation(lastExpressionHolder, Operator.get(m.group()), last, m.end());
@@ -827,8 +833,7 @@ public class EvalTools {
                     //add operation to list
                     last = m.end();
                     if (ternary) {
-//                        lastExpressionHolder = new ExpressionHolder(exp.substring(last, exp.length()));
-                        lastExpressionHolder = prepare(exp.substring(last, exp.length()), model, functions, imports, isTemplate);
+                        lastExpressionHolder = prepare(exp.substring(last), model, functions, imports, isTemplate);
                         operation.rightPart(lastExpressionHolder);
                         break;
                     }
@@ -841,7 +846,6 @@ public class EvalTools {
                 if (last != exp.length()) {
                     exps.add(exp.substring(last).trim());
                     operation.end(exp.length());
-//                    operation.rightPart(new ExpressionHolder(exp.substring(last)));
                     operation.rightPart(prepare(exp.substring(last), model, functions, imports, isTemplate));
                 }
 

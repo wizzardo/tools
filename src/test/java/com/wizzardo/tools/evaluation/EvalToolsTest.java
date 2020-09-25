@@ -1381,4 +1381,11 @@ public class EvalToolsTest {
                 "l = value.length();" +
                 " }").get(model).toString());
     }
+
+    @Test
+    public void test_def_with_generics() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("[]", EvalTools.prepare("def l = new ArrayList<Integer>()").get(model).toString());
+        Assert.assertEquals("[]", EvalTools.prepare("ArrayList<Integer> l = new ArrayList<Integer>()").get(model).toString());
+    }
 }
