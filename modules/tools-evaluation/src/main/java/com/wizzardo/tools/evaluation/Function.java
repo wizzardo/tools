@@ -242,6 +242,10 @@ public class Function extends Expression {
 //        System.out.println("evaluate method: "+toString());
 
             Object instance = thatObject.get(model);
+            if (instance == null && thatObject instanceof VariableOrFieldOfThis) {
+                if (VariableOrFieldOfThis.hasDelegate(model))
+                    instance = ((VariableOrFieldOfThis) thatObject).function.get(model);
+            }
 
             if (safeNavigation && instance == null)
                 return null;
@@ -276,8 +280,9 @@ public class Function extends Expression {
             if (fieldName != null || getter != null) {
                 return getGetter(instance).get(instance);
             }
-            if (EvalTools.CONSTRUCTOR.equals(methodName)) {
-                constructor = findConstructor(getClass(instance), arr);
+            if (constructor != null || EvalTools.CONSTRUCTOR.equals(methodName)) {
+                if (constructor == null)
+                    constructor = findConstructor(getClass(instance), arr);
 //            System.out.println(constructor);
 //            System.out.println(Arrays.toString(constructor.getParameterTypes()));
 //            System.out.println(Arrays.toString(arr));

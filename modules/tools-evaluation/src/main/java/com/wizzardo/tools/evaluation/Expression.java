@@ -139,6 +139,9 @@ public abstract class Expression {
 //            return function.get(model);
         }
 
+        public static boolean hasDelegate(Map<String, Object> model){
+            return model.containsKey("delegate");
+        }
     }
 
 
