@@ -1408,4 +1408,24 @@ public class EvalToolsTest {
                 "for(;i<=3;){l << i++};\n" +
                 "l").get(model).toString());
     }
+
+    @Test
+    public void test_def_function() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("Hello, world!", EvalTools.prepare("" +
+                " String sayHello() {\n" +
+                "        def greet = \"Hello, world!\"\n" +
+                "        greet\n" +
+                "    }\n" +
+                "sayHello()\n" +
+                "").get(model).toString());
+
+        Assert.assertEquals("Hello, world!", EvalTools.prepare("" +
+                " String sayHello(String target) {\n" +
+                "        def greet = \"Hello, $target!\"\n" +
+                "        greet\n" +
+                "    }\n" +
+                "sayHello('world')\n" +
+                "").get(model).toString());
+    }
 }

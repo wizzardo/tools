@@ -32,7 +32,7 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("(def|[a-zA-Z_]+[a-zA-Z_\\d\\.\\<,\\>\\[\\]]*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=)");
+    private static final Pattern DEF = Pattern.compile("(static|private|protected|public)*(def|[a-zA-Z_]+[a-zA-Z_\\d\\.\\<,\\>\\[\\]]*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
 
     protected static int countOpenBrackets(String s, int from, int to) {
@@ -799,12 +799,25 @@ public class EvalTools {
             }
             {
                 Matcher m = DEF.matcher(exp);
-                if (m.find()) {
-                    if (m.group(3).equals("=")) {
-                        exp = m.replaceFirst("def $2 =");
+                if (m.find() && !m.group(2).equals("new")) {
+                    if (m.group(4).equals("=")) {
+                        exp = m.replaceFirst("def $3 =");
+                    } else if (m.group(4).equals("(")) {
+                        int argsEnd = findCloseBracket(exp, m.end());
+                        if (argsEnd == m.end()) {
+                            exp = "def " + m.group(3) + " = " + exp.substring(argsEnd + 1);
+                        } else {
+                            String block = exp.substring(argsEnd + 1).trim();
+                            if (!block.startsWith("{"))
+                                throw new IllegalStateException("Cannot parse: " + exp);
+
+                            String args = exp.substring(m.end(), argsEnd);
+                            exp = "def " + m.group(3) + " = { " + args + " -> " + block.substring(1);
+                        }
+                        return prepare(exp, model, functions, imports, isTemplate);
                     } else {
-                        model.put(m.group(2), null);
-                        return new Expression.Holder(m.group(2));
+                        model.put(m.group(3), null);
+                        return new Expression.Holder(m.group(3));
                     }
                 }
             }
