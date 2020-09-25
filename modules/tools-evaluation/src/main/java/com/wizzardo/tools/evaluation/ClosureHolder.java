@@ -29,4 +29,9 @@ public class ClosureHolder extends Expression {
         closure.setContext(model == null ? Collections.<String, Object>emptyMap() : model);
         return closure;
     }
+
+    @Override
+    public String toString() {
+        return closure.toString();
+    }
 }

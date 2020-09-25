@@ -1428,4 +1428,20 @@ public class EvalToolsTest {
                 "sayHello('world')\n" +
                 "").get(model).toString());
     }
+
+    @Test
+    public void test_def_class() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("Hello, world!", EvalTools.prepare("" +
+                "class Greeter {\n" +
+                "    String sayHello() {\n" +
+                "        def greet = \"Hello, world!\"\n" +
+                "        greet\n" +
+                "    }\n" +
+                "}\n" +
+                "\n" +
+                "new Greeter().sayHello()\n" +
+                "").get(model).toString());
+
+    }
 }

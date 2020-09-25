@@ -34,6 +34,7 @@ public class EvalTools {
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
     private static final Pattern DEF = Pattern.compile("(static|private|protected|public)*(def|[a-zA-Z_]+[a-zA-Z_\\d\\.\\<,\\>\\[\\]]*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
+    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\bclass +([A-Za-z0-9_]+) *\\{");
 
     protected static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
@@ -748,6 +749,26 @@ public class EvalTools {
         }
 
         {
+            Matcher m = CLASS_DEF.matcher(exp);
+            if (m.find() && findCloseBracket(exp, m.end()) == exp.length() - 1) {
+                String className = m.group(2);
+
+                exp = exp.substring(m.end(), exp.length() - 1).trim();
+                List<String> lines = getBlocks(exp);
+
+                List<Expression> definitions = new ArrayList<Expression>(lines.size());
+                for (String s : lines) {
+                    if (isLineCommented(s))
+                        continue;
+                    definitions.add(prepare(s, model, functions, imports, isTemplate));
+                }
+                ClassExpression classExpression = new ClassExpression(className, definitions);
+                model.put("class " + className, classExpression);
+                return classExpression;
+            }
+        }
+
+        {
             List<Statement> statements = getStatements(exp);
             ClosureExpression closure = new ClosureExpression();
             for (Statement s : statements) {
@@ -918,21 +939,29 @@ public class EvalTools {
         {
             Matcher m = NEW.matcher(exp);
             if (m.find()) {
-                Class clazz = findClass(m.group(1), imports);
+                String className = m.group(1);
+                ClassExpression cl = (ClassExpression) model.get("class " + className);
+                if (cl != null) {
+                    thatObject = cl;
+                    methodName = CONSTRUCTOR;
+                    exp = exp.substring(m.end());
+                } else {
+                    Class clazz = findClass(className, imports);
 
-                if (clazz != null) {
-                    if (m.group(5) != null) {
-                        thatObject = new Expression.Holder(Array.class);
-                        methodName = "newInstance";
-                        arrayClass = clazz;
-                        exp = exp.substring(m.end() - 1);
-                    } else {
-                        thatObject = new Expression.Holder(clazz);
-                        methodName = CONSTRUCTOR;
-                        exp = exp.substring(m.end());
-                    }
-                } else
-                    Unchecked.rethrow(new ClassNotFoundException("Can not find class '" + m.group(1) + "'"));
+                    if (clazz != null) {
+                        if (m.group(5) != null) {
+                            thatObject = new Expression.Holder(Array.class);
+                            methodName = "newInstance";
+                            arrayClass = clazz;
+                            exp = exp.substring(m.end() - 1);
+                        } else {
+                            thatObject = new Expression.Holder(clazz);
+                            methodName = CONSTRUCTOR;
+                            exp = exp.substring(m.end());
+                        }
+                    } else
+                        Unchecked.rethrow(new ClassNotFoundException("Can not find class '" + className + "'"));
+                }
             }
         }
 

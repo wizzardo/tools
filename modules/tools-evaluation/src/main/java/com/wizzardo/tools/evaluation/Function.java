@@ -16,12 +16,17 @@ import java.util.*;
  */
 public class Function extends Expression {
 
+
+    public interface BiMapper<A, B, R> {
+        R map(A a, B b);
+    }
+
     protected static final Expression[] EMPTY_ARGS = new Expression[0];
     protected static Map<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>> metaMethods = new HashMap<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>>();
 
     protected Expression thatObject;
-    protected Method method;
-    protected Constructor constructor;
+    protected BiMapper<Object, Object[], Object> method;
+    protected Mapper<Object[], Object> constructor;
     protected Field field;
     protected Getter getter;
     protected Setter setter;
@@ -34,13 +39,13 @@ public class Function extends Expression {
     protected boolean safeNavigation = false;
     protected CollectionTools.Closure3<Object, Object, Map, Expression[]> metaMethod;
 
-    public Function(Expression thatObject, Method method, Expression[] args) {
+    public Function(Expression thatObject, BiMapper<Object, Object[], Object> method, Expression[] args) {
         this.thatObject = thatObject;
         this.method = method;
         this.args = args;
     }
 
-    public Function(Expression thatObject, Method method, Expression[] args, boolean safeNavigation) {
+    public Function(Expression thatObject, BiMapper<Object, Object[], Object> method, Expression[] args, boolean safeNavigation) {
         this.thatObject = thatObject;
         this.method = method;
         this.args = args;
@@ -60,12 +65,12 @@ public class Function extends Expression {
         this.safeNavigation = safeNavigation;
     }
 
-    public Function(Constructor constructor, Expression[] args) {
+    public Function(Mapper<Object[], Object> constructor, Expression[] args) {
         this.args = args;
         this.constructor = constructor;
     }
 
-    public Function(Expression object, Method method) {
+    public Function(Expression object, BiMapper<Object, Object[], Object> method) {
         this.thatObject = object;
         this.method = method;
     }
@@ -282,18 +287,16 @@ public class Function extends Expression {
             }
             if (constructor != null || EvalTools.CONSTRUCTOR.equals(methodName)) {
                 if (constructor == null)
-                    constructor = findConstructor(getClass(instance), arr);
+                    constructor = findConstructor(getClass(instance), arr, instance);
 //            System.out.println(constructor);
 //            System.out.println(Arrays.toString(constructor.getParameterTypes()));
 //            System.out.println(Arrays.toString(arr));
-                return constructor.newInstance(arr);
+                return constructor.map(arr);
             } else if (method == null) {
                 argsMappers = new ArrayList<Mapper<Object[], Object[]>>(args == null ? 0 : args.length);
-                method = findMethod(getClass(instance), methodName, arr, argsMappers);
+                method = findMethod(getClass(instance), instance, methodName, arr, argsMappers);
                 if (method == null && instance.getClass() == Class.class)
-                    method = findMethod(instance.getClass(), methodName, arr, argsMappers);
-                if (method != null && Modifier.isPublic(method.getModifiers()))
-                    method.setAccessible(true);
+                    method = findMethod(instance.getClass(), instance, methodName, arr, argsMappers);
 
             }
             if (method == null) {
@@ -322,7 +325,8 @@ public class Function extends Expression {
                     arr = mapper.map(arr);
                 }
             }
-            Object result = method.invoke(instance, arr);
+//            Object result = method.invoke(instance, arr);
+            Object result = method.map(instance, arr);
 //            if (!hardcodeChecked && (hardcoded = thatObject.hardcoded)) {
 //                hardcodeChecked = true;
 //                if (args != null)
@@ -487,7 +491,7 @@ public class Function extends Expression {
         return clazz;
     }
 
-    private Method findMethod(Class clazz, String method, Object[] args, List<Mapper<Object[], Object[]>> argsMappers) {
+    private BiMapper<Object, Object[], Object> findMethod(Class clazz, final Object instance, final String method, Object[] args, List<Mapper<Object[], Object[]>> argsMappers) {
         Class[] argsClasses;
         if (args != null) {
             argsClasses = new Class[args.length];
@@ -498,8 +502,24 @@ public class Function extends Expression {
         } else
             argsClasses = new Class[0];
 
+        if (clazz.equals(ClassExpression.class)) {
+            return new BiMapper<Object, Object[], Object>() {
+                @Override
+                public Object map(Object instance, Object[] args) {
+                    final ClassExpression cl = (ClassExpression) instance;
+                    final ClosureExpression closure = (ClosureExpression) cl.context.get(method);
+                    return closure.get(cl.context, args);
+                }
+
+                @Override
+                public String toString() {
+                    return method;
+                }
+            };
+        }
+
         try {
-            return clazz.getMethod(method, argsClasses);
+            return wrapMethod(clazz.getMethod(method, argsClasses));
         } catch (NoSuchMethodException e) {
             //ignore
         }
@@ -508,7 +528,32 @@ public class Function extends Expression {
             m = findBoxedMatch(clazz, method, argsClasses);
         if (m == null)
             m = findNumberMatch(clazz, method, argsClasses, argsMappers);
-        return m;
+        if (m != null)
+            return wrapMethod(m);
+        return null;
+    }
+
+    private BiMapper<Object, Object[], Object> wrapMethod(final Method m) {
+        if (Modifier.isPublic(m.getModifiers()))
+            m.setAccessible(true);
+
+        return new BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object instance, Object[] args) {
+                try {
+                    return m.invoke(instance, args);
+                } catch (IllegalAccessException e) {
+                    throw Unchecked.rethrow(e);
+                } catch (InvocationTargetException e) {
+                    throw Unchecked.rethrow(e);
+                }
+            }
+
+            @Override
+            public String toString() {
+                return m.getName();
+            }
+        };
     }
 
     private Method findExactMatch(Class clazz, String method, Class[] argsClasses) {
@@ -685,7 +730,7 @@ public class Function extends Expression {
         };
     }
 
-    private <T> Constructor<T> findConstructor(Class<T> clazz, Object[] args) {
+    private <T> Mapper<Object[], T> findConstructor(Class<T> clazz, Object[] args, Object instance) {
         Class<?>[] argsClasses = null;
         if (args != null) {
             argsClasses = new Class[args.length];
@@ -694,8 +739,23 @@ public class Function extends Expression {
                     argsClasses[i] = args[i].getClass();
             }
         }
+        if (clazz.equals(ClassExpression.class)) {
+            final ClassExpression cl = (ClassExpression) instance;
+            return new Mapper<Object[], T>() {
+                @Override
+                public T map(Object[] objects) {
+                    return (T) cl.newInstance(objects);
+                }
+
+                @Override
+                public String toString() {
+                    return "new " + cl.toString();
+                }
+            };
+        }
+
         try {
-            return clazz.getConstructor(argsClasses);
+            return wrapConstructor(clazz.getConstructor(argsClasses));
         } catch (NoSuchMethodException e) {
             //ignore
         }
@@ -714,10 +774,32 @@ public class Function extends Expression {
                         continue outer;
                     }
                 }
-                return c;
+                return wrapConstructor(c);
             }
         }
         return null;
+    }
+
+    private <T> Mapper<Object[], T> wrapConstructor(final Constructor<T> c) {
+        return new Mapper<Object[], T>() {
+            @Override
+            public T map(Object[] args) {
+                try {
+                    return c.newInstance(args);
+                } catch (InstantiationException e) {
+                    throw Unchecked.rethrow(e);
+                } catch (IllegalAccessException e) {
+                    throw Unchecked.rethrow(e);
+                } catch (InvocationTargetException e) {
+                    throw Unchecked.rethrow(e);
+                }
+            }
+
+            @Override
+            public String toString() {
+                return c.toString();
+            }
+        };
     }
 
     private static final Map<Class, Class> boxing = new HashMap<Class, Class>() {
@@ -745,10 +827,6 @@ public class Function extends Expression {
     private static final Class[] Boxed = new Class[]{Byte.class, Short.class, Character.class, Integer.class, Long.class, Float.class, Double.class};
 
 
-    public Method getMethod() {
-        return method;
-    }
-
     public Expression getThatObject() {
         return thatObject;
     }
@@ -766,7 +844,7 @@ public class Function extends Expression {
         StringBuilder sb = new StringBuilder("function for: ");
         sb.append(thatObject);
         sb.append(".");
-        sb.append(method == null ? methodName : method.getName());
+        sb.append(method == null ? methodName : method.toString());
         sb.append("(");
         if (args != null) {
             for (int i = 0; i < args.length; i++) {

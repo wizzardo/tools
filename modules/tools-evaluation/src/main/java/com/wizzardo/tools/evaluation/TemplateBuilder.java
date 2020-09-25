@@ -81,6 +81,11 @@ public class TemplateBuilder extends Expression {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return parts.toString();
+    }
+
     public static class GString {
         final Supplier<String>[] parts;
 
