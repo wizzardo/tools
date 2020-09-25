@@ -346,6 +346,17 @@ public class EvalTools {
                     Expression then = bodyStatement != null ? bodyStatement.prepare(model, functions, imports) : EvalTools.prepare(body, model, functions, imports);
                     return new WhileExpression(condition, then);
                 }
+                case FOR: {
+                    List<String> args = getBlocks(statement, true);
+                    if (args.size() != 3)
+                        throw new IllegalStateException("more then one statement in condition: " + statement);
+
+                    Expression def = EvalTools.prepare(args.get(0), model, functions, imports);
+                    Expression iterator = EvalTools.prepare(args.get(2), model, functions, imports);
+                    AsBooleanExpression condition = new AsBooleanExpression(EvalTools.prepare(args.get(1), model, functions, imports));
+                    Expression then = bodyStatement != null ? bodyStatement.prepare(model, functions, imports) : EvalTools.prepare(body, model, functions, imports);
+                    return new ForExpression(def, condition, iterator, then);
+                }
                 default:
                     throw new IllegalStateException("not implemented yet");
             }

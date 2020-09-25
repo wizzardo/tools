@@ -1388,4 +1388,12 @@ public class EvalToolsTest {
         Assert.assertEquals("[]", EvalTools.prepare("def l = new ArrayList<Integer>()").get(model).toString());
         Assert.assertEquals("[]", EvalTools.prepare("ArrayList<Integer> l = new ArrayList<Integer>()").get(model).toString());
     }
+
+    @Test
+    public void test_for() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("[1, 2, 3]", EvalTools.prepare("def l = [];\n" +
+                "for(int i=1; i<=3; i++){l << i};\n" +
+                "l").get(model).toString());
+    }
 }
