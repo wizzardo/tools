@@ -347,12 +347,18 @@ public class EvalTools {
                     return new WhileExpression(condition, then);
                 }
                 case FOR: {
-                    List<String> args = getBlocks(statement, true);
+                    List<String> args = getBlocks(statement, true, true);
                     if (args.size() != 3)
-                        throw new IllegalStateException("more then one statement in condition: " + statement);
+                        throw new IllegalStateException("wrong number of statements: " + args);
 
                     Expression def = EvalTools.prepare(args.get(0), model, functions, imports);
+                    if (def == null)
+                        def = Expression.Holder.NULL;
                     Expression iterator = EvalTools.prepare(args.get(2), model, functions, imports);
+                    if (iterator == null) {
+                        iterator = Expression.Holder.NULL;
+                    }
+
                     AsBooleanExpression condition = new AsBooleanExpression(EvalTools.prepare(args.get(1), model, functions, imports));
                     Expression then = bodyStatement != null ? bodyStatement.prepare(model, functions, imports) : EvalTools.prepare(body, model, functions, imports);
                     return new ForExpression(def, condition, iterator, then);
@@ -539,6 +545,10 @@ public class EvalTools {
     }
 
     static List<String> getBlocks(String exp, boolean ignoreNewLine) {
+        return getBlocks(exp, ignoreNewLine, false);
+    }
+
+    static List<String> getBlocks(String exp, boolean ignoreNewLine, boolean withEmptyStatements) {
         List<String> list = new ArrayList<String>();
 
         StringBuilder sb = new StringBuilder();
@@ -563,7 +573,7 @@ public class EvalTools {
                 if (brackets == 0) {
                     if (c == ';' || c == '\n') {
                         String value = cleanLine(sb.toString());
-                        if (value.length() > 0)
+                        if (withEmptyStatements || value.length() > 0)
                             list.add(value);
                         sb.setLength(0);
                         continue;
@@ -578,7 +588,7 @@ public class EvalTools {
             sb.append(c);
         }
         String value = cleanLine(sb.toString());
-        if (value.length() > 0)
+        if (withEmptyStatements || value.length() > 0)
             list.add(value);
 
         return list;

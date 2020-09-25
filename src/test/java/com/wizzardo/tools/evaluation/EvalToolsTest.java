@@ -1395,5 +1395,17 @@ public class EvalToolsTest {
         Assert.assertEquals("[1, 2, 3]", EvalTools.prepare("def l = [];\n" +
                 "for(int i=1; i<=3; i++){l << i};\n" +
                 "l").get(model).toString());
+
+        Assert.assertEquals("[1, 2, 3]", EvalTools.prepare("" +
+                "def l = [];\n" +
+                "def i = 1;\n" +
+                "for(; i<=3; i++){l << i};\n" +
+                "l").get(model).toString());
+
+        Assert.assertEquals("[1, 2, 3]", EvalTools.prepare("" +
+                "def l = [];\n" +
+                "def i = 1;\n" +
+                "for(;i<=3;){l << i++};\n" +
+                "l").get(model).toString());
     }
 }
