@@ -565,8 +565,19 @@ public class Operation extends Expression {
             if (v != null)
                 return setAndReturn(null, v, ob1, ob2, operator);
 
-            if (operator == Operator.EQUAL && leftPart instanceof Expression.VariableOrFieldOfThis) {
+            if (leftPart instanceof Expression.VariableOrFieldOfThis) {
                 Expression.VariableOrFieldOfThis that = (VariableOrFieldOfThis) leftPart;
+                Object instance = that.thisHolder.get(model);
+                if (instance != null) {
+                    Function.Setter setter = that.function.getSetter(instance);
+                    if (setter != null)
+                        return setAndReturn(instance, setter, null, ob2, operator);
+
+                }
+            }
+
+            if (leftPart == null && rightPart instanceof Expression.VariableOrFieldOfThis) {
+                Expression.VariableOrFieldOfThis that = (VariableOrFieldOfThis) rightPart;
                 Object instance = that.thisHolder.get(model);
                 if (instance != null) {
                     Function.Setter setter = that.function.getSetter(instance);

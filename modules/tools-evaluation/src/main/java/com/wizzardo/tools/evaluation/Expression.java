@@ -133,13 +133,17 @@ public abstract class Expression {
             if (variable != null)
                 return variable.get();
 
-//            if (model.containsKey(exp))
-            return model.get(exp);
+            if (model.containsKey(exp))
+                return model.get(exp);
 
-//            return function.get(model);
+            if (hasDelegate(model)) {
+                return function.get(model);
+            }
+
+            return model.get(exp);
         }
 
-        public static boolean hasDelegate(Map<String, Object> model){
+        public static boolean hasDelegate(Map<String, Object> model) {
             return model.containsKey("delegate");
         }
     }

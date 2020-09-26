@@ -816,7 +816,7 @@ public class EvalTools {
                 return new Expression.Holder(exp);
             }
             if (model.containsKey(exp)) {
-                return new Expression.Holder(exp);
+                return new Expression.VariableOrFieldOfThis(exp);
             }
             {
                 Matcher m = DEF.matcher(exp);

@@ -508,7 +508,7 @@ public class Function extends Expression {
                 public Object map(Object instance, Object[] args) {
                     final ClassExpression cl = (ClassExpression) instance;
                     final ClosureExpression closure = (ClosureExpression) cl.context.get(method);
-                    return closure.get(cl.context, args);
+                    return closure.getAgainst(null, cl.context, args);
                 }
 
                 @Override

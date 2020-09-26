@@ -1443,5 +1443,23 @@ public class EvalToolsTest {
                 "new Greeter().sayHello()\n" +
                 "").get(model).toString());
 
+        model.clear();
+        Assert.assertEquals(1, EvalTools.prepare("" +
+                "class Counter {\n" +
+                "    int count = 0\n" +
+                "    int increment() {\n" +
+                "        ++count\n" +
+                "    }\n" +
+                "}\n" +
+                "\n" +
+                "counter = new Counter()\n" +
+                "counter.increment()" +
+                "").get(model));
+
+        Assert.assertEquals(2, EvalTools.prepare("" +
+                "counter.increment()" +
+                "").get(model));
+
+
     }
 }
