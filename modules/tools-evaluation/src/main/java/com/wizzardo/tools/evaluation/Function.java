@@ -376,6 +376,14 @@ public class Function extends Expression {
         if (instance instanceof Map)
             return getter = new MapGetter(fieldName);
 
+        if (instance instanceof ClassExpression)
+            return getter = new Getter() {
+                @Override
+                public Object get(Object instance) {
+                    return ((ClassExpression) instance).context.get(fieldName);
+                }
+            };
+
 
         Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
         Field field = findField(clazz, fieldName);
@@ -415,6 +423,14 @@ public class Function extends Expression {
 
         if (instance instanceof Map)
             return setter = new MapSetter(fieldName);
+
+        if (instance instanceof ClassExpression)
+            return setter = new Setter() {
+                @Override
+                public void set(Object instance, Object value) {
+                    ((ClassExpression) instance).context.put(fieldName, value);
+                }
+            };
 
 
         Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();

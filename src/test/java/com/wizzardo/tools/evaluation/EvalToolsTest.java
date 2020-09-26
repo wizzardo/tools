@@ -1461,5 +1461,32 @@ public class EvalToolsTest {
                 "").get(model));
 
 
+        model.clear();
+        Assert.assertEquals(1, EvalTools.prepare("" +
+                "class Counter {\n" +
+                "    int count = 0\n" +
+                "}\n" +
+                "\n" +
+                "counter = new Counter()\n" +
+                "++counter.count" +
+                "").get(model));
+
+        Assert.assertEquals(2, EvalTools.prepare("" +
+                "++counter.count" +
+                "").get(model));
+
+    }
+
+    @Test
+    public void test_def_class_static_fields() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("value", EvalTools.prepare("" +
+                "class Constants {\n" +
+                "  static final def KEY = 'value' \n" +
+                "}\n" +
+                "\n" +
+                "Constants.KEY\n" +
+                "").get(model).toString());
+
     }
 }

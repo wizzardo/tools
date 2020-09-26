@@ -763,6 +763,7 @@ public class EvalTools {
                     definitions.add(prepare(s, model, functions, imports, isTemplate));
                 }
                 ClassExpression classExpression = new ClassExpression(className, definitions);
+                classExpression.init();
                 model.put("class " + className, classExpression);
                 return classExpression;
             }
@@ -978,22 +979,29 @@ public class EvalTools {
             Matcher m = CLASS.matcher(exp);
             while (m.find()) {
                 String className = m.group(1);
-                Class clazz = findClass(className, imports);
-                if (clazz == null) {
-                    int lastDot = className.lastIndexOf('.');
-                    if (lastDot != -1)
-                        clazz = findClass(className.substring(0, lastDot) + "$" + className.substring(lastDot + 1));
-                }
 
-                if (clazz != null) {
-                    thatObject = new Expression.Holder(clazz);
+                ClassExpression cl = (ClassExpression) model.get("class " + className);
+                if (cl != null) {
+                    thatObject = cl;
                     exp = exp.substring(m.end());
-                    break;
                 } else {
-                    int i = s.lastIndexOf(".");
-                    if (i > 0) {
-                        s = s.substring(0, i);
-                        m = CLASS.matcher(s);
+                    Class clazz = findClass(className, imports);
+                    if (clazz == null) {
+                        int lastDot = className.lastIndexOf('.');
+                        if (lastDot != -1)
+                            clazz = findClass(className.substring(0, lastDot) + "$" + className.substring(lastDot + 1));
+                    }
+
+                    if (clazz != null) {
+                        thatObject = new Expression.Holder(clazz);
+                        exp = exp.substring(m.end());
+                        break;
+                    } else {
+                        int i = s.lastIndexOf(".");
+                        if (i > 0) {
+                            s = s.substring(0, i);
+                            m = CLASS.matcher(s);
+                        }
                     }
                 }
             }
