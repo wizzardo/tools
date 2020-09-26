@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1488,5 +1489,18 @@ public class EvalToolsTest {
                 "Constants.KEY\n" +
                 "").get(model).toString());
 
+    }
+
+    @Test
+    public void test_script_engine() {
+        ScriptEngine scriptEngine = new ScriptEngine(new File("src/test/resources/groovy"));
+
+        Assert.assertEquals("Hello, Groovy!", scriptEngine.run("Greeter.groovy").toString());
+
+        Assert.assertEquals("Hello, dependency!", scriptEngine.run("GreeterWithDependency.groovy").toString());
+
+        Assert.assertEquals("Hello, example dependency!", scriptEngine.run("GreeterWithDependencyImport.groovy").toString());
+
+        Assert.assertEquals("Hello, example dependency!", scriptEngine.run("GreeterWithDependencyMultiImport.groovy").toString());
     }
 }

@@ -623,6 +623,11 @@ public class EvalTools {
 
     public static Expression prepare(String script, Map<String, Object> model, Map<String, UserFunction> functions) {
         List<String> imports = new ArrayList<String>();
+        script = readImports(script, imports);
+        return prepare(script, model, functions, imports, false);
+    }
+
+    public static String readImports(String script, List<String> imports) {
         script = script.trim();
         int s, n;
         if (script.startsWith("package")) {
@@ -641,7 +646,17 @@ public class EvalTools {
 
             script = script.substring(to + 1).trim();
         }
-        return prepare(script, model, functions, imports, false);
+        return script;
+    }
+
+    public static String readPackage(String script) {
+        if (script.startsWith("package")) {
+            int n = script.indexOf("\n");
+            int s = script.indexOf(";");
+            int to = Math.min(n == -1 ? script.length() : n, s == -1 ? script.length() : s);
+            return script.substring(8, to).trim();
+        }
+        return "";
     }
 
     public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
