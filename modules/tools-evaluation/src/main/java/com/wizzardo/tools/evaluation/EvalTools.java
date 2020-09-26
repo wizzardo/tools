@@ -1305,6 +1305,34 @@ public class EvalTools {
             }
         }
 
+        key = new ClassKey("java.io.", s);
+        aClass = javaClassesCache.get(key);
+        if (aClass != null)
+            return aClass;
+        if (!notFoundClassesCache.contains(key)) {
+            try {
+                aClass = classLoader.loadClass("java.io." + s);
+                javaClassesCache.put(key, aClass);
+                return aClass;
+            } catch (ClassNotFoundException ignored) {
+                notFoundClassesCache.add(key);
+            }
+        }
+
+        key = new ClassKey("java.net.", s);
+        aClass = javaClassesCache.get(key);
+        if (aClass != null)
+            return aClass;
+        if (!notFoundClassesCache.contains(key)) {
+            try {
+                aClass = classLoader.loadClass("java.net." + s);
+                javaClassesCache.put(key, aClass);
+                return aClass;
+            } catch (ClassNotFoundException ignored) {
+                notFoundClassesCache.add(key);
+            }
+        }
+
         if (s.equals("byte"))
             return byte.class;
         if (s.equals("int"))
