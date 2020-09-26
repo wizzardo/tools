@@ -940,7 +940,7 @@ public class JsonTest {
             public void run() {
                 Assert.assertNull(JsonTools.parse("[[]]", List.class));
             }
-        }, IllegalArgumentException.class, "JsonArray expected to parse into class java.lang.Object, but JsonObject appeared");
+        }, IllegalStateException.class, "Cannot put array data into class java.lang.Object");
 
         testException(new Runnable() {
             @Override
@@ -1109,11 +1109,14 @@ public class JsonTest {
         Assert.assertEquals(true, aClass.b);
 
         testException(new Runnable() {
-            @Override
-            public void run() {
-                JsonTools.parse("{i:'some string'}", FieldSetterTestClass.class);
-            }
-        }, IllegalStateException.class, "Can not set 'some string' (class java.lang.String) to int com.wizzardo.tools.json.JsonTest$FieldSetterTestClass.i");
+                          @Override
+                          public void run() {
+                              JsonTools.parse("{i:'some string'}", FieldSetterTestClass.class);
+                          }
+                      },
+                IllegalStateException.class, "Error at 3. {i:'some string'}",
+                IllegalStateException.class, "Can not set 'some string' (class java.lang.String) to int com.wizzardo.tools.json.JsonTest$FieldSetterTestClass.i"
+        );
     }
 
     static class IntPrimitiveClass {
@@ -1529,7 +1532,23 @@ public class JsonTest {
             Assert.assertEquals(message, e.getMessage());
             exception = true;
         }
-        assert exception;
+        Assert.assertTrue(exception);
+    }
+
+    private void testException(Runnable closure, Class exceptionClass, String message, Class causeClass, String causeMessage) {
+        boolean exception = false;
+        try {
+            closure.run();
+        } catch (Exception e) {
+            if (!e.getClass().equals(exceptionClass))
+                e.printStackTrace();
+            Assert.assertEquals(exceptionClass, e.getClass());
+            Assert.assertEquals(message, e.getMessage());
+            Assert.assertEquals(causeClass, e.getCause().getClass());
+            Assert.assertEquals(causeMessage, e.getCause().getMessage());
+            exception = true;
+        }
+        Assert.assertTrue(exception);
     }
 
     private void testExceptionContains(Runnable closure, Class exceptionClass, String... message) {
@@ -1545,7 +1564,7 @@ public class JsonTest {
             }
             exception = true;
         }
-        assert exception;
+        Assert.assertTrue(exception);
     }
 
     static class GenericHolder<T> {
@@ -1652,11 +1671,42 @@ public class JsonTest {
     @Test
     public void test_invalidDataType() {
         testException(new Runnable() {
-            @Override
-            public void run() {
-                JsonTools.parse("{'inner': 'asdfasdf'}", SerializeTest.class);
-            }
-        }, IllegalStateException.class, "Can not set 'asdfasdf' (class java.lang.String) to com.wizzardo.tools.json.JsonTest$SerializeTestInner com.wizzardo.tools.json.JsonTest$SerializeTest.inner");
+                          @Override
+                          public void run() {
+                              JsonTools.parse("{'inner': 'asdfasdf'}", SerializeTest.class);
+                          }
+                      },
+                IllegalStateException.class, "Error at 10. {'inner': 'asdfasdf'}",
+                IllegalStateException.class, "Can not set 'asdfasdf' (class java.lang.String) to com.wizzardo.tools.json.JsonTest$SerializeTestInner com.wizzardo.tools.json.JsonTest$SerializeTest.inner");
+
+        testException(new Runnable() {
+                          @Override
+                          public void run() {
+                              JsonTools.parse("{'i': {'message': 'Error'}}", SimpleClass.class);
+                          }
+                      },
+                IllegalStateException.class, "Error at 6. {'i': {'message': 'Error'}...",
+                IllegalStateException.class, "Cannot put object data into field int com.wizzardo.tools.json.JsonTest$SimpleClass.i"
+        );
+        testException(new Runnable() {
+                          @Override
+                          public void run() {
+                              JsonTools.parse("{'i': [{'message': 'Error'}]}", SimpleClass.class);
+                          }
+                      },
+                IllegalStateException.class, "Error at 6. {'i': [{'message': 'Error'...",
+                IllegalStateException.class, "Cannot put array data into int"
+        );
+
+        testException(new Runnable() {
+                          @Override
+                          public void run() {
+                              JsonTools.parse("{'value': {'message': 'Error'}}", StringHolder.class);
+                          }
+                      },
+                IllegalStateException.class, "Error at 10. {'value': {'message': 'Error'}...",
+                IllegalStateException.class, "Cannot put object data into field java.lang.String com.wizzardo.tools.json.JsonTest$StringHolder.value"
+        );
     }
 
     static class TestPropertyAnnotation {

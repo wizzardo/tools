@@ -2,6 +2,7 @@ package com.wizzardo.tools.json;
 
 import com.wizzardo.tools.misc.CharTree;
 import com.wizzardo.tools.misc.Pair;
+import com.wizzardo.tools.misc.Unchecked;
 
 import java.util.Map;
 
@@ -57,7 +58,17 @@ class JavaObjectBinder implements JsonBinder {
         if (Map.class.isAssignableFrom(info.field.getType()))
             return new JavaMapBinder(info.generic);
 
-        return new JavaObjectBinder(info.generic);
+        if (info.serializer.type != Binder.SerializerType.OBJECT && info.serializer.type != Binder.SerializerType.NULL)
+            throw new IllegalStateException("Cannot put object data into field " + info.field);
+
+        try {
+            return new JavaObjectBinder(info.generic);
+        } catch (Exception e) {
+            if (e.getClass().equals(NoSuchMethodException.class)) {
+                throw new IllegalStateException("Cannot put object data into field " + info.field);
+            } else
+                throw Unchecked.rethrow(e);
+        }
     }
 
     @Override

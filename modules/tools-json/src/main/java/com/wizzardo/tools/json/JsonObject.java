@@ -56,7 +56,12 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                         i = JsonObject.parse(s, i, to, null);
                         break;
                     }
-                    JsonBinder ob = json.getObjectBinder();
+                    JsonBinder ob;
+                    try {
+                        ob = json.getObjectBinder();
+                    } catch (IllegalStateException e) {
+                        throw new IllegalStateException("Error at " + i + ". " + getSubstringWithFieldName(s, i), e);
+                    }
                     i = JsonObject.parse(s, i, to, ob);
                     if (ob != null)
                         json.add(ob.getObject());
@@ -67,7 +72,12 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                         i = JsonArray.parse(s, i, to, null);
                         break;
                     }
-                    JsonBinder ob = json.getArrayBinder();
+                    JsonBinder ob;
+                    try {
+                        ob = json.getArrayBinder();
+                    } catch (IllegalStateException e) {
+                        throw new IllegalStateException("Error at " + i + ". " + getSubstringWithFieldName(s, i), e);
+                    }
                     i = JsonArray.parse(s, i, to, ob);
                     if (ob != null)
                         json.add(ob.getObject());
@@ -78,7 +88,11 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
                 }
 
                 default: {
-                    i = parseValue(json, s, i, to, '}');
+                    try {
+                        i = parseValue(json, s, i, to, '}');
+                    } catch (IllegalStateException e) {
+                        throw new IllegalStateException("Error at " + i + ". " + getSubstringWithFieldName(s, i), e);
+                    }
                 }
             }
 
@@ -96,6 +110,32 @@ public class JsonObject extends LinkedHashMap<String, JsonItem> {
 
         }
         return i + 1;
+    }
+
+    protected static String getSubstringWithFieldName(char[] chars, int i) {
+        int from = i;
+        from = lastIndex(chars, ':', from);
+        from = lastIndex(chars, '"', from);
+        from = lastIndex(chars, '"', from);
+        if (from == -1) {
+            from = Math.max(i - 20, 0);
+        }
+
+        int to = Math.min(chars.length, i + 20);
+        if (to == chars.length)
+            return new String(chars, from, to - from);
+        else
+            return new String(chars, from, to - from) + "...";
+    }
+
+    protected static int lastIndex(char[] chars, char c, int from) {
+        int i = from;
+        while (i > 0) {
+            if (chars[i] == c)
+                return i;
+            i--;
+        }
+        return -1;
     }
 
     @Override

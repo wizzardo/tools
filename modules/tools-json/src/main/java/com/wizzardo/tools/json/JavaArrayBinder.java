@@ -109,7 +109,7 @@ class JavaArrayBinder implements JsonBinder {
         } else if (serializer == Binder.SerializerType.COLLECTION) {
             l = Binder.createCollection(clazz);
         } else {
-            throw new IllegalArgumentException("JsonArray expected to parse into " + clazz + ", but JsonObject appeared");
+            throw new IllegalStateException("Cannot put array data into " + clazz);
         }
     }
 
