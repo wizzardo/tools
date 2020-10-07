@@ -136,12 +136,12 @@ public class CacheTest {
 
     @Test
     public void sizeLimitedCacheTest() throws InterruptedException {
-        Cache<String, String> cache = new SizeLimitedCache<String, String>(1, 1, new Computable<String, String>() {
+        SizeLimitedCacheWrapper<String, String> cache = new SizeLimitedCacheWrapper<String, String>(new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
                 return s.toUpperCase();
             }
-        });
+        }),1);
 
         Assert.assertEquals(0, cache.size());
         cache.get("foo1");
@@ -156,17 +156,17 @@ public class CacheTest {
 
     @Test
     public void memoryLimitedCacheTest() throws InterruptedException {
-        MemoryLimitedCache<String, MemoryLimitedCache.SizeProvider> cache = new MemoryLimitedCache<String, MemoryLimitedCache.SizeProvider>(5, 1, new Computable<String, MemoryLimitedCache.SizeProvider>() {
+        MemoryLimitedCacheWrapper<String, MemoryLimitedCacheWrapper.SizeProvider> cache = new MemoryLimitedCacheWrapper<String, MemoryLimitedCacheWrapper.SizeProvider>(new Cache<String, MemoryLimitedCacheWrapper.SizeProvider>(1, new Computable<String, MemoryLimitedCacheWrapper.SizeProvider>() {
             @Override
-            public MemoryLimitedCache.SizeProvider compute(final String s) {
-                return new MemoryLimitedCache.SizeProvider() {
+            public MemoryLimitedCacheWrapper.SizeProvider compute(final String s) {
+                return new MemoryLimitedCacheWrapper.SizeProvider() {
                     @Override
                     public long size() {
                         return s.length();
                     }
                 };
             }
-        });
+        }),5);
 
         Assert.assertEquals(0, cache.size());
         cache.get("foo1");
@@ -214,7 +214,7 @@ public class CacheTest {
 
     @Test
     public void outdated_test() throws InterruptedException {
-        final Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+        final AbstractCache<String, String> cache = new OutdatedWrapper<String, String>(new Cache<String, String>(1, new Computable<String, String>() {
             AtomicInteger counter = new AtomicInteger();
 
             @Override
@@ -226,7 +226,7 @@ public class CacheTest {
                 }
                 return s + "_" + counter.getAndIncrement();
             }
-        }).allowOutdated();
+        }), new Cache<String, String>("outdated", 1));
 
         Assert.assertEquals("foo_0", cache.get("foo"));
         Assert.assertEquals(1, cache.size());
@@ -278,12 +278,12 @@ public class CacheTest {
 
     @Test
     public void test_statistics() throws InterruptedException {
-        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+        StatisticsWrapper<String, String> cache = new StatisticsWrapper<String, String>(new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
                 return s.toUpperCase();
             }
-        });
+        }));
         cache.get("foo");
 
         CacheStatistics statistics = cache.getStatistics();
@@ -313,13 +313,13 @@ public class CacheTest {
 
     @Test
     public void test_statistics_2() throws InterruptedException {
-        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+        StatisticsWrapper<String, String> cache = new StatisticsWrapper<String, String>(new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) throws InterruptedException {
                 Thread.sleep(10);
                 return s.toUpperCase();
             }
-        });
+        }));
         cache.get("foo");
 
         CacheStatistics statistics = cache.getStatistics();
@@ -331,8 +331,7 @@ public class CacheTest {
         Assert.assertEquals(0, statistics.getRemoveCount());
         Assert.assertTrue(statistics.getGetLatency() > 10 * 1000 * 1000l);
         Assert.assertTrue(statistics.getGetLatency() < 15 * 1000 * 1000l);
-        Assert.assertTrue(statistics.getPutLatency() > 10 * 1000 * 1000l);
-        Assert.assertTrue(statistics.getPutLatency() < 15 * 1000 * 1000l);
+        Assert.assertTrue(statistics.getPutLatency() < 10000l);
         Assert.assertTrue(statistics.getComputeLatency() > 10 * 1000 * 1000l);
         Assert.assertTrue(statistics.getComputeLatency() < 15 * 1000 * 1000l);
         Assert.assertTrue(statistics.getRemoveLatency() == 0);
@@ -352,7 +351,7 @@ public class CacheTest {
 
     @Test
     public void test_statistics_3() throws InterruptedException {
-        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+        StatisticsWrapper<String, String> cache = new StatisticsWrapper<String, String>(new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
                 return s.toUpperCase();
@@ -366,7 +365,7 @@ public class CacheTest {
                     e.printStackTrace();
                 }
             }
-        });
+        }));
         cache.get("foo");
 
         CacheStatistics statistics = cache.getStatistics();
@@ -398,7 +397,7 @@ public class CacheTest {
 
     @Test
     public void test_statistics_4() throws InterruptedException {
-        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+        StatisticsWrapper<String, String> cache = new StatisticsWrapper<String, String>(new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
                 return s.toUpperCase();
@@ -412,7 +411,7 @@ public class CacheTest {
                     e.printStackTrace();
                 }
             }
-        });
+        }));
         cache.get("foo");
 
         CacheStatistics statistics = cache.getStatistics();
@@ -445,7 +444,7 @@ public class CacheTest {
 
     @Test
     public void test_statistics_5() throws InterruptedException {
-        Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
+        StatisticsWrapper<String, String> cache = new StatisticsWrapper<String, String>(new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
                 return s.toUpperCase();
@@ -459,7 +458,7 @@ public class CacheTest {
                     e.printStackTrace();
                 }
             }
-        });
+        }));
         cache.get("foo");
 
         CacheStatistics statistics = cache.getStatistics();

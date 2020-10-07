@@ -18,15 +18,15 @@ public class CacheStatistics {
     protected final AtomicLong computeLatency = new AtomicLong();
     protected final AtomicInteger size = new AtomicInteger();
     protected final String cacheName;
-    protected final WeakReference<Cache> cache;
+    protected final WeakReference<AbstractCache> cache;
 
-    public CacheStatistics(Cache cache) {
+    public CacheStatistics(AbstractCache cache) {
         this.cacheName = cache.getName();
-        this.cache = new WeakReference<Cache>(cache);
+        this.cache = new WeakReference<AbstractCache>(cache);
     }
 
     public boolean isValid() {
-        Cache cache = this.cache.get();
+        AbstractCache cache = this.cache.get();
         return cache != null && !cache.isDestroyed();
     }
 

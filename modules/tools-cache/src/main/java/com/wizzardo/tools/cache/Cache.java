@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Cache<K, V> {
+public class Cache<K, V> extends AbstractCache<K, V> {
 
     protected static final CacheListener<Object, Object> NOOP_LISTENER = new CacheListener<Object, Object>() {
         @Override
@@ -26,13 +26,11 @@ public class Cache<K, V> {
 
     protected final ConcurrentHashMap<K, Holder<K, V>> map = new ConcurrentHashMap<K, Holder<K, V>>();
     protected final ConcurrentHashMap<Long, WeakReference<TimingsHolder<K, V>>> timings = new ConcurrentHashMap<Long, WeakReference<TimingsHolder<K, V>>>();
-    protected final CacheStatistics statistics;
     protected final String name;
     protected long ttl;
     protected Computable<? super K, ? extends V> computable;
     protected volatile boolean removeOnException = true;
     protected volatile boolean destroyed;
-    protected Cache<K, V> outdated;
     protected CacheListener<? super K, ? super V> onAdd = NOOP_LISTENER;
     protected CacheListener<? super K, ? super V> onRemove = NOOP_LISTENER;
     protected CacheErrorListener onErrorDuringRefresh = DEFAULT_ERROR_LISTENER;
@@ -42,13 +40,8 @@ public class Cache<K, V> {
         this.name = name != null ? name : "Cache-" + NAME_COUNTER.incrementAndGet();
         this.ttl = ttlSec * 1000;
         this.computable = computable;
-        statistics = createStatistics();
         timings.put(ttl, new WeakReference<TimingsHolder<K, V>>(timingsHolder = new TimingsHolder<K, V>(ttl)));
         CacheCleaner.addCache(this);
-    }
-
-    protected CacheStatistics createStatistics() {
-        return new CacheStatistics(this);
     }
 
     public Cache(long ttlSec, Computable<? super K, ? extends V> computable) {
@@ -63,83 +56,77 @@ public class Cache<K, V> {
         this(name, ttlSec, null);
     }
 
-    public Cache<K, V> allowOutdated() {
-        return allowOutdated(ttl <= 1000 ? 1 : ttl / 2000);
-    }
-
-    public Cache<K, V> allowOutdated(long ttlSec) {
-        outdated = new Cache<K, V>(name + ".outdated", ttlSec);
-        return this;
-    }
-
+    @Override
     public String getName() {
         return name;
     }
 
-    public CacheStatistics getStatistics() {
-        return statistics;
-    }
-
+    @Override
     public V get(K k) {
-        return getFromHolder(getHolder(k, computable, false));
+        return getFromHolder(getThis().getHolder(k, computable, false));
     }
 
+    @Override
     public V get(K k, boolean updateTTL) {
-        return getFromHolder(getHolder(k, computable, updateTTL));
+        return getFromHolder(getThis().getHolder(k, computable, updateTTL));
     }
 
+    @Override
     public V get(K k, Computable<? super K, ? extends V> computable) {
-        return getFromHolder(getHolder(k, computable, false));
+        return getFromHolder(getThis().getHolder(k, computable, false));
     }
 
+    @Override
     public V get(K k, Computable<? super K, ? extends V> computable, boolean updateTTL) {
-        return getFromHolder(getHolder(k, computable, updateTTL));
+        return getFromHolder(getThis().getHolder(k, computable, updateTTL));
     }
 
     protected V getFromHolder(Holder<K, V> holder) {
         return holder == null ? null : holder.get();
     }
 
+    @Override
     public Holder<K, V> getHolder(K k) {
-        return getHolderFromCacheMeasured(k, computable, false);
+        return getThis().getHolderFromCache(k, computable, false);
     }
 
+    @Override
     public Holder<K, V> getHolder(K k, boolean updateTTL) {
-        return getHolderFromCacheMeasured(k, computable, updateTTL);
+        return getThis().getHolderFromCache(k, computable, updateTTL);
     }
 
+    @Override
     public Holder<K, V> getHolder(K k, Computable<? super K, ? extends V> computable) {
-        return getHolderFromCacheMeasured(k, computable, false);
+        return getThis().getHolderFromCache(k, computable, false);
     }
 
+    @Override
     public Holder<K, V> getHolder(K k, Computable<? super K, ? extends V> computable, boolean updateTTL) {
-        return getHolderFromCacheMeasured(k, computable, updateTTL);
+        return getThis().getHolderFromCache(k, computable, updateTTL);
     }
 
+    @Override
     public void setRemoveOnException(boolean removeOnException) {
         this.removeOnException = removeOnException;
     }
 
+    @Override
     public boolean isRemoveOnException() {
         return removeOnException;
     }
 
+    @Override
     public V remove(K k) {
         Holder<K, V> holder = map.remove(k);
         if (holder == null)
             return null;
-        long latency = System.nanoTime();
-        try {
-            onRemoveItem(holder, true);
-            return holder.get();
-        } finally {
-            latency = System.nanoTime() - latency;
-            statistics.removeCount.incrementAndGet();
-            statistics.removeLatency.addAndGet(latency);
-            updateSizeMetric();
-        }
+
+        holder.setRemoved();
+        getThis().onRemoveItem(holder.k, holder.v);
+        return holder.v;
     }
 
+    @Override
     public void refresh() {
         refresh(System.currentTimeMillis());
     }
@@ -161,19 +148,13 @@ public class Cache<K, V> {
                 } else if (entry.timing <= time) {
                     h = timings.poll().value.get();
                     if (h != null && h.validUntil <= time) {
-//                System.out.println("remove: " + h.k + " " + h.v + " because it is invalid for " + (time - h.validUntil));
-                        long latency = System.nanoTime();
                         if (map.remove(h.k, h)) {
                             try {
-                                onRemoveItem(h, true);
+                                h.setRemoved();
+                                getThis().onRemoveItem(h.k, h.v);
                             } catch (Exception e) {
                                 onErrorDuringRefresh(e);
                             }
-
-                            latency = System.nanoTime() - latency;
-                            statistics.removeCount.incrementAndGet();
-                            statistics.removeLatency.addAndGet(latency);
-                            updateSizeMetric();
                         }
                     }
                 } else
@@ -186,71 +167,48 @@ public class Cache<K, V> {
         return nextWakeUp;
     }
 
-    protected void updateSizeMetric() {
-        statistics.size.set(size());
-    }
-
     protected void onErrorDuringRefresh(Exception e) {
         onErrorDuringRefresh.onError(e);
     }
 
+    @Override
     public Cache<K, V> onErrorDuringRefresh(CacheErrorListener errorListener) {
         this.onErrorDuringRefresh = errorListener;
         return this;
     }
 
-    private void putToOutdated(Holder<K, V> h) {
-        if (outdated != null)
-            outdated.put(h.k, h.v);
-    }
-
+    @Override
     public void destroy() {
         destroyed = true;
         clear();
-        if (outdated != null)
-            outdated.destroy();
     }
 
+    @Override
     public void clear() {
         timings.clear();
         map.clear();
     }
 
-    protected void onRemoveItem(Holder<K, V> h, boolean putToOutdated) {
-        if (putToOutdated)
-            putToOutdated(h);
-
-        h.setRemoved();
-        onRemoveItem(h.k, h.v);
-    }
-
+    @Override
     public void onRemoveItem(K k, V v) {
         onRemove.onEvent(k, v);
     }
 
+    @Override
     public void onAddItem(K k, V v) {
         onAdd.onEvent(k, v);
     }
 
+    @Override
     public Cache<K, V> onAdd(CacheListener<? super K, ? super V> onAdd) {
         this.onAdd = onAdd;
         return this;
     }
 
+    @Override
     public Cache<K, V> onRemove(CacheListener<? super K, ? super V> onRemove) {
         this.onRemove = onRemove;
         return this;
-    }
-
-    protected Holder<K, V> getHolderFromCacheMeasured(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
-        long latency = System.nanoTime();
-        try {
-            return getHolderFromCache(key, c, updateTTL);
-        } finally {
-            latency = System.nanoTime() - latency;
-            statistics.getCount.incrementAndGet();
-            statistics.getLatency.addAndGet(latency);
-        }
     }
 
     protected Holder<K, V> getHolderFromCache(final K key, Computable<? super K, ? extends V> c, boolean updateTTL) {
@@ -260,14 +218,13 @@ public class Cache<K, V> {
                 return null;
             }
 
-            long latency = System.nanoTime();
             Holder<K, V> ft = new Holder<K, V>(key, timingsHolder);
             f = map.putIfAbsent(key, ft);
             if (f == null) {
                 boolean failed = true;
                 f = ft;
                 try {
-                    computeMeasured(key, c, ft);
+                    getThis().compute(key, c, ft);
                     failed = false;
                 } catch (Exception e) {
                     throw Unchecked.rethrow(e);
@@ -278,24 +235,11 @@ public class Cache<K, V> {
                         f.setRemoved();
                     } else {
                         updateTimingCache(f);
-                        onAddItem(f.getKey(), f.get());
-                        if (outdated != null)
-                            outdated.remove(key);
+                        getThis().onAddItem(f.getKey(), f.get());
                     }
-
-                    latency = System.nanoTime() - latency;
-                    statistics.putCount.incrementAndGet();
-                    statistics.putLatency.addAndGet(latency);
-                    updateSizeMetric();
                 }
                 return f;
             }
-        }
-
-        if (!f.done && outdated != null) {
-            Holder<K, V> h = outdated.getHolder(key);
-            if (h != null)
-                return h;
         }
 
         if (updateTTL)
@@ -304,63 +248,34 @@ public class Cache<K, V> {
         return f;
     }
 
-    protected void computeMeasured(K key, Computable<? super K, ? extends V> c, Holder<K, V> ft) throws Exception {
-        long latency = System.nanoTime();
-        try {
-            ft.compute(c, key);
-        } finally {
-            latency = System.nanoTime() - latency;
-            statistics.computeCount.incrementAndGet();
-            statistics.computeLatency.addAndGet(latency);
-        }
-    }
-
+    @Override
     public void put(final K key, final V value) {
         put(key, value, ttl);
     }
 
+    @Override
     public void put(final K key, final V value, long ttl) {
-        long latency = System.nanoTime();
-        try {
-            Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
-            Holder<K, V> old = map.put(key, h);
-            onAddItem(key, value);
-            updateTimingCache(h);
-            if (old != null) {
-                long removeLatency = System.nanoTime();
-                try {
-                    onRemoveItem(old, false);
-                } finally {
-                    removeLatency = System.nanoTime() - removeLatency;
-                    statistics.removeCount.incrementAndGet();
-                    statistics.removeLatency.addAndGet(removeLatency);
-                }
-            }
-        } finally {
-            latency = System.nanoTime() - latency;
-            statistics.putCount.incrementAndGet();
-            statistics.putLatency.addAndGet(latency);
-            updateSizeMetric();
+        Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
+        Holder<K, V> old = map.put(key, h);
+        getThis().onAddItem(key, value);
+        updateTimingCache(h);
+        if (old != null) {
+            old.setRemoved();
+            getThis().onRemoveItem(old.k, old.v);
         }
     }
 
+    @Override
     public boolean putIfAbsent(final K key, final V value) {
         return putIfAbsent(key, value, ttl);
     }
 
+    @Override
     public boolean putIfAbsent(final K key, final V value, long ttl) {
-        long latency = System.nanoTime();
         Holder<K, V> h = new Holder<K, V>(key, value, findTimingsHolder(ttl));
         if (map.putIfAbsent(key, h) == null) {
             updateTimingCache(h);
-            try {
-                onAddItem(key, value);
-            } finally {
-                latency = System.nanoTime() - latency;
-                statistics.putCount.incrementAndGet();
-                statistics.putLatency.addAndGet(latency);
-                updateSizeMetric();
-            }
+            getThis().onAddItem(key, value);
             return true;
         }
         return false;
@@ -406,22 +321,27 @@ public class Cache<K, V> {
         timingsHolder.timings.add(new TimingEntry<Holder<K, V>>(key, timing));
     }
 
+    @Override
     public int size() {
         return map.size();
     }
 
+    @Override
     public boolean contains(K key) {
         return map.containsKey(key);
     }
 
+    @Override
     public boolean isDestroyed() {
         return destroyed;
     }
 
+    @Override
     public long getTTL() {
         return ttl;
     }
 
+    @Override
     public long getTTL(K k) {
         Holder<K, V> holder = map.get(k);
         if (holder != null)
@@ -430,6 +350,7 @@ public class Cache<K, V> {
         return ttl;
     }
 
+    @Override
     public void removeOldest() {
         Holder<K, V> holder = null;
         TimingsHolder<K, V> th;
