@@ -569,10 +569,11 @@ public class Operation extends Expression {
                 Expression.VariableOrFieldOfThis that = (VariableOrFieldOfThis) leftPart;
                 Object instance = that.thisHolder.get(model);
                 if (instance != null) {
-                    Function.Setter setter = that.function.getSetter(instance);
-                    if (setter != null)
-                        return setAndReturn(instance, setter, null, ob2, operator);
-
+                    if (!(instance instanceof Map) || ((Map) instance).containsKey(that.function.fieldName)) {
+                        Function.Setter setter = that.function.getSetter(instance);
+                        if (setter != null)
+                            return setAndReturn(instance, setter, null, ob2, operator);
+                    }
                 }
             }
 

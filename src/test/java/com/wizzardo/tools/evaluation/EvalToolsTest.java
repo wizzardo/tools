@@ -1503,4 +1503,23 @@ public class EvalToolsTest {
 
         Assert.assertEquals("Hello, example dependency!", scriptEngine.run("GreeterWithDependencyMultiImport.groovy").toString());
     }
+
+    @Test
+    public void test_closures_inside_closures() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Expression expression = EvalTools.prepare("" +
+                "class Holder {\n" +
+                "    static String create() {\n" +
+                "        def value = \"Hello, world!\"\n" +
+                "        def closure = {\n" +
+                "           value\n" +
+                "        }\n" +
+                "    }\n" +
+                "}\n" +
+                "\n" +
+                "def c = Holder.create()\n" +
+                "c()" +
+                "");
+        Assert.assertEquals("Hello, world!", String.valueOf(expression.get(model)));
+    }
 }
