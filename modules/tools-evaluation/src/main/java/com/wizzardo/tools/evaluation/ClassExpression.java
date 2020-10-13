@@ -28,7 +28,11 @@ public class ClassExpression extends Expression {
 
     @Override
     public Expression clone() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        List<Expression> l = new ArrayList<Expression>(definitions.size());
+        for (Expression expression : definitions) {
+            l.add(expression.clone());
+        }
+        return new ClassExpression(name, l, new HashMap<String, Object>(context));
     }
 
     @Override

@@ -26,8 +26,9 @@ public class ClosureHolder extends Expression {
 
     @Override
     public Object get(Map<String, Object> model) {
-        closure.setContext(model == null ? Collections.<String, Object>emptyMap() : model);
-        return closure;
+        ClosureExpression clone = (ClosureExpression) closure.clone();
+        clone.setContext(model == null ? Collections.<String, Object>emptyMap() : model);
+        return clone;
     }
 
     @Override

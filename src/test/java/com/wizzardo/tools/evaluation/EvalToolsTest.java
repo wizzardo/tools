@@ -1507,7 +1507,8 @@ public class EvalToolsTest {
     @Test
     public void test_closures_inside_closures() {
         Map<String, Object> model = new HashMap<String, Object>();
-        Expression expression = EvalTools.prepare("" +
+        Expression expression;
+        expression = EvalTools.prepare("" +
                 "class Holder {\n" +
                 "    static String create() {\n" +
                 "        def value = \"Hello, world!\"\n" +
@@ -1521,5 +1522,48 @@ public class EvalToolsTest {
                 "c()" +
                 "");
         Assert.assertEquals("Hello, world!", String.valueOf(expression.get(model)));
+
+        expression = EvalTools.prepare("" +
+                "class Holder {\n" +
+                "    static String create(String s) {\n" +
+                "        def closure = {\n" +
+                "           s\n" +
+                "        }\n" +
+                "    }\n" +
+                "}\n" +
+                "\n" +
+                "def foo = Holder.create('foo')\n" +
+                "def bar = Holder.create('bar')\n" +
+                "def f = foo()\n" +
+                "def b = bar()\n" +
+                "");
+        expression.get(model);
+        Assert.assertEquals("foo", String.valueOf(model.get("f")));
+        Assert.assertEquals("bar", String.valueOf(model.get("b")));
+    }
+
+    @Test
+    public void test_closure_return() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Expression expression;
+        expression = EvalTools.prepare("" +
+                "def c = {\n" +
+                "  if(it) return true\n" +
+                "  return false\n" +
+                "}\n" +
+                "c('true')" +
+                "");
+        Assert.assertEquals("true", String.valueOf(expression.get(model)));
+
+        expression = EvalTools.prepare("" +
+                "def i=2 \n" +
+                "def c = {\n" +
+                "  if(i>0) return\n" +
+                "  i++\n" +
+                "}\n" +
+                "c()" +
+                "");
+        expression.get(model);
+        Assert.assertEquals("2", String.valueOf(model.get("i")));
     }
 }
