@@ -33,6 +33,7 @@ public class EvalTools {
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
     private static final Pattern DEF = Pattern.compile("(static|private|protected|public)*(def|[a-zA-Z_]+[a-zA-Z_\\d\\.\\<,\\>\\[\\]]*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
+    private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\bclass +([A-Za-z0-9_]+) *\\{");
 
@@ -786,13 +787,13 @@ public class EvalTools {
 
         {
             List<Statement> statements = getStatements(exp);
-            ClosureExpression closure = new ClosureExpression();
+            Expression.BlockExpression block = new Expression.BlockExpression();
             for (Statement s : statements) {
                 switch (s.type) {
                     case IF:
                     case FOR:
                     case WHILE:
-                        closure.add(s.prepare(model, functions, imports));
+                        block.add(s.prepare(model, functions, imports));
                         break;
 
                     case BLOCK: {
@@ -807,9 +808,9 @@ public class EvalTools {
                                     continue;
                                 inner.add(prepare(line, model, functions, imports, isTemplate));
                             }
-                            closure.add(inner);
+                            block.add(inner);
                         } else if (statements.size() > 1 || !lines.get(0).equals(s.statement)) {
-                            closure.add(prepare(lines.get(0), model, functions, imports, isTemplate));
+                            block.add(prepare(lines.get(0), model, functions, imports, isTemplate));
                         }
                         break;
                     }
@@ -819,8 +820,12 @@ public class EvalTools {
                 }
 
             }
-            if (!closure.isEmpty())
-                return closure;
+
+            if (block.size() == 1)
+                return block.get(0);
+
+            if (!block.isEmpty())
+                return block;
         }
 
         {
@@ -834,6 +839,14 @@ public class EvalTools {
             if (model.containsKey(exp)) {
                 return new Expression.VariableOrFieldOfThis(exp);
             }
+
+            {
+                Matcher m = RETURN.matcher(exp);
+                if (m.find()) {
+                    return new Expression.ReturnExpression(prepare(exp.substring(6), model, functions, imports, isTemplate));
+                }
+            }
+
             {
                 Matcher m = DEF.matcher(exp);
                 if (m.find() && !m.group(2).equals("new")) {

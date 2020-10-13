@@ -28,7 +28,15 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
 
     @Override
     public Expression clone() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        ClosureExpression clone = new ClosureExpression();
+        clone.args = args;
+        for (Expression expression : expressions) {
+            clone.add(expression.clone());
+        }
+        if (!context.isEmpty())
+            clone.context = new HashMap<String, Object>(context);
+
+        return clone;
     }
 
     @Override
@@ -37,6 +45,8 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         Object ob = null;
         for (Expression expression : expressions) {
             ob = expression.get(model);
+            if (ob != null && ob.getClass() == Expression.ReturnResultHolder.class)
+                return ((ReturnResultHolder) ob).value;
         }
         return ob;
     }
@@ -72,6 +82,8 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         Object ob = null;
         for (Expression expression : expressions) {
             ob = expression.get(local);
+            if (ob != null && ob.getClass() == Expression.ReturnResultHolder.class)
+                return ((ReturnResultHolder) ob).value;
         }
         return ob;
     }

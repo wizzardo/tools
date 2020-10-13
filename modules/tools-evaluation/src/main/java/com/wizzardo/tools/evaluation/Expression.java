@@ -170,7 +170,14 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            throw new UnsupportedOperationException("Not implemented yet.");
+            if (map == null)
+                return this;
+
+            Map<String, Expression> m = new HashMap<String, Expression>(map.size() + 1);
+            for (Map.Entry<String, Expression> entry : map.entrySet()) {
+                m.put(entry.getKey(), entry.getValue()).clone();
+            }
+            return new MapExpression(m);
         }
 
         @Override
@@ -232,7 +239,15 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            throw new UnsupportedOperationException("Not implemented yet.");
+            if (collection == null)
+                return this;
+
+            Collection<Expression> l = new ArrayList<Expression>(collection.size());
+            for (Expression expression : collection) {
+                l.add(expression.clone());
+            }
+
+            return new CollectionExpression(l);
         }
 
         @Override
@@ -272,7 +287,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            throw new UnsupportedOperationException("Not implemented yet.");
+            return new CastExpression(clazz, inner.clone());
         }
 
         @Override
@@ -283,6 +298,89 @@ public abstract class Expression {
             } catch (ClassCastException e) {
                 throw new ClassCastException(o.getClass().getCanonicalName() + " cannot be cast to " + clazz.getCanonicalName());
             }
+        }
+    }
+
+    public static class ReturnResultHolder {
+        public final Object value;
+
+        public ReturnResultHolder(Object value) {
+            this.value = value;
+        }
+    }
+
+    public static class ReturnExpression extends Expression {
+        protected Expression inner;
+
+        public ReturnExpression(Expression inner) {
+            this.inner = inner;
+        }
+
+        @Override
+        public void setVariable(Variable v) {
+            inner.setVariable(v);
+        }
+
+        @Override
+        public Expression clone() {
+            if (inner == null)
+                return this;
+
+            return new ReturnExpression(inner.clone());
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+            if (inner == null)
+                return new ReturnResultHolder(null);
+
+            Object o = inner.get(model);
+            return new ReturnResultHolder(o);
+        }
+    }
+
+    public static class BlockExpression extends Expression {
+        protected List<Expression> expressions = new ArrayList<Expression>();
+
+        @Override
+        public void setVariable(Variable v) {
+            for (Expression expression : expressions) {
+                expression.setVariable(v);
+            }
+        }
+
+        public void add(Expression e) {
+            expressions.add(e);
+        }
+
+        @Override
+        public Expression clone() {
+            BlockExpression clone = new BlockExpression();
+            for (Expression expression : expressions) {
+                clone.add(expression);
+            }
+            return clone;
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+            Object ob = null;
+            for (Expression expression : expressions) {
+                ob = expression.get(model);
+            }
+            return ob;
+        }
+
+        public boolean isEmpty() {
+            return expressions.isEmpty();
+        }
+
+        public int size() {
+            return expressions.size();
+        }
+
+        public Expression get(int i) {
+            return expressions.get(i);
         }
     }
 
