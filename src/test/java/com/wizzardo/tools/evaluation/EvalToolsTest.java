@@ -1565,5 +1565,17 @@ public class EvalToolsTest {
                 "");
         expression.get(model);
         Assert.assertEquals("2", String.valueOf(model.get("i")));
+
+        expression = EvalTools.prepare("" +
+                "def i=2 \n" +
+                "def c = {\n" +
+                "  if(i>0)\n" +
+                "    return\n" +
+                "  i++\n" +
+                "}\n" +
+                "c()" +
+                "");
+        expression.get(model);
+        Assert.assertEquals("2", String.valueOf(model.get("i")));
     }
 }

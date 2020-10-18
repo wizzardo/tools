@@ -745,21 +745,34 @@ public class EvalTools {
         if (isClosure(exp)) {
             exp = exp.substring(1, exp.length() - 1).trim();
             ClosureExpression closure = new ClosureExpression();
-            List<String> lines = getBlocks(exp);
-            if (lines.isEmpty())
-                return new ClosureHolder(closure);
+            exp = closure.parseArguments(exp);
 
-            String firstLine = lines.get(0);
-            firstLine = closure.parseArguments(firstLine);
-            if (firstLine.length() == 0)
-                lines.remove(0);
-            else
-                lines.set(0, firstLine);
+            List<Statement> statements = getStatements(exp);
+            for (Statement s : statements) {
+                switch (s.type) {
+                    case IF:
+                    case FOR:
+                    case WHILE:
+                        closure.add(s.prepare(model, functions, imports));
+                        break;
 
-            for (String s : lines) {
-                if (isLineCommented(s))
-                    continue;
-                closure.add(prepare(s, model, functions, imports, isTemplate));
+                    case BLOCK: {
+                        List<String> lines = getBlocks(s.statement);
+                        if (lines.isEmpty())
+                            continue;
+
+                        for (String line : lines) {
+                            if (isLineCommented(line))
+                                continue;
+                            closure.add(prepare(line, model, functions, imports, isTemplate));
+                        }
+                        break;
+                    }
+
+                    default:
+                        throw new IllegalStateException("not implemented yet");
+                }
+
             }
             return new ClosureHolder(closure);
         }

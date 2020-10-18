@@ -12,8 +12,9 @@ import java.util.concurrent.Callable;
 public class ClosureExpression extends Expression implements Runnable, Callable {
 
     protected static final Pair<String, Class>[] DEFAULT_ARGS = new Pair[]{new Pair<String, Class>("it", Object.class)};
+    protected static final Pair<String, Class>[] EMPTY_ARGS = new Pair[0];
     protected List<Expression> expressions = new ArrayList<Expression>();
-    protected Pair<String, Class>[] args;
+    protected Pair<String, Class>[] args = DEFAULT_ARGS;
     protected Map<String, Object> context = Collections.emptyMap();
 
     @Override
@@ -92,28 +93,29 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         expressions.add(expression);
     }
 
-    public String parseArguments(String firstLine) {
-        int i = firstLine.indexOf("->");
-        if (i > 0 && !EvalTools.inString(firstLine, 0, i)) {
-            String args = firstLine.substring(0, i).trim();
-            firstLine = firstLine.substring(i + 2).trim();
-            String[] pairs = args.split(",");
-            this.args = new Pair[pairs.length];
+    public String parseArguments(String exp) {
+        int i = exp.indexOf("->");
+        if (i >= 0 && EvalTools.countOpenBrackets(exp, 0, i) == 0 && !EvalTools.inString(exp, 0, i)) {
+            String args = exp.substring(0, i).trim();
+            exp = exp.substring(i + 2).trim();
 
-            for (i = 0; i < pairs.length; i++) {
-                String[] kv = pairs[i].trim().split(" ");
-                if (kv.length == 2)
-                    this.args[i] = new Pair<String, Class>(kv[1], Object.class);
-                else
-                    this.args[i] = new Pair<String, Class>(kv[0], Object.class);
+            args = args.trim();
+            if (!args.isEmpty()) {
+                String[] pairs = args.split(",");
+                this.args = new Pair[pairs.length];
+
+                for (i = 0; i < pairs.length; i++) {
+                    String[] kv = pairs[i].trim().split(" ");
+                    if (kv.length == 2)
+                        this.args[i] = new Pair<String, Class>(kv[1], Object.class);
+                    else
+                        this.args[i] = new Pair<String, Class>(kv[0], Object.class);
+                }
+            } else {
+                this.args = EMPTY_ARGS;
             }
-        } else {
-            if (i == 0)
-                firstLine = firstLine.substring(2).trim();
-
-            this.args = DEFAULT_ARGS;
         }
-        return firstLine;
+        return exp;
     }
 
     public boolean isEmpty() {

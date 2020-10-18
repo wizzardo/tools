@@ -318,7 +318,8 @@ public abstract class Expression {
 
         @Override
         public void setVariable(Variable v) {
-            inner.setVariable(v);
+            if (inner != null)
+                inner.setVariable(v);
         }
 
         @Override
