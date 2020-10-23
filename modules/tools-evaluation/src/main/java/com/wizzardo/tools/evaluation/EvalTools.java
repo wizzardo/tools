@@ -86,9 +86,15 @@ public class EvalTools {
 
     protected static boolean inString(String s, int from, int to) {
         boolean inString = false;
+        boolean inMultilineString = false;
         char quote = 0;
         for (int i = from; i < to; i++) {
             if (!inString) {
+                if (s.charAt(i) == '\"' && to - i > 3 && s.charAt(i + 1) == '\"' && s.charAt(i + 2) == '\"') {
+                    inMultilineString = !inMultilineString;
+                } else if (inMultilineString)
+                    continue;
+
                 if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i >= 1 && s.charAt(i - 1) != '\\'))) {
                     quote = s.charAt(i);
                     inString = true;
@@ -97,7 +103,7 @@ public class EvalTools {
                 inString = false;
             }
         }
-        return inString;
+        return inMultilineString || inString;
     }
 
     protected static LinkedList<String> getParts(String s) {
@@ -706,6 +712,9 @@ public class EvalTools {
         }
 
         {
+            if (!isTemplate && exp.startsWith("\"\"\"") && exp.endsWith("\"\"\"") && inString(exp, 0, exp.length() - 1)) {
+                return prepare(exp.substring(3, exp.length() - 3), model, functions, imports, true);
+            }
             if (!isTemplate && exp.startsWith("\"") && exp.endsWith("\"") && inString(exp, 0, exp.length() - 1)) {
                 return prepare(exp.substring(1, exp.length() - 1), model, functions, imports, true);
             }

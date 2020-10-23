@@ -1578,4 +1578,20 @@ public class EvalToolsTest {
         expression.get(model);
         Assert.assertEquals("2", String.valueOf(model.get("i")));
     }
+
+
+    @Test
+    public void test_multiline_string() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("foo\nbar\n", EvalTools.prepare("\"\"\"" +
+                "foo\n" +
+                "bar\n" +
+                "\"\"\"").get(model).toString());
+
+
+        Assert.assertEquals("foo\n\"bar\"\n", EvalTools.prepare("\"\"\"" +
+                "foo\n" +
+                "\"bar\"\n" +
+                "\"\"\"").get(model).toString());
+    }
 }
