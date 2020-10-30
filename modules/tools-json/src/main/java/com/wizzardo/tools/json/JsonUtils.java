@@ -279,17 +279,19 @@ class JsonUtils {
         String value;
         int l = k - from;
         if (!needDecoding) {
-            if (isNull(s, from, l)) {
-                setNull(setter, binder);
-                return i;
-            }
-            if (isTrue(s, from, l)) {
-                setBoolean(setter, binder, true);
-                return i;
-            }
-            if (isFalse(s, from, l)) {
-                setBoolean(setter, binder, false);
-                return i;
+            if (quote == 0) {
+                if (isNull(s, from, l)) {
+                    setNull(setter, binder);
+                    return i;
+                }
+                if (isTrue(s, from, l)) {
+                    setBoolean(setter, binder, true);
+                    return i;
+                }
+                if (isFalse(s, from, l)) {
+                    setBoolean(setter, binder, false);
+                    return i;
+                }
             }
 
             value = new String(s, from, l);
