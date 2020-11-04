@@ -582,6 +582,8 @@ public class Function extends Expression {
                 for (int i = 0; i < m.getParameterTypes().length; i++) {
                     arg = argsClasses[i];
                     param = m.getParameterTypes()[i];
+                    if (arg == null && !param.isPrimitive())
+                        continue;
                     if (arg != param && !param.isAssignableFrom(arg))
                         continue outer;
                 }
