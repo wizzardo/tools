@@ -175,7 +175,7 @@ public abstract class Expression {
 
             Map<String, Expression> m = new HashMap<String, Expression>(map.size() + 1);
             for (Map.Entry<String, Expression> entry : map.entrySet()) {
-                m.put(entry.getKey(), entry.getValue()).clone();
+                m.put(entry.getKey(), entry.getValue().clone());
             }
             return new MapExpression(m);
         }

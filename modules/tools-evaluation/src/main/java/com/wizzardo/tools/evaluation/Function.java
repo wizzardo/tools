@@ -663,14 +663,21 @@ public class Function extends Expression {
                             int argsSize = parameterTypes.length;
 
                             Object[] args = new Object[argsSize];
-                            Object vararg = Array.newInstance(parameterTypes[parameterTypes.length - 1].getComponentType(), varArgSize);
+                            Class<?> arrayType = parameterTypes[parameterTypes.length - 1].getComponentType();
+                            Object vararg = Array.newInstance(arrayType, varArgSize);
 
 
                             if (argsSize > 1) {
                                 System.arraycopy(objects, 0, args, 0, argsSize - 1);
                             }
                             if (varArgSize > 0) {
-                                System.arraycopy(objects, argsSize - 1, vararg, 0, varArgSize);
+                                if (arrayType.isPrimitive()) {
+                                    for (int i = 0; i < varArgSize; i++) {
+                                        int fromIndex = argsSize - 1 + i;
+                                        Array.set(vararg, i, objects[fromIndex]);
+                                    }
+                                } else
+                                    System.arraycopy(objects, argsSize - 1, vararg, 0, varArgSize);
                             }
 
                             args[argsSize - 1] = vararg;
@@ -737,7 +744,7 @@ public class Function extends Expression {
                         new InvocationHandler() {
                             @Override
                             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                                for (int j = 0; j < closureArgs.length; j++) {
+                                for (int j = 0; j < closureArgs.length && args != null && j < args.length; j++) {
                                     closureArgs[j].set(args[j]);
                                 }
                                 return closure.get();
