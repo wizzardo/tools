@@ -21,7 +21,7 @@ public class EvalTools {
     static final String CONSTRUCTOR = "%constructor%";
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
-    private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d]+)(\\.[A-Z][a-zA-Z\\d]+)*)(\\[)?");
+    private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d_]+)(\\.[A-Z]?[a-zA-Z\\d_]+)*)(\\[)?");
     private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*");
     private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
     private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*" + "\\)");
@@ -1196,9 +1196,23 @@ public class EvalTools {
                 if (arrayClass == null)
                     thatObject = new Operation(thatObject, prepare(argsRaw, model, functions, imports, isTemplate), Operator.GET);
                 else {
-                    Expression[] args = new Expression[2];
+                    List<String> moreArgs = Collections.emptyList();
+                    while (!parts.isEmpty() && parts.get(0).startsWith("[") && parts.get(0).endsWith("]")) {
+                        String anotherDimentions = parts.remove(0);
+                        anotherDimentions = anotherDimentions.substring(1, anotherDimentions.length() - 1);
+                        if (moreArgs.isEmpty())
+                            moreArgs = new ArrayList<String>(4);
+
+                        moreArgs.add(anotherDimentions);
+                    }
+                    Expression[] args = new Expression[2 + moreArgs.size()];
                     args[0] = new Expression.Holder(arrayClass);
                     args[1] = prepare(argsRaw, model, functions, imports, isTemplate);
+                    if (!moreArgs.isEmpty()) {
+                        for (int i = 0; i < moreArgs.size(); i++) {
+                            args[i + 2] = prepare(moreArgs.get(i), model, functions, imports, isTemplate);
+                        }
+                    }
                     thatObject = new Function(thatObject, methodName, args);
                     arrayClass = null;
                 }
