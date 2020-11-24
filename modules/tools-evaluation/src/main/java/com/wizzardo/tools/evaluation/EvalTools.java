@@ -106,6 +106,31 @@ public class EvalTools {
         return inMultilineString || inString;
     }
 
+    protected static boolean isTemplate(String s, int from, int to) {
+        boolean inString = false;
+        char quote = 0;
+        for (int i = from; i < to; i++) {
+            if (!inString) {
+                if (s.charAt(i) == '\"') {
+                    quote = s.charAt(i);
+                    inString = true;
+                }
+            } else {
+                if (s.charAt(i) == '{' && s.charAt(i - 1) == '$') {
+                    int next = findCloseBracket(s, i + 1, to);
+                    if (next == -1)
+                        throw new IllegalStateException("Unfinished expression at " + i + ": " + s);
+                    i = next;
+                } else if (s.charAt(i) == quote && s.charAt(i - 1) != '\\') {
+                    inString = false;
+                    if (i != to - 1)
+                        return false;
+                }
+            }
+        }
+        return inString;
+    }
+
     protected static LinkedList<String> getParts(String s) {
         LinkedList<String> l = new LinkedList<String>();
         boolean inString = false;
@@ -715,8 +740,10 @@ public class EvalTools {
             if (!isTemplate && exp.startsWith("\"\"\"") && exp.endsWith("\"\"\"") && inString(exp, 0, exp.length() - 1)) {
                 return prepare(exp.substring(3, exp.length() - 3), model, functions, imports, true);
             }
-            if (!isTemplate && exp.startsWith("\"") && exp.endsWith("\"") && inString(exp, 0, exp.length() - 1)) {
-                return prepare(exp.substring(1, exp.length() - 1), model, functions, imports, true);
+            if (!isTemplate && exp.startsWith("\"") && exp.endsWith("\"") && isTemplate(exp, 0, exp.length() - 1)) {
+                String quote = exp.charAt(0) + "";
+                exp = exp.substring(1, exp.length() - 1).replace("\\" + quote, quote);
+                return prepare(exp, model, functions, imports, true);
             }
 
             if (isTemplate) {
@@ -795,12 +822,26 @@ public class EvalTools {
                 List<String> lines = getBlocks(exp);
 
                 List<Expression> definitions = new ArrayList<Expression>(lines.size());
+                ClassExpression classExpression = new ClassExpression(className, definitions);
+
                 for (String s : lines) {
                     if (isLineCommented(s))
                         continue;
-                    definitions.add(prepare(s, model, functions, imports, isTemplate));
+
+                    boolean isStatic = false;
+                    if (s.startsWith("static ")) {
+                        s = s.substring("static ".length()).trim();
+                        isStatic = true;
+                    }
+
+                    Expression prepare = prepare(s, model, functions, imports, isTemplate);
+                    if (prepare instanceof ClosureHolder) {
+                        ClosureExpression closure = ((ClosureHolder) prepare).closure;
+                        closure.setContext(classExpression.context);
+                        prepare = closure;
+                    }
+                    definitions.add(prepare);
                 }
-                ClassExpression classExpression = new ClassExpression(className, definitions);
                 classExpression.init();
                 model.put("class " + className, classExpression);
                 return classExpression;
@@ -1584,7 +1625,7 @@ public class EvalTools {
                     break;
                 case '\\':
                     escape = !escape;
-                    if (!escape) {
+                    if (escape) {
                         sb.append(ch);
                     }
                     break;
