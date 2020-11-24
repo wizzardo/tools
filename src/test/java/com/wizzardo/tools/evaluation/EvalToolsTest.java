@@ -4,6 +4,7 @@
  */
 package com.wizzardo.tools.evaluation;
 
+import com.wizzardo.tools.interfaces.Consumer;
 import com.wizzardo.tools.interfaces.Mapper;
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,6 +15,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.wizzardo.tools.misc.With.with;
 import static org.junit.Assert.*;
 
 /**
@@ -1492,6 +1494,22 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_def_class_static_block() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("foo", EvalTools.prepare("" +
+                "class StaticBlock {\n" +
+                "  static String key = 'value' \n" +
+                "  static {\n" +
+                "    key = 'foo'\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "StaticBlock.key\n" +
+                "").get(model).toString());
+
+    }
+
+    @Test
     public void test_script_engine() {
         ScriptEngine scriptEngine = new ScriptEngine(new File("src/test/resources/groovy"));
 
@@ -1593,5 +1611,26 @@ public class EvalToolsTest {
                 "foo\n" +
                 "\"bar\"\n" +
                 "\"\"\"").get(model).toString());
+    }
+
+    @Test
+    public void test_priorities() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("it", with(new HashMap<String, Object>(), new Consumer<HashMap<String, Object>>() {
+            @Override
+            public void consume(HashMap<String, Object> map) {
+                map.put("a", -1);
+                map.put("b", 1);
+            }
+        }));
+        Assert.assertEquals("true", EvalTools.prepare("it.a > -1 || it.b > -1").get(model).toString());
+        Assert.assertEquals("true", EvalTools.prepare("it.a > (-1) || it.b > (-1)").get(model).toString());
+    }
+
+    @Test
+    public void test_concat() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("bar", "bar");
+        Assert.assertEquals("foobar1", EvalTools.prepare("new StringBuilder().append(\"foo\"+bar+\"1\").toString()").get(model).toString());
     }
 }
