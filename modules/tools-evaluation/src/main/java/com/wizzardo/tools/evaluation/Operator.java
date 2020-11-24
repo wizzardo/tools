@@ -9,13 +9,13 @@ import java.util.Map;
 
 public enum Operator {
 
-    PLUS("+", Operator.Requirement.BOTH, 1, false),
-    PLUS2("++", Operator.Requirement.ANY, 3, false),
-    MINUS("-", Operator.Requirement.BOTH, 1, false),
-    MINUS2("--", Operator.Requirement.ANY, 3, false),
-    MULTIPLY("*", Operator.Requirement.BOTH, 2, false),
-    DIVIDE("/", Operator.Requirement.BOTH, 2, false),
-    MOD("%", Operator.Requirement.BOTH, 2, false),
+    PLUS("+", Operator.Requirement.BOTH, 2, false),
+    PLUS2("++", Operator.Requirement.ANY, 4, false),
+    MINUS("-", Operator.Requirement.BOTH, 2, false),
+    MINUS2("--", Operator.Requirement.ANY, 4, false),
+    MULTIPLY("*", Operator.Requirement.BOTH, 3, false),
+    DIVIDE("/", Operator.Requirement.BOTH, 3, false),
+    MOD("%", Operator.Requirement.BOTH, 3, false),
     EQUAL("=", Operator.Requirement.BOTH, -3, false),
     APPEND("<<", Operator.Requirement.BOTH, -2, false),
     EQUAL2("==", Operator.Requirement.BOTH, 0, true),
@@ -24,7 +24,7 @@ public enum Operator {
     AND2("&&", Operator.Requirement.BOTH, -1, true),
     OR("|", Operator.Requirement.BOTH, -1, true),
     OR2("||", Operator.Requirement.BOTH, -1, true),
-    NOT("!", Operator.Requirement.RIGHR, 1, true),
+    NOT("!", Operator.Requirement.RIGHR, 2, true),
     NOT_EQUAL("!=", Operator.Requirement.BOTH, 1, true),
     PLUS_EQUAL("+=", Operator.Requirement.BOTH, -3, false),
     MINUS_EQUAL("-=", Operator.Requirement.BOTH, -3, false),
@@ -34,9 +34,9 @@ public enum Operator {
     GREATE_EQUAL(">=", Operator.Requirement.BOTH, 1, true),
     LOWER("<", Operator.Requirement.BOTH, 1, true),
     GREATE(">", Operator.Requirement.BOTH, 1, true),
-    TERNARY("?", Operator.Requirement.BOTH, 4, true),
-    ELVIS("?:", Operator.Requirement.BOTH, 4, true),
-    COLON(":", Operator.Requirement.BOTH, 4, true),
+    TERNARY("?", Operator.Requirement.BOTH, 5, true),
+    ELVIS("?:", Operator.Requirement.BOTH, 5, true),
+    COLON(":", Operator.Requirement.BOTH, 5, true),
     GET("%get%", Operator.Requirement.BOTH, 0, false);
     private static final Map<String, Operator> operators = new HashMap<String, Operator>();
     public final String text;
