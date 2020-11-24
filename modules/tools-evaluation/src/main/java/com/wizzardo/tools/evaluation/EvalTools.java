@@ -36,6 +36,7 @@ public class EvalTools {
     private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\bclass +([A-Za-z0-9_]+) *\\{");
+    private static final Pattern STATIC_BLOCK = Pattern.compile("(static) +\\{");
 
     protected static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
@@ -829,7 +830,8 @@ public class EvalTools {
                         continue;
 
                     boolean isStatic = false;
-                    if (s.startsWith("static ")) {
+                    Matcher staticMatcher = STATIC_BLOCK.matcher(s);
+                    if (staticMatcher.find()) {
                         s = s.substring("static ".length()).trim();
                         isStatic = true;
                     }
