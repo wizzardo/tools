@@ -407,9 +407,10 @@ public abstract class Expression {
         if (exp == null) {
             return null;
         }
-        Matcher m = string.matcher(exp);
-        if (m.matches()) {
-            return m.group(1) == null ? m.group(2).replace("\\'", "'") : m.group(1).replace("\\\"", "\"");
+        Matcher m;
+        if (isString(exp)) {
+            String quote = exp.charAt(0) + "";
+            return exp.substring(1, exp.length() - 1).replace("\\" + quote, quote);
         }
 
         m = numberOx.matcher(exp);
@@ -456,11 +457,29 @@ public abstract class Expression {
         return null;
     }
 
+    protected static boolean isString(String s) {
+        boolean inString = false;
+        char quote = 0;
+        int length = s.length();
+        for (int i = 0; i < length; i++) {
+            if (!inString) {
+                if (s.charAt(i) == '\"' || s.charAt(i) == '\'') {
+                    quote = s.charAt(i);
+                    inString = true;
+                } else
+                    return false;
+            } else if (s.charAt(i) == quote && s.charAt(i - 1) != '\\') {
+                return i == length - 1;
+            }
+        }
+        return false;
+    }
+
+
     static String removeUnderscores(String s) {
         return underscore.matcher(s).replaceAll("");
     }
 
-    private static final Pattern string = Pattern.compile("\"(.*)\"|\'(.*)\'");
     private static final Pattern number = Pattern.compile("([\\d_]+\\.?[\\d_]*)([dflbDFLB]?)");
     private static final Pattern numberOx = Pattern.compile("(0[xbXB]?)([\\d_abcdefABCDEF]+)");
     private static final Pattern underscore = Pattern.compile("_");
