@@ -1226,8 +1226,13 @@ public class EvalTools {
                         args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
                     }
                 }
-                if (methodName == null)
+                if (methodName == null) {
+                    if (Function.findMeta(null, thatObject.exp, false) != null) {
+                        thatObject = new Function(Expression.Holder.NULL, thatObject.exp, args);
+                        continue;
+                    }
                     methodName = "execute";
+                }
 
                 if (thatObject instanceof UserFunction) {
                     UserFunction function = (UserFunction) thatObject;
@@ -1873,6 +1878,19 @@ public class EvalTools {
             @Override
             public String toString() {
                 return "with";
+            }
+        });
+
+        Function.setMethod(null, "println", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
+                System.out.println(args[0]);
+                return null;
+            }
+
+            @Override
+            public String toString() {
+                return "println";
             }
         });
     }
