@@ -4,6 +4,7 @@
  */
 package com.wizzardo.tools.evaluation;
 
+import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.util.*;
@@ -274,10 +275,55 @@ public abstract class Expression {
     public static class CastExpression extends Expression {
         protected Class clazz;
         protected Expression inner;
+        protected Mapper<Object, Object> primitiveMapper;
 
         public CastExpression(Class clazz, Expression inner) {
             this.clazz = clazz;
             this.inner = inner;
+            if (clazz.isPrimitive()) {
+                if (int.class == clazz)
+                    primitiveMapper = new Mapper<Object, Object>() {
+                        @Override
+                        public Object map(Object o) {
+                            return ((Number) o).intValue();
+                        }
+                    };
+                else if (long.class == clazz)
+                    primitiveMapper = new Mapper<Object, Object>() {
+                        @Override
+                        public Object map(Object o) {
+                            return ((Number) o).longValue();
+                        }
+                    };
+                else if (short.class == clazz)
+                    primitiveMapper = new Mapper<Object, Object>() {
+                        @Override
+                        public Object map(Object o) {
+                            return ((Number) o).shortValue();
+                        }
+                    };
+                else if (byte.class == clazz)
+                    primitiveMapper = new Mapper<Object, Object>() {
+                        @Override
+                        public Object map(Object o) {
+                            return ((Number) o).byteValue();
+                        }
+                    };
+                else if (float.class == clazz)
+                    primitiveMapper = new Mapper<Object, Object>() {
+                        @Override
+                        public Object map(Object o) {
+                            return ((Number) o).floatValue();
+                        }
+                    };
+                else if (double.class == clazz)
+                    primitiveMapper = new Mapper<Object, Object>() {
+                        @Override
+                        public Object map(Object o) {
+                            return ((Number) o).doubleValue();
+                        }
+                    };
+            }
         }
 
         @Override
@@ -294,7 +340,7 @@ public abstract class Expression {
         public Object get(Map<String, Object> model) {
             Object o = inner.get(model);
             try {
-                return clazz.cast(o);
+                return primitiveMapper != null ? primitiveMapper.map(o) : clazz.cast(o);
             } catch (ClassCastException e) {
                 throw new ClassCastException(o.getClass().getCanonicalName() + " cannot be cast to " + clazz.getCanonicalName());
             }
