@@ -288,7 +288,7 @@ public class Function extends Expression {
             } else if (method == null) {
                 argsMappers = new ArrayList<Mapper<Object[], Object[]>>(args == null ? 0 : args.length);
                 method = findMethod(getClass(instance), instance, methodName, arr, argsMappers);
-                if (method == null && instance.getClass() == Class.class)
+                if (method == null && instance != null && instance.getClass() == Class.class)
                     method = findMethod(instance.getClass(), instance, methodName, arr, argsMappers);
 
             }
@@ -464,35 +464,37 @@ public class Function extends Expression {
         return null;
     }
 
-    private BiMapper<Object, Object[], Object> findMeta(Class clazz, boolean recursively) {
-        if (clazz != null) {
-            Map<String, BiMapper<Object, Object[], Object>> methods;
-            BiMapper<Object, Object[], Object> closure;
-            if ((methods = metaMethods.get(clazz)) != null && (closure = methods.get(methodName)) != null) {
-                return closure;
-            }
-            closure = findMetaInterfaces(clazz.getInterfaces());
-            if (closure != null) {
-                return closure;
-            }
-            if (recursively)
-                return findMeta(clazz.getSuperclass(), true);
+    protected static BiMapper<Object, Object[], Object> findMeta(Class clazz, String methodName, boolean recursively) {
+        Map<String, BiMapper<Object, Object[], Object>> methods;
+        BiMapper<Object, Object[], Object> closure;
+        if ((methods = metaMethods.get(clazz)) != null && (closure = methods.get(methodName)) != null) {
+            return closure;
         }
+
+        if (clazz != null && (closure = findMetaInterfaces(clazz.getInterfaces(), methodName)) != null) {
+            return closure;
+        }
+
+        if (recursively && clazz != null)
+            return findMeta(clazz.getSuperclass(), methodName, true);
         return null;
     }
 
-    private BiMapper<Object, Object[], Object> findMetaInterfaces(Class[] classes) {
+    protected static BiMapper<Object, Object[], Object> findMetaInterfaces(Class[] classes, String methodName) {
         BiMapper<Object, Object[], Object> closure = null;
         Map<String, BiMapper<Object, Object[], Object>> methods;
         for (Class i : classes) {
             if (closure == null && ((methods = metaMethods.get(i)) == null || (closure = methods.get(methodName)) == null)) {
-                closure = findMetaInterfaces(i.getInterfaces());
+                closure = findMetaInterfaces(i.getInterfaces(), methodName);
             }
         }
         return closure;
     }
 
     private Class getClass(Object ob) {
+        if (ob == null)
+            return null;
+
         Class clazz = ob.getClass();
         if (clazz == Class.class) {
             return (Class) ob;
@@ -511,7 +513,7 @@ public class Function extends Expression {
         } else
             argsClasses = new Class[0];
 
-        if (clazz.equals(ClassExpression.class)) {
+        if (ClassExpression.class.equals(clazz)) {
             return new BiMapper<Object, Object[], Object>() {
                 @Override
                 public Object map(Object instance, Object[] args) {
@@ -536,17 +538,15 @@ public class Function extends Expression {
         while (clazz != null) {
             Method[] methods = getMethods(clazz);
 
-            BiMapper<Object, Object[], Object> meta = findMeta(clazz, false);
+            BiMapper<Object, Object[], Object> meta = findMeta(clazz, method, false);
             if (meta != null) {
                 return meta;
             }
 
-            Method m = findExactMatch(methods, method, argsClasses);
-            if (m == null)
-                m = findBoxedMatch(methods, method, argsClasses);
-            if (m == null)
-                m = findNumberMatch(methods, method, argsClasses, argsMappers);
+            Method m = findMethod(methods, method, argsClasses, argsMappers);
 
+            if (m == null)
+                m = findDefaultMethod(clazz, method, argsClasses, argsMappers);
 
             if (m != null)
                 return wrapMethod(m);
@@ -554,7 +554,25 @@ public class Function extends Expression {
             clazz = clazz.getSuperclass();
         }
 
+        return findMeta(null, method, false);
+    }
 
+    private Method findMethod(Method[] methods, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
+        Method m = findExactMatch(methods, method, argsClasses);
+        if (m == null)
+            m = findBoxedMatch(methods, method, argsClasses);
+        if (m == null)
+            m = findNumberMatch(methods, method, argsClasses, argsMappers);
+        return m;
+    }
+
+    private Method findDefaultMethod(Class cl, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
+        for (Class anInterface : cl.getInterfaces()) {
+            Method m = findMethod(getMethods(anInterface), method, argsClasses, argsMappers);
+            if (m != null)
+                return m;
+            return findDefaultMethod(anInterface, method, argsClasses, argsMappers);
+        }
         return null;
     }
 

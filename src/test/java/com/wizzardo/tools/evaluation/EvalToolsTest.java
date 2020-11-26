@@ -1649,4 +1649,12 @@ public class EvalToolsTest {
                 "com.wizzardo.tools.misc.With.with(new StringBuilder(), {it.append('foo')})\n" +
                 "").get(model).toString());
     }
+
+    @Test
+    public void test_default_methods() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        EvalTools.evaluate("def r = []", model);
+        EvalTools.evaluate("new com.wizzardo.tools.collections.Range(0, 1).forEach({r << it})", model);
+        Assert.assertEquals("[0]", model.get("r").toString());
+    }
 }
