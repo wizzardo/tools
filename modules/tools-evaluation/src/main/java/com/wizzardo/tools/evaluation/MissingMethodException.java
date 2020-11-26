@@ -8,7 +8,7 @@ import java.util.Arrays;
  */
 public class MissingMethodException extends RuntimeException {
     public MissingMethodException(Class clazz, String method, Object[] args) {
-        super("No signature of method: " + clazz.getCanonicalName() + "." + method + "is applicable for argument types: " + getArgsClasses(args) + " values: " + Arrays.toString(args));
+        super("No signature of method: " + clazz.getCanonicalName() + "." + method + " is applicable for argument types: " + getArgsClasses(args) + " values: " + Arrays.toString(args));
     }
 
     private static String getArgsClasses(Object[] args) {

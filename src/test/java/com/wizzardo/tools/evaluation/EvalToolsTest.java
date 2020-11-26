@@ -1633,4 +1633,20 @@ public class EvalToolsTest {
         model.put("bar", "bar");
         Assert.assertEquals("foobar1", EvalTools.prepare("new StringBuilder().append(\"foo\"+bar+\"1\").toString()").get(model).toString());
     }
+
+    @Test
+    public void test_java_lambda() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("FOO", EvalTools.prepare("" +
+                "def c = (s -> s.toUpperCase())\n" +
+                "c('foo')").get(model).toString());
+    }
+
+    @Test
+    public void test_meta_methods() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("foo", EvalTools.prepare("" +
+                "com.wizzardo.tools.misc.With.with(new StringBuilder(), {it.append('foo')})\n" +
+                "").get(model).toString());
+    }
 }

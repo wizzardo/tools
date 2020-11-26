@@ -10,6 +10,7 @@ import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Moxa
@@ -22,7 +23,9 @@ public class Function extends Expression {
     }
 
     protected static final Expression[] EMPTY_ARGS = new Expression[0];
-    protected static Map<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>> metaMethods = new HashMap<Class, Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>>();
+    protected static Map<Class, Map<String, BiMapper<Object, Object[], Object>>> metaMethods = new HashMap<Class, Map<String, BiMapper<Object, Object[], Object>>>();
+
+    protected static Map<Class, Method[]> methodsCache = new ConcurrentHashMap<Class, Method[]>(256, 1);
 
     protected Expression thatObject;
     protected BiMapper<Object, Object[], Object> method;
@@ -35,9 +38,7 @@ public class Function extends Expression {
     protected List<Mapper<Object[], Object[]>> argsMappers;
     protected String fieldName;
     protected boolean hardcodeChecked = false;
-    protected boolean metaChecked = false;
     protected boolean safeNavigation = false;
-    protected CollectionTools.Closure3<Object, Object, Map, Expression[]> metaMethod;
 
     public Function(Expression thatObject, BiMapper<Object, Object[], Object> method, Expression[] args) {
         this.thatObject = thatObject;
@@ -255,14 +256,6 @@ public class Function extends Expression {
             if (safeNavigation && instance == null)
                 return null;
 
-            if (!metaChecked && instance != null) {
-                checkMeta(instance instanceof Class ? (Class) instance : instance.getClass());
-                metaChecked = true;
-            }
-            if (metaMethod != null) {
-                return metaMethod.execute(instance, model, args != null ? args : EMPTY_ARGS);
-            }
-
             if (args != null) {
                 arr = resolveArgs(model);
             }
@@ -443,7 +436,8 @@ public class Function extends Expression {
         if (method != null)
             return setter = new MethodSetter(method);
 
-        throw Unchecked.rethrow(new NoSuchFieldException(fieldName));
+//        throw Unchecked.rethrow(new NoSuchFieldException(fieldName));
+        return null;
     }
 
     protected Method findMethod(Class clazz, String name, int paramsCount) {
@@ -470,30 +464,29 @@ public class Function extends Expression {
         return null;
     }
 
-    private boolean checkMeta(Class clazz) {
+    private BiMapper<Object, Object[], Object> findMeta(Class clazz, boolean recursively) {
         if (clazz != null) {
-            Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>> methods;
-            CollectionTools.Closure3<Object, Object, Map, Expression[]> closure = null;
+            Map<String, BiMapper<Object, Object[], Object>> methods;
+            BiMapper<Object, Object[], Object> closure;
             if ((methods = metaMethods.get(clazz)) != null && (closure = methods.get(methodName)) != null) {
-                metaMethod = closure;
-                return true;
+                return closure;
             }
-            closure = findMeta(clazz.getInterfaces());
+            closure = findMetaInterfaces(clazz.getInterfaces());
             if (closure != null) {
-                metaMethod = closure;
-                return true;
+                return closure;
             }
-            return checkMeta(clazz.getSuperclass());
+            if (recursively)
+                return findMeta(clazz.getSuperclass(), true);
         }
-        return false;
+        return null;
     }
 
-    private CollectionTools.Closure3<Object, Object, Map, Expression[]> findMeta(Class[] classes) {
-        CollectionTools.Closure3<Object, Object, Map, Expression[]> closure = null;
-        Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>> methods;
+    private BiMapper<Object, Object[], Object> findMetaInterfaces(Class[] classes) {
+        BiMapper<Object, Object[], Object> closure = null;
+        Map<String, BiMapper<Object, Object[], Object>> methods;
         for (Class i : classes) {
             if (closure == null && ((methods = metaMethods.get(i)) == null || (closure = methods.get(methodName)) == null)) {
-                closure = findMeta(i.getInterfaces());
+                closure = findMetaInterfaces(i.getInterfaces());
             }
         }
         return closure;
@@ -534,18 +527,34 @@ public class Function extends Expression {
             };
         }
 
-        try {
-            return wrapMethod(clazz.getMethod(method, argsClasses));
-        } catch (NoSuchMethodException e) {
-            //ignore
+//        try {
+//            return wrapMethod(clazz.getMethod(method, argsClasses));
+//        } catch (NoSuchMethodException e) {
+//            //ignore
+//        }
+
+        while (clazz != null) {
+            Method[] methods = getMethods(clazz);
+
+            BiMapper<Object, Object[], Object> meta = findMeta(clazz, false);
+            if (meta != null) {
+                return meta;
+            }
+
+            Method m = findExactMatch(methods, method, argsClasses);
+            if (m == null)
+                m = findBoxedMatch(methods, method, argsClasses);
+            if (m == null)
+                m = findNumberMatch(methods, method, argsClasses, argsMappers);
+
+
+            if (m != null)
+                return wrapMethod(m);
+
+            clazz = clazz.getSuperclass();
         }
-        Method m = findExactMatch(clazz, method, argsClasses);
-        if (m == null)
-            m = findBoxedMatch(clazz, method, argsClasses);
-        if (m == null)
-            m = findNumberMatch(clazz, method, argsClasses, argsMappers);
-        if (m != null)
-            return wrapMethod(m);
+
+
         return null;
     }
 
@@ -572,11 +581,11 @@ public class Function extends Expression {
         };
     }
 
-    private Method findExactMatch(Class clazz, String method, Class[] argsClasses) {
+    private Method findExactMatch(Method[] methods, String method, Class[] argsClasses) {
         Class<?> arg;
         Class<?> param;
         outer:
-        for (Method m : clazz.getMethods()) {
+        for (Method m : methods) {
             if (m.getName().equals(method) && ((m.getParameterTypes().length == 0 && argsClasses == null) || m.getParameterTypes().length == argsClasses.length)) {
 //                System.out.println("check args");
                 for (int i = 0; i < m.getParameterTypes().length; i++) {
@@ -593,11 +602,11 @@ public class Function extends Expression {
         return null;
     }
 
-    private Method findBoxedMatch(Class clazz, String method, Class[] argsClasses) {
+    private Method findBoxedMatch(Method[] methods, String method, Class[] argsClasses) {
         Class<?> arg;
         Class<?> param;
         outer:
-        for (Method m : clazz.getMethods()) {
+        for (Method m : methods) {
             if (m.getName().equals(method) && ((m.getParameterTypes().length == 0 && argsClasses == null) || m.getParameterTypes().length == argsClasses.length)) {
 //                System.out.println("check args");
                 for (int i = 0; i < m.getParameterTypes().length; i++) {
@@ -613,11 +622,11 @@ public class Function extends Expression {
         return null;
     }
 
-    private Method findNumberMatch(Class clazz, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
+    private Method findNumberMatch(Method[] methods, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
         Class<?> arg;
         Class<?> param;
         outer:
-        for (Method m : clazz.getMethods()) {
+        for (Method m : methods) {
             final Class<?>[] parameterTypes = m.getParameterTypes();
             if (m.getName().equals(method) && ((parameterTypes.length == 0 && argsClasses == null) || parameterTypes.length == argsClasses.length ||
                     (m.isVarArgs() && parameterTypes.length <= argsClasses.length + 1))) {
@@ -827,6 +836,16 @@ public class Function extends Expression {
         };
     }
 
+    private static Method[] getMethods(Class cl) {
+        Method[] methods = methodsCache.get(cl);
+        if (methods == null) {
+            methods = cl.getDeclaredMethods();
+            methodsCache.put(cl, methods);
+        }
+
+        return methods;
+    }
+
     private static final Map<Class, Class> boxing = new HashMap<Class, Class>() {
         {
             put(int.class, Integer.class);
@@ -886,10 +905,10 @@ public class Function extends Expression {
         return field;
     }
 
-    public static void setMethod(Class clazz, String methodName, CollectionTools.Closure3<Object, Object, Map, Expression[]> c) {
-        Map<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>> methods = metaMethods.get(clazz);
+    public static void setMethod(Class clazz, String methodName, BiMapper<Object, Object[], Object> c) {
+        Map<String, BiMapper<Object, Object[], Object>> methods = metaMethods.get(clazz);
         if (methods == null) {
-            methods = new HashMap<String, CollectionTools.Closure3<Object, Object, Map, Expression[]>>();
+            methods = new HashMap<String, BiMapper<Object, Object[], Object>>();
             metaMethods.put(clazz, methods);
         }
         methods.put(methodName, c);

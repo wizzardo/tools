@@ -37,6 +37,7 @@ public class EvalTools {
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\bclass +([A-Za-z0-9_]+) *\\{");
     private static final Pattern STATIC_BLOCK = Pattern.compile("(static) +\\{");
+    private static final Pattern JAVA_LAMBDA = Pattern.compile("^(\\(([A-Za-z0-9_]+\\s*,?\\s*)+\\)|\\(\\s*\\)|[A-Za-z0-9_]+)\\s*->\\s*(\\{)?");
 
     protected static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
@@ -334,7 +335,14 @@ public class EvalTools {
     }
 
     private static boolean isClosure(String exp) {
-        return exp.startsWith("{") && exp.endsWith("}");
+        if (exp.startsWith("{") && exp.endsWith("}"))
+            return true;
+
+        Matcher m = JAVA_LAMBDA.matcher(exp);
+        if (m.find())
+            return true;
+
+        return false;
     }
 
     static List<String> getBlocks(String exp) {
@@ -780,9 +788,16 @@ public class EvalTools {
         }
 
         if (isClosure(exp)) {
-            exp = exp.substring(1, exp.length() - 1).trim();
             ClosureExpression closure = new ClosureExpression();
-            exp = closure.parseArguments(exp);
+            Matcher isLambda = JAVA_LAMBDA.matcher(exp);
+            if (isLambda.find()) {
+                exp = closure.parseArguments(exp);
+                if (exp.startsWith("{"))
+                    exp = exp.substring(1, exp.length() - 1).trim();
+            } else {
+                exp = exp.substring(1, exp.length() - 1).trim();
+                exp = closure.parseArguments(exp);
+            }
 
             List<Statement> statements = getStatements(exp);
             for (Statement s : statements) {
@@ -1666,113 +1681,153 @@ public class EvalTools {
 
 
     static {
-        Function.setMethod(Collection.class, "collect", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+        Function.setMethod(Collection.class, "collect", new Function.BiMapper<Object, Object[], Object>() {
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public Object map(Object it, Object[] args) {
                 List l = new ArrayList();
-                ClosureExpression closure = (ClosureExpression) args[0].get();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 Collection c = (Collection) it;
                 for (Object ob : c) {
-                    l.add(closure.get(model, ob));
+                    l.add(closure.get(closure.context, ob));
                 }
                 return l;
             }
-        });
-        Function.setMethod(Collection.class, "find", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public String toString() {
+                return "collect";
+            }
+        });
+        Function.setMethod(Collection.class, "find", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0].get();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
-                    if ((Boolean) closure.get(model, ob)) {
+                    if ((Boolean) closure.get(closure.context, ob)) {
                         return ob;
                     }
                 }
                 return null;
             }
-        });
-        Function.setMethod(Collection.class, "findAll", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public String toString() {
+                return "find";
+            }
+        });
+        Function.setMethod(Collection.class, "findAll", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
                 List l = new ArrayList();
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0].get();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
-                    if ((Boolean) closure.get(model, ob)) {
+                    if ((Boolean) closure.get(closure.context, ob)) {
                         l.add(ob);
                     }
                 }
                 return l;
             }
-        });
-        Function.setMethod(Collection.class, "findIndexOf", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public String toString() {
+                return "findAll";
+            }
+        });
+        Function.setMethod(Collection.class, "findIndexOf", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0].get();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 int i = 0;
                 for (Object ob : c) {
-                    if ((Boolean) closure.get(model, ob)) {
+                    if ((Boolean) closure.get(closure.context, ob)) {
                         return i;
                     }
                     i++;
                 }
                 return -1;
             }
-        });
-        Function.setMethod(Collection.class, "each", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public String toString() {
+                return "findIndexOf";
+            }
+        });
+        Function.setMethod(Collection.class, "each", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0].get();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
-                    closure.get(model, ob);
+                    closure.get(closure.context, ob);
                 }
                 return null;
             }
-        });
-        Function.setMethod(Collection.class, "eachWithIndex", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public String toString() {
+                return "each";
+            }
+        });
+        Function.setMethod(Collection.class, "eachWithIndex", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0].get();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 int i = 0;
                 for (Object ob : c) {
-                    closure.get(model, ob, i++);
+                    closure.get(closure.context, ob, i++);
                 }
                 return null;
             }
-        });
-        Function.setMethod(Collection.class, "every", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public String toString() {
+                return "eachWithIndex";
+            }
+        });
+        Function.setMethod(Collection.class, "every", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0].get();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
-                    if (!(Boolean) closure.get(model, ob))
+                    if (!(Boolean) closure.get(closure.context, ob))
                         return false;
                 }
                 return true;
             }
-        });
-        Function.setMethod(Collection.class, "any", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public String toString() {
+                return "every";
+            }
+        });
+        Function.setMethod(Collection.class, "any", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
-                ClosureExpression closure = (ClosureExpression) args[0].get();
+                ClosureExpression closure = (ClosureExpression) args[0];
                 for (Object ob : c) {
-                    if ((Boolean) closure.get(model, ob))
+                    if ((Boolean) closure.get(closure.context, ob))
                         return true;
                 }
                 return false;
             }
-        });
-        Function.setMethod(Collection.class, "join", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
+            public String toString() {
+                return "any";
+            }
+        });
+        Function.setMethod(Collection.class, "join", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
                 StringBuilder sb = new StringBuilder();
                 Collection c = (Collection) it;
-                Object separator = args[0].get(model);
+                Object separator = args[0];
                 for (Object ob : c) {
                     if (sb.length() != 0) {
                         sb.append(separator);
@@ -1781,28 +1836,43 @@ public class EvalTools {
                 }
                 return sb.toString();
             }
-        });
-
-        Function.setMethod(Number.class, "multiply", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
 
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
-                if (args.length != 1)
-                    throw new MissingMethodException(it.getClass(), "multiply", args);
-
-                return Operation.multiply(it, args[0].get(model));
+            public String toString() {
+                return "join";
             }
         });
 
-        Function.setMethod(Object.class, "with", new CollectionTools.Closure3<Object, Object, Map, Expression[]>() {
+        Function.setMethod(Number.class, "multiply", new Function.BiMapper<Object, Object[], Object>() {
+
             @Override
-            public Object execute(Object it, Map model, Expression[] args) {
-                if (args.length != 1 || args[0].getClass() != ClosureHolder.class)
+            public Object map(Object it, Object[] args) {
+                if (args.length != 1)
+                    throw new MissingMethodException(it.getClass(), "multiply", args);
+
+                return Operation.multiply(it, args[0]);
+            }
+
+            @Override
+            public String toString() {
+                return "multiply";
+            }
+        });
+
+        Function.setMethod(Object.class, "with", new Function.BiMapper<Object, Object[], Object>() {
+            @Override
+            public Object map(Object it, Object[] args) {
+                if (args.length != 1 || args[0].getClass() != ClosureExpression.class)
                     throw new MissingMethodException(it.getClass(), "with", args);
 
-                ClosureExpression closure = (ClosureExpression) args[0].get();
-                closure.getAgainst(model, it);
+                ClosureExpression closure = (ClosureExpression) args[0];
+                closure.getAgainst(closure.context, it);
                 return it;
+            }
+
+            @Override
+            public String toString() {
+                return "with";
             }
         });
     }

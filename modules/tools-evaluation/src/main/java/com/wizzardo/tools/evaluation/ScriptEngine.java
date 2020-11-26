@@ -65,6 +65,8 @@ public class ScriptEngine {
             for (String imp : imports) {
                 if (imp.endsWith(".*")) {
                     File file = new File(root, imp.substring(0, imp.length() - 1).replace('.', '/') + name + ".groovy");
+                    if (!file.exists())
+                        file = new File(root, imp.substring(0, imp.length() - 1).replace('.', '/') + name + ".java");
                     if (file.exists()) {
                         ClassExpression classExpression = resolveClassExpression(name, file);
                         if (classExpression != null)
@@ -72,6 +74,8 @@ public class ScriptEngine {
                     }
                 } else if (imp.endsWith(name) && imp.charAt(imp.length() - 1 - name.length()) == '.') {
                     File file = new File(root, imp.replace('.', '/') + ".groovy");
+                    if (!file.exists())
+                        file = new File(root, imp.replace('.', '/') + ".java");
                     if (file.exists()) {
                         ClassExpression classExpression = resolveClassExpression(name, file);
                         if (classExpression != null)
@@ -82,6 +86,8 @@ public class ScriptEngine {
 
             {
                 File file = new File(root, pack + name + ".groovy");
+                if (!file.exists())
+                    file = new File(root, pack + name + ".java");
                 if (file.exists()) {
                     ClassExpression classExpression = resolveClassExpression(name, file);
                     if (classExpression != null)
