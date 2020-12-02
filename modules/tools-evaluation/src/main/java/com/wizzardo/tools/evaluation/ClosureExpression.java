@@ -72,8 +72,8 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         local.put("delegate", thisObject);
         local.put("this", model);
         if (!(args.length == 1 && args[0].key.equals("it") && (arg == null || arg.length == 0))) {
-            if (args.length != arg.length)
-                throw new IllegalArgumentException("wrong number of arguments! there were " + arg.length + ", but must be " + args.length);
+            if (args.length > 0 && (arg == null || args.length != arg.length))
+                throw new IllegalArgumentException("wrong number of arguments! there were " + (arg == null ? 0 : arg.length) + ", but must be " + args.length);
             for (int i = 0; i < args.length; i++) {
 //                if (!args[i].value.isAssignableFrom(arg[i].getClass()))
 //                    throw new ClassCastException("Can not cast " + args[i].getClass() + " to " + args[i].value);
@@ -99,13 +99,20 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
             String args = exp.substring(0, i).trim();
             exp = exp.substring(i + 2).trim();
 
+            if (args.startsWith("(") && args.endsWith(")"))
+                args = args.substring(1, args.length() - 1);
+
             args = args.trim();
             if (!args.isEmpty()) {
-                String[] pairs = args.split(",");
+                String[] pairs = args.split(",\\s*");
                 this.args = new Pair[pairs.length];
 
                 for (i = 0; i < pairs.length; i++) {
-                    String[] kv = pairs[i].trim().split(" ");
+                    String pair = pairs[i];
+                    if (pair.startsWith("final "))
+                        pair = pair.substring(6);
+
+                    String[] kv = pair.trim().split(" ");
                     if (kv.length == 2)
                         this.args[i] = new Pair<String, Class>(kv[1], Object.class);
                     else
