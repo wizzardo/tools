@@ -87,7 +87,9 @@ public abstract class Expression {
                 return new Holder(exp, result);
             }
 
-            return new Holder(exp);
+            Holder holder = new Holder(exp);
+            holder.variable = variable;
+            return holder;
         }
 
         @Override
@@ -126,7 +128,9 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new VariableOrFieldOfThis(exp);
+            VariableOrFieldOfThis expression = new VariableOrFieldOfThis(exp);
+            expression.variable = variable;
+            return expression;
         }
 
         @Override
