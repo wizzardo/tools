@@ -4,7 +4,6 @@
  */
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.collections.CollectionTools;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.Array;
@@ -1685,8 +1684,15 @@ public class EvalTools {
     }
 
 
+    public static abstract class ClosureInvoker implements Function.MethodInvoker {
+        @Override
+        public boolean canInvoke(Object instance) {
+            return true;
+        }
+    }
+
     static {
-        Function.setMethod(Collection.class, "collect", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "collect", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 List l = new ArrayList();
@@ -1703,7 +1709,7 @@ public class EvalTools {
                 return "collect";
             }
         });
-        Function.setMethod(Collection.class, "find", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "find", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
@@ -1721,7 +1727,7 @@ public class EvalTools {
                 return "find";
             }
         });
-        Function.setMethod(Collection.class, "findAll", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "findAll", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 List l = new ArrayList();
@@ -1740,7 +1746,7 @@ public class EvalTools {
                 return "findAll";
             }
         });
-        Function.setMethod(Collection.class, "findIndexOf", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "findIndexOf", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
@@ -1760,7 +1766,7 @@ public class EvalTools {
                 return "findIndexOf";
             }
         });
-        Function.setMethod(Collection.class, "each", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "each", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
@@ -1776,7 +1782,7 @@ public class EvalTools {
                 return "each";
             }
         });
-        Function.setMethod(Collection.class, "eachWithIndex", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "eachWithIndex", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
@@ -1793,7 +1799,7 @@ public class EvalTools {
                 return "eachWithIndex";
             }
         });
-        Function.setMethod(Collection.class, "every", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "every", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
@@ -1810,7 +1816,7 @@ public class EvalTools {
                 return "every";
             }
         });
-        Function.setMethod(Collection.class, "any", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "any", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 Collection c = (Collection) it;
@@ -1827,7 +1833,7 @@ public class EvalTools {
                 return "any";
             }
         });
-        Function.setMethod(Collection.class, "join", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Collection.class, "join", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 StringBuilder sb = new StringBuilder();
@@ -1848,7 +1854,7 @@ public class EvalTools {
             }
         });
 
-        Function.setMethod(Number.class, "multiply", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Number.class, "multiply", new ClosureInvoker() {
 
             @Override
             public Object map(Object it, Object[] args) {
@@ -1864,7 +1870,7 @@ public class EvalTools {
             }
         });
 
-        Function.setMethod(Object.class, "with", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(Object.class, "with", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 if (args.length != 1 || args[0].getClass() != ClosureExpression.class)
@@ -1881,7 +1887,7 @@ public class EvalTools {
             }
         });
 
-        Function.setMethod(null, "println", new Function.BiMapper<Object, Object[], Object>() {
+        Function.setMethod(null, "println", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
                 System.out.println(args[0]);

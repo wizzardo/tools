@@ -4,7 +4,6 @@
  */
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.tools.collections.CollectionTools;
 import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
@@ -18,17 +17,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Function extends Expression {
 
 
-    public interface BiMapper<A, B, R> {
-        R map(A a, B b);
+    public interface MethodInvoker {
+        Object map(Object instance, Object[] args);
+
+        boolean canInvoke(Object instance);
     }
 
     protected static final Expression[] EMPTY_ARGS = new Expression[0];
-    protected static Map<Class, Map<String, BiMapper<Object, Object[], Object>>> metaMethods = new HashMap<Class, Map<String, BiMapper<Object, Object[], Object>>>();
+    protected static Map<Class, Map<String, MethodInvoker>> metaMethods = new HashMap<Class, Map<String, MethodInvoker>>();
 
     protected static Map<Class, Method[]> methodsCache = new ConcurrentHashMap<Class, Method[]>(256, 1);
 
     protected Expression thatObject;
-    protected BiMapper<Object, Object[], Object> method;
+    protected MethodInvoker method;
     protected Mapper<Object[], Object> constructor;
     protected Field field;
     protected Getter getter;
@@ -40,13 +41,13 @@ public class Function extends Expression {
     protected boolean hardcodeChecked = false;
     protected boolean safeNavigation = false;
 
-    public Function(Expression thatObject, BiMapper<Object, Object[], Object> method, Expression[] args) {
+    public Function(Expression thatObject, MethodInvoker method, Expression[] args) {
         this.thatObject = thatObject;
         this.method = method;
         this.args = args;
     }
 
-    public Function(Expression thatObject, BiMapper<Object, Object[], Object> method, Expression[] args, boolean safeNavigation) {
+    public Function(Expression thatObject, MethodInvoker method, Expression[] args, boolean safeNavigation) {
         this.thatObject = thatObject;
         this.method = method;
         this.args = args;
@@ -71,7 +72,7 @@ public class Function extends Expression {
         this.constructor = constructor;
     }
 
-    public Function(Expression object, BiMapper<Object, Object[], Object> method) {
+    public Function(Expression object, MethodInvoker method) {
         this.thatObject = object;
         this.method = method;
     }
@@ -285,7 +286,8 @@ public class Function extends Expression {
 //            System.out.println(Arrays.toString(constructor.getParameterTypes()));
 //            System.out.println(Arrays.toString(arr));
                 return constructor.map(arr);
-            } else if (method == null) {
+            }
+            if (method == null || !method.canInvoke(instance)) {
                 argsMappers = new ArrayList<Mapper<Object[], Object[]>>(args == null ? 0 : args.length);
                 method = findMethod(getClass(instance), instance, methodName, arr, argsMappers);
                 if (method == null && instance != null && instance.getClass() == Class.class)
@@ -377,6 +379,13 @@ public class Function extends Expression {
                 }
             };
 
+        if (instance instanceof Class && fieldName.equals("class"))
+            return new Getter() {
+                @Override
+                public Object get(Object instance) {
+                    return instance;
+                }
+            };
 
         Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
         Field field = findField(clazz, fieldName);
@@ -464,9 +473,9 @@ public class Function extends Expression {
         return null;
     }
 
-    protected static BiMapper<Object, Object[], Object> findMeta(Class clazz, String methodName, boolean recursively) {
-        Map<String, BiMapper<Object, Object[], Object>> methods;
-        BiMapper<Object, Object[], Object> closure;
+    protected static MethodInvoker findMeta(Class clazz, String methodName, boolean recursively) {
+        Map<String, MethodInvoker> methods;
+        MethodInvoker closure;
         if ((methods = metaMethods.get(clazz)) != null && (closure = methods.get(methodName)) != null) {
             return closure;
         }
@@ -480,9 +489,9 @@ public class Function extends Expression {
         return null;
     }
 
-    protected static BiMapper<Object, Object[], Object> findMetaInterfaces(Class[] classes, String methodName) {
-        BiMapper<Object, Object[], Object> closure = null;
-        Map<String, BiMapper<Object, Object[], Object>> methods;
+    protected static MethodInvoker findMetaInterfaces(Class[] classes, String methodName) {
+        MethodInvoker closure = null;
+        Map<String, MethodInvoker> methods;
         for (Class i : classes) {
             if (closure == null && ((methods = metaMethods.get(i)) == null || (closure = methods.get(methodName)) == null)) {
                 closure = findMetaInterfaces(i.getInterfaces(), methodName);
@@ -502,7 +511,7 @@ public class Function extends Expression {
         return clazz;
     }
 
-    private BiMapper<Object, Object[], Object> findMethod(Class clazz, final Object instance, final String method, Object[] args, List<Mapper<Object[], Object[]>> argsMappers) {
+    private MethodInvoker findMethod(Class clazz, final Object instance, final String method, Object[] args, List<Mapper<Object[], Object[]>> argsMappers) {
         Class[] argsClasses;
         if (args != null) {
             argsClasses = new Class[args.length];
@@ -514,7 +523,7 @@ public class Function extends Expression {
             argsClasses = new Class[0];
 
         if (ClassExpression.class.equals(clazz)) {
-            return new BiMapper<Object, Object[], Object>() {
+            return new EvalTools.ClosureInvoker() {
                 @Override
                 public Object map(Object instance, Object[] args) {
                     final ClassExpression cl = (ClassExpression) instance;
@@ -538,7 +547,7 @@ public class Function extends Expression {
         while (clazz != null) {
             Method[] methods = getMethods(clazz);
 
-            BiMapper<Object, Object[], Object> meta = findMeta(clazz, method, false);
+            MethodInvoker meta = findMeta(clazz, method, false);
             if (meta != null) {
                 return meta;
             }
@@ -576,11 +585,11 @@ public class Function extends Expression {
         return null;
     }
 
-    private BiMapper<Object, Object[], Object> wrapMethod(final Method m) {
+    private MethodInvoker wrapMethod(final Method m) {
         if (Modifier.isPublic(m.getModifiers()))
             m.setAccessible(true);
 
-        return new BiMapper<Object, Object[], Object>() {
+        return new MethodInvoker() {
             @Override
             public Object map(Object instance, Object[] args) {
                 try {
@@ -589,7 +598,14 @@ public class Function extends Expression {
                     throw Unchecked.rethrow(e);
                 } catch (InvocationTargetException e) {
                     throw Unchecked.rethrow(e);
+                } catch (ClassCastException e) {
+                    throw Unchecked.rethrow(e);
                 }
+            }
+
+            @Override
+            public boolean canInvoke(Object instance) {
+                return m.getDeclaringClass().isAssignableFrom(instance.getClass());
             }
 
             @Override
@@ -923,10 +939,10 @@ public class Function extends Expression {
         return field;
     }
 
-    public static void setMethod(Class clazz, String methodName, BiMapper<Object, Object[], Object> c) {
-        Map<String, BiMapper<Object, Object[], Object>> methods = metaMethods.get(clazz);
+    public static void setMethod(Class clazz, String methodName, MethodInvoker c) {
+        Map<String, MethodInvoker> methods = metaMethods.get(clazz);
         if (methods == null) {
-            methods = new HashMap<String, BiMapper<Object, Object[], Object>>();
+            methods = new HashMap<String, MethodInvoker>();
             metaMethods.put(clazz, methods);
         }
         methods.put(methodName, c);
