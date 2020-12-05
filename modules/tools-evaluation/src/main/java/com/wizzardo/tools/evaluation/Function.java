@@ -790,7 +790,7 @@ public class Function extends Expression {
                                 for (int j = 0; j < closureArgs.length && args != null && j < args.length; j++) {
                                     closureArgs[j].set(args[j]);
                                 }
-                                return closure.get();
+                                return closure.get(closure.context, args);
                             }
                         });
                 return objects;

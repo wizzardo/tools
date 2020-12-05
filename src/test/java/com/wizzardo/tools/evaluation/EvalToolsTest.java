@@ -1632,6 +1632,7 @@ public class EvalToolsTest {
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("bar", "bar");
         Assert.assertEquals("foobar1", EvalTools.prepare("new StringBuilder().append(\"foo\"+bar+\"1\").toString()").get(model).toString());
+        Assert.assertEquals("foo ( bar ) 1", EvalTools.prepare("new StringBuilder().append(\"foo\"+\" ( \"+bar+\" ) \"+\"1\").toString()").get(model).toString());
     }
 
     @Test
@@ -1656,5 +1657,14 @@ public class EvalToolsTest {
         EvalTools.evaluate("def r = []", model);
         EvalTools.evaluate("new com.wizzardo.tools.collections.Range(0, 1).forEach({r << it})", model);
         Assert.assertEquals("[0]", model.get("r").toString());
+    }
+
+    @Test
+    public void test_generics() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        EvalTools.evaluate("List<String> l = new ArrayList<>()", model);
+        Assert.assertEquals(ArrayList.class, model.get("l").getClass());
+        EvalTools.evaluate("Map<String, Integer> m = new HashMap<>()", model);
+        Assert.assertEquals(HashMap.class, model.get("m").getClass());
     }
 }

@@ -21,7 +21,7 @@ public class EvalTools {
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
     private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d_]+)(\\.[A-Z]?[a-zA-Z\\d_]+)*)(\\[)?");
-    private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*");
+    private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*");
     private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
     private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*" + "\\)");
     private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
@@ -31,7 +31,7 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("(static|private|protected|public)*(def|[a-zA-Z_]+[a-zA-Z_\\d\\.\\<,\\>\\[\\]]*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
+    private static final Pattern DEF = Pattern.compile("(static|private|protected|public)*(def|[a-zA-Z_\\d\\.]+(?:<[\\s,a-zA-Z_\\d\\.<>]+>)*(?:\\[\\])*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\bclass +([A-Za-z0-9_]+) *\\{");
@@ -40,11 +40,22 @@ public class EvalTools {
 
     protected static int countOpenBrackets(String s, int from, int to) {
         int n = 0;
+        boolean inString = false;
+        char quote = 0;
         for (int i = from; i < to; i++) {
-            if (s.charAt(i) == '(' || s.charAt(i) == '[' || s.charAt(i) == '{') {
-                n++;
-            } else if (s.charAt(i) == ')' || s.charAt(i) == ']' || s.charAt(i) == '}') {
-                n--;
+            if (!inString) {
+                if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i >= 1 && s.charAt(i - 1) != '\\'))) {
+                    quote = s.charAt(i);
+                    inString = true;
+                    continue;
+                }
+                if (s.charAt(i) == '(' || s.charAt(i) == '[' || s.charAt(i) == '{') {
+                    n++;
+                } else if (s.charAt(i) == ')' || s.charAt(i) == ']' || s.charAt(i) == '}') {
+                    n--;
+                }
+            } else if ((s.charAt(i) == quote) && i >= 1 && s.charAt(i - 1) != '\\') {
+                inString = false;
             }
         }
         return n;
@@ -979,7 +990,7 @@ public class EvalTools {
                     continue;
 
 //                System.out.println(m.group());
-                if (countOpenBrackets(exp, last, m.start()) == 0 && !inString(exp, last, m.start())) {
+                if (!inString(exp, 0, m.start()) && countOpenBrackets(exp, 0, m.start()) == 0) {
                     String subexpression = exp.substring(last, m.start()).trim();
                     if (subexpression.startsWith("new ") && (m.group().equals("<") || m.group().equals(">"))) {
                         continue;
