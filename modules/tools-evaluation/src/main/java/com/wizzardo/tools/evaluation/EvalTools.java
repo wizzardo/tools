@@ -20,10 +20,10 @@ public class EvalTools {
     static final String CONSTRUCTOR = "%constructor%";
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
-    private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d_]+)(\\.[A-Z]?[a-zA-Z\\d_]+)*)(\\[)?");
+    private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d_]+)(\\.[A-Z]?[a-zA-Z\\d_]+)*)(\\[)?]?");
     private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*");
     private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
-    private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)*" + "\\)");
+    private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*)+\\>)?" + "\\)");
     private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
     private static final Pattern COMMA = Pattern.compile(",");
     private static final Pattern MAP_KEY_VALUE = Pattern.compile("[a-zA-Z\\d]+ *: *.+");
@@ -31,7 +31,7 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("(static|private|protected|public)*(def|[a-zA-Z_\\d\\.]+(?:<[\\s,a-zA-Z_\\d\\.<>]+>)*(?:\\[\\])*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
+    private static final Pattern DEF = Pattern.compile("(static|private|protected|public)*(def|[a-zA-Z_\\d\\.]+(?:<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)*(?:\\[\\])*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\bclass +([A-Za-z0-9_]+) *\\{");
@@ -1145,8 +1145,14 @@ public class EvalTools {
 
                 if (clazz != null) {
                     exp = exp.substring(m.end());
-                    return new Expression.CastExpression(clazz, prepare(exp, model, functions, imports, isTemplate));
+                    boolean isArray = m.group(5) != null;
+                    return new Expression.CastExpression(clazz, prepare(exp, model, functions, imports, isTemplate), isArray);
                 }
+                if (model.containsKey("class " + className)) {
+                    exp = exp.substring(m.end());
+                    return prepare(exp, model, functions, imports, isTemplate);
+                }
+                throw new IllegalStateException("Cannot find class to cast (" + className + ") for expression '" + exp + "'");
             }
         }
 

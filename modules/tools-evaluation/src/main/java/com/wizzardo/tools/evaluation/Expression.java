@@ -7,6 +7,9 @@ package com.wizzardo.tools.evaluation;
 import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -280,10 +283,16 @@ public abstract class Expression {
         protected Class clazz;
         protected Expression inner;
         protected Mapper<Object, Object> primitiveMapper;
+        protected boolean isArray;
 
         public CastExpression(Class clazz, Expression inner) {
+            this(clazz, inner, false);
+        }
+
+        public CastExpression(Class clazz, Expression inner, boolean isArray) {
             this.clazz = clazz;
             this.inner = inner;
+            this.isArray = isArray;
             if (clazz.isPrimitive()) {
                 if (int.class == clazz)
                     primitiveMapper = new Mapper<Object, Object>() {
@@ -337,15 +346,23 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new CastExpression(clazz, inner.clone());
+            return new CastExpression(clazz, inner.clone(), isArray);
         }
 
         @Override
         public Object get(Map<String, Object> model) {
             Object o = inner.get(model);
+            if (isArray) {
+                if (!o.getClass().isArray() || o.getClass().getComponentType() != clazz)
+                    throw new ClassCastException(o.getClass().getCanonicalName() + " cannot be cast to " + clazz.getCanonicalName() + "[]");
+                return o;
+            }
             try {
                 return primitiveMapper != null ? primitiveMapper.map(o) : clazz.cast(o);
             } catch (ClassCastException e) {
+                if (o instanceof ClosureExpression && Function.isSAMInterface(clazz)) {
+                    return Function.wrapClosureAsProxy((ClosureExpression) o, clazz);
+                }
                 throw new ClassCastException(o.getClass().getCanonicalName() + " cannot be cast to " + clazz.getCanonicalName());
             }
         }

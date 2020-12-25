@@ -1667,4 +1667,12 @@ public class EvalToolsTest {
         EvalTools.evaluate("Map<String, Integer> m = new HashMap<>()", model);
         Assert.assertEquals(HashMap.class, model.get("m").getClass());
     }
+
+    @Test
+    public void test_sam_with_array_param() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("bytes", new byte[123]);
+        Assert.assertEquals(123, EvalTools.evaluate("com.wizzardo.tools.interfaces.Mapper<byte[], Integer> mapper = (bytes -> bytes.length);\n" +
+                "mapper.map(bytes)", model));
+    }
 }

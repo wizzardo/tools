@@ -280,11 +280,20 @@ public class Function extends Expression {
                 return getGetter(instance).get(instance);
             }
             if (constructor != null || EvalTools.CONSTRUCTOR.equals(methodName)) {
-                if (constructor == null)
-                    constructor = findConstructor(getClass(instance), arr, instance);
+                if (constructor == null) {
+                    argsMappers = new ArrayList<Mapper<Object[], Object[]>>(args == null ? 0 : args.length);
+                    constructor = findConstructor(getClass(instance), arr, instance, argsMappers);
+                }
 //            System.out.println(constructor);
 //            System.out.println(Arrays.toString(constructor.getParameterTypes()));
 //            System.out.println(Arrays.toString(arr));
+
+                if (!argsMappers.isEmpty()) {
+                    for (Mapper<Object[], Object[]> mapper : argsMappers) {
+                        arr = mapper.map(arr);
+                    }
+                }
+
                 return constructor.map(arr);
             }
             if (method == null || !method.canInvoke(instance)) {
@@ -580,7 +589,10 @@ public class Function extends Expression {
             Method m = findMethod(getMethods(anInterface), method, argsClasses, argsMappers);
             if (m != null)
                 return m;
-            return findDefaultMethod(anInterface, method, argsClasses, argsMappers);
+
+            m = findDefaultMethod(anInterface, method, argsClasses, argsMappers);
+            if (m != null)
+                return m;
         }
         return null;
     }
@@ -627,7 +639,7 @@ public class Function extends Expression {
                     param = m.getParameterTypes()[i];
                     if (arg == null && !param.isPrimitive())
                         continue;
-                    if (arg != param && !param.isAssignableFrom(arg))
+                    if (arg != param && (arg == null || !param.isAssignableFrom(arg)))
                         continue outer;
                 }
                 return m;
@@ -742,7 +754,7 @@ public class Function extends Expression {
         return null;
     }
 
-    private boolean isSAMInterface(Class<?> param) {
+    protected static boolean isSAMInterface(Class<?> param) {
         if (!param.isInterface())
             return false;
 
@@ -776,29 +788,32 @@ public class Function extends Expression {
         return new Mapper<Object[], Object[]>() {
             @Override
             public Object[] map(Object[] objects) {
-                final ClosureExpression closure = (ClosureExpression) objects[index];
-                final Variable[] closureArgs = new Variable[closure.getParametersCount()];
-                for (int j = 0; j < closureArgs.length; j++) {
-                    closure.setVariable(closureArgs[j] = new Variable(closure.getParameterName(j), null));
-                }
-                objects[index] = Proxy.newProxyInstance(
-                        samInterface.getClassLoader(),
-                        new Class[]{samInterface},
-                        new InvocationHandler() {
-                            @Override
-                            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                                for (int j = 0; j < closureArgs.length && args != null && j < args.length; j++) {
-                                    closureArgs[j].set(args[j]);
-                                }
-                                return closure.get(closure.context, args);
-                            }
-                        });
+                objects[index] = wrapClosureAsProxy((ClosureExpression) objects[index], samInterface);
                 return objects;
             }
         };
     }
 
-    private <T> Mapper<Object[], T> findConstructor(Class<T> clazz, Object[] args, Object instance) {
+    protected static Object wrapClosureAsProxy(final ClosureExpression closure, final Class<?> samInterface) {
+        final Variable[] closureArgs = new Variable[closure.getParametersCount()];
+        for (int j = 0; j < closureArgs.length; j++) {
+            closure.setVariable(closureArgs[j] = new Variable(closure.getParameterName(j), null));
+        }
+        return Proxy.newProxyInstance(
+                samInterface.getClassLoader(),
+                new Class[]{samInterface},
+                new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) {
+                        for (int j = 0; j < closureArgs.length && args != null && j < args.length; j++) {
+                            closureArgs[j].set(args[j]);
+                        }
+                        return closure.get(closure.context, args);
+                    }
+                });
+    }
+
+    private <T> Mapper<Object[], T> findConstructor(Class<T> clazz, Object[] args, Object instance, List<Mapper<Object[], Object[]>> argsMappers) {
         Class<?>[] argsClasses = null;
         if (args != null) {
             argsClasses = new Class[args.length];
@@ -832,11 +847,19 @@ public class Function extends Expression {
             Class<?>[] parameterTypes = c.getParameterTypes();
             if (((parameterTypes.length == 0 && argsClasses == null) || parameterTypes.length == argsClasses.length)) {
 //                System.out.println("check args");
+                if (!argsMappers.isEmpty())
+                    argsMappers.clear();
+
                 for (int i = 0; i < parameterTypes.length; i++) {
-                    Class<?> type = parameterTypes[i];
-                    if (!(type.isAssignableFrom(argsClasses[i])
-                            || (boxing.containsKey(type) && boxing.get(type).equals(argsClasses[i]))
-                            || (boxing.containsKey(type) && boxing.containsValue(argsClasses[i])))
+                    Class<?> param = parameterTypes[i];
+                    Class<?> arg = argsClasses[i];
+                    if (arg == ClosureExpression.class && isSAMInterface(param)) {
+                        argsMappers.add(wrapClosureArgAsProxy(i, param));
+                        continue;
+                    }
+                    if (!(param.isAssignableFrom(arg)
+                            || (boxing.containsKey(param) && boxing.get(param).equals(arg))
+                            || (boxing.containsKey(param) && boxing.containsValue(arg)))
                     ) {
 //                        System.out.println(m.getParameterTypes()[i] + "\t" + (argsClasses[i]));
                         continue outer;
@@ -845,6 +868,9 @@ public class Function extends Expression {
                 return wrapConstructor(c);
             }
         }
+
+        if (!argsMappers.isEmpty())
+            argsMappers.clear();
         return null;
     }
 
