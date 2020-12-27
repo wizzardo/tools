@@ -8,6 +8,7 @@ import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ScriptEngine {
     public static final FileFilter NOOP_FILTER = new FileFilter() {
@@ -46,6 +47,9 @@ public class ScriptEngine {
         List<String> imports;
         List<File> dependencies = new ArrayList<File>();
         FileFilter fileFilter;
+        Map<String, Class> classCache = new HashMap<String, Class>();
+        long findClassDuration = 0;
+        long findClassCount = 0;
 
         public Binding(File root, String pack, List<String> imports) {
             this(root, pack, imports, NOOP_FILTER);
@@ -126,6 +130,11 @@ public class ScriptEngine {
 
             Binding binding = new Binding(root, pack, imports, fileFilter);
             Expression expression = EvalTools.prepare(script, binding, new HashMap<String, UserFunction>(), imports);
+
+//            System.out.println("resolveClassExpression: " + name + ", " + file);
+//            System.out.println("binding.findClassDuration: " + (binding.findClassDuration / 1000 / 1000f) + "ms");
+//            System.out.println("binding.findClassCount: " + (binding.findClassCount));
+//            System.out.println("binding.classCache.size(): " + (binding.classCache.size()));
 
             if (binding.containsKey("class " + name)) {
                 return (ClassExpression) binding.get("class " + name);

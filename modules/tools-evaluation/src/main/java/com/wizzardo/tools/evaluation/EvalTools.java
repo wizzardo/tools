@@ -43,18 +43,19 @@ public class EvalTools {
         boolean inString = false;
         char quote = 0;
         for (int i = from; i < to; i++) {
+            char c = s.charAt(i);
             if (!inString) {
-                if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i >= 1 && s.charAt(i - 1) != '\\'))) {
-                    quote = s.charAt(i);
+                if ((c == '\'' || c == '\"') && (i == 0 || s.charAt(i - 1) != '\\')) {
+                    quote = c;
                     inString = true;
                     continue;
                 }
-                if (s.charAt(i) == '(' || s.charAt(i) == '[' || s.charAt(i) == '{') {
+                if (c == '(' || c == '[' || c == '{') {
                     n++;
-                } else if (s.charAt(i) == ')' || s.charAt(i) == ']' || s.charAt(i) == '}') {
+                } else if (c == ')' || c == ']' || c == '}') {
                     n--;
                 }
-            } else if ((s.charAt(i) == quote) && i >= 1 && s.charAt(i - 1) != '\\') {
+            } else if (c == quote && s.charAt(i - 1) != '\\') {
                 inString = false;
             }
         }
@@ -71,18 +72,19 @@ public class EvalTools {
         char quote = 0;
         int i;
         for (i = from; i < to && n > 0; i++) {
+            char c = s.charAt(i);
             if (!inString) {
-                if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i >= 1 && s.charAt(i - 1) != '\\'))) {
-                    quote = s.charAt(i);
+                if ((c == '\'' || c == '\"') && (i == 0 || s.charAt(i - 1) != '\\')) {
+                    quote = c;
                     inString = true;
                     continue;
                 }
-                if (s.charAt(i) == '(' || s.charAt(i) == '[' || s.charAt(i) == '{') {
+                if (c == '(' || c == '[' || c == '{') {
                     n++;
-                } else if (s.charAt(i) == ')' || s.charAt(i) == ']' || s.charAt(i) == '}') {
+                } else if (c == ')' || c == ']' || c == '}') {
                     n--;
                 }
-            } else if ((s.charAt(i) == quote) && i >= 1 && s.charAt(i - 1) != '\\') {
+            } else if ((c == quote) && i >= 1 && s.charAt(i - 1) != '\\') {
                 inString = false;
             }
         }
@@ -101,17 +103,18 @@ public class EvalTools {
         boolean inMultilineString = false;
         char quote = 0;
         for (int i = from; i < to; i++) {
+            char c = s.charAt(i);
             if (!inString) {
-                if (s.charAt(i) == '\"' && to - i > 3 && s.charAt(i + 1) == '\"' && s.charAt(i + 2) == '\"') {
+                if (c == '\"' && to - i > 3 && s.charAt(i + 1) == '\"' && s.charAt(i + 2) == '\"') {
                     inMultilineString = !inMultilineString;
                 } else if (inMultilineString)
                     continue;
 
-                if ((s.charAt(i) == '\'' || s.charAt(i) == '\"') && (i == 0 || (i >= 1 && s.charAt(i - 1) != '\\'))) {
-                    quote = s.charAt(i);
+                if ((c == '\'' || c == '\"') && (i == 0 || s.charAt(i - 1) != '\\')) {
+                    quote = c;
                     inString = true;
                 }
-            } else if ((s.charAt(i) == quote) && i >= 1 && s.charAt(i - 1) != '\\') {
+            } else if (c == quote && s.charAt(i - 1) != '\\') {
                 inString = false;
             }
         }
@@ -122,18 +125,19 @@ public class EvalTools {
         boolean inString = false;
         char quote = 0;
         for (int i = from; i < to; i++) {
+            char c = s.charAt(i);
             if (!inString) {
-                if (s.charAt(i) == '\"') {
-                    quote = s.charAt(i);
+                if (c == '\"') {
+                    quote = c;
                     inString = true;
                 }
             } else {
-                if (s.charAt(i) == '{' && s.charAt(i - 1) == '$') {
+                if (c == '{' && s.charAt(i - 1) == '$') {
                     int next = findCloseBracket(s, i + 1, to);
                     if (next == -1)
                         throw new IllegalStateException("Unfinished expression at " + i + ": " + s);
                     i = next;
-                } else if (s.charAt(i) == quote && s.charAt(i - 1) != '\\') {
+                } else if (c == quote && s.charAt(i - 1) != '\\') {
                     inString = false;
                     if (i != to - 1)
                         return false;
@@ -348,9 +352,22 @@ public class EvalTools {
         if (exp.startsWith("{") && exp.endsWith("}"))
             return true;
 
-        Matcher m = JAVA_LAMBDA.matcher(exp);
-        if (m.find())
+        return false;
+    }
+
+    static boolean isJavaLambda(String exp) {
+        int i = exp.indexOf("->");
+
+        int eq = exp.indexOf("=");
+        if (eq > 0 && eq < i)
+            return false;
+
+        if (exp.startsWith("return "))
+            return false;
+
+        if (i > 0 && !inString(exp, 0, i) && countOpenBrackets(exp, 0, i) == 0) {
             return true;
+        }
 
         return false;
     }
@@ -797,10 +814,10 @@ public class EvalTools {
             }
         }
 
-        if (isClosure(exp)) {
+        boolean isLambda = false;
+        if (isClosure(exp) || (isLambda = isJavaLambda(exp))) {
             ClosureExpression closure = new ClosureExpression();
-            Matcher isLambda = JAVA_LAMBDA.matcher(exp);
-            if (isLambda.find()) {
+            if (isLambda) {
                 exp = closure.parseArguments(exp);
                 if (exp.startsWith("{"))
                     exp = exp.substring(1, exp.length() - 1).trim();
@@ -1065,7 +1082,7 @@ public class EvalTools {
                     methodName = CONSTRUCTOR;
                     exp = exp.substring(m.end());
                 } else {
-                    Class clazz = findClass(className, imports);
+                    Class clazz = findClass(className, imports, model);
 
                     if (clazz != null) {
                         if (m.group(5) != null) {
@@ -1093,35 +1110,40 @@ public class EvalTools {
         }
 
         if (thatObject == null) {
-            String s = exp;
             Matcher m = CLASS.matcher(exp);
-            while (m.find()) {
+            if (m.find()) {
                 String className = m.group(1);
+                StringBuilder sb = new StringBuilder(className);
 
-                ClassExpression cl = (ClassExpression) model.get("class " + className);
-                if (cl != null) {
-                    thatObject = cl;
-                    exp = exp.substring(m.end());
-                } else {
-                    Class clazz = findClass(className, imports);
-                    if (clazz == null) {
-                        int lastDot = className.lastIndexOf('.');
-                        if (lastDot != -1)
-                            clazz = findClass(className.substring(0, lastDot) + "$" + className.substring(lastDot + 1));
-                    }
-
-                    if (clazz != null) {
-                        thatObject = new Expression.Holder(clazz);
-                        exp = exp.substring(m.end());
-                        break;
+                int i;
+                do {
+                    className = sb.toString();
+                    ClassExpression cl = (ClassExpression) model.get("class " + className);
+                    if (cl != null) {
+                        thatObject = cl;
+                        exp = exp.substring(sb.length());
                     } else {
-                        int i = s.lastIndexOf(".");
-                        if (i > 0) {
-                            s = s.substring(0, i);
-                            m = CLASS.matcher(s);
+                        Class clazz = findClass(className, imports, model);
+                        if (clazz == null) {
+                            int lastDot = sb.lastIndexOf(".");
+                            if (lastDot != -1) {
+                                sb.setCharAt(lastDot, '$');
+                                clazz = findClass(sb.toString(), imports, model);
+                                sb.setCharAt(lastDot, '.');
+                            }
+                        }
+
+                        if (clazz != null) {
+                            thatObject = new Expression.Holder(clazz);
+                            exp = exp.substring(sb.length());
+                            break;
                         }
                     }
-                }
+
+                    i = sb.lastIndexOf(".");
+                    if (i > 0)
+                        sb.setLength(i);
+                } while (i > 0);
             }
         }
 
@@ -1136,11 +1158,11 @@ public class EvalTools {
                 }
 
                 String className = m.group(1);
-                Class clazz = findClass(className, imports);
+                Class clazz = findClass(className, imports, model);
                 if (clazz == null) {
                     int lastDot = className.lastIndexOf('.');
                     if (lastDot != -1)
-                        clazz = findClass(className.substring(0, lastDot) + "$" + className.substring(lastDot + 1));
+                        clazz = findClass(className.substring(0, lastDot) + "$" + className.substring(lastDot + 1), imports, model);
                 }
 
                 if (clazz != null) {
@@ -1370,11 +1392,6 @@ public class EvalTools {
         return s.startsWith("//");
     }
 
-
-    private static Class findClass(String s) {
-        return findClass(s, null);
-    }
-
     private static Map<ClassKey, Class> javaClassesCache = new ConcurrentHashMap<ClassKey, Class>();
     private static Set<ClassKey> notFoundClassesCache = Collections.newSetFromMap(new ConcurrentHashMap<ClassKey, Boolean>());
 
@@ -1406,7 +1423,43 @@ public class EvalTools {
         }
     }
 
-    private static Class findClass(String s, List<String> imports) {
+    private static Class findClass(String s, List<String> imports, Map model) {
+        if (model instanceof ScriptEngine.Binding) {
+            ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
+            if (binding.classCache.containsKey(s))
+                return binding.classCache.get(s);
+
+            long time = System.nanoTime();
+            Class cl = doFindClass(s, imports);
+            time = System.nanoTime() - time;
+
+            binding.findClassDuration += time;
+            binding.findClassCount++;
+
+            binding.classCache.put(s, cl);
+            return cl;
+        }
+        return doFindClass(s, imports);
+    }
+
+    private static Class doFindClass(String s, List<String> imports) {
+        if (s.equals("byte"))
+            return byte.class;
+        if (s.equals("int"))
+            return int.class;
+        if (s.equals("short"))
+            return short.class;
+        if (s.equals("long"))
+            return long.class;
+        if (s.equals("float"))
+            return float.class;
+        if (s.equals("double"))
+            return double.class;
+        if (s.equals("char"))
+            return char.class;
+        if (s.equals("boolean"))
+            return boolean.class;
+
         ClassKey key;
         Class aClass;
         ClassLoader classLoader = ClassLoader.getSystemClassLoader();
@@ -1475,23 +1528,6 @@ public class EvalTools {
                 notFoundClassesCache.add(key);
             }
         }
-
-        if (s.equals("byte"))
-            return byte.class;
-        if (s.equals("int"))
-            return int.class;
-        if (s.equals("short"))
-            return short.class;
-        if (s.equals("long"))
-            return long.class;
-        if (s.equals("float"))
-            return float.class;
-        if (s.equals("double"))
-            return double.class;
-        if (s.equals("char"))
-            return char.class;
-        if (s.equals("boolean"))
-            return boolean.class;
 
         if (imports != null) {
             for (String imp : imports) {

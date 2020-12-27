@@ -896,7 +896,7 @@ public class Function extends Expression {
         };
     }
 
-    private static Method[] getMethods(Class cl) {
+    protected static Method[] getMethods(Class cl) {
         Method[] methods = methodsCache.get(cl);
         if (methods == null) {
             methods = cl.getDeclaredMethods();
