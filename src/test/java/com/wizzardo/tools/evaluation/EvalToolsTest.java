@@ -1675,4 +1675,13 @@ public class EvalToolsTest {
         Assert.assertEquals(123, EvalTools.evaluate("com.wizzardo.tools.interfaces.Mapper<byte[], Integer> mapper = (bytes -> bytes.length);\n" +
                 "mapper.map(bytes)", model));
     }
+
+    @Test
+    public void test_cast_with_double_generics() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("list", Collections.singleton("test"));
+        Assert.assertEquals(1, EvalTools.evaluate("def c = (list -> list.size());\n" +
+                "com.wizzardo.tools.interfaces.Mapper<List<String>, Integer> mapper = (com.wizzardo.tools.interfaces.Mapper<List<String>, Integer>) c;\n" +
+                "mapper.map(list)", model));
+    }
 }
