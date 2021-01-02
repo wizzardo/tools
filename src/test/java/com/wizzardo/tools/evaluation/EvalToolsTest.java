@@ -1543,7 +1543,7 @@ public class EvalToolsTest {
 
         expression = EvalTools.prepare("" +
                 "class Holder {\n" +
-                "    static String create(String s) {\n" +
+                "    static String create(final String s) {\n" +
                 "        def closure = {\n" +
                 "           s\n" +
                 "        }\n" +

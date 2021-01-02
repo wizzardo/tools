@@ -866,6 +866,7 @@ public class EvalTools {
 
                 List<Expression> definitions = new ArrayList<Expression>(lines.size());
                 ClassExpression classExpression = new ClassExpression(className, definitions);
+                model.put("class " + className, classExpression);
 
                 for (String s : lines) {
                     if (isLineCommented(s))
@@ -887,7 +888,6 @@ public class EvalTools {
                     definitions.add(prepare);
                 }
                 classExpression.init();
-                model.put("class " + className, classExpression);
                 return classExpression;
             }
         }
