@@ -70,7 +70,8 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         HashMap<String, Object> local = model != null ? new HashMap<String, Object>(model) : new HashMap<String, Object>(2, 1);
         local.putAll(context);
         local.put("delegate", thisObject);
-        local.put("this", model);
+        if (model != null)
+            local.put("this", model);
         if (!(args.length == 1 && args[0].key.equals("it") && (arg == null || arg.length == 0))) {
             if (args.length > 0 && (arg == null || args.length != arg.length))
                 throw new IllegalArgumentException("wrong number of arguments! there were " + (arg == null ? 0 : arg.length) + ", but must be " + args.length);
@@ -104,25 +105,94 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
 
             args = args.trim();
             if (!args.isEmpty()) {
-                String[] pairs = args.split(",\\s*");
-                this.args = new Pair[pairs.length];
+//                String[] pairs = args.split(",\\s*");
+//                this.args = new Pair[pairs.length];
+//
+//                for (i = 0; i < pairs.length; i++) {
+//                    String pair = pairs[i];
+//                    if (pair.startsWith("final "))
+//                        pair = pair.substring(6);
+//
+//                    String[] kv = pair.trim().split(" ");
+//                    if (kv.length == 2)
+//                        this.args[i] = new Pair<String, Class>(kv[1], Object.class);
+//                    else
+//                        this.args[i] = new Pair<String, Class>(kv[0], Object.class);
+//                }
+                int from = 0;
+                ArrayList<Pair<String, Class>> l = new ArrayList<Pair<String, Class>>();
+                while ((from = findNextArgumentStart(args, from)) != -1) {
+                    int classStart = from;
+                    int classEnd = findNextArgumentClassEnd(args, classStart);
+                    if (args.startsWith("final ", classStart)) {
+                        classStart = findNextArgumentStart(args, classEnd);
+                        classEnd = findNextArgumentClassEnd(args, classStart);
+                    }
+                    if (classEnd == args.length() || args.charAt(classEnd) == ',') {
+                        l.add(new Pair<String, Class>(args.substring(classStart, classEnd), Object.class));
+                        from = classEnd + 1;
+                    } else {
+                        int nameStart = findNextArgumentStart(args, classEnd);
+                        int nameEnd = findNextArgumentNameEnd(args, nameStart);
+                        if (nameStart == nameEnd) {
+                            l.add(new Pair<String, Class>(args.substring(classStart, classEnd), Object.class));
+                            from = classEnd + 1;
+                        } else {
+                            l.add(new Pair<String, Class>(args.substring(nameStart, nameEnd), Object.class));
+                            from = nameEnd + 1;
+                        }
+                    }
 
-                for (i = 0; i < pairs.length; i++) {
-                    String pair = pairs[i];
-                    if (pair.startsWith("final "))
-                        pair = pair.substring(6);
-
-                    String[] kv = pair.trim().split(" ");
-                    if (kv.length == 2)
-                        this.args[i] = new Pair<String, Class>(kv[1], Object.class);
-                    else
-                        this.args[i] = new Pair<String, Class>(kv[0], Object.class);
                 }
+                this.args = l.toArray(new Pair[l.size()]);
             } else {
                 this.args = EMPTY_ARGS;
             }
         }
         return exp;
+    }
+
+    protected static int findNextArgumentStart(String args, int from) {
+        if (from == -1)
+            return -1;
+
+        int to = args.length();
+        for (int i = from; i < to; i++) {
+            char c = args.charAt(i);
+            if (c <= ' ')
+                continue;
+
+            return i;
+        }
+        return -1;
+    }
+
+    protected static int findNextArgumentClassEnd(String args, int from) {
+        int to = args.length();
+        int genericBrackets = 0;
+        for (int i = from; i < to; i++) {
+            char c = args.charAt(i);
+            if (c == '<') {
+                genericBrackets++;
+            } else if (c == '>') {
+                genericBrackets--;
+            } else if (genericBrackets == 0 && (c <= ' ' || c == ','))
+                return i;
+        }
+        return to;
+    }
+
+    protected static int findNextArgumentNameEnd(String args, int from) {
+        if (from == -1)
+            return -1;
+
+        int to = args.length();
+        for (int i = from; i < to; i++) {
+            char c = args.charAt(i);
+            if (c <= ' ' || c == ',')
+                return i;
+        }
+        return to;
     }
 
     public boolean isEmpty() {

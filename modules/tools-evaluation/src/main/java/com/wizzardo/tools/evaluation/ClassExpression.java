@@ -22,8 +22,6 @@ public class ClassExpression extends Expression {
 
     @Override
     public void setVariable(Variable v) {
-        for (Expression e : definitions)
-            e.setVariable(v);
     }
 
     @Override
@@ -47,11 +45,12 @@ public class ClassExpression extends Expression {
 
     @Override
     public String toString() {
-        return "class " + name + " " + definitions.toString();
+        return "class " + name;// + " " + definitions.toString();
     }
 
     public ClassExpression newInstance(Object[] objects) {
         ClassExpression instance = new ClassExpression(name, definitions);
+        instance.context.put("this", instance);
         instance.init();
         return instance;
     }
