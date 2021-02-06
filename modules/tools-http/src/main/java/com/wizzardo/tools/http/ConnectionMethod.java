@@ -29,8 +29,7 @@ public enum ConnectionMethod {
             fieldReflection.setObject(null, new String[]{
                     GET.name(), POST.name(), HEAD.name(), OPTIONS.name(), PUT.name(), DELETE.name(), TRACE.name(), CONNECT.name(), PATCH.name()
             });
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
+        } catch (NoSuchFieldException ignored) {
         }
     }
 }
