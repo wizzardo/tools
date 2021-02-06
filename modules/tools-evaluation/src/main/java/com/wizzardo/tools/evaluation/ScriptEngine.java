@@ -42,14 +42,14 @@ public class ScriptEngine {
     }
 
     public static class Binding extends HashMap<String, Object> {
-        File root;
-        String pack;
-        List<String> imports;
-        List<File> dependencies = new ArrayList<File>();
-        FileFilter fileFilter;
-        Map<String, Class> classCache = new HashMap<String, Class>();
-        long findClassDuration = 0;
-        long findClassCount = 0;
+        protected File root;
+        protected String pack;
+        protected List<String> imports;
+        protected List<String> dependencies = new ArrayList<String>();
+        protected FileFilter fileFilter;
+        protected Map<String, Class> classCache = new HashMap<String, Class>();
+        protected long findClassDuration = 0;
+        protected long findClassCount = 0;
 
         public Binding(File root, String pack, List<String> imports) {
             this(root, pack, imports, NOOP_FILTER);
@@ -62,7 +62,7 @@ public class ScriptEngine {
             this.fileFilter = filter;
         }
 
-        public List<File> getDependencies() {
+        public List<String> getDependencies() {
             return dependencies;
         }
 
@@ -73,7 +73,7 @@ public class ScriptEngine {
 
             String k = key.toString();
             if (k.startsWith("class ")) {
-                Pair<File, ClassExpression> resolved = resolve(k.substring(6));
+                Pair<String, ClassExpression> resolved = resolve(k.substring(6));
                 if (resolved != null) {
                     put(k, resolved.value);
                     dependencies.add(resolved.key);
@@ -84,25 +84,34 @@ public class ScriptEngine {
             return null;
         }
 
-        public Pair<File, ClassExpression> resolve(String name) {
+        public Pair<String, ClassExpression> resolve(String name) {
+            String path = resolveFile(name);
+            if (path != null) {
+                ClassExpression classExpression = resolveClassExpression(name, path);
+                if (classExpression != null)
+                    return Pair.of(path, classExpression);
+            }
+
+            return null;
+        }
+
+        public String resolveFile(String name) {
             for (String imp : imports) {
                 if (imp.endsWith(".*")) {
                     File file = new File(root, imp.substring(0, imp.length() - 1).replace('.', '/') + name + ".groovy");
                     if (!file.exists())
                         file = new File(root, imp.substring(0, imp.length() - 1).replace('.', '/') + name + ".java");
+
                     if (file.exists() && fileFilter.accept(file)) {
-                        ClassExpression classExpression = resolveClassExpression(name, file);
-                        if (classExpression != null)
-                            return Pair.of(file, classExpression);
+                        return file.getPath();
                     }
                 } else if (imp.endsWith(name) && imp.charAt(imp.length() - 1 - name.length()) == '.') {
                     File file = new File(root, imp.replace('.', '/') + ".groovy");
                     if (!file.exists())
                         file = new File(root, imp.replace('.', '/') + ".java");
+
                     if (file.exists() && fileFilter.accept(file)) {
-                        ClassExpression classExpression = resolveClassExpression(name, file);
-                        if (classExpression != null)
-                            return Pair.of(file, classExpression);
+                        return file.getPath();
                     }
                 }
             }
@@ -111,24 +120,26 @@ public class ScriptEngine {
                 File file = new File(root, pack + name + ".groovy");
                 if (!file.exists())
                     file = new File(root, pack + name + ".java");
+
                 if (file.exists() && fileFilter.accept(file)) {
-                    ClassExpression classExpression = resolveClassExpression(name, file);
-                    if (classExpression != null)
-                        return Pair.of(file, classExpression);
+                    return file.getPath();
                 }
             }
 
             return null;
         }
 
-        protected ClassExpression resolveClassExpression(String name, File file) {
-            String script = FileTools.text(file);
+        protected ClassExpression resolveClassExpression(String name, String path) {
+            String script = FileTools.text(path);
+            return resolveClassExpression(name, path, script);
+        }
 
+        protected ClassExpression resolveClassExpression(String name, String path, String script) {
             List<String> imports = new ArrayList<String>();
             String pack = EvalTools.readPackage(script);
             script = EvalTools.readImports(script, imports);
 
-            Binding binding = new Binding(root, pack, imports, fileFilter);
+            Binding binding = createBidding(root, pack, imports, fileFilter);
             Expression expression = EvalTools.prepare(script, binding, new HashMap<String, UserFunction>(), imports);
 
 //            System.out.println("resolveClassExpression: " + name + ", " + file);
@@ -140,6 +151,10 @@ public class ScriptEngine {
                 return (ClassExpression) binding.get("class " + name);
             }
             return null;
+        }
+
+        protected Binding createBidding(File root, String pack, List<String> imports, FileFilter fileFilter) {
+            return new Binding(root, pack, imports, fileFilter);
         }
     }
 }

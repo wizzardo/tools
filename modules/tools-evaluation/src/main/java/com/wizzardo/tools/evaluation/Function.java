@@ -688,7 +688,9 @@ public class Function extends Expression {
                         param = parameterTypes[i];
                     }
 
-                    if (arg == param || param.isAssignableFrom(arg))
+                    if (arg == null && !param.isPrimitive())
+                        continue;
+                    if (arg == param || arg != null && param.isAssignableFrom(arg))
                         continue;
                     if (param == char.class && arg == Character.class)
                         continue;
@@ -795,19 +797,19 @@ public class Function extends Expression {
     }
 
     protected static Object wrapClosureAsProxy(final ClosureExpression closure, final Class<?> samInterface) {
-        final Variable[] closureArgs = new Variable[closure.getParametersCount()];
-        for (int j = 0; j < closureArgs.length; j++) {
-            closure.setVariable(closureArgs[j] = new Variable(closure.getParameterName(j), null));
-        }
+//        final Variable[] closureArgs = new Variable[closure.getParametersCount()];
+//        for (int j = 0; j < closureArgs.length; j++) {
+//            closure.setVariable(closureArgs[j] = new Variable(closure.getParameterName(j), null));
+//        }
         return Proxy.newProxyInstance(
                 samInterface.getClassLoader(),
                 new Class[]{samInterface},
                 new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) {
-                        for (int j = 0; j < closureArgs.length && args != null && j < args.length; j++) {
-                            closureArgs[j].set(args[j]);
-                        }
+//                        for (int j = 0; j < closureArgs.length && args != null && j < args.length; j++) {
+//                            closureArgs[j].set(args[j]);
+//                        }
                         return closure.get(closure.context, args);
                     }
                 });
