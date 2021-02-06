@@ -121,6 +121,29 @@ public class EvalTools {
         return inMultilineString || inString;
     }
 
+    protected static boolean inString(StringBuilder s, int from, int to) {
+        boolean inString = false;
+        boolean inMultilineString = false;
+        char quote = 0;
+        for (int i = from; i < to; i++) {
+            char c = s.charAt(i);
+            if (!inString) {
+                if (c == '\"' && to - i > 3 && s.charAt(i + 1) == '\"' && s.charAt(i + 2) == '\"') {
+                    inMultilineString = !inMultilineString;
+                } else if (inMultilineString)
+                    continue;
+
+                if ((c == '\'' || c == '\"') && (i == 0 || s.charAt(i - 1) != '\\')) {
+                    quote = c;
+                    inString = true;
+                }
+            } else if (c == quote && s.charAt(i - 1) != '\\') {
+                inString = false;
+            }
+        }
+        return inMultilineString || inString;
+    }
+
     protected static boolean isTemplate(String s, int from, int to) {
         boolean inString = false;
         char quote = 0;
@@ -620,11 +643,13 @@ public class EvalTools {
     static List<String> getBlocks(String exp, boolean ignoreNewLine, boolean withEmptyStatements) {
         List<String> list = new ArrayList<String>();
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(128);
         char last = 0, stringChar = 0;
         boolean inString = false;
         int brackets = 0;
-        for (char c : exp.toCharArray()) {
+        int length = exp.length();
+        for (int i = 0; i < length; i++) {
+            char c = exp.charAt(i);
             if (inString) {
                 if (c == stringChar && last != '\\') {
                     inString = false;
@@ -641,9 +666,9 @@ public class EvalTools {
 
                 if (brackets == 0) {
                     if (c == ';' || c == '\n') {
-                        String value = cleanLine(sb.toString());
-                        if (withEmptyStatements || value.length() > 0)
-                            list.add(value);
+                        cleanLine(sb);
+                        if (withEmptyStatements || sb.length() > 0)
+                            list.add(sb.toString());
                         sb.setLength(0);
                         continue;
                     }
@@ -656,25 +681,44 @@ public class EvalTools {
             last = c;
             sb.append(c);
         }
-        String value = cleanLine(sb.toString());
-        if (withEmptyStatements || value.length() > 0)
-            list.add(value);
+        cleanLine(sb);
+        if (withEmptyStatements || sb.length() > 0)
+            list.add(sb.toString());
 
         return list;
     }
 
-    static String cleanLine(String line) {
+    static StringBuilder cleanLine(StringBuilder line) {
         int comment = -1;
         while ((comment = line.indexOf("//", comment + 1)) != -1) {
             if (!inString(line, 0, comment)) {
                 int end = line.indexOf("\n", comment);
-                if (end == -1)
-                    line = line.substring(0, comment);
-                else
-                    line = line.substring(0, comment) + line.substring(end);
+                if (end == -1) {
+                    line.setLength(comment);
+                } else {
+                    line.delete(comment, end);
+                }
             }
         }
-        return line.trim();
+        return trim(line);
+    }
+
+    static StringBuilder trim(StringBuilder sb) {
+        int i = 0;
+        while (i < sb.length() && sb.charAt(i) <= ' ') {
+            i++;
+        }
+        if (i != 0)
+            sb.delete(0, i);
+
+        i = sb.length() - 1;
+        while (i > 0 && sb.charAt(i) <= ' ') {
+            i--;
+        }
+        if (i != sb.length() - 1)
+            sb.setLength(i + 1);
+
+        return sb;
     }
 
     public static Expression prepareTemplate(String exp) {
@@ -698,22 +742,29 @@ public class EvalTools {
     public static String readImports(String script, List<String> imports) {
         script = script.trim();
         int s, n;
+        int position = 0;
         if (script.startsWith("package")) {
             n = script.indexOf("\n");
             s = script.indexOf(";");
             int to = Math.min(n == -1 ? script.length() : n, s == -1 ? script.length() : s);
             imports.add(script.substring(8, to).trim() + ".*");
 
-            script = script.substring(to + 1).trim();
+            position = to + 1;
+            while (position < script.length() && script.charAt(position) <= ' ')
+                position++;
         }
-        while (script.startsWith("import")) {
-            n = script.indexOf("\n");
-            s = script.indexOf(";");
+        while (script.startsWith("import", position)) {
+            n = script.indexOf("\n", position);
+            s = script.indexOf(";", position);
             int to = Math.min(n == -1 ? script.length() : n, s == -1 ? script.length() : s);
-            imports.add(script.substring(7, to).trim());
+            imports.add(script.substring(position + 7, to).trim());
 
-            script = script.substring(to + 1).trim();
+            position = to + 1;
+            while (position < script.length() && script.charAt(position) <= ' ')
+                position++;
         }
+        if (position != 0)
+            return script.substring(position);
         return script;
     }
 
@@ -1462,7 +1513,7 @@ public class EvalTools {
 
         ClassKey key;
         Class aClass;
-        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+        ClassLoader classLoader = EvalTools.class.getClassLoader();
 
         key = new ClassKey("", s);
         if (!notFoundClassesCache.contains(key)) {
@@ -1566,6 +1617,11 @@ public class EvalTools {
                     if (imp.endsWith(mainClass))
                         try {
                             return classLoader.loadClass(imp + "$" + subClass);
+                        } catch (ClassNotFoundException ignored) {
+                        }
+                    if (imp.endsWith(".*"))
+                        try {
+                            return classLoader.loadClass(imp.substring(0, imp.length() - 2) + mainClass + "$" + subClass);
                         } catch (ClassNotFoundException ignored) {
                         }
                 }
