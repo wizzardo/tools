@@ -377,6 +377,9 @@ public class Function extends Expression {
         if (fieldName == null)
             return null;
 
+        if (instance == null)
+            throw new NullPointerException("Cannot get getter '" + fieldName + "' on null: " + thatObject.toString());
+
         if (instance instanceof Map)
             return getter = new MapGetter(fieldName);
 
@@ -947,19 +950,23 @@ public class Function extends Expression {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("function for: ");
-        sb.append(thatObject);
+        StringBuilder sb = new StringBuilder();
+        sb.append(thatObject.exp);
         sb.append(".");
-        sb.append(method == null ? methodName : method.toString());
-        sb.append("(");
-        if (args != null) {
-            for (int i = 0; i < args.length; i++) {
-                if (i > 0)
-                    sb.append(", ");
-                sb.append(args[i]);
+        if (getter != null || fieldName != null)
+            sb.append(fieldName);
+        else {
+            sb.append(method == null ? methodName : method.toString());
+            sb.append("(");
+            if (args != null) {
+                for (int i = 0; i < args.length; i++) {
+                    if (i > 0)
+                        sb.append(", ");
+                    sb.append(args[i]);
+                }
             }
+            sb.append(")");
         }
-        sb.append(")");
         return sb.toString();
     }
 

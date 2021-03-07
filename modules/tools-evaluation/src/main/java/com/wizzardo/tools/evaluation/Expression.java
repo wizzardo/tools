@@ -53,6 +53,7 @@ public abstract class Expression {
         public Holder(Class clazz) {
             hardcoded = true;
             this.result = clazz;
+            exp = clazz.getCanonicalName();
         }
 
         public Holder(Object result) {
