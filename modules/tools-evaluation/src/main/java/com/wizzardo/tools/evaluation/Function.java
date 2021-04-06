@@ -425,7 +425,12 @@ public class Function extends Expression {
             };
         }
 
-        throw Unchecked.rethrow(new NoSuchFieldException(fieldName));
+        if (field != null) {
+            field.setAccessible(true);
+            return getter = new FieldGetter(field);
+        }
+
+        throw Unchecked.rethrow(new NoSuchFieldException("Cannot find getter " + thatObject.toString() + "." + fieldName));
     }
 
     public Setter getSetter(Object instance) {
@@ -844,8 +849,7 @@ public class Function extends Expression {
 
         try {
             return wrapConstructor(clazz.getConstructor(argsClasses));
-        } catch (NoSuchMethodException e) {
-            //ignore
+        } catch (NoSuchMethodException ignored) {
         }
         outer:
         for (Constructor c : clazz.getConstructors()) {
@@ -876,7 +880,8 @@ public class Function extends Expression {
 
         if (!argsMappers.isEmpty())
             argsMappers.clear();
-        return null;
+
+        throw new NullPointerException("Cannot find constructor for " + clazz + " with args: " + Arrays.toString(argsClasses));
     }
 
     private <T> Mapper<Object[], T> wrapConstructor(final Constructor<T> c) {

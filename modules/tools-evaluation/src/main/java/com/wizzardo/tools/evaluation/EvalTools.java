@@ -960,13 +960,11 @@ public class EvalTools {
                             continue;
 
                         if (lines.size() > 1) {
-                            ClosureExpression inner = new ClosureExpression();
                             for (String line : lines) {
                                 if (isLineCommented(line))
                                     continue;
-                                inner.add(prepare(line, model, functions, imports, isTemplate));
+                                block.add(prepare(line, model, functions, imports, isTemplate));
                             }
-                            block.add(inner);
                         } else if (statements.size() > 1 || !lines.get(0).equals(s.statement)) {
                             block.add(prepare(lines.get(0), model, functions, imports, isTemplate));
                         }
@@ -1042,6 +1040,9 @@ public class EvalTools {
             int ternaryInner = 0;
             while (m.find()) {
                 if (ternary) {
+                    if (inString(exp, 0, m.start()))
+                        continue;
+
                     if (m.group().equals("?")) {
                         ternaryInner++;
                         continue;
