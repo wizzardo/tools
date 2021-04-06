@@ -132,6 +132,17 @@ public class DateIso8601 {
             }
 
             c = chars[i];
+
+            while (isInt(c)) {
+                //ignore microseconds
+                i++;
+                if (i == length) {
+                    long timeStamp = getTimeStamp(year, month, day, hour, minute, second, millisecond);
+                    return new Date(timeStamp - tz.getOffset(timeStamp));
+                }
+                c = chars[i];
+            }
+
             boolean plus = c == '+';
             if (!plus)
                 check(c, '-');

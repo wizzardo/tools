@@ -75,6 +75,7 @@ public class DateIso8601Test {
     @Test
     public void testFormat() {
         TimeZone timeZone = TimeZone.getTimeZone("Europe/Berlin");
+        assertEquals("2021-03-31T12:06:45.851Z", format(new DateIso8601().parse("2021-03-31T14:06:45.851225")));
         assertEquals("1900-10-19T00:00:00.000Z", format(new DateIso8601().parse("1900-10-19")));
         assertEquals("1901-01-01T00:00:00.000Z", format(new DateIso8601().parse("1901-01-01")));
         assertEquals("1901-01-01T23:59:59.999Z", format(new DateIso8601().parse("1901-01-01T23:59:59.999Z")));
