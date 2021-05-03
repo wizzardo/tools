@@ -1660,6 +1660,13 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_string() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        EvalTools.evaluate("def s = \"test\"", model);
+        Assert.assertEquals("test", model.get("s"));
+    }
+
+    @Test
     public void test_generics() {
         Map<String, Object> model = new HashMap<String, Object>();
         EvalTools.evaluate("List<String> l = new ArrayList<>()", model);

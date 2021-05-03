@@ -42,6 +42,9 @@ public class TemplateBuilder extends Expression {
             hardcoded &= e.hardcoded;
             if (e.hardcoded) {
                 final String s = String.valueOf(o);
+                if (parts.size() == 1)
+                    return result = s;
+
                 suppliers[i] = new Supplier<String>() {
                     @Override
                     public String supply() {
