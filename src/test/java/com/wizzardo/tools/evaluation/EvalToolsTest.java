@@ -327,7 +327,7 @@ public class EvalToolsTest {
         assertEquals(3, EvalTools.evaluate("x[\"key\"] +=2", model));
 
         model = new HashMap<String, Object>();
-        model.put("arr", new TemplateBuilder.GString[1]);
+        model.put("arr", new String[1]);
         assertEquals("ololo", EvalTools.evaluate("arr[0] = \"ololo\"", model).toString());
 
         model = new HashMap<String, Object>();
