@@ -116,8 +116,16 @@ public class DateIso8601 {
                         c = chars[i];
                     }
                     if (isInt(c)) {
-                        millisecond = getInt3(chars, i, c);
-                        i += 3;
+                        if (i + 3 <= length) {
+                            millisecond = getInt3(chars, i, c);
+                            i += 3;
+                        } else if (i + 2 <= length) {
+                            millisecond = getInt2(chars, i, c) * 10;
+                            i += 2;
+                        } else {
+                            millisecond = getInt(c) * 100;
+                            i++;
+                        }
                     }
                 }
             }
