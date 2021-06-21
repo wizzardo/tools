@@ -26,6 +26,7 @@ public class Generic<T, F extends Fields, G extends Generic> {
         this.clazz = c;
         this.parent = parent;
         this.typeParameters = typeParameters;
+        types = getTypes(c, typeParameters);
     }
 
     public Generic(Type c) {
