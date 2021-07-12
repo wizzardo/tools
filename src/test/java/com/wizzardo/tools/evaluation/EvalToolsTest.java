@@ -1691,4 +1691,18 @@ public class EvalToolsTest {
                 "com.wizzardo.tools.interfaces.Mapper<List<String>, Integer> mapper = (com.wizzardo.tools.interfaces.Mapper<List<String>, Integer>) c;\n" +
                 "mapper.map(list)", model));
     }
+
+    @Test
+    public void test_return() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals(1, EvalTools.evaluate("def c = { -> \n" +
+                "for(int i = 0; i < 5; i++){\n" +
+                "  if(i==1){\n" +
+                "    return 1;\n" +
+                "  }\n" +
+                "}\n" +
+                "return -1;\n" +
+                "};\n" +
+                "c()", model));
+    }
 }

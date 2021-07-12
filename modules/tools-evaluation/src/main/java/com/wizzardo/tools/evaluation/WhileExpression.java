@@ -25,7 +25,9 @@ public class WhileExpression extends Expression {
     @Override
     public Object get(Map<String, Object> model) {
         while ((Boolean) condition.get(model)) {
-            thenStatement.get(model);
+            Object o = thenStatement.get(model);
+            if (o != null && o instanceof ReturnResultHolder)
+                return o;
         }
         return null;
     }

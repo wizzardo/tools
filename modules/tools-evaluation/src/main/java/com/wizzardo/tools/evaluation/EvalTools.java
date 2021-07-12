@@ -1782,14 +1782,14 @@ public class EvalTools {
     @SuppressWarnings("unchecked")
     public static <T> T evaluate(String exp, Map<String, Object> model) {
 //        System.out.println("evaluate: " + exp + "\t" + model);
-        Expression ex = prepare(exp, model);
+        Expression ex = prepare(exp, model == null ? null : new HashMap<String, Object>(model));
         return (T) ex.get(model);
     }
 
     @SuppressWarnings("unchecked")
     public static <T> T evaluate(String exp, Map<String, Object> model, Map<String, UserFunction> functions) {
 //        System.out.println("evaluate: " + exp + "\t" + model);
-        Expression ex = prepare(exp, model, functions);
+        Expression ex = prepare(exp, model == null ? null : new HashMap<String, Object>(model), functions);
         return (T) ex.get(model);
     }
 

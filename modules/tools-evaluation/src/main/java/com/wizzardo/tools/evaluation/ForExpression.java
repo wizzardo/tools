@@ -32,7 +32,9 @@ public class ForExpression extends Expression {
     public Object get(Map<String, Object> model) {
         definition.get(model);
         while ((Boolean) condition.get(model)) {
-            thenStatement.get(model);
+            Object o = thenStatement.get(model);
+            if (o != null && o instanceof ReturnResultHolder)
+                return o;
             iterator.get(model);
         }
         return null;
