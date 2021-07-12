@@ -1705,4 +1705,15 @@ public class EvalToolsTest {
                 "};\n" +
                 "c()", model));
     }
+
+    @Test
+    public void test_no_iterator_variable_in_context_after_loop() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals(10, EvalTools.evaluate("def sum = 0;\n" +
+                "for(int i = 0; i < 5; i++){\n" +
+                "  sum+=i;\n" +
+                "}\n" +
+                "sum", model));
+        Assert.assertFalse(model.containsKey("i"));
+    }
 }

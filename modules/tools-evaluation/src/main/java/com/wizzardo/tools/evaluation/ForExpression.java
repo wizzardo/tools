@@ -31,12 +31,19 @@ public class ForExpression extends Expression {
     @Override
     public Object get(Map<String, Object> model) {
         definition.get(model);
-        while ((Boolean) condition.get(model)) {
-            Object o = thenStatement.get(model);
-            if (o != null && o instanceof ReturnResultHolder)
-                return o;
-            iterator.get(model);
+        try {
+            while ((Boolean) condition.get(model)) {
+                Object o = thenStatement.get(model);
+                if (o != null && o instanceof ReturnResultHolder)
+                    return o;
+                iterator.get(model);
+            }
+            return null;
+        } finally {
+            if (definition instanceof Operation && ((Operation) definition).leftPart() instanceof Holder) {
+                String exp = ((Operation) definition).leftPart().exp;
+                model.remove(exp);
+            }
         }
-        return null;
     }
 }
