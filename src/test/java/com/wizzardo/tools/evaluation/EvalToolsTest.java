@@ -1395,6 +1395,17 @@ public class EvalToolsTest {
     @Test
     public void test_for() {
         Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("6", EvalTools.prepare("" +
+                "def l = [1, 2, 3];\n" +
+                "def sum = 0;\n" +
+                "for(def i: l){sum+=i};\n" +
+                "sum").get(model).toString());
+
+        Assert.assertEquals("6", EvalTools.prepare("" +
+                "def sum = 0;\n" +
+                "for(i in [1, 2, 3]){sum+=i};\n" +
+                "sum").get(model).toString());
+
         Assert.assertEquals("[1, 2, 3]", EvalTools.prepare("def l = [];\n" +
                 "for(int i=1; i<=3; i++){l << i};\n" +
                 "l").get(model).toString());

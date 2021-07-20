@@ -440,6 +440,22 @@ public class EvalTools {
                 }
                 case FOR: {
                     List<String> args = getBlocks(statement, true, true);
+                    if (args.size() == 1 && args.get(0).contains(":")) {
+                        String[] split = args.get(0).split(":", 2);
+                        Expression def = EvalTools.prepare(split[0].trim(), model, functions, imports);
+                        Expression iterable = EvalTools.prepare(split[1].trim(), model, functions, imports);
+
+                        Expression then = bodyStatement != null ? bodyStatement.prepare(model, functions, imports) : EvalTools.prepare(body, model, functions, imports);
+                        return new ForEachExpression(def, iterable, then);
+                    }
+                    if (args.size() == 1 && args.get(0).contains(" in ")) {
+                        String[] split = args.get(0).split(" +in +", 2);
+                        Expression def = EvalTools.prepare(split[0].trim(), model, functions, imports);
+                        Expression iterable = EvalTools.prepare(split[1].trim(), model, functions, imports);
+
+                        Expression then = bodyStatement != null ? bodyStatement.prepare(model, functions, imports) : EvalTools.prepare(body, model, functions, imports);
+                        return new ForEachExpression(def, iterable, then);
+                    }
                     if (args.size() != 3)
                         throw new IllegalStateException("wrong number of statements: " + args);
 
