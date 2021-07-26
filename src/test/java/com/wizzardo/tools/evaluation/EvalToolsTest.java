@@ -1727,4 +1727,26 @@ public class EvalToolsTest {
                 "sum", model));
         Assert.assertFalse(model.containsKey("i"));
     }
+
+    @Test
+    public void test_closure_context() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Map<String, Object> delegate = new HashMap<String, Object>();
+        delegate.put("a", "3");
+        model.put("delegate", delegate);
+        Assert.assertEquals(11, EvalTools.evaluate("" +
+                "def b = {\n" +
+                "  int a = 2;\n" +
+                "  a = 22;\n" +
+                "  return a;\n" +
+                "}\n" +
+                "def c = { -> \n" +
+                "  int a = 1;\n" +
+                "  a = 11;\n" +
+                "  b();\n" +
+                "  return a;\n" +
+                "}\n" +
+                "c()", model));
+        Assert.assertEquals("3", delegate.get("a"));
+    }
 }

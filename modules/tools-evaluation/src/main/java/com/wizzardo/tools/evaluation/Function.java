@@ -956,7 +956,7 @@ public class Function extends Expression {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(thatObject.exp);
+        sb.append(thatObject);
         sb.append(".");
         if (getter != null || fieldName != null)
             sb.append(fieldName);

@@ -31,4 +31,9 @@ public class WhileExpression extends Expression {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return condition.toString();
+    }
 }

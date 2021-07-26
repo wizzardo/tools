@@ -42,6 +42,11 @@ public class AsBooleanExpression extends Expression {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return condition.toString();
+    }
+
     public Expression getCondition() {
         return condition;
     }

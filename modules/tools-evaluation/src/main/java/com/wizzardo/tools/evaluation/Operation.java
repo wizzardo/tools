@@ -570,6 +570,8 @@ public class Operation extends Expression {
                 Object instance = that.thisHolder.get(model);
                 if (instance != null) {
                     if (!(instance instanceof Map) || ((Map) instance).containsKey(that.function.fieldName)) {
+                        if (model.containsKey(that.exp))
+                            instance = model;
                         Function.Setter setter = that.function.getSetter(instance);
                         if (setter != null)
                             return setAndReturn(instance, setter, null, ob2, operator);

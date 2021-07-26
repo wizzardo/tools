@@ -436,6 +436,8 @@ public abstract class Expression {
             Object ob = null;
             for (Expression expression : expressions) {
                 ob = expression.get(model);
+                if (ob != null && ob instanceof ReturnResultHolder)
+                    return ob;
             }
             return ob;
         }
