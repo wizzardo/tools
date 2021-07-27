@@ -308,6 +308,7 @@ public class Function extends Expression {
                     thatObject = new Function(thatObject, "toString", new Expression[0]);
                     return get(model);
                 } else if (!methodName.equals("execute")) {
+                    Expression prevThatObject = thatObject;
                     thatObject = new Function(thatObject, methodName);
                     String methodNameHolder = methodName;
                     methodName = "execute";
@@ -316,12 +317,14 @@ public class Function extends Expression {
                     } catch (Exception e) {
                         if (!e.getClass().equals(NoSuchFieldException.class))
                             throw Unchecked.rethrow(e);
-                        else
+                        else {
                             methodName = methodNameHolder;
+                            thatObject = prevThatObject;
+                        }
                     }
                 }
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
-                throw new NoSuchMethodException("can't find method '" + methodName + "' for class " + getClass(instance) + " with args: " + Arrays.toString(arr));
+                throw new NoSuchMethodException(getClass(instance).getCanonicalName() + "." + methodName + "(" + (arr == null ? "" : Arrays.toString(arr)) + "), at " + this);
             }
 
             if (!argsMappers.isEmpty()) {

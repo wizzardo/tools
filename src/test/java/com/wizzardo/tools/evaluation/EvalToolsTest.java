@@ -1749,4 +1749,25 @@ public class EvalToolsTest {
                 "c()", model));
         Assert.assertEquals("3", delegate.get("a"));
     }
+
+    @Test
+    public void test_exceptions() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        boolean exception = false;
+        try {
+            EvalTools.evaluate("" +
+                    "def c = { -> \n" +
+                    "  int a = 1;\n" +
+                    "  a.toUpperCase();\n" +
+                    "  return a;\n" +
+                    "}\n" +
+                    "c()", model);
+        } catch (Exception e) {
+            Assert.assertEquals(NoSuchMethodException.class, e.getClass());
+            Assert.assertEquals("java.lang.Integer.toUpperCase(), at a.toUpperCase()", e.getMessage());
+            exception = true;
+        }
+        assertTrue(exception);
+    }
 }
