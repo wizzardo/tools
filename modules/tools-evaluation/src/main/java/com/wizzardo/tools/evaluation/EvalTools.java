@@ -756,19 +756,21 @@ public class EvalTools {
     }
 
     public static String readImports(String script, List<String> imports) {
-        script = script.trim();
+        script = removeComments(script.trim());
         int s, n;
         int position = 0;
-        if (script.startsWith("package")) {
+        position = skipCommentLine(script, position);
+        if (script.startsWith("package", position)) {
             n = script.indexOf("\n");
             s = script.indexOf(";");
             int to = Math.min(n == -1 ? script.length() : n, s == -1 ? script.length() : s);
             imports.add(script.substring(8, to).trim() + ".*");
 
             position = to + 1;
-            while (position < script.length() && script.charAt(position) <= ' ')
-                position++;
+            position = skipWhitespaces(script, position);
         }
+
+        position = skipCommentLine(script, position);
         while (script.startsWith("import", position)) {
             n = script.indexOf("\n", position);
             s = script.indexOf(";", position);
@@ -776,8 +778,8 @@ public class EvalTools {
             imports.add(script.substring(position + 7, to).trim());
 
             position = to + 1;
-            while (position < script.length() && script.charAt(position) <= ' ')
-                position++;
+            position = skipWhitespaces(script, position);
+            position = skipCommentLine(script, position);
         }
         if (position != 0)
             return script.substring(position);
@@ -804,17 +806,7 @@ public class EvalTools {
             return null;
         }
         //remove comments
-        int comment = -1;
-        do {
-            comment = exp.indexOf("/*", comment + 1);
-            if (comment != -1 && !inString(exp, 0, comment)) {
-                int commentEnd = exp.indexOf("*/", comment);
-                if (commentEnd == -1)
-                    throw new IllegalStateException("Cannot find end of comment block for exp '" + exp + "'");
-
-                exp = exp.substring(0, comment) + exp.substring(commentEnd + 2);
-            }
-        } while (comment != -1);
+        exp = removeComments(exp);
 
         if (!isTemplate) {
             exp = exp.trim();
@@ -1404,6 +1396,21 @@ public class EvalTools {
         return thatObject;
     }
 
+    private static String removeComments(String exp) {
+        int comment = -1;
+        do {
+            comment = exp.indexOf("/*", comment + 1);
+            if (comment != -1 && !inString(exp, 0, comment)) {
+                int commentEnd = exp.indexOf("*/", comment);
+                if (commentEnd == -1)
+                    throw new IllegalStateException("Cannot find end of comment block for exp '" + exp + "'");
+
+                exp = exp.substring(0, comment) + exp.substring(commentEnd + 2);
+            }
+        } while (comment != -1);
+        return exp;
+    }
+
     protected static Expression prioritize(List<Operation> operations) {
         if (operations.size() == 1)
             return operations.get(0);
@@ -1458,6 +1465,32 @@ public class EvalTools {
 
     protected static boolean isLineCommented(String s) {
         return s.startsWith("//");
+    }
+
+    protected static boolean isLineCommented(String s, int position) {
+        return s.startsWith("//", position);
+    }
+
+    protected static int skipCommentLine(String s, int from) {
+        while (isLineCommented(s, from)) {
+            from = skipUntil(s, from, '\n');
+            from = skipWhitespaces(s, from);
+        }
+        return from;
+    }
+
+    protected static int skipWhitespaces(String s, int position) {
+        int limit = s.length();
+        while (position < limit && s.charAt(position) <= ' ')
+            position++;
+        return position;
+    }
+
+    protected static int skipUntil(String s, int position, char until) {
+        int limit = s.length();
+        while (position < limit && s.charAt(position) != until)
+            position++;
+        return position;
     }
 
     private static Map<ClassKey, Class> javaClassesCache = new ConcurrentHashMap<ClassKey, Class>();
