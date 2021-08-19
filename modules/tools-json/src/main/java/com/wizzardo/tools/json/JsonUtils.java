@@ -227,6 +227,17 @@ class JsonUtils {
                 setter.setBoolean(object, l != 0);
                 break;
             }
+            case OBJECT: {
+                try {
+                    if (floatValue)
+                        setter.setObject(object, String.valueOf(d));
+                    else
+                        setter.setObject(object, String.valueOf(l));
+                } catch (Exception e) {
+                    throw new IllegalStateException("Can not set number " + (floatValue ? d : l) + " to " + setter);
+                }
+                break;
+            }
         }
     }
 
