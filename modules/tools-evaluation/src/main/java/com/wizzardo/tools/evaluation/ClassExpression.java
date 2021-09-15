@@ -48,16 +48,36 @@ public class ClassExpression extends Expression {
         return "class " + name;// + " " + definitions.toString();
     }
 
-    public ClassExpression newInstance(Object[] objects) {
+    public ClassExpression newInstance(Object[] args) {
         ClassExpression instance = new ClassExpression(name, definitions);
         instance.context.put("this", instance);
         instance.init();
+
+
+        for (Expression expression : definitions) {
+            if (expression instanceof Operation) {
+                Operation operation = (Operation) expression;
+                if (operation.operator() == Operator.EQUAL && operation.leftPart().exp.equals(name)) {
+                    ClosureHolder closureHolder = (ClosureHolder) operation.rightPart();
+                    ClosureExpression closure = closureHolder.closure;
+                    int length = args == null ? 0 : args.length;
+                    if (closure.args.length == length) {
+                        closure.getAgainst(instance.context, instance.context, args);
+                        break;
+                    }
+                }
+            }
+        }
+
         return instance;
     }
 
     protected void init() {
         for (Expression expression : definitions) {
             expression.get(context);
+            if(expression instanceof Holder){
+                context.put(expression.exp, null);
+            }
         }
     }
 }
