@@ -1521,6 +1521,24 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_def_class_constructor() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("test", EvalTools.prepare("" +
+                "class Holder {\n" +
+                "  String value = 'value' \n" +
+                "  Holder(String v) {\n" +
+                "    value = v;\n" +
+                "  }\n" +
+                "  public Holder() {\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "new Holder('test').value\n" +
+                "").get(model).toString());
+
+    }
+
+    @Test
     public void test_script_engine() {
         ScriptEngine scriptEngine = new ScriptEngine(new File("src/test/resources/groovy"));
 
