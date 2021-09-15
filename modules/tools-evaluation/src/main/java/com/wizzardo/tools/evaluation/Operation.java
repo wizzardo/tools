@@ -570,7 +570,7 @@ public class Operation extends Expression {
                 Object instance = that.thisHolder.get(model);
                 if (instance != null) {
                     if (!(instance instanceof Map) || ((Map) instance).containsKey(that.function.fieldName)) {
-                        if (model.containsKey(that.exp))
+                        if (model.containsKey(that.exp) && (!(instance instanceof Map) || model.get(that.exp) != ((Map) instance).get(that.exp)))
                             instance = model;
                         Function.Setter setter = that.function.getSetter(instance);
                         if (setter != null)
@@ -661,7 +661,19 @@ public class Operation extends Expression {
                 return r;
             }
             case EQUAL: {
-                setter.set(thatObject, right);
+                try {
+                    setter.set(thatObject, right);
+                } catch (IllegalArgumentException e) {
+                    if (setter instanceof Function.FieldSetter) {
+                        Function.FieldSetter fieldSetter = (Function.FieldSetter) setter;
+                        if (right instanceof ClosureExpression && Function.isSAMInterface(fieldSetter.field.getType())) {
+                            Object proxy = Function.wrapClosureAsProxy((ClosureExpression) right, fieldSetter.field.getType());
+                            setter.set(thatObject, proxy);
+                            return proxy;
+                        }
+                    }
+                    throw Unchecked.rethrow(e);
+                }
                 return right;
             }
         }
