@@ -664,6 +664,7 @@ public class EvalTools {
         boolean inString = false;
         int brackets = 0;
         int length = exp.length();
+        boolean lineEndedWithSemicolon = true;
         for (int i = 0; i < length; i++) {
             char c = exp.charAt(i);
             if (inString) {
@@ -681,7 +682,11 @@ public class EvalTools {
                     continue;
 
                 if (brackets == 0) {
+                    if (c == '.' && trim(sb).length() == 0 && !lineEndedWithSemicolon) {
+                        sb.append(list.remove(list.size() - 1));
+                    }
                     if (c == ';' || c == '\n') {
+                        lineEndedWithSemicolon = c == ';';
                         cleanLine(sb);
                         if (withEmptyStatements || sb.length() > 0)
                             list.add(sb.toString());

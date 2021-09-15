@@ -1788,4 +1788,17 @@ public class EvalToolsTest {
         }
         assertTrue(exception);
     }
+
+    @Test
+    public void test_builder_pattern() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Assert.assertEquals("qwe", EvalTools.evaluate("" +
+                "new StringBuilder()\n" +
+                "  .append('q')\n" +
+                "  .append('w')\n" +
+                "  .append('e')\n" +
+                "  .toString()\n" +
+                "", model));
+    }
 }
