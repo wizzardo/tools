@@ -943,6 +943,10 @@ public class EvalTools {
                         isStatic = true;
                     }
 
+                    if (s.startsWith(className) && s.charAt(className.length()) == '(') {
+                        s = "protected " + s; // workaround for default access modifier
+                    }
+
                     Expression prepare = prepare(s, model, functions, imports, isTemplate);
                     if (prepare instanceof ClosureHolder) {
                         ClosureExpression closure = ((ClosureHolder) prepare).closure;

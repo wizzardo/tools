@@ -14,7 +14,7 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
     protected static final Pair<String, Class>[] DEFAULT_ARGS = new Pair[]{new Pair<String, Class>("it", Object.class)};
     protected static final Pair<String, Class>[] EMPTY_ARGS = new Pair[0];
     protected List<Expression> expressions = new ArrayList<Expression>();
-    protected Pair<String, Class>[] args = DEFAULT_ARGS;
+    protected Pair<String, Class>[] args = EMPTY_ARGS;
     protected Map<String, Object> context = Collections.emptyMap();
 
     @Override
@@ -72,13 +72,18 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         local.put("delegate", thisObject);
         if (model != null)
             local.put("this", model);
-        if (!(args.length == 1 && args[0].key.equals("it") && (arg == null || arg.length == 0))) {
-            if (args.length > 0 && (arg == null || args.length != arg.length))
-                throw new IllegalArgumentException("wrong number of arguments! there were " + (arg == null ? 0 : arg.length) + ", but must be " + args.length);
-            for (int i = 0; i < args.length; i++) {
+
+        if (arg != null) {
+            if (args.length == 0 && arg.length == 1) {
+                local.put("it", arg[0]);
+            } else {
+                if (args.length != arg.length)
+                    throw new IllegalArgumentException("wrong number of arguments! there were " + (arg.length) + ", but must be " + args.length);
+                for (int i = 0; i < args.length; i++) {
 //                if (!args[i].value.isAssignableFrom(arg[i].getClass()))
 //                    throw new ClassCastException("Can not cast " + args[i].getClass() + " to " + args[i].value);
-                local.put(args[i].key, arg[i]);
+                    local.put(args[i].key, arg[i]);
+                }
             }
         }
         Object ob = null;

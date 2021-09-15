@@ -267,7 +267,7 @@ public class Function extends Expression {
 
             if (instance instanceof ClosureExpression) {
                 ClosureExpression exp = (ClosureExpression) instance;
-                return exp.get(model, arr);
+                return exp.getAgainst(model, exp.context, arr);
             }
 
             if (instance instanceof UserFunction) {
@@ -324,7 +324,8 @@ public class Function extends Expression {
                     }
                 }
 //            System.out.println("can't find " + methodName + " for class " + thatObject.getClass(model) + "\t" + Arrays.toString(arr));
-                throw new NoSuchMethodException(getClass(instance).getCanonicalName() + "." + methodName + "(" + (arr == null ? "" : Arrays.toString(arr)) + "), at " + this);
+                Class aClass = getClass(instance);
+                throw new NoSuchMethodException((aClass != null ? aClass.getCanonicalName() : "null") + "." + methodName + "(" + (arr == null ? "" : Arrays.toString(arr)) + "), at " + this);
             }
 
             if (!argsMappers.isEmpty()) {
