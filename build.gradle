@@ -24,11 +24,24 @@ allprojects {
     }
 }
 
+buildscript {
+    repositories {
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.wizzardo.tools:tools-gradle-build:+'
+    }
+}
+
 archivesBaseName = "tools"
 ext {
     descriptionString = 'Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other'
 }
 
+apply plugin: 'tools-gradle-build'
 apply from: 'gradle/sonatype.gradle'
 apply plugin: 'jacoco'
 
@@ -44,10 +57,9 @@ task codeCoverageReport(type: JacocoReport) {
     }
 
     reports {
-        xml.enabled true
-        xml.destination "${buildDir}/reports/jacoco/report.xml"
-        html.enabled false
-        csv.enabled false
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
 }
 
@@ -72,16 +84,27 @@ dependencies {
 
     testCompile 'junit:junit:4.11'
     testCompile 'com.google.code.gson:gson:2.2.4'
+    testCompile "org.assertj:assertj-core:3.18.1"
+    testCompile 'org.xerial:sqlite-jdbc:3.32.3.2'
 }
 
 
-task fatJar(type: Jar) {
-    baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}
 
 task copyJars(type: Copy, dependsOn: subprojects.jar) {
     from(subprojects.jar)
     into project.file('build/libs')
+}
+
+sqlTools {
+    migrationsTest {
+        enabled = true
+        src = 'sql/migrations'
+        out = 'sql/migrations.txt'
+    }
+    tablesGeneratorTest {
+        enabled = true
+        src = 'src/test/java/com/wizzardo/tools/sql/model'
+        out = 'src/test/java/com/wizzardo/tools/sql/generated'
+        packageName = 'com.wizzardo.tools.sql.generated'
+    }
 }

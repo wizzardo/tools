@@ -6,20 +6,6 @@ if (!project.hasProperty("ossrhUsername"))
 if (!project.hasProperty("ossrhPassword"))
     ext.ossrhPassword = ""
 
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
-}
-
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives javadocJar, sourcesJar
-}
-
 signing {
     required { gradle.taskGraph.hasTask("uploadArchives") }
     sign configurations.archives

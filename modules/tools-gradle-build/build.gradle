@@ -1,6 +1,9 @@
 archivesBaseName = "tools-gradle-build"
 apply plugin: 'groovy'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
     compile gradleApi()
     compile localGroovy()
