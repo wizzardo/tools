@@ -66,6 +66,7 @@ dependencies {
     compile project(':modules:tools-misc')
     compile project(':modules:tools-reflection')
     compile project(':modules:tools-security')
+    compile project(':modules:tools-sql')
     compile project(':modules:tools-xml')
     compile project(':modules:tools-yaml')
 

@@ -1,0 +1,15 @@
+archivesBaseName = "tools-gradle-build"
+apply plugin: 'groovy'
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+
+    compile project(':modules:tools-sql')
+}
+
+ext {
+    descriptionString = 'gradle build plugin'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+
