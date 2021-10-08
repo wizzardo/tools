@@ -126,6 +126,29 @@ public class ScriptEngine {
                 }
             }
 
+            {
+                String[] parts = name.split("\\.");
+                File folder = root;
+                int i = 0;
+                for (; i < parts.length; i++) {
+                    File file = new File(folder, parts[i]);
+                    if (file.exists() && file.isDirectory()) {
+                        folder = file;
+                    } else
+                        break;
+                }
+
+                if (i < parts.length) {
+                    File file = new File(folder, parts[i] + ".groovy");
+                    if (!file.exists())
+                        file = new File(folder, parts[i] + ".java");
+
+                    if (file.exists() && fileFilter.accept(file)) {
+                        return file.getPath();
+                    }
+                }
+            }
+
             return null;
         }
 
@@ -139,8 +162,22 @@ public class ScriptEngine {
             String pack = EvalTools.readPackage(script);
             script = EvalTools.readImports(script, imports);
 
+            if (name.startsWith(pack))
+                name = name.substring(pack.length() + 1);
+
             Binding binding = createBidding(root, pack, imports, fileFilter);
             Expression expression = EvalTools.prepare(script, binding, new HashMap<String, UserFunction>(), imports);
+            if (expression instanceof ClassExpression) {
+                ClassExpression ce = (ClassExpression) expression;
+                ce.packageName = pack;
+                if (ce.getName().equals(name))
+                    return ce;
+
+                if (name.startsWith(ce.getName() + ".")) {
+                    name = name.substring(ce.getName().length() + 1);
+                    pack += "." + ce.getName();
+                }
+            }
 
 //            System.out.println("resolveClassExpression: " + name + ", " + file);
 //            System.out.println("binding.findClassDuration: " + (binding.findClassDuration / 1000 / 1000f) + "ms");
@@ -148,7 +185,9 @@ public class ScriptEngine {
 //            System.out.println("binding.classCache.size(): " + (binding.classCache.size()));
 
             if (binding.containsKey("class " + name)) {
-                return (ClassExpression) binding.get("class " + name);
+                ClassExpression classExpression = (ClassExpression) binding.get("class " + name);
+                classExpression.packageName = pack;
+                return classExpression;
             }
             return null;
         }

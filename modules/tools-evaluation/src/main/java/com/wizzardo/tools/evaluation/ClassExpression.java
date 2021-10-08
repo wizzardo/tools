@@ -5,8 +5,10 @@ import java.util.*;
 
 public class ClassExpression extends Expression {
 
+    protected boolean isEnum;
     protected List<Expression> definitions;
     protected Map<String, Object> context = new HashMap<String, Object>();
+    protected String packageName;
     protected String name;
 
     public ClassExpression(String name, List<Expression> definitions) {
@@ -18,6 +20,22 @@ public class ClassExpression extends Expression {
         this.name = name;
         this.definitions = definitions;
         this.context = context;
+    }
+
+    public List<Expression> getDefinitions() {
+        return definitions;
+    }
+
+    public boolean isEnum() {
+        return isEnum;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPackageName() {
+        return packageName;
     }
 
     @Override
@@ -55,8 +73,8 @@ public class ClassExpression extends Expression {
 
 
         for (Expression expression : definitions) {
-            if (expression instanceof Operation) {
-                Operation operation = (Operation) expression;
+            if (expression instanceof DefineAndSet && ((DefineAndSet) expression).action instanceof Operation) {
+                Operation operation = (Operation) ((DefineAndSet) expression).action;
                 if (operation.operator() == Operator.EQUAL && operation.leftPart().exp.equals(name)) {
                     ClosureHolder closureHolder = (ClosureHolder) operation.rightPart();
                     ClosureExpression closure = closureHolder.closure;
@@ -75,7 +93,7 @@ public class ClassExpression extends Expression {
     protected void init() {
         for (Expression expression : definitions) {
             expression.get(context);
-            if(expression instanceof Holder){
+            if (expression instanceof Holder) {
                 context.put(expression.exp, null);
             }
         }

@@ -40,8 +40,11 @@ public class ForExpression extends Expression {
             }
             return null;
         } finally {
-            if (definition instanceof Operation && ((Operation) definition).leftPart() instanceof Holder) {
-                String exp = ((Operation) definition).leftPart().exp;
+            Expression def = definition;
+            if (def instanceof DefineAndSet) {
+                model.remove(((DefineAndSet) def).name);
+            } else if (def instanceof Operation && ((Operation) def).leftPart() instanceof Holder) {
+                String exp = ((Operation) def).leftPart().exp;
                 model.remove(exp);
             }
         }

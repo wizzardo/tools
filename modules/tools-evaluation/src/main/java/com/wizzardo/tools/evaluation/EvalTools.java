@@ -31,10 +31,10 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("(static|private|protected|public)*(def|[a-zA-Z_\\d\\.]+(?:<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)*(?:\\[\\])*) +([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
+    private static final Pattern DEF = Pattern.compile("^(static\\s+|final\\s+|private\\s+|protected\\s+|public\\s+)*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
-    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\bclass +([A-Za-z0-9_]+) *\\{");
+    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum) +([A-Za-z0-9_]+) *\\{");
     private static final Pattern STATIC_BLOCK = Pattern.compile("(static) +\\{");
     private static final Pattern JAVA_LAMBDA = Pattern.compile("^(\\(([A-Za-z0-9_]+\\s*,?\\s*)+\\)|\\(\\s*\\)|[A-Za-z0-9_]+)\\s*->\\s*(\\{)?");
 
@@ -923,7 +923,10 @@ public class EvalTools {
         {
             Matcher m = CLASS_DEF.matcher(exp);
             if (m.find() && findCloseBracket(exp, m.end()) == exp.length() - 1) {
-                String className = m.group(2);
+                String className = m.group(3);
+                String type = m.group(2);
+
+                boolean isEnum = "enum".equals(type);
 
                 exp = exp.substring(m.end(), exp.length() - 1).trim();
                 List<String> lines = getBlocks(exp);
@@ -932,7 +935,8 @@ public class EvalTools {
                 ClassExpression classExpression = new ClassExpression(className, definitions);
                 model.put("class " + className, classExpression);
 
-                for (String s : lines) {
+                for (int i = isEnum ? 1 : 0; i < lines.size(); i++) {
+                    String s = lines.get(i);
                     if (isLineCommented(s))
                         continue;
 
@@ -955,7 +959,40 @@ public class EvalTools {
                     }
                     definitions.add(prepare);
                 }
+
                 classExpression.init();
+
+                if (isEnum) {
+                    classExpression.isEnum = true;
+                    List<String> enums = parseArgs(lines.get(0));
+                    for (int i = 0; i < enums.size(); i++) {
+                        String s = enums.get(i);
+                        int argsStart = s.indexOf('(');
+
+                        String name;
+                        Object[] args = null;
+
+                        if (argsStart != -1) {
+                            name = s.substring(0, argsStart);
+
+                            String argsRaw = trimBrackets(s.substring(name.length()));
+                            if (argsRaw.length() > 0) {
+                                List<String> arr = parseArgs(argsRaw);
+                                args = new Object[arr.size()];
+                                for (int j = 0; j < arr.size(); j++) {
+                                    args[j] = prepare(arr.get(j), model, functions, imports, isTemplate).get();
+                                }
+                            } else {
+                                args = new Object[0];
+                            }
+                        } else {
+                            name = s;
+                            args = new Object[0];
+                        }
+                        classExpression.context.put(name, classExpression.newInstance(args));
+                    }
+                }
+
                 return classExpression;
             }
         }
@@ -1022,25 +1059,37 @@ public class EvalTools {
 
             {
                 Matcher m = DEF.matcher(exp);
-                if (m.find() && !m.group(2).equals("new")) {
-                    if (m.group(4).equals("=")) {
-                        exp = m.replaceFirst("def $3 =");
-                    } else if (m.group(4).equals("(")) {
-                        int argsEnd = findCloseBracket(exp, m.end());
-                        if (argsEnd == m.end()) {
-                            exp = "def " + m.group(3) + " = " + exp.substring(argsEnd + 1);
-                        } else {
-                            String block = exp.substring(argsEnd + 1).trim();
-                            if (!block.startsWith("{"))
-                                throw new IllegalStateException("Cannot parse: " + exp);
+                if (m.find()) {
+                    String type = m.group(2);
+                    if (type != null)
+                        type = type.replaceAll("\\s", "");
 
-                            String args = exp.substring(m.end(), argsEnd);
-                            exp = "def " + m.group(3) + " = { " + args + " -> " + block.substring(1);
+                    if (!"new".equals(type)) {
+                        if (m.group(4).equals("=")) {
+                            String name = m.group(3);
+                            exp = name + " =" + exp.substring(m.group(0).length());
+                            Expression action = prepare(exp, model, functions, imports, isTemplate);
+                            if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
+                                ((Operation) action).leftPart(new Expression.Holder(name));
+                            }
+                            return new Expression.DefineAndSet(type, name, action);
+                        } else if (m.group(4).equals("(")) {
+                            int argsEnd = findCloseBracket(exp, m.end());
+                            if (argsEnd == m.end()) {
+                                exp = "def " + m.group(3) + " = " + exp.substring(argsEnd + 1);
+                            } else {
+                                String block = exp.substring(argsEnd + 1).trim();
+                                if (!block.startsWith("{"))
+                                    throw new IllegalStateException("Cannot parse: " + exp);
+
+                                String args = exp.substring(m.end(), argsEnd);
+                                exp = "def " + m.group(3) + " = { " + args + " -> " + block.substring(1);
+                            }
+                            return prepare(exp, model, functions, imports, isTemplate);
+                        } else {
+                            model.put(m.group(3), null);
+                            return new Expression.Definition(type, m.group(3));
                         }
-                        return prepare(exp, model, functions, imports, isTemplate);
-                    } else {
-                        model.put(m.group(3), null);
-                        return new Expression.Holder(m.group(3));
                     }
                 }
             }
@@ -1533,7 +1582,7 @@ public class EvalTools {
         }
     }
 
-    private static Class findClass(String s, List<String> imports, Map model) {
+    public static Class findClass(String s, List<String> imports, Map model) {
         if (model instanceof ScriptEngine.Binding) {
             ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
             if (binding.classCache.containsKey(s))
@@ -1569,6 +1618,23 @@ public class EvalTools {
             return char.class;
         if (s.equals("boolean"))
             return boolean.class;
+
+        if (s.equals("byte[]"))
+            return byte[].class;
+        if (s.equals("int[]"))
+            return int[].class;
+        if (s.equals("short[]"))
+            return short[].class;
+        if (s.equals("long[]"))
+            return long[].class;
+        if (s.equals("float[]"))
+            return float[].class;
+        if (s.equals("double[]"))
+            return double[].class;
+        if (s.equals("char[]"))
+            return char[].class;
+        if (s.equals("boolean[]"))
+            return boolean[].class;
 
         ClassKey key;
         Class aClass;

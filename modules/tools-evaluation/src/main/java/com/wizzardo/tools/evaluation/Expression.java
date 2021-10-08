@@ -112,6 +112,50 @@ public abstract class Expression {
 
     }
 
+    public static class Definition extends Holder {
+        public final String type;
+        public final String name;
+
+
+        public Definition(String type, String name) {
+            super(name);
+            this.type = type;
+            this.name = name;
+        }
+    }
+
+    public static class DefineAndSet extends Expression {
+        public final String type;
+        public final String name;
+        public final Expression action;
+
+        public DefineAndSet(String type, String name, Expression action) {
+            this.type = type;
+            this.name = name;
+            this.action = action;
+        }
+
+        @Override
+        public void setVariable(Variable v) {
+            action.setVariable(v);
+        }
+
+        @Override
+        public Expression clone() {
+            return new DefineAndSet(type, name, action);
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+            return action.get(model);
+        }
+
+        @Override
+        public String toString() {
+            return type + " " + action;
+        }
+    }
+
     public static class VariableOrFieldOfThis extends Expression {
 
         public final Expression thisHolder;
