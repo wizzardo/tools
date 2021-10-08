@@ -42,4 +42,9 @@ public class QueuedPool<T> extends AbstractQueuedPool<T> {
         resetter.consume(t);
         return t;
     }
+
+    @Override
+    public void dispose(Holder<T> h) {
+        queue().remove(h);
+    }
 }

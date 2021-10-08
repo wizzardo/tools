@@ -1,6 +1,5 @@
 package com.wizzardo.tools.misc.pool;
 
-import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.util.Queue;

@@ -1,0 +1,20 @@
+dependencies {
+    compile project(':modules:tools-reflection')
+    compile project(':modules:tools-misc')
+    compile project(':modules:tools-io')
+    compile project(':modules:tools-exception')
+    compile project(':modules:tools-security')
+    compile project(':modules:tools-cache')
+    compile project(':modules:tools-collections')
+    compile project(':modules:tools-evaluation')
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+archivesBaseName = "tools-sql"
+ext {
+    descriptionString = 'sql tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+

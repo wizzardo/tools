@@ -113,7 +113,7 @@ public class PoolBuilder<T> {
                     Holder<T> holder = super.poll();
                     if (holder == null && created.get() == limitSize) {
                         synchronized (this) {
-                            while ((holder = super.poll()) == null) {
+                            while ((holder = super.poll()) == null && created.get() == limitSize) {
                                 waits.incrementAndGet();
                                 try {
                                     this.wait();
@@ -130,6 +130,18 @@ public class PoolBuilder<T> {
                 public T create() {
                     created.incrementAndGet();
                     return super.create();
+                }
+
+                @Override
+                public void dispose(Holder<T> h) {
+                    super.dispose(h);
+                    created.decrementAndGet();
+                    if (waits.get() > 0) {
+                        synchronized (this) {
+                            if (waits.get() > 0)
+                                this.notify();
+                        }
+                    }
                 }
 
                 @Override

@@ -15,6 +15,8 @@ public interface Pool<T> {
 
     void release(Holder<T> t);
 
+    void dispose(Holder<T> h);
+
     <R> R provide(UnsafeMapper<T, R> mapper);
 
     interface UnsafeMapper<A, B> {
