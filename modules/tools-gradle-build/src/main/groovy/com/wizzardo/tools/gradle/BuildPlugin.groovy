@@ -40,6 +40,13 @@ class BuildPlugin implements Plugin<Project> {
             action.execute(getMigrations());
         }
 
+        @Nested
+        abstract Migrations getMigrationsTest();
+
+        void migrationsTest(Action<? super Migrations> action) {
+            action.execute(getMigrationsTest());
+        }
+
 
         @Nested
         abstract TablesGenerator getTablesGenerator();
@@ -47,18 +54,30 @@ class BuildPlugin implements Plugin<Project> {
         void tablesGenerator(Action<? super TablesGenerator> action) {
             action.execute(getTablesGenerator());
         }
+
+        @Nested
+        abstract TablesGenerator getTablesGeneratorTest();
+
+        void tablesGeneratorTest(Action<? super TablesGenerator> action) {
+            action.execute(getTablesGeneratorTest());
+        }
     }
 
     abstract static class Migrations {
         abstract Property<Boolean> getEnabled();
+
         abstract Property<String> getSrc();
+
         abstract Property<String> getOut();
     }
 
     abstract static class TablesGenerator {
         abstract Property<Boolean> getEnabled();
+
         abstract Property<String> getSrc();
+
         abstract Property<String> getOut();
+
         abstract Property<String> getPackageName();
     }
 
@@ -135,48 +154,58 @@ class BuildPlugin implements Plugin<Project> {
             SqlToolsExtension toolsSqlExtension = project.extensions.create('sqlTools', SqlToolsExtension.class)
             task([description: 'listing all migrations'], 'listMigrations', {
                 doLast {
-                    def migrations = toolsSqlExtension.migrations
-                    if (migrations && migrations.getEnabled().getOrElse(false)) {
-                        def out = migrations.getOut().getOrElse('migrations.txt')
-                        if (!out.startsWith('/'))
-                            out = '/' + out
+                    [
+                            main: toolsSqlExtension.migrations,
+                            test: toolsSqlExtension.migrationsTest,
+                    ].each { sourceSet, migrations ->
+                        if (migrations && migrations.getEnabled().getOrElse(false)) {
+                            def out = migrations.getOut().getOrElse('migrations.txt')
+                            if (!out.startsWith('/'))
+                                out = '/' + out
 
-                        def file = new File(projectDir.absolutePath, 'src/main/resources' + out)
-                        file.parentFile.mkdirs()
+                            def file = new File(projectDir.absolutePath, "src/$sourceSet/resources$out")
+                            file.parentFile.mkdirs()
 
-                        def src = migrations.getSrc().getOrElse('migrations')
+                            def src = migrations.getSrc().getOrElse('migrations')
 
-                        def sout = new StringBuilder(), serr = new StringBuilder()
-                        def proc = "find ${src} -name *.sql".execute([], new File(projectDir.absolutePath, 'src/main/resources'))
-                        proc.consumeProcessOutput(sout, serr)
-                        proc.waitForOrKill(1000)
-                        if (serr.length() > 0) {
-                            System.err.println(serr)
-                            throw new IllegalStateException()
+                            def sout = new StringBuilder(), serr = new StringBuilder()
+                            def proc = "find ${src} -name *.sql".execute([], new File(projectDir.absolutePath, "src/$sourceSet/resources"))
+                            proc.consumeProcessOutput(sout, serr)
+                            proc.waitForOrKill(1000)
+                            if (serr.length() > 0) {
+                                System.err.println(serr)
+                                throw new IllegalStateException()
+                            }
+
+                            file.setText(sout.toString())
                         }
-
-                        file.setText(sout.toString())
                     }
                 }
             })
 
             tasks.processResources.dependsOn listMigrations
+            tasks.processTestResources.dependsOn listMigrations
 
             task([description: 'generate dto tables'], 'generateTables', {
                 doLast {
-                    def tablesGenerator = toolsSqlExtension.tablesGenerator
-                    if (tablesGenerator && tablesGenerator.getEnabled().getOrElse(false)) {
-                        def src = tablesGenerator.getSrc().get()
-                        def out = tablesGenerator.getOut().get()
-                        def packageName = tablesGenerator.getPackageName().get()
+                    [
+                            main: toolsSqlExtension.tablesGenerator,
+                            test: toolsSqlExtension.tablesGeneratorTest,
+                    ].each { sourceSet, tablesGenerator ->
+                        if (tablesGenerator && tablesGenerator.getEnabled().getOrElse(false)) {
+                            def src = tablesGenerator.getSrc().get()
+                            def out = tablesGenerator.getOut().get()
+                            def packageName = tablesGenerator.getPackageName().get()
 
-                        Generator generator = new Generator(out, packageName);
-                        generator.createTables(new File(src).listFiles());
+                            Generator generator = new Generator(out, packageName);
+                            generator.createTables(new File(src).listFiles());
+                        }
                     }
                 }
             })
 
             tasks.compileJava.dependsOn generateTables
+            tasks.compileTestJava.dependsOn generateTables
 
         }
     }

@@ -5,3 +5,5 @@ build
 .gradle
 gradle.properties
 *.iml
+src/test/resources/sql/migrations.txt
+src/test/java/com/wizzardo/tools/sql/generated

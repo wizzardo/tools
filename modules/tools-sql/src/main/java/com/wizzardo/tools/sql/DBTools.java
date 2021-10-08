@@ -25,6 +25,7 @@ public class DBTools {
         R map(T var1) throws SQLException;
     }
 
+    protected String migrationsListPath = "/migrations.txt";
     protected DataSource dataSource;
 
     protected Connection createConnection() throws SQLException {
@@ -103,7 +104,7 @@ public class DBTools {
             return l;
         });
 
-        List<String> migrations = Arrays.asList(getResourceAsString("/migrations.txt").split("\n"));
+        List<String> migrations = Arrays.asList(getResourceAsString(migrationsListPath).split("\n"));
         Collections.sort(migrations);
         migrations.forEach(name -> {
 //            System.out.println(s);
