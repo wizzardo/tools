@@ -1,5 +1,6 @@
 rootProject.name = 'tools'
 include ':modules:tools-cache',
+        ':modules:tools-bytecode',
         ':modules:tools-collections',
         ':modules:tools-evaluation',
         ':modules:tools-exception',

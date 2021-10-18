@@ -1,0 +1,14 @@
+dependencies {
+    compile project(':modules:tools-misc')
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+archivesBaseName = "tools-bytecode"
+ext {
+    descriptionString = 'bytecode tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
+
