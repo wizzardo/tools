@@ -162,7 +162,7 @@ public class ScriptEngine {
             String pack = EvalTools.readPackage(script);
             script = EvalTools.readImports(script, imports);
 
-            if (name.startsWith(pack))
+            if (!pack.isEmpty() && name.startsWith(pack))
                 name = name.substring(pack.length() + 1);
 
             Binding binding = createBidding(root, pack, imports, fileFilter);
