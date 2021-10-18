@@ -1074,7 +1074,7 @@ public class FlowTest {
     public void test_of_ints() {
         Assert.assertEquals("1,2,3", Flow.of(new int[]{1, 2, 3}).join(",").get());
 
-        IllegalState flow = Flow.of(new int[]{1, 2, 3}).then(new IllegalState());
+        IllegalState<Integer> flow = Flow.of(new int[]{1, 2, 3}).then(new IllegalState<>());
         flow.stop();
         flow.execute();
     }
@@ -1083,7 +1083,7 @@ public class FlowTest {
     public void test_of_longs() {
         Assert.assertEquals("1,2,3", Flow.of(new long[]{1, 2, 3}).join(",").get());
 
-        IllegalState flow = Flow.of(new long[]{1, 2, 3}).then(new IllegalState());
+        IllegalState<Long> flow = Flow.of(new long[]{1, 2, 3}).then(new IllegalState<>());
         flow.stop();
         flow.execute();
     }
@@ -1092,7 +1092,7 @@ public class FlowTest {
     public void test_of_shorts() {
         Assert.assertEquals("1,2,3", Flow.of(new short[]{1, 2, 3}).join(",").get());
 
-        IllegalState flow = Flow.of(new short[]{1, 2, 3}).then(new IllegalState());
+        IllegalState<Short> flow = Flow.of(new short[]{1, 2, 3}).then(new IllegalState<>());
         flow.stop();
         flow.execute();
     }
@@ -1101,7 +1101,7 @@ public class FlowTest {
     public void test_of_bytes() {
         Assert.assertEquals("1,2,3", Flow.of(new byte[]{1, 2, 3}).join(",").get());
 
-        IllegalState flow = Flow.of(new byte[]{1, 2, 3}).then(new IllegalState());
+        IllegalState<Byte> flow = Flow.of(new byte[]{1, 2, 3}).then(new IllegalState<>());
         flow.stop();
         flow.execute();
     }
@@ -1110,7 +1110,7 @@ public class FlowTest {
     public void test_of_floats() {
         Assert.assertEquals("1.0,2.0,3.0", Flow.of(new float[]{1, 2, 3}).join(",").get());
 
-        IllegalState flow = Flow.of(new float[]{1, 2, 3}).then(new IllegalState());
+        IllegalState<Float> flow = Flow.of(new float[]{1, 2, 3}).then(new IllegalState<>());
         flow.stop();
         flow.execute();
     }
@@ -1119,7 +1119,7 @@ public class FlowTest {
     public void test_of_doubles() {
         Assert.assertEquals("1.0,2.0,3.0", Flow.of(new double[]{1, 2, 3}).join(",").get());
 
-        IllegalState flow = Flow.of(new double[]{1, 2, 3}).then(new IllegalState());
+        IllegalState<Double> flow = Flow.of(new double[]{1, 2, 3}).then(new IllegalState<>());
         flow.stop();
         flow.execute();
     }
@@ -1128,7 +1128,7 @@ public class FlowTest {
     public void test_of_booleans() {
         Assert.assertEquals("true,false", Flow.of(new boolean[]{true, false}).join(",").get());
 
-        IllegalState flow = Flow.of(new boolean[]{true, false}).then(new IllegalState());
+        IllegalState<Boolean> flow = Flow.of(new boolean[]{true, false}).then(new IllegalState<>());
         flow.stop();
         flow.execute();
     }
@@ -1137,14 +1137,14 @@ public class FlowTest {
     public void test_of_chars() {
         Assert.assertEquals("a,b,c", Flow.of(new char[]{'a', 'b', 'c'}).join(",").get());
 
-        IllegalState flow = Flow.of(new char[]{'a', 'b', 'c'}).then(new IllegalState());
+        IllegalState<Character> flow = Flow.of(new char[]{'a', 'b', 'c'}).then(new IllegalState<>());
         flow.stop();
         flow.execute();
     }
 
-    static class IllegalState extends FlowProcessor {
+    static class IllegalState<T> extends FlowProcessor<T,Object> {
         @Override
-        public void process(Object o) {
+        public void process(T o) {
             throw new IllegalStateException();
         }
     }

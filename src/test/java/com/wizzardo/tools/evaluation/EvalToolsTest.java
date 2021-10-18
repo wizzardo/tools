@@ -35,19 +35,19 @@ public class EvalToolsTest {
         Map<String, UserFunction> functions = new HashMap<String, UserFunction>();
 
 
-        assertEquals(1, EvalTools.evaluate("java.lang.Math.abs(-1)"));
+        assertEquals((Object) 1, EvalTools.evaluate("java.lang.Math.abs(-1)"));
 
-        assertEquals(1, EvalTools.evaluate("(1)"));
-        assertEquals(1000, EvalTools.evaluate("(1_000)"));
-        assertEquals(1000.0, EvalTools.evaluate("(1_000.000_)"));
-        assertEquals(1, EvalTools.evaluate("((1))"));
-        assertEquals(2, EvalTools.evaluate("1+1"));
-        assertEquals(2.0, EvalTools.evaluate("1+1.0"));
-        assertEquals(5, EvalTools.evaluate("1+1+3"));
-        assertEquals(0x12b3, EvalTools.evaluate("0x12b3"));
-        assertEquals(15, EvalTools.evaluate("0b1111"));
-        assertEquals(83, EvalTools.evaluate("0123"));
-        assertEquals(0f, EvalTools.evaluate("0f"));
+        assertEquals((Object) 1, EvalTools.evaluate("(1)"));
+        assertEquals((Object) 1000, EvalTools.evaluate("(1_000)"));
+        assertEquals((Object) 1000.0, EvalTools.evaluate("(1_000.000_)"));
+        assertEquals((Object) 1, EvalTools.evaluate("((1))"));
+        assertEquals((Object) 2, EvalTools.evaluate("1+1"));
+        assertEquals((Object) 2.0, EvalTools.evaluate("1+1.0"));
+        assertEquals((Object) 5, EvalTools.evaluate("1+1+3"));
+        assertEquals((Object) 0x12b3, EvalTools.evaluate("0x12b3"));
+        assertEquals((Object) 15, EvalTools.evaluate("0b1111"));
+        assertEquals((Object) 83, EvalTools.evaluate("0123"));
+        assertEquals((Object) 0f, EvalTools.evaluate("0f"));
         assertEquals("olo123", EvalTools.evaluate("\"olo\"+1+(1+1)+3"));
         assertEquals("olo123", EvalTools.evaluate("'olo'+1+(1+1)+3"));
         assertEquals("OLO123", EvalTools.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()"));
@@ -58,34 +58,34 @@ public class EvalToolsTest {
         model.put("length111", "111");
         assertEquals("QWERTYOLOLO123", EvalTools.evaluate("ololo.concat(qwe.trim().substring(2)).concat(qwe.trim().substring(length111.length()) + 123).toUpperCase()", model));
 
-        assertEquals(5f, EvalTools.evaluate("10f/2"));
-        assertEquals(7, EvalTools.evaluate("1+2*3"));
-        assertEquals(9, EvalTools.evaluate("1+2*(1+3)"));
+        assertEquals((Object) 5f, EvalTools.evaluate("10f/2"));
+        assertEquals((Object) 7, EvalTools.evaluate("1+2*3"));
+        assertEquals((Object) 9, EvalTools.evaluate("1+2*(1+3)"));
 
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(1, EvalTools.evaluate("i++", model));
+        assertEquals((Object) 1, EvalTools.evaluate("i++", model));
         assertEquals(2, model.get("i"));
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(2, EvalTools.evaluate("i++ + 1", model));
+        assertEquals((Object) 2, EvalTools.evaluate("i++ + 1", model));
         assertEquals(2, model.get("i"));
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(3, EvalTools.evaluate("++i + 1", model));
+        assertEquals((Object) 3, EvalTools.evaluate("++i + 1", model));
         assertEquals(2, model.get("i"));
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(4, EvalTools.evaluate("++i + i++", model));
+        assertEquals((Object) 4, EvalTools.evaluate("++i + i++", model));
         assertEquals(3, model.get("i"));
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(5, EvalTools.evaluate("++i + ++i", model));
+        assertEquals((Object) 5, EvalTools.evaluate("++i + ++i", model));
         assertEquals(3, model.get("i"));
 
 
@@ -96,27 +96,27 @@ public class EvalToolsTest {
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(1, EvalTools.evaluate("i--", model));
+        assertEquals((Object) 1, EvalTools.evaluate("i--", model));
         assertEquals(0, model.get("i"));
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(0, EvalTools.evaluate("i-- - 1", model));
+        assertEquals((Object) 0, EvalTools.evaluate("i-- - 1", model));
         assertEquals(0, model.get("i"));
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(-1, EvalTools.evaluate("--i - 1", model));
+        assertEquals((Object) (-1), EvalTools.evaluate("--i - 1", model));
         assertEquals(0, model.get("i"));
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(0, EvalTools.evaluate("--i - i--", model));
+        assertEquals((Object) 0, EvalTools.evaluate("--i - i--", model));
         assertEquals(-1, model.get("i"));
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(1, EvalTools.evaluate("--i - --i", model));
+        assertEquals((Object) 1, EvalTools.evaluate("--i - --i", model));
         assertEquals(-1, model.get("i"));
 
 
@@ -132,23 +132,23 @@ public class EvalToolsTest {
 
         model = new HashMap<String, Object>();
         model.put("a", "ololo");
-        assertEquals(6, EvalTools.evaluate("a!=null?a.length()+1:1+\"ololo\"", model));
+        assertEquals((Object) 6, EvalTools.evaluate("a!=null?a.length()+1:1+\"ololo\"", model));
         assertEquals("1ololo", EvalTools.evaluate("a==null?a.length()+1:1+\"ololo\"", model));
-        assertEquals(15, EvalTools.evaluate("4+(a!=null?a.length()+1:1+\"ololo\")+5", model));
+        assertEquals((Object) 15, EvalTools.evaluate("4+(a!=null?a.length()+1:1+\"ololo\")+5", model));
 
 
         model = new HashMap<String, Object>();
         model.put("i", 0);
-        assertEquals(5, EvalTools.evaluate("i+=5", model));
-        assertEquals(10, EvalTools.evaluate("i*=2", model));
-        assertEquals(2, EvalTools.evaluate("i/=5", model));
-        assertEquals(0, EvalTools.evaluate("i-=2", model));
-        assertEquals(3, EvalTools.evaluate("i+=1+2", model));
+        assertEquals((Object) 5, EvalTools.evaluate("i+=5", model));
+        assertEquals((Object) 10, EvalTools.evaluate("i*=2", model));
+        assertEquals((Object) 2, EvalTools.evaluate("i/=5", model));
+        assertEquals((Object) 0, EvalTools.evaluate("i-=2", model));
+        assertEquals((Object) 3, EvalTools.evaluate("i+=1+2", model));
 
 
         model = new HashMap<String, Object>();
         model.put("i", 0);
-        assertEquals(3, EvalTools.evaluate("i=1+2", model));
+        assertEquals((Object) 3, EvalTools.evaluate("i=1+2", model));
         assertEquals(3, model.get("i"));
 
 
@@ -205,68 +205,68 @@ public class EvalToolsTest {
         assertEquals(true, EvalTools.evaluate("true&&(false|!true) | 3>2 ", model));
 
         System.out.println("test static methods");
-        assertEquals(1, EvalTools.evaluate("java.lang.Math.abs(-1)"));
-        assertEquals(1, EvalTools.evaluate("Math.abs(-1)"));
-        assertEquals(2, EvalTools.evaluate("Math.abs(-1)+Math.abs(-1)"));
-        assertEquals(2d, EvalTools.evaluate("Math.sqrt(2+2)"));
-        assertEquals(4d, EvalTools.evaluate("Math.pow(2,(2*2)/(2))"));
-        assertEquals(Math.PI, EvalTools.evaluate("Math.PI"));
+        assertEquals((Object) 1, EvalTools.evaluate("java.lang.Math.abs(-1)"));
+        assertEquals((Object) 1, EvalTools.evaluate("Math.abs(-1)"));
+        assertEquals((Object) 2, EvalTools.evaluate("Math.abs(-1)+Math.abs(-1)"));
+        assertEquals((Object) 2d, EvalTools.evaluate("Math.sqrt(2+2)"));
+        assertEquals((Object) 4d, EvalTools.evaluate("Math.pow(2,(2*2)/(2))"));
+        assertEquals((Object)Math.PI, EvalTools.evaluate("Math.PI"));
 
         System.out.println("test constructors");
         assertEquals("ololo", EvalTools.evaluate("new String(\"ololo\")"));
 
         System.out.println("test fields");
-        assertEquals(1, EvalTools.evaluate("new java.awt.Point(1,2).x"));
-        assertEquals(3, EvalTools.evaluate("new java.awt.Point(1,2).x + new java.awt.Point(1,2).y"));
+        assertEquals((Object) 1, EvalTools.evaluate("new java.awt.Point(1,2).x"));
+        assertEquals((Object) 3, EvalTools.evaluate("new java.awt.Point(1,2).x + new java.awt.Point(1,2).y"));
 
 
         System.out.println("test user functions");
         UserFunction y = new UserFunction("y", "x*2", "x");
         functions = new HashMap<String, UserFunction>();
         functions.put(y.getName(), y);
-        assertEquals(10, EvalTools.evaluate("y(5)", null, functions));
+        assertEquals((Object) 10, EvalTools.evaluate("y(5)", null, functions));
 
         functions = new HashMap<String, UserFunction>();
         functions.put("y", new UserFunction("y", "x*2", "x"));
-        assertEquals(8, EvalTools.evaluate("y(2*(10/5))", null, functions));
-
-        functions = new HashMap<String, UserFunction>();
-        functions.put("y", new UserFunction("y", "x*2", "x"));
-        functions.put("z", new UserFunction("z", "y(x)+x", "x"));
-        assertEquals(15, EvalTools.evaluate("z(5)", null, functions));
+        assertEquals((Object) 8, EvalTools.evaluate("y(2*(10/5))", null, functions));
 
         functions = new HashMap<String, UserFunction>();
         functions.put("y", new UserFunction("y", "x*2", "x"));
         functions.put("z", new UserFunction("z", "y(x)+x", "x"));
-        assertEquals(11, EvalTools.evaluate("z(5) - y(2)", null, functions));
+        assertEquals((Object) 15, EvalTools.evaluate("z(5)", null, functions));
 
         functions = new HashMap<String, UserFunction>();
         functions.put("y", new UserFunction("y", "x*2", "x"));
         functions.put("z", new UserFunction("z", "y(x)+x", "x"));
-        assertEquals(9, EvalTools.evaluate("z(5) - z(2)", null, functions));
+        assertEquals((Object) 11, EvalTools.evaluate("z(5) - y(2)", null, functions));
+
+        functions = new HashMap<String, UserFunction>();
+        functions.put("y", new UserFunction("y", "x*2", "x"));
+        functions.put("z", new UserFunction("z", "y(x)+x", "x"));
+        assertEquals((Object) 9, EvalTools.evaluate("z(5) - z(2)", null, functions));
 
         functions = new HashMap<String, UserFunction>();
         functions.put("y", new UserFunction("y", "2*2"));
-        assertEquals(4, EvalTools.evaluate("y()", null, functions));
+        assertEquals((Object) 4, EvalTools.evaluate("y()", null, functions));
 
         model = new HashMap<String, Object>();
         model.put("x", 0);
         model.put("g", 0);
         functions = new HashMap<String, UserFunction>();
         functions.put("it", new UserFunction("it", "i<end&&(g=++x)==g?it(i+1,end):g", "i", "end"));
-        assertEquals(10, EvalTools.evaluate("it(0,10)", model, functions));
+        assertEquals((Object) 10, EvalTools.evaluate("it(0,10)", model, functions));
         assertEquals(10, model.get("x"));
 
         assertEquals(true, EvalTools.evaluate("(Math.sin((3.1416/2))) > 0"));
 
         model = new HashMap<String, Object>();
         model.put("x", 0);
-        assertEquals(0, EvalTools.evaluate("x = x++", model));
+        assertEquals((Object) 0, EvalTools.evaluate("x = x++", model));
 
 
         System.out.println("test variables definition");
         model = new HashMap<String, Object>();
-        assertEquals(1, EvalTools.evaluate("def x = 1", model));
+        assertEquals((Object) 1, EvalTools.evaluate("def x = 1", model));
         assertEquals(1, model.get("x"));
 
 
@@ -286,7 +286,7 @@ public class EvalToolsTest {
         assertEquals("qwerty", ((Map) EvalTools.evaluate("[qwe:\"qwerty\"]")).get("qwe").toString());
         assertEquals("qwe\",rty", ((Map) EvalTools.evaluate("[qwe:\"qwe\\\",rty\"]")).get("qwe").toString());
         assertEquals(1, ((Map) ((Map) EvalTools.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]]")).get("olo")).get("asd"));
-        assertEquals(1, EvalTools.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]].olo.asd"));
+        assertEquals((Object) 1, EvalTools.evaluate("[qwe:\"qwe\\\",rty\",olo:[asd:1]].olo.asd"));
 
         model = new HashMap<String, Object>();
         model.put("x", 1);
@@ -298,33 +298,33 @@ public class EvalToolsTest {
         assertTrue(EvalTools.evaluate("def x = [:]", model) instanceof Map);
         assertEquals("value", EvalTools.evaluate("x.key = \"value\"", model).toString());
         assertEquals("value", ((Map) model.get("x")).get("key").toString());
-        assertEquals(1, EvalTools.evaluate("x.key = 1", model));
-        assertEquals(1, EvalTools.evaluate("x.key++", model));
+        assertEquals((Object) 1, EvalTools.evaluate("x.key = 1", model));
+        assertEquals((Object) 1, EvalTools.evaluate("x.key++", model));
         assertEquals(2, ((Map) model.get("x")).get("key"));
-        assertEquals(4, EvalTools.evaluate("x.key+=2", model));
-        assertEquals(12, EvalTools.evaluate("x.key*=3", model));
-        assertEquals(3, EvalTools.evaluate("x.key/=4", model));
-        assertEquals(0, EvalTools.evaluate("x.key-=3", model));
-        assertEquals(1, EvalTools.evaluate("++x.key", model));
-        assertEquals(0, EvalTools.evaluate("--x.key", model));
-        assertEquals(0, EvalTools.evaluate("x.key--", model));
+        assertEquals((Object) 4, EvalTools.evaluate("x.key+=2", model));
+        assertEquals((Object) 12, EvalTools.evaluate("x.key*=3", model));
+        assertEquals((Object) 3, EvalTools.evaluate("x.key/=4", model));
+        assertEquals((Object) 0, EvalTools.evaluate("x.key-=3", model));
+        assertEquals((Object) 1, EvalTools.evaluate("++x.key", model));
+        assertEquals((Object) 0, EvalTools.evaluate("--x.key", model));
+        assertEquals((Object) 0, EvalTools.evaluate("x.key--", model));
         assertEquals(-1, ((Map) model.get("x")).get("key"));
 
         model = new HashMap<String, Object>();
         Point p = new Point(0, 0);
         model.put("p", p);
-        assertEquals(0, EvalTools.evaluate("p.x", model));
-        assertEquals(0, EvalTools.evaluate("p.x++", model));
-        assertEquals(2, EvalTools.evaluate("++p.x", model));
-        assertEquals(2, p.x);
+        assertEquals((Object) 0, EvalTools.evaluate("p.x", model));
+        assertEquals((Object) 0, EvalTools.evaluate("p.x++", model));
+        assertEquals((Object) 2, EvalTools.evaluate("++p.x", model));
+        assertEquals((Object) 2, p.x);
 
 
         model = new HashMap<String, Object>();
         assertTrue(EvalTools.evaluate("def x = [:]", model) instanceof Map);
-        assertEquals(1, EvalTools.evaluate("x[\"key\"] = 1", model));
-        assertEquals(1, EvalTools.evaluate("x[\"key\"]", model));
-        assertEquals(1, ((Map) model.get("x")).get("key"));
-        assertEquals(3, EvalTools.evaluate("x[\"key\"] +=2", model));
+        assertEquals((Object) 1, EvalTools.evaluate("x[\"key\"] = 1", model));
+        assertEquals((Object) 1, EvalTools.evaluate("x[\"key\"]", model));
+        assertEquals((Object) 1, ((Map) model.get("x")).get("key"));
+        assertEquals((Object) 3, EvalTools.evaluate("x[\"key\"] +=2", model));
 
         model = new HashMap<String, Object>();
         model.put("arr", new String[1]);
@@ -332,27 +332,27 @@ public class EvalToolsTest {
 
         model = new HashMap<String, Object>();
         assertTrue(EvalTools.evaluate("def l = []", model) instanceof List);
-        assertEquals(1, EvalTools.evaluate("l[0] = 1", model));
-        assertEquals(1, EvalTools.evaluate("l[0]", model));
-        assertEquals(2, EvalTools.evaluate("l[2]=2", model));
+        assertEquals((Object) 1, EvalTools.evaluate("l[0] = 1", model));
+        assertEquals((Object) 1, EvalTools.evaluate("l[0]", model));
+        assertEquals((Object) 2, EvalTools.evaluate("l[2]=2", model));
         assertEquals("[1, null, 2]", EvalTools.evaluate("l", model).toString());
 
         model = new HashMap<String, Object>();
         assertTrue(EvalTools.evaluate("def m = [:]", model) instanceof Map);
         assertTrue(EvalTools.evaluate("m.a = [:]", model) instanceof Map);
-        assertEquals(1, EvalTools.evaluate("m[\"a\"][\"b\"] = 1", model));
-        assertEquals(1, EvalTools.evaluate("m.a.b = 1", model));
+        assertEquals((Object) 1, EvalTools.evaluate("m[\"a\"][\"b\"] = 1", model));
+        assertEquals((Object) 1, EvalTools.evaluate("m.a.b = 1", model));
 
         assertEquals("[{id=1}, {id=2}, {id=3}]", EvalTools.evaluate("[[id:1],[id:2],[id:3]]").toString());
 
 
-        assertEquals(5, EvalTools.evaluate("(0..5).size()"));
-        assertEquals(5, EvalTools.evaluate("(1+2-3 .. 5).size()"));
+        assertEquals((Object) 5, EvalTools.evaluate("(0..5).size()"));
+        assertEquals((Object) 5, EvalTools.evaluate("(1+2-3 .. 5).size()"));
 
         model = new HashMap<String, Object>();
         EvalTools.evaluate("def x=0..10", model);
 
-        assertEquals(5, EvalTools.evaluate("x.get(5)", model));
+        assertEquals((Object) 5, EvalTools.evaluate("x.get(5)", model));
         boolean exception = false;
         try {
             EvalTools.evaluate("x.put(5)", model);
@@ -394,8 +394,8 @@ public class EvalToolsTest {
 
         model = new HashMap<String, Object>();
         model.put("i", 1);
-        assertEquals(1, EvalTools.evaluate("i++?:0", model));
-        assertEquals(2, EvalTools.evaluate("i", model));
+        assertEquals((Object) 1, EvalTools.evaluate("i++?:0", model));
+        assertEquals((Object) 2, EvalTools.evaluate("i", model));
     }
 
     @Test
@@ -670,8 +670,8 @@ public class EvalToolsTest {
         Assert.assertTrue((Boolean) EvalTools.evaluate("l.any({it > 2})", model));
         Assert.assertTrue(!(Boolean) EvalTools.evaluate("l.any({it > 3})", model));
 
-        assertEquals(1, EvalTools.evaluate("l.findIndexOf({it == 2})", model));
-        assertEquals(-1, EvalTools.evaluate("l.findIndexOf({it == 4})", model));
+        assertEquals((Object) 1, EvalTools.evaluate("l.findIndexOf({it == 2})", model));
+        assertEquals((Object) (-1), EvalTools.evaluate("l.findIndexOf({it == 4})", model));
 
         //TODO [1,2,3].sum() == 6
 
@@ -773,7 +773,7 @@ public class EvalToolsTest {
         model.put("i", 0);
         String s = "i++;" +
                 "i*=2;";
-        assertEquals(2, EvalTools.evaluate(s, model));
+        assertEquals((Object) 2, EvalTools.evaluate(s, model));
 
     }
 
@@ -821,11 +821,11 @@ public class EvalToolsTest {
                 "i";
 
         model.put("i", 1);
-        assertEquals(2, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 2, EvalTools.evaluate(exp, model));
         model.put("i", 2);
-        assertEquals(4, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 4, EvalTools.evaluate(exp, model));
         model.put("i", -1);
-        assertEquals(-1, EvalTools.evaluate(exp, model));
+        assertEquals((Object) (-1), EvalTools.evaluate(exp, model));
 
 
         exp = "if(i>0){" +
@@ -834,11 +834,11 @@ public class EvalToolsTest {
                 "i";
 
         model.put("i", 1);
-        assertEquals(5, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 5, EvalTools.evaluate(exp, model));
         model.put("i", 2);
-        assertEquals(7, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 7, EvalTools.evaluate(exp, model));
         model.put("i", -1);
-        assertEquals(-1, EvalTools.evaluate(exp, model));
+        assertEquals((Object) (-1), EvalTools.evaluate(exp, model));
 
 
         exp = "if(i>0)" +
@@ -848,9 +848,9 @@ public class EvalToolsTest {
                 "i";
 
         model.put("i", 2);
-        assertEquals(4, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 4, EvalTools.evaluate(exp, model));
         model.put("i", -2);
-        assertEquals(2, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 2, EvalTools.evaluate(exp, model));
 
 
         exp = "if(i>0){" +
@@ -861,9 +861,9 @@ public class EvalToolsTest {
                 "i";
 
         model.put("i", 2);
-        assertEquals(5, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 5, EvalTools.evaluate(exp, model));
         model.put("i", -2);
-        assertEquals(2, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 2, EvalTools.evaluate(exp, model));
 
 
         exp = "if(i>0)" +
@@ -875,9 +875,9 @@ public class EvalToolsTest {
                 "i";
 
         model.put("i", 2);
-        assertEquals(4, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 4, EvalTools.evaluate(exp, model));
         model.put("i", -2);
-        assertEquals(3, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 3, EvalTools.evaluate(exp, model));
 
 
         exp = "if(i==0)" +
@@ -889,11 +889,11 @@ public class EvalToolsTest {
                 "i";
 
         model.put("i", 0);
-        assertEquals(1, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 1, EvalTools.evaluate(exp, model));
         model.put("i", 1);
-        assertEquals(2, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 2, EvalTools.evaluate(exp, model));
         model.put("i", -1);
-        assertEquals(3, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 3, EvalTools.evaluate(exp, model));
 
 
         exp = "if(i>0) if(i<5)" +
@@ -905,13 +905,13 @@ public class EvalToolsTest {
                 "i";
 
         model.put("i", 1);
-        assertEquals(2, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 2, EvalTools.evaluate(exp, model));
         model.put("i", 7);
-        assertEquals(3, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 3, EvalTools.evaluate(exp, model));
         model.put("i", 15);
-        assertEquals(4, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 4, EvalTools.evaluate(exp, model));
         model.put("i", 0);
-        assertEquals(0, EvalTools.evaluate(exp, model));
+        assertEquals((Object) 0, EvalTools.evaluate(exp, model));
     }
 
     @Test
@@ -1708,7 +1708,7 @@ public class EvalToolsTest {
     public void test_sam_with_array_param() {
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("bytes", new byte[123]);
-        Assert.assertEquals(123, EvalTools.evaluate("com.wizzardo.tools.interfaces.Mapper<byte[], Integer> mapper = (bytes -> bytes.length);\n" +
+        Assert.assertEquals((Object) 123, EvalTools.evaluate("com.wizzardo.tools.interfaces.Mapper<byte[], Integer> mapper = (bytes -> bytes.length);\n" +
                 "mapper.map(bytes)", model));
     }
 
@@ -1716,7 +1716,7 @@ public class EvalToolsTest {
     public void test_cast_with_double_generics() {
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("list", Collections.singleton("test"));
-        Assert.assertEquals(1, EvalTools.evaluate("def c = (list -> list.size());\n" +
+        Assert.assertEquals((Object) 1, EvalTools.evaluate("def c = (list -> list.size());\n" +
                 "com.wizzardo.tools.interfaces.Mapper<List<String>, Integer> mapper = (com.wizzardo.tools.interfaces.Mapper<List<String>, Integer>) c;\n" +
                 "mapper.map(list)", model));
     }
@@ -1724,7 +1724,7 @@ public class EvalToolsTest {
     @Test
     public void test_return() {
         Map<String, Object> model = new HashMap<String, Object>();
-        Assert.assertEquals(1, EvalTools.evaluate("def c = { -> \n" +
+        Assert.assertEquals((Object) 1, EvalTools.evaluate("def c = { -> \n" +
                 "for(int i = 0; i < 5; i++){\n" +
                 "  if(i==1){\n" +
                 "    return 1;\n" +
@@ -1738,7 +1738,7 @@ public class EvalToolsTest {
     @Test
     public void test_no_iterator_variable_in_context_after_loop() {
         Map<String, Object> model = new HashMap<String, Object>();
-        Assert.assertEquals(10, EvalTools.evaluate("def sum = 0;\n" +
+        Assert.assertEquals((Object) 10, EvalTools.evaluate("def sum = 0;\n" +
                 "for(int i = 0; i < 5; i++){\n" +
                 "  sum+=i;\n" +
                 "}\n" +
@@ -1752,7 +1752,7 @@ public class EvalToolsTest {
         Map<String, Object> delegate = new HashMap<String, Object>();
         delegate.put("a", "3");
         model.put("delegate", delegate);
-        Assert.assertEquals(11, EvalTools.evaluate("" +
+        Assert.assertEquals((Object) 11, EvalTools.evaluate("" +
                 "def b = {\n" +
                 "  int a = 2;\n" +
                 "  a = 22;\n" +
