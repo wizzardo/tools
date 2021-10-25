@@ -3,6 +3,8 @@ package com.wizzardo.tools.bytecode;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DynamicProxyTest {
@@ -283,6 +285,26 @@ public class DynamicProxyTest {
         SuperClassArgsLongLongReturnLong o = DynamicProxy.create(SuperClassArgsLongLongReturnLong.class, (that, method, args) -> ((Long) args[0]) * 2l + ((Long) args[1]) * 2l);
         Assert.assertEquals(3, new SuperClassArgsLongLongReturnLong().test(1, 2));
         Assert.assertEquals(6, o.test(1, 2));
+    }
+
+
+    public static class SuperClassConstructorArgsInt {
+        int a;
+
+        public SuperClassConstructorArgsInt(int a) {
+            this.a = a;
+        }
+    }
+
+    @Test
+    public void test_constructor_args_int() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        String name = SuperClassConstructorArgsInt.class.getSimpleName() + "Extension";
+        ClassBuilder builder = DynamicProxyFactory.createBuilder(name, SuperClassConstructorArgsInt.class);
+        Class<?> clazz = DynamicProxyFactory.loadClass(name, builder.build());
+        Constructor<?> constructor = clazz.getConstructor(int.class);
+        SuperClassConstructorArgsInt o = (SuperClassConstructorArgsInt) constructor.newInstance(1);
+        Assert.assertEquals(name, o.getClass().getSimpleName());
+        Assert.assertEquals(1, o.a);
     }
 
 }

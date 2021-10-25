@@ -3,6 +3,7 @@ package com.wizzardo.tools.bytecode;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.misc.With;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -63,10 +64,14 @@ public class DynamicProxyFactory {
         ClassBuilder builder = new ClassBuilder()
                 .setSuperClass(clazz)
                 .setClassFullName(classFullName)
-                .withDefaultConstructor()
                 .implement(DynamicProxy.class)
                 .field("handler", Handler.class)
                 .fieldSetter("handler");
+
+        Constructor<?>[] constructors = clazz.getConstructors();
+        for (Constructor<?> constructor : constructors) {
+            builder.withSuperConstructor(constructor.getParameterTypes());
+        }
 
         for (Method method : clazz.getDeclaredMethods()) {
             addHandlerCallForMethod(builder, method);
@@ -87,18 +92,27 @@ public class DynamicProxyFactory {
         }.loadClass(classFullName.replace('/', '.')));
     }
 
+    public static ClassBuilder createBuilder(String fullName, Class<?> superClass) {
+        return createBuilder(fullName, superClass, null);
+    }
+
     public static ClassBuilder createBuilder(String fullName, Class<?> superClass, Class<?>[] interfaces) {
         ClassBuilder builder = new ClassBuilder()
                 .setSuperClass(superClass)
                 .setClassFullName(fullName)
-                .withDefaultConstructor()
                 .implement(DynamicProxy.class)
                 .field("handler", Handler.class)
                 .fieldSetter("handler");
 
-        for (Class<?> anInterface : interfaces) {
-            builder.implement(anInterface);
+        Constructor<?>[] constructors = superClass.getConstructors();
+        for (Constructor<?> constructor : constructors) {
+            builder.withSuperConstructor(constructor.getParameterTypes());
         }
+
+        if (interfaces != null)
+            for (Class<?> anInterface : interfaces) {
+                builder.implement(anInterface);
+            }
         return builder;
     }
 

@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import static com.wizzardo.tools.bytecode.ByteCodeParser.int1toBytes;
+
 public class ClassBuilder {
     public static final Class<?>[] EMPTY_ARGS = new Class[0];
     ByteCodeParser reader = new ByteCodeParser();
@@ -90,6 +92,66 @@ public class ClassBuilder {
 
         append(methodInfo);
         return this;
+    }
+
+
+    public void withSuperConstructor(Class<?>[] parameterTypes) {
+        if (reader.thisClass == 0)
+            throw new IllegalStateException("thisClass is not set");
+        if (reader.superClass == 0)
+            throw new IllegalStateException("superClass is not set");
+
+        method("<init>", parameterTypes, void.class, b -> {
+            Code_attribute codeAttribute = new Code_attribute(reader);
+            codeAttribute.max_locals = 1 + (parameterTypes.length == 0 ? 0 : Arrays.stream(parameterTypes).mapToInt(it -> it == long.class || it == double.class ? 2 : 1).sum());
+            codeAttribute.max_stack = 1 + parameterTypes.length * 2; // not optimal but should be ok
+            codeAttribute.attribute_name_index = getOrCreateUtf8Constant("Code");
+
+            int nameIndex = getOrCreateUtf8Constant("<init>");
+            int descriptorIndex = getOrCreateUtf8Constant(getMethodDescriptor(parameterTypes, void.class));
+
+            int superConstructorNameAndTypeIndex = getOrCreateNameAndTypeConstant(nameIndex, descriptorIndex);
+
+            int superConstructorIndex = getOrCreateMethodRef(reader.superClass, superConstructorNameAndTypeIndex);
+
+            CodeBuilder code = new CodeBuilder()
+                    .append(Instruction.aload_0);
+
+            if (parameterTypes.length != 0) {
+                int localVarIndexOffset = 1;
+                for (int i = 0; i < parameterTypes.length; i++) {
+                    Class<?> parameterType = parameterTypes[i];
+                    if (parameterType.isPrimitive()) {
+                        if (parameterType == int.class) {
+                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+                        } else if (parameterType == long.class) {
+                            code.append(Instruction.lload, int1toBytes(i + localVarIndexOffset++));
+                        } else if (parameterType == byte.class) {
+                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+                        } else if (parameterType == short.class) {
+                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+                        } else if (parameterType == float.class) {
+                            code.append(Instruction.fload, int1toBytes(i + localVarIndexOffset));
+                        } else if (parameterType == double.class) {
+                            code.append(Instruction.dload, int1toBytes(i + localVarIndexOffset++));
+                        } else if (parameterType == boolean.class) {
+                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+                        } else if (parameterType == char.class) {
+                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+                        }
+                    } else {
+                        code.append(Instruction.aload, int1toBytes(i + 1));
+                    }
+                }
+            }
+
+            code.append(Instruction.invokespecial, ByteCodeParser.int2toBytes(superConstructorIndex));
+            code.append(Instruction.return_);
+            codeAttribute.code = code.build();
+            codeAttribute.code_length = codeAttribute.code.length;
+            codeAttribute.attribute_length = codeAttribute.updateLength();
+            return codeAttribute;
+        });
     }
 
     public ClassBuilder implement(Class<?> intrface) {
@@ -195,7 +257,7 @@ public class ClassBuilder {
 
         int classIndex = getOrCreateClassConstant(method.getDeclaringClass());
         int nameIndex = getOrCreateUtf8Constant(method.getName());
-        String descriptor = "(" + (Arrays.stream(method.getParameterTypes()).map(this::getFieldDescription).collect(Collectors.joining(""))) + ")" + getFieldDescription(method.getReturnType());
+        String descriptor = getMethodDescriptor(method);
         int descriptorIndex = getOrCreateUtf8Constant(descriptor);
 
         int nameAndTypeIndex = getOrCreateNameAndTypeConstant(nameIndex, descriptorIndex);
@@ -226,7 +288,7 @@ public class ClassBuilder {
 
         int classIndex = getOrCreateClassConstant(method.getDeclaringClass());
         int nameIndex = getOrCreateUtf8Constant(method.getName());
-        String descriptor = "(" + (Arrays.stream(method.getParameterTypes()).map(this::getFieldDescription).collect(Collectors.joining(""))) + ")" + getFieldDescription(method.getReturnType());
+        String descriptor = getMethodDescriptor(method);
         int descriptorIndex = getOrCreateUtf8Constant(descriptor);
 
         int nameAndTypeIndex = getOrCreateNameAndTypeConstant(nameIndex, descriptorIndex);
@@ -301,7 +363,7 @@ public class ClassBuilder {
 
     public ClassBuilder method(String name, Class<?>[] args, Class<?> returnType, Mapper<ClassBuilder, Code_attribute> codeBuilderMapper) {
         int nameIndex = getOrCreateUtf8Constant(name);
-        String descriptor = "(" + (Arrays.stream(args).map(this::getFieldDescription).collect(Collectors.joining(""))) + ")" + getFieldDescription(returnType);
+        String descriptor = getMethodDescriptor(args, returnType);
         int descriptorIndex = getOrCreateUtf8Constant(descriptor);
 
         MethodInfo mi = new MethodInfo();
@@ -322,9 +384,17 @@ public class ClassBuilder {
         if (nameIndex == -1)
             return false;
 
-        String descriptor = "(" + (Arrays.stream(method.getParameterTypes()).map(this::getFieldDescription).collect(Collectors.joining(""))) + ")" + getFieldDescription(method.getReturnType());
+        String descriptor = getMethodDescriptor(method);
         int descriptorIndex = reader.findUtf8ConstantIndex(descriptor.getBytes(StandardCharsets.UTF_8));
         return descriptorIndex != -1;
+    }
+
+    private String getMethodDescriptor(Method method) {
+        return getMethodDescriptor(method.getParameterTypes(), method.getReturnType());
+    }
+
+    private String getMethodDescriptor(Class<?>[] args, Class<?> returnType) {
+        return "(" + (Arrays.stream(args).map(this::getFieldDescription).collect(Collectors.joining(""))) + ")" + getFieldDescription(returnType);
     }
 
     private String getFieldDescription(Class type) {
