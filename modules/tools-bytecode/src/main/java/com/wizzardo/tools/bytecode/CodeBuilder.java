@@ -44,6 +44,11 @@ public class CodeBuilder {
         return this;
     }
 
+    public CodeBuilder append(CodeBuilder cb) {
+        operations.addAll(cb.operations);
+        return this;
+    }
+
     public CodeBuilder append(Instruction instruction, byte[] args) {
         operations.add(new Operation(instruction, args));
         return this;

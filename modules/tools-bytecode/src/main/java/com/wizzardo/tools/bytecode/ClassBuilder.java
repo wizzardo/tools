@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class ClassBuilder {
-    public static final Class[] EMPTY_ARGS = new Class[0];
+    public static final Class<?>[] EMPTY_ARGS = new Class[0];
     ByteCodeParser reader = new ByteCodeParser();
 
     {
@@ -33,7 +33,7 @@ public class ClassBuilder {
         return this;
     }
 
-    public ClassBuilder setSuperClass(Class clazz) {
+    public ClassBuilder setSuperClass(Class<?> clazz) {
         return setSuperClassFullName(clazz.getTypeName());
     }
 
@@ -101,7 +101,7 @@ public class ClassBuilder {
         return this;
     }
 
-    public ClassBuilder field(String name, Class type) {
+    public ClassBuilder field(String name, Class<?> type) {
         String description = getFieldDescription(type);
         int nameIndex = getOrCreateUtf8Constant(name);
         int descriptorIndex = getOrCreateUtf8Constant(description);
@@ -109,6 +109,7 @@ public class ClassBuilder {
             return this;
 
         FieldInfo fi = new FieldInfo();
+        fi.access_flags = AccessFlags.ACC_PUBLIC;
         fi.name_index = nameIndex;
         fi.descriptor_index = descriptorIndex;
         append(fi);
@@ -314,6 +315,16 @@ public class ClassBuilder {
         append(mi);
 
         return this;
+    }
+
+    public boolean hasMethod(Method method) {
+        int nameIndex = reader.findUtf8ConstantIndex(method.getName().getBytes(StandardCharsets.UTF_8));
+        if (nameIndex == -1)
+            return false;
+
+        String descriptor = "(" + (Arrays.stream(method.getParameterTypes()).map(this::getFieldDescription).collect(Collectors.joining(""))) + ")" + getFieldDescription(method.getReturnType());
+        int descriptorIndex = reader.findUtf8ConstantIndex(descriptor.getBytes(StandardCharsets.UTF_8));
+        return descriptorIndex != -1;
     }
 
     private String getFieldDescription(Class type) {
