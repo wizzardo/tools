@@ -145,7 +145,7 @@ public class DBTools {
         return rs.getLong(1);
     }
 
-    public long insertInto(Object o, Table t) throws SQLException {
+    public long insertInto(Object o, Table t) {
         return withBuilder(c -> insertInto(c, o, t));
     }
 

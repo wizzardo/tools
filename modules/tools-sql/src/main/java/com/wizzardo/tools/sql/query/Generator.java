@@ -101,14 +101,13 @@ public class Generator {
         List<FieldDescription> fields = (List<FieldDescription>) Flow.of(definitions)
                 .map(expression -> {
                     if (expression instanceof Expression.Definition) {
-                        String type = ((Expression.Definition) expression).type;
-                        Class clazz = EvalTools.findClass(type, imports, model);
+                        Class clazz = ((Expression.Definition) expression).type;
                         if (clazz != null)
                             return createFieldDescription(getFieldType(clazz), clazz, ((Expression.Definition) expression).name);
-                        Pair<String, ClassExpression> resolve = model.resolve(type);
-                        if (resolve != null && (clazz = getFieldType(resolve.value)) != null) {
-                            return createFieldDescription(clazz, resolve.value, ((Expression.Definition) expression).name);
-                        }
+//                        Pair<String, ClassExpression> resolve = model.resolve(type);
+//                        if (resolve != null && (clazz = getFieldType(resolve.value)) != null) {
+//                            return createFieldDescription(clazz, resolve.value, ((Expression.Definition) expression).name);
+//                        }
                     } else if (expression instanceof Expression.DefineAndSet) {
                         String type = ((Expression.DefineAndSet) expression).type;
                         Class clazz = EvalTools.findClass(type, imports, model);
