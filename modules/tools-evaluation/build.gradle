@@ -3,7 +3,11 @@ dependencies {
     compile project(':modules:tools-collections')
     compile project(':modules:tools-misc')
     compile project(':modules:tools-io')
+    compile project(':modules:tools-bytecode')
 }
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 archivesBaseName = "tools-evaluation"
 ext {

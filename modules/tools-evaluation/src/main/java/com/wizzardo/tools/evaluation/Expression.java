@@ -7,9 +7,6 @@ package com.wizzardo.tools.evaluation;
 import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -113,14 +110,37 @@ public abstract class Expression {
     }
 
     public static class Definition extends Holder {
-        public final String type;
+        public final Class<?> type;
         public final String name;
 
 
-        public Definition(String type, String name) {
+        public Definition(Class<?> type, String name) {
             super(name);
             this.type = type;
             this.name = name;
+        }
+    }
+
+    public static class ResolveClass extends Holder {
+        public final String className;
+
+        public ResolveClass(String name) {
+            super(name);
+            this.className = "class " + name;
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+            ClassExpression cl = (ClassExpression) model.get(className);
+            if (cl == null)
+                return null;
+
+            return cl.getJavaClass();
+        }
+
+        @Override
+        public Expression clone() {
+            return new ResolveClass(exp);
         }
     }
 
@@ -147,6 +167,7 @@ public abstract class Expression {
 
         @Override
         public Object get(Map<String, Object> model) {
+            model.put(name, null);
             return action.get(model);
         }
 

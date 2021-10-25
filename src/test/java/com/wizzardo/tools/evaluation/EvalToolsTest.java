@@ -5,6 +5,7 @@
 package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.interfaces.Consumer;
+import com.wizzardo.tools.interfaces.Filter;
 import com.wizzardo.tools.interfaces.Mapper;
 import org.junit.Assert;
 import org.junit.Test;
@@ -210,7 +211,7 @@ public class EvalToolsTest {
         assertEquals((Object) 2, EvalTools.evaluate("Math.abs(-1)+Math.abs(-1)"));
         assertEquals((Object) 2d, EvalTools.evaluate("Math.sqrt(2+2)"));
         assertEquals((Object) 4d, EvalTools.evaluate("Math.pow(2,(2*2)/(2))"));
-        assertEquals((Object)Math.PI, EvalTools.evaluate("Math.PI"));
+        assertEquals((Object) Math.PI, EvalTools.evaluate("Math.PI"));
 
         System.out.println("test constructors");
         assertEquals("ololo", EvalTools.evaluate("new String(\"ololo\")"));
@@ -1800,5 +1801,82 @@ public class EvalToolsTest {
                 "  .append('e')\n" +
                 "  .toString()\n" +
                 "", model));
+    }
+
+    static class NonNullFilter implements com.wizzardo.tools.interfaces.Filter {
+        @Override
+        public boolean allow(Object o) {
+            return o != null;
+        }
+    }
+
+    @Test
+    public void test_proxy_interface() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Object result = EvalTools.evaluate("" +
+                " static class NonNullFilter implements com.wizzardo.tools.interfaces.Filter {\n" +
+                "        @Override\n" +
+                "        public boolean allow(Object o) {\n" +
+                "            return o != null;\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n" +
+                "new NonNullFilter();" +
+                "", model);
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof com.wizzardo.tools.interfaces.Filter);
+        Filter<Object> filter = (Filter<Object>) result;
+
+        Assert.assertTrue(filter.allow("test"));
+        Assert.assertFalse(filter.allow(null));
+    }
+
+    @Test
+    public void test_proxy_interface_with_field() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Object result = EvalTools.evaluate("" +
+                " static class SameFilter implements com.wizzardo.tools.interfaces.Filter {\n" +
+                "        Object value;\n" +
+                "\n" +
+                "        @Override\n" +
+                "        public boolean allow(Object o) {\n" +
+                "            return o != null;\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n" +
+                "def filter = new SameFilter();\n" +
+                "filter.value = 'test'\n" +
+                "filter" +
+                "", model);
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof com.wizzardo.tools.interfaces.Filter);
+        Filter<Object> filter = (Filter<Object>) result;
+
+        Assert.assertTrue(filter.allow("test"));
+        Assert.assertFalse(filter.allow(null));
+    }
+
+    @Test
+    public void test_proxy_interface_with_type() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Object result = EvalTools.evaluate("" +
+                " static class NonNullFilter implements com.wizzardo.tools.interfaces.Filter<String> {\n" +
+                "        @Override\n" +
+                "        public boolean allow(String o) {\n" +
+                "            return o != null;\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n" +
+                "new NonNullFilter();" +
+                "", model);
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof com.wizzardo.tools.interfaces.Filter);
+        Filter<String> filter = (Filter<String>) result;
+
+        Assert.assertTrue(filter.allow("test"));
+        Assert.assertFalse(filter.allow(null));
     }
 }

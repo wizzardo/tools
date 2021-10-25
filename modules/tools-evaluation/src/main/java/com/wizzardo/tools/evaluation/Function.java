@@ -403,6 +403,10 @@ public class Function extends Expression {
                 }
             };
 
+        if (instance instanceof ClassExpression.ClassExpressionProxy) {
+            return getGetter(((ClassExpression.ClassExpressionProxy) instance).getClassExpression());
+        }
+
         Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
         Field field = findField(clazz, fieldName);
         if (field != null && Modifier.isPublic(field.getModifiers()))
@@ -822,7 +826,7 @@ public class Function extends Expression {
 //                        for (int j = 0; j < closureArgs.length && args != null && j < args.length; j++) {
 //                            closureArgs[j].set(args[j]);
 //                        }
-                        return closure.get(closure.context, args);
+                        return closure.getAgainst(closure.context, closure.context.get("this"), args);
                     }
                 });
     }

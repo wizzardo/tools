@@ -21,6 +21,7 @@ public class EvalTools {
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
     private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d_]+)(\\.[A-Z]?[a-zA-Z\\d_]+)*)(\\[)?]?");
+    private static final Pattern TYPE = Pattern.compile(CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)*\\>)*");
     private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*");
     private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
     private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)+\\>)?" + "\\)");
@@ -34,7 +35,10 @@ public class EvalTools {
     private static final Pattern DEF = Pattern.compile("^(static\\s+|final\\s+|private\\s+|protected\\s+|public\\s+)*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
-    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum) +([A-Za-z0-9_]+) *\\{");
+    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum) +([A-Za-z0-9_]+)" +
+            "(?<extends> +extends +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" + ")?" +
+            "(?<implements> +implements(,? +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" + ")+)?" +
+            " *\\{");
     private static final Pattern STATIC_BLOCK = Pattern.compile("(static) +\\{");
     private static final Pattern JAVA_LAMBDA = Pattern.compile("^(\\(([A-Za-z0-9_]+\\s*,?\\s*)+\\)|\\(\\s*\\)|[A-Za-z0-9_]+)\\s*->\\s*(\\{)?");
 
@@ -927,12 +931,34 @@ public class EvalTools {
                 String type = m.group(2);
 
                 boolean isEnum = "enum".equals(type);
+                Class[] interfaces = new Class[0];
+                String anImplements = m.group("implements");
+                if (anImplements != null && !anImplements.isEmpty()) {
+                    anImplements = anImplements.trim();
+                    anImplements = anImplements.substring("implements ".length()).trim();
+                    Matcher interfacesMatcher = TYPE.matcher(anImplements);
+
+                    List<String> interfacesNames = new ArrayList<>();
+                    while (interfacesMatcher.find()) {
+                        interfacesNames.add(interfacesMatcher.group(1));
+                    }
+                    interfaces = new Class[interfacesNames.size()];
+                    for (int i = 0; i < interfacesNames.size(); i++) {
+                        Class aClass = findClass(interfacesNames.get(i).trim(), imports, model);
+                        interfaces[i] = aClass;
+                        if (aClass == null)
+                            throw new IllegalStateException("Cannot find interface to implement: " + interfacesNames.get(i));
+                        if (!aClass.isInterface())
+                            throw new IllegalStateException("Cannot implement " + interfacesNames.get(i) + " - it's not an interface!");
+                    }
+                }
 
                 exp = exp.substring(m.end(), exp.length() - 1).trim();
                 List<String> lines = getBlocks(exp);
 
                 List<Expression> definitions = new ArrayList<Expression>(lines.size());
                 ClassExpression classExpression = new ClassExpression(className, definitions);
+                classExpression.interfaces = interfaces;
                 model.put("class " + className, classExpression);
 
                 for (int i = isEnum ? 1 : 0; i < lines.size(); i++) {
@@ -1087,8 +1113,16 @@ public class EvalTools {
                             }
                             return prepare(exp, model, functions, imports, isTemplate);
                         } else {
-                            model.put(m.group(3), null);
-                            return new Expression.Definition(type, m.group(3));
+                            String name = m.group(3);
+                            model.put(name, null);
+                            if (type != null && type.contains("<"))
+                                type = type.substring(0, type.indexOf('<'));
+
+                            Class typeClass = findClass(type, imports, model);
+                            if (typeClass == null)
+                                throw new IllegalStateException("Cannot find class for " + type);
+
+                            return new Expression.Definition(typeClass, name);
                         }
                     }
                 }
@@ -1231,8 +1265,12 @@ public class EvalTools {
             Matcher m = CLASS.matcher(exp);
             if (m.find()) {
                 String className = m.group(1);
+                if (className.endsWith(".class"))
+                    className = className.substring(0, className.length() - ".class".length());
+
                 StringBuilder sb = new StringBuilder(className);
 
+                Class clazz = null;
                 int i;
                 do {
                     className = sb.toString();
@@ -1241,7 +1279,7 @@ public class EvalTools {
                         thatObject = cl;
                         exp = exp.substring(sb.length());
                     } else {
-                        Class clazz = findClass(className, imports, model);
+                        clazz = findClass(className, imports, model);
                         if (clazz == null) {
                             int lastDot = sb.lastIndexOf(".");
                             if (lastDot != -1) {
@@ -1262,6 +1300,15 @@ public class EvalTools {
                     if (i > 0)
                         sb.setLength(i);
                 } while (i > 0);
+
+                if (clazz == null && m.group(0).endsWith(".class")) {
+                    className = m.group(0);
+                    if (className.endsWith(".class"))
+                        className = className.substring(0, className.length() - ".class".length());
+
+                    thatObject = new Expression.ResolveClass(className);
+                    exp = exp.substring(m.group(0).length());
+                }
             }
         }
 
@@ -1602,6 +1649,8 @@ public class EvalTools {
     }
 
     private static Class doFindClass(String s, List<String> imports) {
+        if (s.equals("def"))
+            return Object.class;
         if (s.equals("byte"))
             return byte.class;
         if (s.equals("int"))

@@ -70,8 +70,9 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         HashMap<String, Object> local = model != null ? new HashMap<String, Object>(model) : new HashMap<String, Object>(2, 1);
         local.putAll(context);
         local.put("delegate", thisObject);
-        if (model != null)
-            local.put("this", model);
+        local.put("this", thisObject);
+//        if (model != null)
+//            local.put("this", model);
 
         if (arg != null) {
             if (args.length == 0 && arg.length == 1) {
