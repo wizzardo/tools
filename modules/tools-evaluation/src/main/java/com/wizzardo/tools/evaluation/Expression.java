@@ -113,11 +113,26 @@ public abstract class Expression {
         public final Class<?> type;
         public final String name;
 
-
         public Definition(Class<?> type, String name) {
             super(name);
             this.type = type;
             this.name = name;
+        }
+    }
+
+    public static class DefinitionWithClassExpression extends Holder {
+        public final ClassExpression type;
+        public final String name;
+
+        public DefinitionWithClassExpression(ClassExpression type, String name) {
+            super(name);
+            this.type = type;
+            this.name = name;
+        }
+
+        @Override
+        public Expression clone() {
+            return new DefinitionWithClassExpression(type, name);
         }
     }
 

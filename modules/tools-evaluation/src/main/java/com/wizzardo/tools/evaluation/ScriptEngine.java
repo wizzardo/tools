@@ -44,10 +44,12 @@ public class ScriptEngine {
     public static class Binding extends HashMap<String, Object> {
         protected File root;
         protected String pack;
+        protected String path;
         protected List<String> imports;
         protected List<String> dependencies = new ArrayList<String>();
         protected FileFilter fileFilter;
         protected Map<String, Class> classCache = new HashMap<String, Class>();
+        protected String currentClass;
         protected long findClassDuration = 0;
         protected long findClassCount = 0;
 
@@ -57,7 +59,8 @@ public class ScriptEngine {
 
         public Binding(File root, String pack, List<String> imports, FileFilter filter) {
             this.root = root;
-            this.pack = pack.replace('.', '/') + '/';
+            this.pack = pack;
+            this.path = pack.replace('.', '/') + '/';
             this.imports = imports;
             this.fileFilter = filter;
         }
@@ -117,9 +120,9 @@ public class ScriptEngine {
             }
 
             {
-                File file = new File(root, pack + name + ".groovy");
+                File file = new File(root, path + name + ".groovy");
                 if (!file.exists())
-                    file = new File(root, pack + name + ".java");
+                    file = new File(root, path + name + ".java");
 
                 if (file.exists() && fileFilter.accept(file)) {
                     return file.getPath();

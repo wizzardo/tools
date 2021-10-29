@@ -959,6 +959,17 @@ public class EvalTools {
                 List<Expression> definitions = new ArrayList<Expression>(lines.size());
                 ClassExpression classExpression = new ClassExpression(className, definitions);
                 classExpression.interfaces = interfaces;
+                String parentClass = null;
+                if (model instanceof ScriptEngine.Binding) {
+                    ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
+                    if (binding.currentClass == null)
+                        classExpression.packageName = binding.pack;
+                    else {
+                        classExpression.packageName = binding.pack + "." + binding.currentClass;
+                        parentClass = binding.currentClass;
+                    }
+                    binding.currentClass = className;
+                }
                 model.put("class " + className, classExpression);
 
                 for (int i = isEnum ? 1 : 0; i < lines.size(); i++) {
@@ -1017,6 +1028,11 @@ public class EvalTools {
                         }
                         classExpression.context.put(name, classExpression.newInstance(args));
                     }
+                }
+
+                if (model instanceof ScriptEngine.Binding) {
+                    ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
+                    binding.currentClass = parentClass;
                 }
 
                 return classExpression;
@@ -1117,6 +1133,9 @@ public class EvalTools {
                             model.put(name, null);
                             if (type != null && type.contains("<"))
                                 type = type.substring(0, type.indexOf('<'));
+
+                            if (model.containsKey("class " + type))
+                                return new Expression.DefinitionWithClassExpression((ClassExpression) model.get("class " + type), name);
 
                             Class typeClass = findClass(type, imports, model);
                             if (typeClass == null)

@@ -104,20 +104,24 @@ public class Generator {
                         Class clazz = ((Expression.Definition) expression).type;
                         if (clazz != null)
                             return createFieldDescription(getFieldType(clazz), clazz, ((Expression.Definition) expression).name);
-//                        Pair<String, ClassExpression> resolve = model.resolve(type);
-//                        if (resolve != null && (clazz = getFieldType(resolve.value)) != null) {
-//                            return createFieldDescription(clazz, resolve.value, ((Expression.Definition) expression).name);
-//                        }
                     } else if (expression instanceof Expression.DefineAndSet) {
                         String type = ((Expression.DefineAndSet) expression).type;
+                        if (((Expression.DefineAndSet) expression).action instanceof Operation && ((Operation) ((Expression.DefineAndSet) expression).action).rightPart() instanceof ClosureHolder)
+                            return null;
+
                         Class clazz = EvalTools.findClass(type, imports, model);
                         if (clazz != null)
                             return createFieldDescription(getFieldType(clazz), clazz, ((Expression.DefineAndSet) expression).name);
 
                         Pair<String, ClassExpression> resolve = model.resolve(type);
                         if (resolve != null && (clazz = getFieldType(resolve.value)) != null) {
-                            return createFieldDescription(clazz, resolve.value, ((Expression.Definition) expression).name);
+                            return createFieldDescription(clazz, resolve.value, ((Expression.DefineAndSet) expression).name);
                         }
+                    } else if (expression instanceof Expression.DefinitionWithClassExpression) {
+                        ClassExpression classExpression = ((Expression.DefinitionWithClassExpression) expression).type;
+                        Class clazz = getFieldType(classExpression);
+                        if (clazz != null)
+                            return createFieldDescription(clazz, classExpression, ((Expression.DefinitionWithClassExpression) expression).name);
                     }
 
                     return null;

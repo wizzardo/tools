@@ -7,12 +7,14 @@ import com.wizzardo.tools.sql.generated.Tables;
 import com.wizzardo.tools.sql.model.Artist;
 import com.wizzardo.tools.sql.model.Song;
 import com.wizzardo.tools.sql.query.Field;
+import com.wizzardo.tools.sql.query.Generator;
 import com.wizzardo.tools.sql.query.QueryBuilder;
 import com.wizzardo.tools.sql.query.QueryBuilder.TIMESTAMP;
 import org.junit.Before;
 import org.junit.Test;
 import org.sqlite.javax.SQLiteConnectionPoolDataSource;
 
+import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -159,10 +161,10 @@ public class DBToolsTest {
         final Artist artist = new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1");
         artist.id = service.insertInto(artist, Tables.ARTIST);
 
-        Song song1 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 1", artist.id);
+        Song song1 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 1", artist.id, Song.Genre.ROCK);
         song1.id = service.insertInto(song1, Tables.SONG);
 
-        Song song2 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 2", artist.id);
+        Song song2 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 2", artist.id, Song.Genre.METAL);
         song2.id = service.insertInto(song2, Tables.SONG);
 
 
