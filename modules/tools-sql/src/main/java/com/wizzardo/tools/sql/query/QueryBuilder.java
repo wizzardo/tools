@@ -536,6 +536,14 @@ public class QueryBuilder {
             return result;
         }
 
+        public LimitStep limit(int limit) {
+            return new LimitStep(this, limit);
+        }
+
+        public OffsetStep offset(int offset) {
+            return new OffsetStep(this, offset);
+        }
+
         public OrderByStep orderBy(Field field) {
             return new OrderByStep(this, field);
         }
@@ -664,6 +672,14 @@ public class QueryBuilder {
             return result;
         }
 
+        public LimitStep limit(int limit) {
+            return new LimitStep(this, limit);
+        }
+
+        public OffsetStep offset(int offset) {
+            return new OffsetStep(this, offset);
+        }
+
         public OrderByStep orderBy(Field field) {
             return new OrderByStep(this, field);
         }
@@ -712,6 +728,90 @@ public class QueryBuilder {
             int result = super.hashCode();
             result = 31 * result + by.hashCode();
             result = 31 * result + order.hashCode();
+            return result;
+        }
+
+        public LimitStep limit(int limit) {
+            return new LimitStep(this, limit);
+        }
+    }
+
+    public static class LimitStep extends AbstractChainStep implements FetchableStep {
+        private final int limit;
+
+        public LimitStep(AbstractChainStep previous, int limit) {
+            super(previous);
+            this.limit = limit;
+        }
+
+        @Override
+        public void toSql(QueryBuilder sb) {
+            super.toSql(sb);
+            sb.append(" limit ?");
+        }
+
+        @Override
+        public void fillData(QueryBuilder sb) {
+            super.fillData(sb);
+            sb.setField(limit);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!super.equals(o)) return false;
+
+            LimitStep step = (LimitStep) o;
+
+            return limit == step.limit;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + limit;
+            return result;
+        }
+
+        public OffsetStep offset(int offset) {
+            return new OffsetStep(this, offset);
+        }
+    }
+
+    public static class OffsetStep extends AbstractChainStep implements FetchableStep {
+        private final int offset;
+
+        public OffsetStep(AbstractChainStep previous, int offset) {
+            super(previous);
+            this.offset = offset;
+        }
+
+        @Override
+        public void toSql(QueryBuilder sb) {
+            super.toSql(sb);
+            sb.append(" offset ?");
+        }
+
+        @Override
+        public void fillData(QueryBuilder sb) {
+            super.fillData(sb);
+            sb.setField(offset);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!super.equals(o)) return false;
+
+            OffsetStep step = (OffsetStep) o;
+
+            return offset == step.offset;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + offset;
             return result;
         }
     }

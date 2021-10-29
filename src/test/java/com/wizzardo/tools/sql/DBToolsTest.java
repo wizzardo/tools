@@ -189,6 +189,68 @@ public class DBToolsTest {
     }
 
     @Test
+    public void test_limit() throws SQLException {
+        final Artist artist = new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1");
+        artist.id = service.insertInto(artist, Tables.ARTIST);
+
+        Song song1 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 1", artist.id, Song.Genre.ROCK);
+        song1.id = service.insertInto(song1, Tables.SONG);
+
+        Song song2 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 2", artist.id, Song.Genre.METAL);
+        song2.id = service.insertInto(song2, Tables.SONG);
+
+
+        List<Song> songs = service.withBuilder(c -> {
+            QueryBuilder.LimitStep query = c.select()
+                    .from(Tables.SONG)
+                    .limit(1);
+
+            assertThat(query.toSql()).isEqualTo("select * from song limit ?");
+            return query.fetchInto(Song.class);
+        });
+        assertThat(songs).hasSize(1);
+    }
+
+    @Test
+    public void test_offset() throws SQLException {
+        final Artist artist = new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1");
+        artist.id = service.insertInto(artist, Tables.ARTIST);
+
+        Song song1 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 1", artist.id, Song.Genre.ROCK);
+        song1.id = service.insertInto(song1, Tables.SONG);
+
+        Song song2 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 2", artist.id, Song.Genre.METAL);
+        song2.id = service.insertInto(song2, Tables.SONG);
+
+
+        List<Song> songs = service.withBuilder(c -> {
+            QueryBuilder.OffsetStep query = c.select()
+                    .from(Tables.SONG)
+                    .limit(1)
+                    .offset(0);
+
+            assertThat(query.toSql()).isEqualTo("select * from song limit ? offset ?");
+            return query.fetchInto(Song.class);
+        });
+        assertThat(songs).hasSize(1);
+        assertThat(songs.get(0)).extracting("id", "name", "genre")
+                .contains(1L, "song 1", Song.Genre.ROCK);
+
+        songs = service.withBuilder(c -> {
+            QueryBuilder.OffsetStep query = c.select()
+                    .from(Tables.SONG)
+                    .limit(1)
+                    .offset(1);
+
+            assertThat(query.toSql()).isEqualTo("select * from song limit ? offset ?");
+            return query.fetchInto(Song.class);
+        });
+        assertThat(songs).hasSize(1);
+        assertThat(songs.get(0)).extracting("id", "name", "genre")
+                .contains(2L, "song 2", Song.Genre.METAL);
+    }
+
+    @Test
     public void benchmark_building_sql() {
         Stopwatch stopwatch = new Stopwatch("building_sql", true);
         int n = 100000;
@@ -203,7 +265,7 @@ public class DBToolsTest {
             sum += sql.length();
         }
         stopwatch.stop();
-        assertThat(stopwatch.getDuration()).isLessThan(150000000);
+        assertThat(stopwatch.getDuration()).isLessThan(150_000_000);
         assertThat(sum).isNotEqualTo(0);
     }
 

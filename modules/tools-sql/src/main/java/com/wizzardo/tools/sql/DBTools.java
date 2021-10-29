@@ -154,6 +154,14 @@ public class DBTools {
 //        return getLastInsertedId(c.getConnection());
     }
 
+    public void insertOne(Object o, Table t) {
+        withBuilder(c -> insertInto(c, o, t));
+    }
+
+    public void insertOne(QueryBuilder.WrapConnectionStep c, Object o, Table t) throws SQLException {
+         c.insertInto(t).values(o).executeInsert();
+    }
+
     private static String getResourceAsString(String name) {
         if (!name.startsWith("/"))
             name = "/" + name;

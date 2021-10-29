@@ -66,7 +66,7 @@ public class FieldMappers {
             return (o, builder) -> builder.setField((Boolean) reflection.getObject(o));
         else if (fieldType == Byte.class)
             return (o, builder) -> builder.setField((Byte) reflection.getObject(o));
-        else if (fieldType.isArray()){
+        else if (fieldType.isArray()) {
             Class componentType = fieldType.getComponentType();
             if (!componentType.isPrimitive())
                 throw new IllegalArgumentException("Only primitive arrays are supported for now");
@@ -234,6 +234,15 @@ public class FieldMappers {
                     throw Unchecked.rethrow(e);
                 }
             };
+        if (c.isEnum())
+            return rs -> {
+                try {
+                    String value = rs.getString(1);
+                    return (R) (rs.wasNull() ? null : Enum.valueOf((Class<Enum>) c, value));
+                } catch (SQLException e) {
+                    throw Unchecked.rethrow(e);
+                }
+            };
 
         Fields<FieldInfo> fields = fieldsCache.get(c);
         List<FieldSetter> setters = StreamSupport.stream(fields.spliterator(), false)
@@ -358,7 +367,12 @@ public class FieldMappers {
             return (instance, rs) -> reflection.setObject(instance, rs.getDate(name));
         else if (fieldType == Timestamp.class)
             return (instance, rs) -> reflection.setObject(instance, rs.getTimestamp(name));
-        else if (fieldType == Long.class)
+        else if (fieldType.isEnum()) {
+            return (instance, rs) -> {
+                String value = rs.getString(name);
+                reflection.setObject(instance, value != null ? Enum.valueOf((Class<Enum>) fieldType, value) : null);
+            };
+        } else if (fieldType == Long.class)
             return (instance, rs) -> {
                 long value = rs.getLong(name);
                 reflection.setObject(instance, value == 0 && rs.wasNull() ? null : value);
