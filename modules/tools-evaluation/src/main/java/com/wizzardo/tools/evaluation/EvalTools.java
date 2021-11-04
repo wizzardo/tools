@@ -1139,7 +1139,7 @@ public class EvalTools {
 
                             Class typeClass = findClass(type, imports, model);
                             if (typeClass == null)
-                                throw new IllegalStateException("Cannot find class for " + type);
+                                return new Expression.Definition(type, name);
 
                             return new Expression.Definition(typeClass, name);
                         }

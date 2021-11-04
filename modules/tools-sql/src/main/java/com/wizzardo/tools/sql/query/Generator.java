@@ -104,6 +104,14 @@ public class Generator {
                         Class clazz = ((Expression.Definition) expression).type;
                         if (clazz != null)
                             return createFieldDescription(getFieldType(clazz), clazz, ((Expression.Definition) expression).name);
+
+                        if (((Expression.Definition) expression).typeDefinition != null) {
+                            Pair<String, ClassExpression> resolve = model.resolve(((Expression.Definition) expression).typeDefinition);
+                            if (resolve != null && (clazz = getFieldType(resolve.value)) != null) {
+                                return createFieldDescription(clazz, resolve.value, ((Expression.Definition) expression).name);
+                            }
+                        }
+
                     } else if (expression instanceof Expression.DefineAndSet) {
                         String type = ((Expression.DefineAndSet) expression).type;
                         if (((Expression.DefineAndSet) expression).action instanceof Operation && ((Operation) ((Expression.DefineAndSet) expression).action).rightPart() instanceof ClosureHolder)

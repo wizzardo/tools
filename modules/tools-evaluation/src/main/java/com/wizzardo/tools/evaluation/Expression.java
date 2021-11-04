@@ -112,11 +112,20 @@ public abstract class Expression {
     public static class Definition extends Holder {
         public final Class<?> type;
         public final String name;
+        public final String typeDefinition;
 
         public Definition(Class<?> type, String name) {
             super(name);
             this.type = type;
             this.name = name;
+            this.typeDefinition = null;
+        }
+
+        public Definition(String type, String name) {
+            super(name);
+            this.type = null;
+            this.name = name;
+            this.typeDefinition = type;
         }
     }
 
