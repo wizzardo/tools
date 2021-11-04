@@ -85,6 +85,7 @@ class Code_attribute extends AttributeInfo {
 
     @Override
     public void write(ByteArrayOutputStream out) {
+        attribute_length = updateLength();
         ByteCodeParser.writeInt2(attribute_name_index, out);
         ByteCodeParser.writeInt4(attribute_length, out);
 //                out.write(info, 0, info.length);

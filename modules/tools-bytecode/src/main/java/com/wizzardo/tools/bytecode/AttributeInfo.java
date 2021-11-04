@@ -45,6 +45,8 @@ class AttributeInfo {
             return new LocalVariableTable_attribute();
         if (name.equals("StackMapTable"))
             return new StackMapTable_attribute();
+        if (name.equals("Signature"))
+            return new Signature_attribute();
 
         return new AttributeInfo();
     }

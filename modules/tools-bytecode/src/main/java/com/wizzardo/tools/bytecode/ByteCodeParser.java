@@ -148,7 +148,10 @@ class ByteCodeParser {
 
         attributes = new AttributeInfo[attributesCount];
         for (int j = 0; j < attributesCount; j++) {
-            AttributeInfo ai = new AttributeInfo();
+            int nameIndex = readInt2(position, bytes);
+            String name = getName(nameIndex);
+            AttributeInfo ai = AttributeInfo.byName(name, this);
+
             attributes[j] = ai;
             position = ai.read(bytes, position);
 

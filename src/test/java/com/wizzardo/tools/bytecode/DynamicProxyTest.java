@@ -1,5 +1,8 @@
 package com.wizzardo.tools.bytecode;
 
+import com.wizzardo.tools.bytecode.fields.IntFieldSetter;
+import com.wizzardo.tools.io.FileTools;
+import com.wizzardo.tools.misc.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -305,6 +308,26 @@ public class DynamicProxyTest {
         SuperClassConstructorArgsInt o = (SuperClassConstructorArgsInt) constructor.newInstance(1);
         Assert.assertEquals(name, o.getClass().getSimpleName());
         Assert.assertEquals(1, o.a);
+    }
+
+
+    public static class IntHolder {
+        public int a;
+
+        public IntHolder(int a) {
+            this.a = a;
+        }
+    }
+
+    @Test
+    public void test_int_setter() throws NoSuchFieldException, InstantiationException, IllegalAccessException {
+        IntHolder holder = new IntHolder(1);
+        Assert.assertEquals(1, holder.a);
+
+        Class<IntFieldSetter> aClass = DynamicProxyFactory.createFieldSetter(IntHolder.class, "a", IntFieldSetter.class);
+        IntFieldSetter<IntHolder> instance = aClass.newInstance();
+        instance.set(holder, 2);
+        Assert.assertEquals(2, holder.a);
     }
 
 }

@@ -1,13 +1,14 @@
 package com.wizzardo.tools.bytecode;
 
+import com.wizzardo.tools.bytecode.fields.FieldSetter;
+import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.misc.With;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.*;
 import java.util.Arrays;
+import java.util.Optional;
 
 import static com.wizzardo.tools.bytecode.ByteCodeParser.int1toBytes;
 import static com.wizzardo.tools.bytecode.ByteCodeParser.int2toBytes;
@@ -84,12 +85,33 @@ public class DynamicProxyFactory {
     }
 
     public static Class<?> loadClass(String classFullName, byte[] bytes) {
+        String name = classFullName.replace('/', '.');
+        try {
+            Optional<Method> defineHiddenClass = Arrays.stream(MethodHandles.Lookup.class.getMethods()).filter(it -> it.getName().equals("defineHiddenClass")).findFirst();
+            if(defineHiddenClass.isPresent()){
+                Class<?> classOptionClass = ClassLoader.getSystemClassLoader().loadClass("java.lang.invoke.MethodHandles$Lookup$ClassOption");
+                MethodHandles.Lookup lookup = (MethodHandles.Lookup) defineHiddenClass.get().invoke(MethodHandles.lookup(), bytes, true, Array.newInstance(classOptionClass, 0));
+                return lookup.lookupClass();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        try {
+//            ClassLoader classLoader = DynamicProxyFactory.class.getClassLoader();
+//            Method method = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
+//            method.setAccessible(true);
+//            Object result = method.invoke(classLoader, name, bytes, 0, bytes.length);
+//            return (Class<?>) result;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
         return Unchecked.call(() -> new ClassLoader() {
             @Override
             public Class<?> findClass(String name) {
                 return defineClass(name, bytes, 0, bytes.length);
             }
-        }.loadClass(classFullName.replace('/', '.')));
+        }.loadClass(name));
     }
 
     public static ClassBuilder createBuilder(String fullName, Class<?> superClass) {
@@ -114,6 +136,112 @@ public class DynamicProxyFactory {
                 builder.implement(anInterface);
             }
         return builder;
+    }
+
+    public static <T extends FieldSetter> Class<T> createFieldSetter(Class<?> clazz, String fieldName, Class<T> setterInterface) throws NoSuchFieldException {
+//    public static <T extends FieldSetter> Pair<String,byte[]> createFieldSetter(Class<?> clazz, String fieldName, Class<T> setterInterface) throws NoSuchFieldException {
+//        String classFullName = clazz.getTypeName() + "$" + fieldName + "Setter" + System.nanoTime();
+        String classFullName = "com/wizzardo/tools/bytecode/Generated_" + clazz.getSimpleName() + "_" + fieldName + "_setter" + System.nanoTime();
+
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        ClassBuilder builder = new ClassBuilder()
+                .setClassFullName(classFullName)
+                .setSuperClass(Object.class)
+                .implement(setterInterface)
+                .withDefaultConstructor();
+
+        Signature_attribute attribute = new Signature_attribute();
+        attribute.attribute_name_index = builder.getOrCreateUtf8Constant("Signature");
+        String setterType = builder.getFieldDescription(setterInterface);
+        setterType = setterType.substring(0, setterType.length() - 1) + "<" + builder.getFieldDescription(clazz) + ">;";
+        String signature = builder.getFieldDescription(Object.class) + setterType;
+        attribute.signature_index = builder.getOrCreateUtf8Constant(signature);
+        builder.append(attribute);
+
+        for (Method method : setterInterface.getDeclaredMethods()) {
+            Class<?>[] parameterTypes = new Class[]{clazz, method.getParameterTypes()[1]};
+            builder.method(method.getName(), parameterTypes, void.class, cb -> {
+                Code_attribute ca = new Code_attribute(cb.reader);
+                ca.max_locals = 1 + Arrays.stream(parameterTypes).mapToInt(it -> it == long.class || it == double.class ? 2 : 1).sum();
+                ca.max_stack = 3;
+                ca.attribute_name_index = cb.getOrCreateUtf8Constant("Code");
+
+                CodeBuilder code = new CodeBuilder().append(Instruction.aload_1);
+                addLoadArg(code, 1, parameterTypes[1], 1);
+                code.append(Instruction.putfield, cb.getOrCreateFieldRefBytes(field))
+                        .append(Instruction.return_);
+
+                ca.code = code.build();
+                ca.code_length = ca.code.length;
+
+                ca.attribute_length = ca.updateLength();
+                return ca;
+            });
+
+//            String descriptor = builder.getMethodDescriptor(parameterTypes, void.class);
+//            int descriptorIndex = builder.getOrCreateUtf8Constant(descriptor);
+
+            int methodRef = builder.getOrCreateMethodRef(builder.reader.thisClass, method.getName(), parameterTypes, void.class);
+
+            builder.method(method.getName(), new Class[]{Object.class, parameterTypes[1]}, void.class,
+                    AccessFlags.ACC_PUBLIC | AccessFlags.ACC_SYNTHETIC | AccessFlags.ACC_BRIDGE
+                    , cb -> {
+                        Code_attribute ca = new Code_attribute(cb.reader);
+                        ca.max_locals = 1 + Arrays.stream(parameterTypes).mapToInt(it -> it == long.class || it == double.class ? 2 : 1).sum();
+                        ca.max_stack = 3;
+                        ca.attribute_name_index = cb.getOrCreateUtf8Constant("Code");
+
+                        CodeBuilder code = new CodeBuilder()
+//                                .append(Instruction.aload_0)
+                                .append(Instruction.aload_1)
+                                .append(Instruction.checkcast, int2toBytes(cb.getOrCreateClassConstant(clazz)));
+                        addLoadArg(code, 1, parameterTypes[1], 1);
+                        code.append(Instruction.putfield, cb.getOrCreateFieldRefBytes(field));
+//                        code.append(Instruction.invokevirtual, ByteCodeParser.int2toBytes(methodRef));
+                        code.append(Instruction.return_);
+
+                        ca.code = code.build();
+                        ca.code_length = ca.code.length;
+                        return ca;
+                    });
+        }
+
+        byte[] build = builder.build();
+        return (Class<T>) loadClass(classFullName, build);
+//        return Pair.of(classFullName, build);
+    }
+
+    private static int addLoadArg(CodeBuilder code, int i, Class<?> parameterType, int localVarIndexOffset) {
+        if (parameterType.isPrimitive()) {
+            if (parameterType == int.class) {
+                if (i + localVarIndexOffset == 1)
+                    code.append(Instruction.iload_1);
+                else if (i + localVarIndexOffset == 2)
+                    code.append(Instruction.iload_2);
+                else if (i + localVarIndexOffset == 3)
+                    code.append(Instruction.iload_3);
+                else
+                    code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+            } else if (parameterType == long.class) {
+                code.append(Instruction.lload, int1toBytes(i + localVarIndexOffset++));
+            } else if (parameterType == byte.class) {
+                code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+            } else if (parameterType == short.class) {
+                code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+            } else if (parameterType == float.class) {
+                code.append(Instruction.fload, int1toBytes(i + localVarIndexOffset));
+            } else if (parameterType == double.class) {
+                code.append(Instruction.dload, int1toBytes(i + localVarIndexOffset++));
+            } else if (parameterType == boolean.class) {
+                code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+            } else if (parameterType == char.class) {
+                code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+            }
+        } else {
+            code.append(Instruction.aload, int1toBytes(i + 1));
+        }
+        return localVarIndexOffset;
     }
 
     public static void addHandlerCallForMethod(ClassBuilder builder, Method method) {
@@ -254,27 +382,28 @@ public class DynamicProxyFactory {
                 int localVarIndexOffset = 1;
                 for (int i = 0; i < parameterTypes.length; i++) {
                     Class<?> parameterType = parameterTypes[i];
-                    if (parameterType.isPrimitive()) {
-                        if (parameterType == int.class) {
-                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
-                        } else if (parameterType == long.class) {
-                            code.append(Instruction.lload, int1toBytes(i + localVarIndexOffset++));
-                        } else if (parameterType == byte.class) {
-                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
-                        } else if (parameterType == short.class) {
-                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
-                        } else if (parameterType == float.class) {
-                            code.append(Instruction.fload, int1toBytes(i + localVarIndexOffset));
-                        } else if (parameterType == double.class) {
-                            code.append(Instruction.dload, int1toBytes(i + localVarIndexOffset++));
-                        } else if (parameterType == boolean.class) {
-                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
-                        } else if (parameterType == char.class) {
-                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
-                        }
-                    } else {
-                        code.append(Instruction.aload, int1toBytes(i + 1));
-                    }
+                    localVarIndexOffset = addLoadArg(code, i, parameterType, localVarIndexOffset);
+//                    if (parameterType.isPrimitive()) {
+//                        if (parameterType == int.class) {
+//                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+//                        } else if (parameterType == long.class) {
+//                            code.append(Instruction.lload, int1toBytes(i + localVarIndexOffset++));
+//                        } else if (parameterType == byte.class) {
+//                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+//                        } else if (parameterType == short.class) {
+//                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+//                        } else if (parameterType == float.class) {
+//                            code.append(Instruction.fload, int1toBytes(i + localVarIndexOffset));
+//                        } else if (parameterType == double.class) {
+//                            code.append(Instruction.dload, int1toBytes(i + localVarIndexOffset++));
+//                        } else if (parameterType == boolean.class) {
+//                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+//                        } else if (parameterType == char.class) {
+//                            code.append(Instruction.iload, int1toBytes(i + localVarIndexOffset));
+//                        }
+//                    } else {
+//                        code.append(Instruction.aload, int1toBytes(i + 1));
+//                    }
                 }
                 code.append(Instruction.invokespecial, int2toBytes(superMethodIndex))
                         .append(returnInstruction);

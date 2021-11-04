@@ -287,10 +287,13 @@ public class ClassBuilder {
             throw new IllegalArgumentException("DeclaringClass of the method " + method + " is an interface!");
 
         int classIndex = getOrCreateClassConstant(method.getDeclaringClass());
-        int nameIndex = getOrCreateUtf8Constant(method.getName());
-        String descriptor = getMethodDescriptor(method);
-        int descriptorIndex = getOrCreateUtf8Constant(descriptor);
+        return getOrCreateMethodRef(classIndex, method.getName(), method.getParameterTypes(), method.getReturnType());
+    }
 
+    public int getOrCreateMethodRef(int classIndex, String name, Class<?>[] args, Class<?> returnType) {
+        int nameIndex = getOrCreateUtf8Constant(name);
+        String descriptor = getMethodDescriptor(args, returnType);
+        int descriptorIndex = getOrCreateUtf8Constant(descriptor);
         int nameAndTypeIndex = getOrCreateNameAndTypeConstant(nameIndex, descriptorIndex);
         return getOrCreateMethodRef(classIndex, nameAndTypeIndex);
     }
@@ -357,17 +360,25 @@ public class ClassBuilder {
         return this;
     }
 
+    public ClassBuilder method(Method method, Mapper<ClassBuilder, Code_attribute> codeBuilderMapper) {
+        return method(method.getName(), method.getParameterTypes(), method.getReturnType(), codeBuilderMapper);
+    }
+
     public ClassBuilder method(String name, Class<?> returnType, Mapper<ClassBuilder, Code_attribute> codeBuilderMapper) {
         return method(name, EMPTY_ARGS, returnType, codeBuilderMapper);
     }
 
     public ClassBuilder method(String name, Class<?>[] args, Class<?> returnType, Mapper<ClassBuilder, Code_attribute> codeBuilderMapper) {
+        return method(name, args, returnType, AccessFlags.ACC_PUBLIC, codeBuilderMapper);
+    }
+
+    public ClassBuilder method(String name, Class<?>[] args, Class<?> returnType, int accessFlags, Mapper<ClassBuilder, Code_attribute> codeBuilderMapper) {
         int nameIndex = getOrCreateUtf8Constant(name);
         String descriptor = getMethodDescriptor(args, returnType);
         int descriptorIndex = getOrCreateUtf8Constant(descriptor);
 
         MethodInfo mi = new MethodInfo();
-        mi.access_flags = AccessFlags.ACC_PUBLIC;
+        mi.access_flags = accessFlags;
         mi.name_index = nameIndex;
         mi.descriptor_index = descriptorIndex;
         mi.attributes_count = 1;
@@ -389,15 +400,15 @@ public class ClassBuilder {
         return descriptorIndex != -1;
     }
 
-    private String getMethodDescriptor(Method method) {
+    public String getMethodDescriptor(Method method) {
         return getMethodDescriptor(method.getParameterTypes(), method.getReturnType());
     }
 
-    private String getMethodDescriptor(Class<?>[] args, Class<?> returnType) {
+    public String getMethodDescriptor(Class<?>[] args, Class<?> returnType) {
         return "(" + (Arrays.stream(args).map(this::getFieldDescription).collect(Collectors.joining(""))) + ")" + getFieldDescription(returnType);
     }
 
-    private String getFieldDescription(Class type) {
+    public String getFieldDescription(Class type) {
         if (type.isPrimitive()) {
             if (type == int.class)
                 return "I";
@@ -508,6 +519,15 @@ public class ClassBuilder {
         FieldInfo[] infos = new FieldInfo[reader.fieldsCount];
         System.arraycopy(reader.fields, 0, infos, 0, reader.fields.length);
         reader.fields = infos;
+        infos[infos.length - 1] = fieldInfo;
+        return infos.length - 1;
+    }
+
+    protected int append(AttributeInfo fieldInfo) {
+        reader.attributesCount++;
+        AttributeInfo[] infos = new AttributeInfo[reader.attributesCount];
+        System.arraycopy(reader.attributes, 0, infos, 0, reader.attributes.length);
+        reader.attributes = infos;
         infos[infos.length - 1] = fieldInfo;
         return infos.length - 1;
     }
