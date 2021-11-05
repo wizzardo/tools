@@ -88,7 +88,7 @@ public class DynamicProxyFactory {
         String name = classFullName.replace('/', '.');
         try {
             Optional<Method> defineHiddenClass = Arrays.stream(MethodHandles.Lookup.class.getMethods()).filter(it -> it.getName().equals("defineHiddenClass")).findFirst();
-            if(defineHiddenClass.isPresent()){
+            if (defineHiddenClass.isPresent()) {
                 Class<?> classOptionClass = ClassLoader.getSystemClassLoader().loadClass("java.lang.invoke.MethodHandles$Lookup$ClassOption");
                 MethodHandles.Lookup lookup = (MethodHandles.Lookup) defineHiddenClass.get().invoke(MethodHandles.lookup(), bytes, true, Array.newInstance(classOptionClass, 0));
                 return lookup.lookupClass();
@@ -139,17 +139,29 @@ public class DynamicProxyFactory {
     }
 
     public static <T extends FieldSetter> Class<T> createFieldSetter(Class<?> clazz, String fieldName, Class<T> setterInterface) throws NoSuchFieldException {
-//    public static <T extends FieldSetter> Pair<String,byte[]> createFieldSetter(Class<?> clazz, String fieldName, Class<T> setterInterface) throws NoSuchFieldException {
-//        String classFullName = clazz.getTypeName() + "$" + fieldName + "Setter" + System.nanoTime();
         String classFullName = "com/wizzardo/tools/bytecode/Generated_" + clazz.getSimpleName() + "_" + fieldName + "_setter" + System.nanoTime();
 
         Field field = clazz.getDeclaredField(fieldName);
-        field.setAccessible(true);
         ClassBuilder builder = new ClassBuilder()
                 .setClassFullName(classFullName)
                 .setSuperClass(Object.class)
                 .implement(setterInterface)
                 .withDefaultConstructor();
+
+        Optional<Method> optionalSetter = Optional.empty();
+        if (!Modifier.isPublic(field.getModifiers())) {
+            optionalSetter = Arrays.stream(clazz.getMethods())
+                    .filter(it -> it.getParameterCount() == 1
+                            && it.getParameterTypes()[0] == field.getType()
+                            && it.getName().equalsIgnoreCase("set" + fieldName))
+                    .findFirst();
+
+            if (!optionalSetter.isPresent())
+                throw new IllegalArgumentException("Cannot create setter, field is not public and there is no setter for it");
+        }
+
+        Method setter = optionalSetter.orElse(null);
+
 
         Signature_attribute attribute = new Signature_attribute();
         attribute.attribute_name_index = builder.getOrCreateUtf8Constant("Signature");
@@ -169,8 +181,15 @@ public class DynamicProxyFactory {
 
                 CodeBuilder code = new CodeBuilder().append(Instruction.aload_1);
                 addLoadArg(code, 1, parameterTypes[1], 1);
-                code.append(Instruction.putfield, cb.getOrCreateFieldRefBytes(field))
-                        .append(Instruction.return_);
+                if (Modifier.isPublic(field.getModifiers())) {
+                    code.append(Instruction.putfield, cb.getOrCreateFieldRefBytes(field));
+                } else if (setter != null) {
+                    int methodRef = builder.getOrCreateMethodRef(setter);
+                    code.append(Instruction.invokevirtual, ByteCodeParser.int2toBytes(methodRef));
+                } else
+                    throw new IllegalArgumentException("Cannot create setter, field is not public and there is no setter for it");
+
+                code.append(Instruction.return_);
 
                 ca.code = code.build();
                 ca.code_length = ca.code.length;
@@ -193,12 +212,12 @@ public class DynamicProxyFactory {
                         ca.attribute_name_index = cb.getOrCreateUtf8Constant("Code");
 
                         CodeBuilder code = new CodeBuilder()
-//                                .append(Instruction.aload_0)
+                                .append(Instruction.aload_0)
                                 .append(Instruction.aload_1)
                                 .append(Instruction.checkcast, int2toBytes(cb.getOrCreateClassConstant(clazz)));
                         addLoadArg(code, 1, parameterTypes[1], 1);
-                        code.append(Instruction.putfield, cb.getOrCreateFieldRefBytes(field));
-//                        code.append(Instruction.invokevirtual, ByteCodeParser.int2toBytes(methodRef));
+//                        code.append(Instruction.putfield, cb.getOrCreateFieldRefBytes(field));
+                        code.append(Instruction.invokevirtual, ByteCodeParser.int2toBytes(methodRef));
                         code.append(Instruction.return_);
 
                         ca.code = code.build();
@@ -209,7 +228,6 @@ public class DynamicProxyFactory {
 
         byte[] build = builder.build();
         return (Class<T>) loadClass(classFullName, build);
-//        return Pair.of(classFullName, build);
     }
 
     private static int addLoadArg(CodeBuilder code, int i, Class<?> parameterType, int localVarIndexOffset) {

@@ -330,4 +330,31 @@ public class DynamicProxyTest {
         Assert.assertEquals(2, holder.a);
     }
 
+    public static class IntHolderWithSetter {
+        private int a;
+
+        public IntHolderWithSetter(int a) {
+            this.a = a;
+        }
+
+        public void setA(int a) {
+            this.a = a;
+        }
+
+        public int getA() {
+            return a;
+        }
+    }
+
+    @Test
+    public void test_int_setter_use_setter() throws NoSuchFieldException, InstantiationException, IllegalAccessException {
+        IntHolderWithSetter holder = new IntHolderWithSetter(1);
+        Assert.assertEquals(1, holder.a);
+
+        Class<IntFieldSetter> aClass = DynamicProxyFactory.createFieldSetter(IntHolderWithSetter.class, "a", IntFieldSetter.class);
+        IntFieldSetter<IntHolderWithSetter> instance = aClass.newInstance();
+        instance.set(holder, 2);
+        Assert.assertEquals(2, holder.a);
+    }
+
 }
