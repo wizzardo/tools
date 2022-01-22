@@ -85,7 +85,7 @@ public class DBTools {
 
         withDB(connection -> {
             DatabaseMetaData metaData = connection.getMetaData();
-            if ("SQLite".equals(metaData.getDatabaseProductName())) {
+            if (metaData.getDatabaseProductName().contains("SQLite")) {
                 connection.createStatement().executeUpdate("create table if not exists schema_history" +
                         "(id INTEGER PRIMARY KEY, name VARCHAR(128), date_executed DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), md5 CHAR(32));");
             } else {
