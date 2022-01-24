@@ -18,6 +18,8 @@ public enum Operator {
     MOD("%", Operator.Requirement.BOTH, 3, false),
     EQUAL("=", Operator.Requirement.BOTH, -3, false),
     APPEND("<<", Operator.Requirement.BOTH, -2, false),
+    RIGHT_SHIFT(">>", Operator.Requirement.BOTH, -1, false),
+    RIGHT_SHIFT_UNSIGNED(">>>", Operator.Requirement.BOTH, -1, false),
     EQUAL2("==", Operator.Requirement.BOTH, 0, true),
     RANGE("..", Operator.Requirement.BOTH, 0, true),
     AND("&", Operator.Requirement.BOTH, -1, true),

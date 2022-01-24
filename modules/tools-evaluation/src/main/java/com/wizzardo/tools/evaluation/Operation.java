@@ -8,7 +8,6 @@ import com.wizzardo.tools.collections.Range;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -318,6 +317,14 @@ public class Operation extends Expression {
                 result = append(ob1, ob2);
                 break;
             }
+            case RIGHT_SHIFT: {
+                result = shiftRight(ob1, ob2);
+                break;
+            }
+            case RIGHT_SHIFT_UNSIGNED: {
+                result = shiftRightUnsigned(ob1, ob2);
+                break;
+            }
             case GET: {
                 result = get(ob1, ob2);
                 break;
@@ -478,7 +485,85 @@ public class Operation extends Expression {
             ((StringBuilder) ob1).append(ob2);
             return ob1;
         }
-        return null;
+        return shiftLeft(ob1, ob2);
+    }
+
+    private static Object shiftLeft(Object ob1, Object ob2) {
+        if (!(ob2 instanceof Number)) {
+            throw new IllegalArgumentException("can not shift not a number");
+        }
+        if (!(ob1 instanceof Number)) {
+            throw new IllegalArgumentException("can not shift not a number");
+        }
+
+        Number right = (Number) ob2;
+
+        if (ob1 instanceof Integer) {
+            return ((Number) ob1).intValue() << right.intValue();
+        }
+        if (ob1 instanceof Long) {
+            return ((Number) ob1).longValue() << right.intValue();
+        }
+        if (ob1 instanceof Short) {
+            return ((Number) ob1).shortValue() << right.intValue();
+        }
+        if (ob1 instanceof Byte) {
+            return ((Number) ob1).byteValue() << right.intValue();
+        }
+
+        throw new IllegalArgumentException("can not cast "+ob1+" to int type");
+    }
+
+    private static Object shiftRight(Object ob1, Object ob2) {
+        if (!(ob2 instanceof Number)) {
+            throw new IllegalArgumentException("can not shift not a number");
+        }
+        if (!(ob1 instanceof Number)) {
+            throw new IllegalArgumentException("can not shift not a number");
+        }
+
+        Number right = (Number) ob2;
+
+        if (ob1 instanceof Integer) {
+            return ((Number) ob1).intValue() >> right.intValue();
+        }
+        if (ob1 instanceof Long) {
+            return ((Number) ob1).longValue() >> right.intValue();
+        }
+        if (ob1 instanceof Short) {
+            return ((Number) ob1).shortValue() >> right.intValue();
+        }
+        if (ob1 instanceof Byte) {
+            return ((Number) ob1).byteValue() >> right.intValue();
+        }
+
+        throw new IllegalArgumentException("can not cast "+ob1+" to int type");
+    }
+
+    private static Object shiftRightUnsigned(Object ob1, Object ob2) {
+        if (!(ob2 instanceof Number)) {
+            throw new IllegalArgumentException("can not shift not a number");
+        }
+        if (!(ob1 instanceof Number)) {
+            throw new IllegalArgumentException("can not shift not a number");
+        }
+
+        Number right = (Number) ob2;
+
+        if (ob1 instanceof Integer) {
+            return ((Number) ob1).intValue() >>> right.intValue();
+        }
+        if (ob1 instanceof Long) {
+            return ((Number) ob1).longValue() >>> right.intValue();
+        }
+        if (ob1 instanceof Short) {
+            return ((Number) ob1).shortValue() >>> right.intValue();
+        }
+        if (ob1 instanceof Byte) {
+            return ((Number) ob1).byteValue() >>> right.intValue();
+        }
+
+        throw new IllegalArgumentException("can not cast "+ob1+" to int type");
     }
 
     private static Object set(Expression leftPart, Expression rightPart, Map<String, Object> model, Operator operator) {

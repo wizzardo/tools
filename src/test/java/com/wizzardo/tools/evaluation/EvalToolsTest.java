@@ -120,6 +120,26 @@ public class EvalToolsTest {
         assertEquals((Object) 1, EvalTools.evaluate("--i - --i", model));
         assertEquals(-1, model.get("i"));
 
+        model = new HashMap<String, Object>();
+        model.put("i", 8);
+        assertEquals((Object) (8 >> 1), EvalTools.evaluate("i >> 1", model));
+        assertEquals(8, model.get("i"));
+
+        model = new HashMap<String, Object>();
+        model.put("i", 8);
+        assertEquals((Object) (8 << 1), EvalTools.evaluate("i << 1", model));
+        assertEquals(8, model.get("i"));
+
+        model = new HashMap<String, Object>();
+        model.put("i", 8);
+        assertEquals((Object) (8 >>> 1), EvalTools.evaluate("i >>> 1", model));
+        assertEquals(8, model.get("i"));
+
+        model = new HashMap<String, Object>();
+        model.put("i", -8);
+        assertEquals((Object) (-8 >>> 1), EvalTools.evaluate("i >>> 1", model));
+        assertEquals(-8, model.get("i"));
+
 
         assertEquals(true, EvalTools.evaluate("1>0"));
         assertEquals(true, EvalTools.evaluate("1>=1"));
