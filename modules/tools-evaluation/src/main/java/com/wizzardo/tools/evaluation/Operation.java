@@ -39,7 +39,6 @@ public class Operation extends Expression {
 
     private Expression wrapBooleanOperationLeft(Expression exp, Operator operator) {
         switch (operator) {
-            case AND:
             case AND2:
             case OR:
             case OR2:
@@ -52,7 +51,6 @@ public class Operation extends Expression {
 
     private Expression wrapBooleanOperationRight(Expression exp, Operator operator) {
         switch (operator) {
-            case AND:
             case AND2:
             case OR:
             case OR2:
@@ -305,12 +303,7 @@ public class Operation extends Expression {
                 break;
             }
             case AND: {
-                if (!(Boolean) ob1) {
-//                    rightPart().get(model); already done
-                    result = false;
-                } else {
-                    result = ob2;
-                }
+                result = and(ob1, ob2);
                 break;
             }
             case APPEND: {
@@ -486,6 +479,34 @@ public class Operation extends Expression {
             return ob1;
         }
         return shiftLeft(ob1, ob2);
+    }
+
+    private static Object and(Object ob1,Object ob2) {
+        if (ob1 instanceof Number) {
+            if (ob2 instanceof Number) {
+                Number right = (Number) ob2;
+                if (ob1 instanceof Integer) {
+                    return ((Number) ob1).intValue() & right.intValue();
+                }
+                if (ob1 instanceof Long) {
+                    return ((Number) ob1).longValue() & right.intValue();
+                }
+                if (ob1 instanceof Short) {
+                    return ((Number) ob1).shortValue() & right.intValue();
+                }
+                if (ob1 instanceof Byte) {
+                    return ((Number) ob1).byteValue() & right.intValue();
+                }
+                throw new IllegalArgumentException("can not cast " + ob1 + " to int type");
+            }
+        }
+
+
+        if (!AsBooleanExpression.toBoolean(ob1)) {
+            return false;
+        } else {
+            return AsBooleanExpression.toBoolean(ob2);
+        }
     }
 
     private static Object shiftLeft(Object ob1, Object ob2) {

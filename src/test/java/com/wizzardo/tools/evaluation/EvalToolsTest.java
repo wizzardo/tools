@@ -140,6 +140,10 @@ public class EvalToolsTest {
         assertEquals((Object) (-8 >>> 1), EvalTools.evaluate("i >>> 1", model));
         assertEquals(-8, model.get("i"));
 
+        model = new HashMap<String, Object>();
+        model.put("i", 12345);
+        assertEquals((Object) (12345 & 0xFF), EvalTools.evaluate("i & 0xFF", model));
+        assertEquals(12345, model.get("i"));
 
         assertEquals(true, EvalTools.evaluate("1>0"));
         assertEquals(true, EvalTools.evaluate("1>=1"));
