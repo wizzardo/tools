@@ -39,7 +39,8 @@ public enum Operator {
     TERNARY("?", Operator.Requirement.BOTH, 5, true),
     ELVIS("?:", Operator.Requirement.BOTH, 5, true),
     COLON(":", Operator.Requirement.BOTH, 5, true),
-    GET("%get%", Operator.Requirement.BOTH, 0, false);
+    GET("%get%", Operator.Requirement.BOTH, 0, false),
+    INSTANCEOF("instanceof", Operator.Requirement.BOTH, -2, false);
     private static final Map<String, Operator> operators = new HashMap<String, Operator>();
     public final String text;
     public final Operator.Requirement requirement;

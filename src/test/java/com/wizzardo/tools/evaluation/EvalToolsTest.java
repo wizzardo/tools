@@ -421,6 +421,11 @@ public class EvalToolsTest {
         model.put("i", 1);
         assertEquals((Object) 1, EvalTools.evaluate("i++?:0", model));
         assertEquals((Object) 2, EvalTools.evaluate("i", model));
+
+        model = new HashMap<String, Object>();
+        model.put("i", 1);
+        assertEquals(true, EvalTools.evaluate("i instanceof Integer", model));
+        assertEquals(false, EvalTools.evaluate("i instanceof String", model));
     }
 
     @Test

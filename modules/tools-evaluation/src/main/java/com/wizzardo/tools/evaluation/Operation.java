@@ -333,6 +333,13 @@ public class Operation extends Expression {
                     result = rightPart.get(model);
                 break;
             }
+            case INSTANCEOF: {
+                if (!(ob2 instanceof Class))
+                    throw new IllegalArgumentException("Right part of instanceof must be a class");
+
+                result = ((Class) ob2).isAssignableFrom(ob1.getClass());
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Not yet implemented:" + this.operator);
         }
