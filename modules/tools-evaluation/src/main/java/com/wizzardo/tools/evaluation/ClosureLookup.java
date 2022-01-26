@@ -10,10 +10,12 @@ public class ClosureLookup extends Expression {
     protected final String functionName;
     protected final Map<String, UserFunction> functions;
     protected final Object[] args;
+    protected final ClassExpression parent;
 
-    public ClosureLookup(String functionName, Map<String, UserFunction> functions, int argsCount) {
+    public ClosureLookup(String functionName, Map<String, UserFunction> functions, int argsCount, ClassExpression parent) {
         this.functionName = functionName;
         this.functions = functions;
+        this.parent = parent;
         args = new Object[argsCount];
     }
 
@@ -39,6 +41,11 @@ public class ClosureLookup extends Expression {
         Object delegate = model.get("delegate");
         if (delegate instanceof ClassExpression) {
             ClosureHolder method = ((ClassExpression) delegate).findMethod(functionName, args);
+            if (method != null)
+                return method.get(model);
+        }
+        if (parent != null) {
+            ClosureHolder method = parent.findMethod(functionName, args);
             if (method != null)
                 return method.get(model);
         }

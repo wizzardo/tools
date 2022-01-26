@@ -1546,6 +1546,22 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_def_class_static_var_init_by_method() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("VALUE", EvalTools.prepare("" +
+                "class StaticBlock {\n" +
+                "  static String key = foo('value') \n" +
+                "  static String foo(String s){\n" +
+                "    return s.toUpperCase()\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "StaticBlock.key\n" +
+                "").get(model).toString());
+
+    }
+
+    @Test
     public void test_def_class_method_overloading() {
         Map<String, Object> model = new HashMap<String, Object>();
         Assert.assertEquals(4, EvalTools.prepare("" +

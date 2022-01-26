@@ -989,6 +989,7 @@ public class EvalTools {
                     binding.currentClass = className;
                 }
                 model.put("class " + className, classExpression);
+                Object prevClass = model.put("current class", classExpression);
 
                 for (int i = isEnum ? 1 : 0; i < lines.size(); i++) {
                     String s = lines.get(i);
@@ -1015,6 +1016,7 @@ public class EvalTools {
                     definitions.add(prepare);
                 }
 
+                model.put("current class", prevClass);
                 classExpression.init();
 
                 if (isEnum) {
@@ -1391,9 +1393,10 @@ public class EvalTools {
             if (m.find()) {
 //                System.out.println("find user function: " + m.group(1) + "\t from " + exp);
 //                System.out.println("available functions: " + functions);
+                ClassExpression currentClass = (ClassExpression) model.get("current class");
                 String functionName = m.group(1);
                 List<String> args = parseArgs(exp.substring(functionName.length() + 1, exp.length() - 1));
-                thatObject = new ClosureLookup(functionName, functions, args.size());
+                thatObject = new ClosureLookup(functionName, functions, args.size(), currentClass);
                 exp = exp.substring(functionName.length());
             }
         }
