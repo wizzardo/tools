@@ -35,7 +35,7 @@ public class EvalTools {
     private static final Pattern DEF = Pattern.compile("^((?:static\\s+|final\\s+|private\\s+|protected\\s+|public\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
-    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum) +([A-Za-z0-9_]+)" +
+    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum|interface) +([A-Za-z0-9_]+)" +
             "(?<extends> +extends +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" + ")?" +
             "(?<implements> +implements(,? +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" + ")+)?" +
             " *\\{");
@@ -929,6 +929,24 @@ public class EvalTools {
             if (m.find() && findCloseBracket(exp, m.end()) == exp.length() - 1) {
                 String className = m.group(3);
                 String type = m.group(2);
+
+                if ("interface".equals(type))
+                    return new Expression() {
+                        @Override
+                        public void setVariable(Variable v) {
+
+                        }
+
+                        @Override
+                        public Expression clone() {
+                            return null;
+                        }
+
+                        @Override
+                        public Object get(Map<String, Object> model) {
+                            return null;
+                        }
+                    };
 
                 boolean isEnum = "enum".equals(type);
                 Class[] interfaces = new Class[0];
