@@ -32,7 +32,7 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("^(static\\s+|final\\s+|private\\s+|protected\\s+|public\\s+)*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
+    private static final Pattern DEF = Pattern.compile("^((?:static\\s+|final\\s+|private\\s+|protected\\s+|public\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum) +([A-Za-z0-9_]+)" +
@@ -1106,20 +1106,21 @@ public class EvalTools {
                     if (modifiers != null)
                         modifiers = modifiers.trim();
 
-                    String type = m.group(2);
+                    String generics = m.group(2);
+                    String type = m.group(3);
                     if (type != null)
                         type = type.replaceAll("\\s", "");
 
                     if (!"new".equals(type)) {
-                        String name = m.group(3);
-                        if (m.group(4).equals("=")) {
+                        String name = m.group(4);
+                        if (m.group(5).equals("=")) {
                             exp = name + " =" + exp.substring(m.group(0).length());
                             Expression action = prepare(exp, model, functions, imports, isTemplate);
                             if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
                                 ((Operation) action).leftPart(new Expression.Holder(name));
                             }
                             return new Expression.DefineAndSet(type, name, action);
-                        } else if (m.group(4).equals("(")) {
+                        } else if (m.group(5).equals("(")) {
                             int argsEnd = findCloseBracket(exp, m.end());
                             ClosureHolder closure;
                             if (argsEnd == m.end()) {

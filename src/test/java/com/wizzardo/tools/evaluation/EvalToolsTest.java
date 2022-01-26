@@ -1563,6 +1563,20 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_def_class_method_generic_type_return() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals(4, EvalTools.prepare("" +
+                "class StaticClass {\n" +
+                "  public static <T extends Number> T foo(T t) { return t; }\n" +
+                "}\n" +
+                "\n" +
+                "int b = StaticClass.foo(4)\n" +
+                "").get(model));
+
+        assertEquals(4, model.get("b"));
+    }
+
+    @Test
     public void test_def_class_constructor() {
         Map<String, Object> model = new HashMap<String, Object>();
         Assert.assertEquals("test", EvalTools.prepare("" +
