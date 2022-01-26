@@ -32,7 +32,7 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?");
-    private static final Pattern DEF = Pattern.compile("^((?:static\\s+|final\\s+|private\\s+|protected\\s+|public\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
+    private static final Pattern DEF = Pattern.compile("^((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum|interface) +([A-Za-z0-9_]+)" +
