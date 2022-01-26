@@ -2,6 +2,7 @@ package com.wizzardo.tools.gradle
 
 import com.wizzardo.tools.sql.query.Generator
 import org.gradle.api.*
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.bundling.Jar
@@ -84,7 +85,6 @@ class BuildPlugin implements Plugin<Project> {
     def void apply(Project project) {
         project.with {
             apply plugin: 'java'
-            apply plugin: 'maven'
 
             ext.getGitRevision = { -> gitRevision }
             ext.getGitBranchName = { -> gitBranchName }
@@ -112,7 +112,9 @@ class BuildPlugin implements Plugin<Project> {
 
             task([type: Jar, description: 'Generates runnable jar with all dependencies'], 'fatJar', {
                 baseName = project.name + '-all'
-                from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+//                from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                from { sourceSets.main.runtimeClasspath.collect { !it.isFile() ? it : zipTree(it) } }
                 exclude 'META-INF/*'
                 with jar
 
