@@ -1546,6 +1546,23 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_def_class_method_overloading() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals(4, EvalTools.prepare("" +
+                "class StaticClass {\n" +
+                "  static int foo(int a, int b) { return a+b; }\n" +
+                "  static int foo(int a) { return a; }\n" +
+                "}\n" +
+                "\n" +
+                "int a = StaticClass.foo(1, 2)\n" +
+                "int b = StaticClass.foo(4)\n" +
+                "").get(model));
+
+        assertEquals(3, model.get("a"));
+        assertEquals(4, model.get("b"));
+    }
+
+    @Test
     public void test_def_class_constructor() {
         Map<String, Object> model = new HashMap<String, Object>();
         Assert.assertEquals("test", EvalTools.prepare("" +

@@ -548,12 +548,16 @@ public class Function extends Expression {
             argsClasses = new Class[0];
 
         if (ClassExpression.class.equals(clazz)) {
+            ClassExpression cl = (ClassExpression) instance;
+            ClosureHolder closureHolder = cl.findMethod(method, args);
+            if (closureHolder == null)
+                throw new IllegalArgumentException("Cannot find method " + method + " " + Arrays.toString(args) + " in " + this);
+
+            ClosureExpression closure = (ClosureExpression) closureHolder.get(cl.context);
             return new EvalTools.ClosureInvoker() {
                 @Override
                 public Object map(Object instance, Object[] args) {
-                    final ClassExpression cl = (ClassExpression) instance;
-                    final ClosureExpression closure = (ClosureExpression) cl.context.get(method);
-                    return closure.getAgainst(null, cl.context, args);
+                    return closure.getAgainst(null, cl, args);
                 }
 
                 @Override

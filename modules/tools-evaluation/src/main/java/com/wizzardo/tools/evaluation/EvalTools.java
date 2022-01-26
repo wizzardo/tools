@@ -1102,13 +1102,17 @@ public class EvalTools {
             {
                 Matcher m = DEF.matcher(exp);
                 if (m.find()) {
+                    String modifiers = m.group(1);
+                    if (modifiers != null)
+                        modifiers = modifiers.trim();
+
                     String type = m.group(2);
                     if (type != null)
                         type = type.replaceAll("\\s", "");
 
                     if (!"new".equals(type)) {
+                        String name = m.group(3);
                         if (m.group(4).equals("=")) {
-                            String name = m.group(3);
                             exp = name + " =" + exp.substring(m.group(0).length());
                             Expression action = prepare(exp, model, functions, imports, isTemplate);
                             if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
@@ -1117,19 +1121,20 @@ public class EvalTools {
                             return new Expression.DefineAndSet(type, name, action);
                         } else if (m.group(4).equals("(")) {
                             int argsEnd = findCloseBracket(exp, m.end());
+                            ClosureHolder closure;
                             if (argsEnd == m.end()) {
-                                exp = "def " + m.group(3) + " = " + exp.substring(argsEnd + 1);
+                                closure = (ClosureHolder) prepare(exp.substring(argsEnd + 1), model, functions, imports, isTemplate);
                             } else {
                                 String block = exp.substring(argsEnd + 1).trim();
                                 if (!block.startsWith("{"))
                                     throw new IllegalStateException("Cannot parse: " + exp);
 
                                 String args = exp.substring(m.end(), argsEnd);
-                                exp = "def " + m.group(3) + " = { " + args + " -> " + block.substring(1);
+                                closure = (ClosureHolder) prepare("{ " + args + " -> " + block.substring(1), model, functions, imports, isTemplate);
                             }
-                            return prepare(exp, model, functions, imports, isTemplate);
+
+                            return new Expression.MethodDefinition(modifiers, type, name, closure);
                         } else {
-                            String name = m.group(3);
                             model.put(name, null);
                             if (type != null && type.contains("<"))
                                 type = type.substring(0, type.indexOf('<'));
@@ -1368,7 +1373,8 @@ public class EvalTools {
 //                System.out.println("find user function: " + m.group(1) + "\t from " + exp);
 //                System.out.println("available functions: " + functions);
                 String functionName = m.group(1);
-                thatObject = new ClosureLookup(functionName, functions);
+                List<String> args = parseArgs(exp.substring(functionName.length() + 1, exp.length() - 1));
+                thatObject = new ClosureLookup(functionName, functions, args.size());
                 exp = exp.substring(functionName.length());
             }
         }

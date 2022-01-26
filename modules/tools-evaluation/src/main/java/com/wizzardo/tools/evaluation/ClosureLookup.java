@@ -9,10 +9,12 @@ public class ClosureLookup extends Expression {
 
     protected final String functionName;
     protected final Map<String, UserFunction> functions;
+    protected final Object[] args;
 
-    public ClosureLookup(String functionName, Map<String, UserFunction> functions) {
+    public ClosureLookup(String functionName, Map<String, UserFunction> functions, int argsCount) {
         this.functionName = functionName;
         this.functions = functions;
+        args = new Object[argsCount];
     }
 
     @Override
@@ -34,12 +36,19 @@ public class ClosureLookup extends Expression {
             return localFunction;
         }
 
+        Object delegate = model.get("delegate");
+        if (delegate instanceof ClassExpression) {
+            ClosureHolder method = ((ClassExpression) delegate).findMethod(functionName, args);
+            if (method != null)
+                return method.get(model);
+        }
+
         localFunction = lookupInFunctions();
         if (localFunction instanceof Expression) {
             return localFunction;
         }
 
-        return model.get("delegate");
+        return delegate;
     }
 
     private Object lookupInFunctions() {
@@ -50,5 +59,10 @@ public class ClosureLookup extends Expression {
         UserFunction function = userFunction.clone();
         function.setUserFunctions(functions);
         return function;
+    }
+
+    @Override
+    public String toString() {
+        return functionName;
     }
 }

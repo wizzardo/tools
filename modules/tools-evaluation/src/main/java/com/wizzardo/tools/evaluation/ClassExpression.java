@@ -100,6 +100,14 @@ public class ClassExpression extends Expression {
                         break;
                     }
                 }
+            } else if (expression instanceof MethodDefinition && ((MethodDefinition) expression).name.equals(name)) {
+                ClosureHolder closureHolder = ((MethodDefinition) expression).action;
+                ClosureExpression closure = closureHolder.closure;
+                int length = args == null ? 0 : args.length;
+                if (closure.args.length == length) {
+                    closure.getAgainst(instance.context, instance.context, args);
+                    break;
+                }
             } else if (expression instanceof ClassExpression) {
                 instance.context.put(expression.toString(), expression);
             }
@@ -121,7 +129,11 @@ public class ClassExpression extends Expression {
                     }
                 }
                 ((DynamicProxy) result).setHandler((that, method, args1) -> {
-                    ClosureExpression closure = (ClosureExpression) instance.context.get(method);
+                    ClosureHolder closureHolder = findMethod(method, args1);
+                    if (closureHolder == null)
+                        throw new IllegalArgumentException("Cannot find method " + method + " " + Arrays.toString(args) + " in " + this);
+
+                    ClosureExpression closure = (ClosureExpression) closureHolder.get(instance.context);
                     return closure.getAgainst(closure.context, result, args1);
                 });
                 return result;
@@ -144,6 +156,18 @@ public class ClassExpression extends Expression {
         }
 
         return instance;
+    }
+
+    public ClosureHolder findMethod(String method, Object[] args) {
+        for (int i = 0; i < definitions.size(); i++) {
+            Expression e = definitions.get(i);
+            if (e instanceof MethodDefinition) {
+                MethodDefinition md = (MethodDefinition) e;
+                if (md.name.equals(method) && md.action.closure.args.length == (args == null ? 0 : args.length))
+                    return md.action;
+            }
+        }
+        return null;
     }
 
     public Class<?> getJavaClass() {
@@ -184,6 +208,9 @@ public class ClassExpression extends Expression {
 
     protected void init() {
         for (Expression expression : definitions) {
+            if (expression instanceof MethodDefinition){
+                continue;
+            }
             expression.get(context);
             if (expression instanceof Holder) {
                 context.put(expression.exp, null);

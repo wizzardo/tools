@@ -54,7 +54,23 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
 
     @Override
     public String toString() {
-        return expressions.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ ");
+        for (int i = 0; i < args.length; i++) {
+            Pair<String, Class> arg = args[i];
+            if (i > 0)
+                sb.append(", ");
+            sb.append(arg.value.getSimpleName()).append(' ').append(arg.key);
+        }
+        if (args.length > 0)
+            sb.append(" -> ");
+        for (int i = 0; i < expressions.size(); i++) {
+            if (i > 0)
+                sb.append("; ");
+            sb.append(expressions.get(i));
+        }
+        sb.append(" }");
+        return sb.toString();
     }
 
     @Override
@@ -68,9 +84,13 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
 
     public Object getAgainst(Map<String, Object> model, Object thisObject, Object... arg) {
         HashMap<String, Object> local = model != null ? new HashMap<String, Object>(model) : new HashMap<String, Object>(2, 1);
-        local.putAll(context);
-        local.put("delegate", thisObject);
-        local.put("this", thisObject);
+        if (context != model)
+            local.putAll(context);
+
+        if (context != thisObject) {
+            local.put("delegate", thisObject);
+            local.put("this", thisObject);
+        }
 //        if (model != null)
 //            local.put("this", model);
 

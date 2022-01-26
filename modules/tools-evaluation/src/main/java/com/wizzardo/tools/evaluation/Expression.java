@@ -201,6 +201,42 @@ public abstract class Expression {
         }
     }
 
+    public static class MethodDefinition extends Expression {
+        public final String modifiers;
+        public final String type;
+        public final String name;
+        public final ClosureHolder action;
+
+        public MethodDefinition(String modifiers, String type, String name, ClosureHolder action) {
+            this.modifiers = modifiers;
+            this.type = type;
+            this.name = name;
+            this.action = action;
+        }
+
+        @Override
+        public void setVariable(Variable v) {
+            action.setVariable(v);
+        }
+
+        @Override
+        public Expression clone() {
+            return new MethodDefinition(modifiers, type, name, action);
+        }
+
+        @Override
+        public Object get(Map<String, Object> model) {
+            Object c = action.get(model);
+            model.put(name, c);
+            return c;
+        }
+
+        @Override
+        public String toString() {
+            return type + " " + name + " " + action;
+        }
+    }
+
     public static class VariableOrFieldOfThis extends Expression {
 
         public final Expression thisHolder;
@@ -494,6 +530,11 @@ public abstract class Expression {
 
             Object o = inner.get(model);
             return new ReturnResultHolder(o);
+        }
+
+        @Override
+        public String toString() {
+            return inner.toString();
         }
     }
 
