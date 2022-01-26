@@ -1346,7 +1346,7 @@ public class EvalTools {
                         sb.setLength(i);
                 } while (i > 0);
 
-                if (clazz == null && m.group(0).endsWith(".class")) {
+                if (clazz == null && thatObject == null && m.group(0).endsWith(".class")) {
                     className = m.group(0);
                     if (className.endsWith(".class"))
                         className = className.substring(0, className.length() - ".class".length());
