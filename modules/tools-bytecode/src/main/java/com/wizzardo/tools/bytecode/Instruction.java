@@ -6,6 +6,8 @@ public enum Instruction {
     aload(0x19, 1),
     aload_0(0x2a),
     aload_1(0x2b),
+    iconst_0(0x03),
+    iconst_1(0x04),
     iload(0x15,1),
     iload_1(0x1b),
     iload_2(0x1c),
@@ -20,6 +22,7 @@ public enum Instruction {
     invokespecial(0xb7, 2),
     invokestatic(0xb8, 2),
     nop(0x00),
+    new_(0xbb, 2),
     bipush(0x10, 1),
     anewarray(0xbd, 2),
     dup(0x59),
@@ -41,6 +44,7 @@ public enum Instruction {
     checkcast(0xc0, 2),
     ldc(0x12, 1),
     ldc_w(0x13, 2),
+    ldc2_w(0x14, 2),
     ;
 
     public final int code;

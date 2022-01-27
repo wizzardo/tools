@@ -52,13 +52,16 @@ class ByteCodeParser {
         constantPool = new ConstantPoolInfo.ConstantInfo[constantPoolCount];
         System.out.println("Constant pool:");
         for (int i = 1; i < constantPool.length; i++) {
-            ConstantPoolInfo.ConstantInfo info = ConstantPoolInfo.byTag(bytes[position]);
+            byte tag = bytes[position];
+            ConstantPoolInfo.ConstantInfo info = ConstantPoolInfo.byTag(tag);
             if (info == null) {
-                throw new IllegalStateException("Unknown ConstantPoolInfo tag: " + bytes[position]);
+                throw new IllegalStateException("Unknown ConstantPoolInfo tag: " + tag);
             }
             constantPool[i] = info;
             position = info.read(bytes, position);
             System.out.println("\t" + i + ": " + info);
+            if (tag == ConstantPoolInfo.CONSTANT_Long || tag == ConstantPoolInfo.CONSTANT_Double)
+                i++;
         }
 
         accessFlags = readInt2(position, bytes);
@@ -171,7 +174,9 @@ class ByteCodeParser {
         writeInt2(majorVersion, out);
         writeInt2(constantPoolCount, out);
         for (int i = 1; i < constantPool.length; i++) {
-            constantPool[i].write(out);
+            ConstantPoolInfo.ConstantInfo constantInfo = constantPool[i];
+            if (constantInfo != null)
+                constantInfo.write(out);
         }
         writeInt2(accessFlags, out);
         writeInt2(thisClass, out);
@@ -228,6 +233,22 @@ class ByteCodeParser {
 
     public int findUtf8ConstantIndex(byte[] bytes) {
         return findConstantIndex(ci -> ci instanceof ConstantPoolInfo.CONSTANT_Utf8_info && Arrays.equals(bytes, ((ConstantPoolInfo.CONSTANT_Utf8_info) ci).bytes));
+    }
+
+    public int findIntegerConstantIndex(int value) {
+        return findConstantIndex(ci -> ci instanceof ConstantPoolInfo.CONSTANT_Integer_info && ((ConstantPoolInfo.CONSTANT_Integer_info) ci).value == value);
+    }
+
+    public int findLongConstantIndex(long value) {
+        return findConstantIndex(ci -> ci instanceof ConstantPoolInfo.CONSTANT_Long_info && ((ConstantPoolInfo.CONSTANT_Long_info) ci).value == value);
+    }
+
+    public int findFloatConstantIndex(float value) {
+        return findConstantIndex(ci -> ci instanceof ConstantPoolInfo.CONSTANT_Float_info && ((ConstantPoolInfo.CONSTANT_Float_info) ci).value == value);
+    }
+
+    public int findDoubleConstantIndex(double value) {
+        return findConstantIndex(ci -> ci instanceof ConstantPoolInfo.CONSTANT_Double_info && ((ConstantPoolInfo.CONSTANT_Double_info) ci).value == value);
     }
 
     public int findConstantIndex(Predicate<ConstantPoolInfo.ConstantInfo> predicate) {

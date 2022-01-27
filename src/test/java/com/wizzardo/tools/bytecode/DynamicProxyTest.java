@@ -1,13 +1,14 @@
 package com.wizzardo.tools.bytecode;
 
 import com.wizzardo.tools.bytecode.fields.IntFieldSetter;
-import com.wizzardo.tools.io.FileTools;
-import com.wizzardo.tools.misc.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DynamicProxyTest {
@@ -357,4 +358,195 @@ public class DynamicProxyTest {
         Assert.assertEquals(2, holder.a);
     }
 
+    public static class IntHolderWithDefault extends IntHolderParent {
+        public int a = IntConstants.getI();
+        public TestEnum e = TestEnum.ONE;
+
+        public IntHolderWithDefault() {
+        }
+
+        public IntHolderWithDefault(int a) {
+            this.a = a;
+        }
+    }
+
+    public static class IntHolderParent {
+        public int initA() {
+            return 42;
+        }
+    }
+
+    public static class IntConstants {
+        public static final int I = 42;
+
+        public static int getI() {
+            return I;
+        }
+
+        public static int getValue(int value) {
+            return value;
+        }
+    }
+
+    public enum TestEnum {
+        ONE, TWO
+    }
+
+    @Test
+    public void test_proxy_field_int_default_value_constant() throws NoSuchFieldException, InstantiationException, IllegalAccessException {
+        String name = "IntHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .field("a", int.class, 42)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Field field = aClass.getDeclaredField("a");
+        Assert.assertEquals(42, field.get(aClass.newInstance()));
+    }
+
+    @Test
+    public void test_proxy_field_int_default_value_invoke_static() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "IntHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name);
+
+        builder.fieldCallMethod("a", int.class, IntConstants.class.getDeclaredMethod("getI"))
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Field field = aClass.getDeclaredField("a");
+        Assert.assertEquals(42, field.get(aClass.newInstance()));
+    }
+
+    @Test
+    public void test_proxy_field_int_default_value_invoke_static_with_param() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "IntHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name);
+
+        builder.fieldCallMethod("a", int.class, IntConstants.class.getDeclaredMethod("getValue", int.class), 42)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Field field = aClass.getDeclaredField("a");
+        Assert.assertEquals(42, field.get(aClass.newInstance()));
+    }
+
+    @Test
+    public void test_proxy_field_list_default_value_invoke_new_with_param() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "ListHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name);
+
+        builder.fieldCallConstructor("l", List.class, ArrayList.class.getDeclaredConstructor(int.class), 10)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Field field = aClass.getDeclaredField("l");
+        Assert.assertEquals(ArrayList.class, field.get(aClass.newInstance()).getClass());
+    }
+
+    @Test
+    public void test_proxy_field_long_default_value_constant() throws NoSuchFieldException, InstantiationException, IllegalAccessException {
+        String name = "LongHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .field("a", long.class, 1234567890123456l)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Field field = aClass.getDeclaredField("a");
+        Assert.assertEquals(1234567890123456l, field.get(aClass.newInstance()));
+    }
+
+    @Test
+    public void test_proxy_field_float_default_value_constant() throws NoSuchFieldException, InstantiationException, IllegalAccessException {
+        String name = "FloatHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .field("a", float.class, Float.MAX_VALUE / 42f)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Field field = aClass.getDeclaredField("a");
+        Assert.assertEquals(Float.MAX_VALUE / 42f, field.get(aClass.newInstance()));
+    }
+
+    @Test
+    public void test_proxy_field_double_default_value_constant() throws NoSuchFieldException, InstantiationException, IllegalAccessException {
+        String name = "DoubleHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .field("a", double.class, Float.MAX_VALUE / 42d)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Field field = aClass.getDeclaredField("a");
+        Assert.assertEquals(Float.MAX_VALUE / 42d, field.get(aClass.newInstance()));
+    }
+
+    @Test
+    public void test_proxy_field_boolean_default_value_constant() throws NoSuchFieldException, InstantiationException, IllegalAccessException {
+        String name = "BooleanHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .field("a", boolean.class, true)
+                .field("b", boolean.class, false)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Assert.assertEquals(true, aClass.getDeclaredField("a").get(instance));
+        Assert.assertEquals(false, aClass.getDeclaredField("b").get(instance));
+    }
+
+    @Test
+    public void test_proxy_field_enum_default_value_constant() throws NoSuchFieldException, InstantiationException, IllegalAccessException {
+        String name = "EnumHolderWithDefault";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .field("a", TestEnum.class, TestEnum.ONE)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Assert.assertEquals(TestEnum.ONE, aClass.getDeclaredField("a").get(instance));
+    }
 }

@@ -1,18 +1,39 @@
 package com.wizzardo.tools.bytecode;
 
+import com.wizzardo.tools.interfaces.Consumer;
 import com.wizzardo.tools.interfaces.Mapper;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.wizzardo.tools.bytecode.ByteCodeParser.int1toBytes;
+import static com.wizzardo.tools.bytecode.ByteCodeParser.int2toBytes;
 
 public class ClassBuilder {
     public static final Class<?>[] EMPTY_ARGS = new Class[0];
-    ByteCodeParser reader = new ByteCodeParser();
+    protected ByteCodeParser reader = new ByteCodeParser();
+    protected List<FieldDescription> fields = new ArrayList<>();
+
+    static class FieldDescription<T> {
+        final String name;
+        final Class<T> type;
+        final T value;
+        final Consumer<CodeBuilder> initializer;
+
+        FieldDescription(String name, Class<T> type, T value, Consumer<CodeBuilder> initializer) {
+            this.name = name;
+            this.type = type;
+            this.value = value;
+            this.initializer = initializer;
+        }
+    }
 
     {
         reader.majorVersion = 52;
@@ -60,19 +81,32 @@ public class ClassBuilder {
         Code_attribute codeAttribute = new Code_attribute(reader);
         methodInfo.attributes[0] = codeAttribute;
 
-        codeAttribute.max_locals = 1;
-        codeAttribute.max_stack = 1;
+        codeAttribute.max_locals = 2;
+        codeAttribute.max_stack = 4;
         codeAttribute.attribute_name_index = getOrCreateUtf8Constant("Code");
 
         int superConstructorNameAndTypeIndex = getOrCreateNameAndTypeConstant(nameIndex, descriptorIndex);
 
         int superConstructorIndex = getOrCreateMethodRef(reader.superClass, superConstructorNameAndTypeIndex);
 
-        codeAttribute.code = new CodeBuilder()
+        CodeBuilder code = new CodeBuilder()
                 .append(Instruction.aload_0)
-                .append(Instruction.invokespecial, ByteCodeParser.int2toBytes(superConstructorIndex))
-                .append(Instruction.return_)
-                .build();
+                .append(Instruction.invokespecial, ByteCodeParser.int2toBytes(superConstructorIndex));
+
+        for (FieldDescription field : fields) {
+            if (field.value != null) {
+                code.append(Instruction.aload_0);
+                addLoadConstant(code, field.value, field.type);
+                code.append(Instruction.putfield, getOrCreateFieldRefBytes(field.name));
+            } else if (field.initializer != null) {
+                field.initializer.consume(code);
+            }
+
+        }
+
+        code.append(Instruction.return_);
+
+        codeAttribute.code = code.build();
         codeAttribute.code_length = codeAttribute.code.length;
         codeAttribute.attribute_length = codeAttribute.updateLength();
 
@@ -164,18 +198,126 @@ public class ClassBuilder {
     }
 
     public ClassBuilder field(String name, Class<?> type) {
+        return field(name, type, null);
+    }
+
+    public <T> ClassBuilder field(String name, Class<T> type, T initValue) {
         String description = getFieldDescription(type);
         int nameIndex = getOrCreateUtf8Constant(name);
         int descriptorIndex = getOrCreateUtf8Constant(description);
         if (reader.findFieldIndex(fi -> fi.name_index == nameIndex && fi.descriptor_index == descriptorIndex) != -1)
             return this;
 
+        fields.add(new FieldDescription<>(name, type, initValue, null));
+
         FieldInfo fi = new FieldInfo();
         fi.access_flags = AccessFlags.ACC_PUBLIC;
         fi.name_index = nameIndex;
         fi.descriptor_index = descriptorIndex;
         append(fi);
+        return this;
+    }
 
+    public <T> ClassBuilder fieldCallMethod(String name, Class<T> type, Method method, Object... args) {
+        int methodRef = getOrCreateMethodRef(method);
+        Class<?>[] types = method.getParameterTypes();
+        return fieldCallMethod(name, type, code -> {
+            code.append(Instruction.aload_0);
+            if (args != null) {
+                for (int i = 0; i < args.length; i++) {
+                    Object arg = args[i];
+                    Class<?> argType = types[i];
+                    addLoadConstant(code, arg, argType);
+                }
+            }
+
+            if ((method.getModifiers() & Modifier.STATIC) != 0)
+                code.append(Instruction.invokestatic, ByteCodeParser.int2toBytes(methodRef));
+            else
+                code.append(Instruction.invokevirtual, ByteCodeParser.int2toBytes(methodRef));
+
+            code.append(Instruction.putfield, getOrCreateFieldRefBytes(name));
+        });
+    }
+
+    public <T> ClassBuilder fieldCallConstructor(String name, Class<T> type, Constructor constructor, Object... args) {
+        int methodRef = getOrCreateMethodRef(constructor);
+        Class<?>[] types = constructor.getParameterTypes();
+        if (types.length != (args == null ? 0 : args.length))
+            throw new IllegalArgumentException("Cannot invoke constructor " + constructor + ", args.length does not match");
+
+        return fieldCallMethod(name, type, code -> {
+            code.append(Instruction.aload_0);
+            code.append(Instruction.new_, int2toBytes(getOrCreateClassConstant(constructor.getDeclaringClass())));
+            code.append(Instruction.dup);
+
+            for (int i = 0; i < types.length; i++) {
+                Object arg = args[i];
+                Class<?> argType = types[i];
+                addLoadConstant(code, arg, argType);
+            }
+
+            code.append(Instruction.invokespecial, ByteCodeParser.int2toBytes(methodRef));
+            code.append(Instruction.putfield, getOrCreateFieldRefBytes(name));
+        });
+    }
+
+    private void addLoadConstant(CodeBuilder code, Object value, Class<?> type) {
+        if (type.isPrimitive()) {
+            int constant;
+            if (type == int.class) {
+                constant = getOrCreateIntegerConstant((Integer) value);
+            } else if (type == char.class) {
+                constant = getOrCreateIntegerConstant((Character) value);
+            } else if (type == byte.class) {
+                constant = getOrCreateIntegerConstant(((Byte) value).intValue());
+            } else if (type == short.class) {
+                constant = getOrCreateIntegerConstant(((Short) value).intValue());
+            } else if (type == long.class) {
+                constant = getOrCreateLongConstant((Long) value);
+                code.append(Instruction.ldc2_w, int2toBytes(constant));
+                return;
+            } else if (type == float.class) {
+                constant = getOrCreateFloatConstant((Float) value);
+            } else if (type == double.class) {
+                constant = getOrCreateDoubleConstant((Double) value);
+                code.append(Instruction.ldc2_w, int2toBytes(constant));
+                return;
+            } else if (type == boolean.class) {
+                if (((Boolean) value)) {
+                    code.append(Instruction.iconst_1);
+                } else {
+                    code.append(Instruction.iconst_0);
+                }
+                return;
+            } else
+                throw new IllegalStateException();
+
+            if (constant < 255)
+                code.append(Instruction.ldc, int1toBytes(constant));
+            else
+                code.append(Instruction.ldc_w, int2toBytes(constant));
+        } else if (type.isEnum()) {
+            code.append(Instruction.getstatic, int2toBytes(getOrCreateFieldRef((Enum) value)));
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    protected <T> ClassBuilder fieldCallMethod(String name, Class<T> type, Consumer<CodeBuilder> initializer) {
+        String description = getFieldDescription(type);
+        int nameIndex = getOrCreateUtf8Constant(name);
+        int descriptorIndex = getOrCreateUtf8Constant(description);
+        if (reader.findFieldIndex(fi -> fi.name_index == nameIndex && fi.descriptor_index == descriptorIndex) != -1)
+            return this;
+
+        fields.add(new FieldDescription<>(name, type, null, initializer));
+
+        FieldInfo fi = new FieldInfo();
+        fi.access_flags = AccessFlags.ACC_PUBLIC;
+        fi.name_index = nameIndex;
+        fi.descriptor_index = descriptorIndex;
+        append(fi);
         return this;
     }
 
@@ -242,6 +384,26 @@ public class ClassBuilder {
         return append(fieldrefInfo);
     }
 
+    public <E extends Enum<E>> int getOrCreateFieldRef(E e) {
+        int classIndex = getOrCreateClassConstant(e.getDeclaringClass());
+        int nameIndex = getOrCreateUtf8Constant(e.name());
+        int descriptorIndex = getOrCreateUtf8Constant(getFieldDescription(e.getDeclaringClass()));
+
+        int fieldNameAndTypeIndex = getOrCreateNameAndTypeConstant(nameIndex, descriptorIndex);
+
+        int index = reader.findConstantIndex(ci -> ci instanceof ConstantPoolInfo.CONSTANT_Fieldref_info
+                && ((ConstantPoolInfo.CONSTANT_Fieldref_info) ci).class_index == classIndex
+                && ((ConstantPoolInfo.CONSTANT_Fieldref_info) ci).name_and_type_index == fieldNameAndTypeIndex
+        );
+        if (index != -1)
+            return index;
+
+        ConstantPoolInfo.CONSTANT_Fieldref_info fieldrefInfo = new ConstantPoolInfo.CONSTANT_Fieldref_info();
+        fieldrefInfo.class_index = classIndex;
+        fieldrefInfo.name_and_type_index = fieldNameAndTypeIndex;
+        return append(fieldrefInfo);
+    }
+
     public byte[] getOrCreateInterfaceMethodRefBytes(Class<?> clazz, String name, Class<?>[] args) throws NoSuchMethodException {
         return getOrCreateInterfaceMethodRefBytes(clazz.getDeclaredMethod(name, args));
     }
@@ -288,6 +450,11 @@ public class ClassBuilder {
 
         int classIndex = getOrCreateClassConstant(method.getDeclaringClass());
         return getOrCreateMethodRef(classIndex, method.getName(), method.getParameterTypes(), method.getReturnType());
+    }
+
+    public int getOrCreateMethodRef(Constructor constructor) {
+        int classIndex = getOrCreateClassConstant(constructor.getDeclaringClass());
+        return getOrCreateMethodRef(classIndex, "<init>", constructor.getParameterTypes(), void.class);
     }
 
     public int getOrCreateMethodRef(int classIndex, String name, Class<?>[] args, Class<?> returnType) {
@@ -501,8 +668,15 @@ public class ClassBuilder {
         ConstantPoolInfo.ConstantInfo[] infos = new ConstantPoolInfo.ConstantInfo[reader.constantPoolCount];
         System.arraycopy(reader.constantPool, 0, infos, 0, reader.constantPool.length);
         reader.constantPool = infos;
-        infos[reader.constantPoolCount - 1] = constantInfo;
-        return reader.constantPoolCount - 1;
+        int index = reader.constantPoolCount - 1;
+        infos[index] = constantInfo;
+        if (constantInfo.tag() == ConstantPoolInfo.CONSTANT_Long || constantInfo.tag() == ConstantPoolInfo.CONSTANT_Double) {
+            reader.constantPoolCount++;
+            infos = new ConstantPoolInfo.ConstantInfo[reader.constantPoolCount];
+            System.arraycopy(reader.constantPool, 0, infos, 0, reader.constantPool.length);
+            reader.constantPool = infos;
+        }
+        return index;
     }
 
     protected int append(MethodInfo methodInfo) {
@@ -549,6 +723,46 @@ public class ClassBuilder {
 
         ConstantPoolInfo.CONSTANT_String_info c = new ConstantPoolInfo.CONSTANT_String_info();
         c.string_index = stringIndex;
+        return append(c);
+    }
+
+    public int getOrCreateIntegerConstant(int value) {
+        int index = reader.findIntegerConstantIndex(value);
+        if (index != -1)
+            return index;
+
+        ConstantPoolInfo.CONSTANT_Integer_info c = new ConstantPoolInfo.CONSTANT_Integer_info();
+        c.value = value;
+        return append(c);
+    }
+
+    public int getOrCreateLongConstant(long value) {
+        int index = reader.findLongConstantIndex(value);
+        if (index != -1)
+            return index;
+
+        ConstantPoolInfo.CONSTANT_Long_info c = new ConstantPoolInfo.CONSTANT_Long_info();
+        c.value = value;
+        return append(c);
+    }
+
+    public int getOrCreateFloatConstant(float value) {
+        int index = reader.findFloatConstantIndex(value);
+        if (index != -1)
+            return index;
+
+        ConstantPoolInfo.CONSTANT_Float_info c = new ConstantPoolInfo.CONSTANT_Float_info();
+        c.value = value;
+        return append(c);
+    }
+
+    public int getOrCreateDoubleConstant(double value) {
+        int index = reader.findDoubleConstantIndex(value);
+        if (index != -1)
+            return index;
+
+        ConstantPoolInfo.CONSTANT_Double_info c = new ConstantPoolInfo.CONSTANT_Double_info();
+        c.value = value;
         return append(c);
     }
 }

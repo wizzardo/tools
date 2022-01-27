@@ -23,13 +23,13 @@ class ConstantPoolInfo {
         if (tag == CONSTANT_Utf8)
             return new CONSTANT_Utf8_info();
         if (tag == CONSTANT_Integer)
-            return null;
+            return new CONSTANT_Integer_info();
         if (tag == CONSTANT_Float)
-            return null;
+            return new CONSTANT_Float_info();
         if (tag == CONSTANT_Long)
-            return null;
+            return new CONSTANT_Long_info();
         if (tag == CONSTANT_Double)
-            return null;
+            return new CONSTANT_Double_info();
         if (tag == CONSTANT_Class)
             return new CONSTANT_Class_info();
         if (tag == CONSTANT_String)
@@ -56,6 +56,8 @@ class ConstantPoolInfo {
         int read(byte[] bytes, int from);
 
         void write(ByteArrayOutputStream out);
+
+        int tag();
     }
 
     public static class CONSTANT_String_info implements ConstantInfo {
@@ -86,6 +88,158 @@ class ConstantPoolInfo {
                     ", string_index=" + string_index +
                     '}';
         }
+
+        @Override
+        public int tag() {
+            return tag;
+        }
+    }
+
+    public static class CONSTANT_Integer_info implements ConstantInfo {
+        final byte tag = CONSTANT_Integer;
+        int value;
+
+        @Override
+        public int read(byte[] bytes, int from) {
+            if (bytes[from] != tag)
+                throw new IllegalStateException(bytes[from] + " != " + tag + " CONSTANT_Integer");
+
+            from++;
+            value = ByteCodeParser.readInt4(from, bytes);
+            from += 4;
+            return from;
+        }
+
+        @Override
+        public void write(ByteArrayOutputStream out) {
+            out.write(tag);
+            ByteCodeParser.writeInt4(value, out);
+        }
+
+        @Override
+        public String toString() {
+            return "CONSTANT_Integer_info{" +
+                    "tag=" + tag +
+                    ", value=" + value +
+                    '}';
+        }
+
+        @Override
+        public int tag() {
+            return tag;
+        }
+    }
+    public static class CONSTANT_Float_info implements ConstantInfo {
+        final byte tag = CONSTANT_Float;
+        float value;
+
+        @Override
+        public int read(byte[] bytes, int from) {
+            if (bytes[from] != tag)
+                throw new IllegalStateException(bytes[from] + " != " + tag + " CONSTANT_Float");
+
+            from++;
+            value = Float.intBitsToFloat(ByteCodeParser.readInt4(from, bytes));
+            from += 4;
+            return from;
+        }
+
+        @Override
+        public void write(ByteArrayOutputStream out) {
+            out.write(tag);
+            ByteCodeParser.writeInt4(Float.floatToRawIntBits(value), out);
+        }
+
+        @Override
+        public String toString() {
+            return "CONSTANT_Float_info{" +
+                    "tag=" + tag +
+                    ", value=" + value +
+                    '}';
+        }
+
+        @Override
+        public int tag() {
+            return tag;
+        }
+    }
+
+    public static class CONSTANT_Long_info implements ConstantInfo {
+        final byte tag = CONSTANT_Long;
+        long value;
+
+        @Override
+        public int read(byte[] bytes, int from) {
+            if (bytes[from] != tag)
+                throw new IllegalStateException(bytes[from] + " != " + tag + " CONSTANT_Long");
+
+            from++;
+            value = (long) ByteCodeParser.readInt4(from, bytes) << 32;
+            from += 4;
+            value += ByteCodeParser.readInt4(from, bytes);
+            from += 4;
+            return from;
+        }
+
+        @Override
+        public void write(ByteArrayOutputStream out) {
+            out.write(tag);
+            ByteCodeParser.writeInt4((int) ((value >> 32) & 0xFFFFFFFF), out);
+            ByteCodeParser.writeInt4((int) (value & 0xFFFFFFFF), out);
+        }
+
+        @Override
+        public String toString() {
+            return "CONSTANT_Long_info{" +
+                    "tag=" + tag +
+                    ", value=" + value +
+                    '}';
+        }
+
+        @Override
+        public int tag() {
+            return tag;
+        }
+    }
+
+    public static class CONSTANT_Double_info implements ConstantInfo {
+        final byte tag = CONSTANT_Double;
+        double value;
+
+        @Override
+        public int read(byte[] bytes, int from) {
+            if (bytes[from] != tag)
+                throw new IllegalStateException(bytes[from] + " != " + tag + " CONSTANT_Double");
+
+            from++;
+            long l = (long) ByteCodeParser.readInt4(from, bytes) << 32;
+            from += 4;
+            l += ByteCodeParser.readInt4(from, bytes);
+            value = Double.longBitsToDouble(l);
+            from += 4;
+            return from;
+        }
+
+        @Override
+        public void write(ByteArrayOutputStream out) {
+            out.write(tag);
+            long l = Double.doubleToRawLongBits(value);
+            ByteCodeParser.writeInt4((int) ((l >> 32) & 0xFFFFFFFF), out);
+            ByteCodeParser.writeInt4((int) (l & 0xFFFFFFFF), out);
+        }
+
+        @Override
+        public String toString() {
+            return "CONSTANT_Double_info{" +
+                    "tag=" + tag +
+                    ", value=" + value +
+                    '}';
+        }
+
+        @Override
+        public int tag() {
+            return tag;
+        }
     }
 
     public static class CONSTANT_Class_info implements ConstantInfo {
@@ -115,6 +269,11 @@ class ConstantPoolInfo {
                     "tag=" + tag +
                     ", name_index=" + name_index +
                     '}';
+        }
+
+        @Override
+        public int tag() {
+            return tag;
         }
     }
 
@@ -151,6 +310,11 @@ class ConstantPoolInfo {
                     ", name_and_type_index=" + name_and_type_index +
                     '}';
         }
+
+        @Override
+        public int tag() {
+            return tag;
+        }
     }
 
     public static class CONSTANT_NameAndType_info implements ConstantInfo {
@@ -185,6 +349,11 @@ class ConstantPoolInfo {
                     ", name_index=" + name_index +
                     ", descriptor_index=" + descriptor_index +
                     '}';
+        }
+
+        @Override
+        public int tag() {
+            return tag;
         }
     }
 
@@ -223,6 +392,11 @@ class ConstantPoolInfo {
                     ", bytes=" + new String(bytes, StandardCharsets.UTF_8) +
                     '}';
         }
+
+        @Override
+        public int tag() {
+            return tag;
+        }
     }
 
     public static class CONSTANT_Methodref_info implements ConstantInfo {
@@ -258,6 +432,11 @@ class ConstantPoolInfo {
                     ", name_and_type_index=" + name_and_type_index +
                     '}';
         }
+
+        @Override
+        public int tag() {
+            return tag;
+        }
     }
 
     public static class CONSTANT_InterfaceMethodref_info implements ConstantInfo {
@@ -292,6 +471,11 @@ class ConstantPoolInfo {
                     ", class_index=" + class_index +
                     ", name_and_type_index=" + name_and_type_index +
                     '}';
+        }
+
+        @Override
+        public int tag() {
+            return tag;
         }
     }
 }
