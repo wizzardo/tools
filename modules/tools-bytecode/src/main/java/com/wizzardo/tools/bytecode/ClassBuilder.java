@@ -24,13 +24,11 @@ public class ClassBuilder {
     static class FieldDescription<T> {
         final String name;
         final Class<T> type;
-        final T value;
         final Consumer<CodeBuilder> initializer;
 
-        FieldDescription(String name, Class<T> type, T value, Consumer<CodeBuilder> initializer) {
+        FieldDescription(String name, Class<T> type, Consumer<CodeBuilder> initializer) {
             this.name = name;
             this.type = type;
-            this.value = value;
             this.initializer = initializer;
         }
     }
@@ -93,15 +91,10 @@ public class ClassBuilder {
                 .append(Instruction.aload_0)
                 .append(Instruction.invokespecial, ByteCodeParser.int2toBytes(superConstructorIndex));
 
-        for (FieldDescription field : fields) {
-            if (field.value != null) {
-                code.append(Instruction.aload_0);
-                addLoadConstant(code, field.value, field.type);
-                code.append(Instruction.putfield, getOrCreateFieldRefBytes(field.name));
-            } else if (field.initializer != null) {
+        for (FieldDescription<?> field : fields) {
+            if (field.initializer != null) {
                 field.initializer.consume(code);
             }
-
         }
 
         code.append(Instruction.return_);
@@ -137,8 +130,8 @@ public class ClassBuilder {
 
         method("<init>", parameterTypes, void.class, b -> {
             Code_attribute codeAttribute = new Code_attribute(reader);
-            codeAttribute.max_locals = 1 + (parameterTypes.length == 0 ? 0 : Arrays.stream(parameterTypes).mapToInt(it -> it == long.class || it == double.class ? 2 : 1).sum());
-            codeAttribute.max_stack = 1 + parameterTypes.length * 2; // not optimal but should be ok
+            codeAttribute.max_locals = 2 + (parameterTypes.length == 0 ? 0 : Arrays.stream(parameterTypes).mapToInt(it -> it == long.class || it == double.class ? 2 : 1).sum());
+            codeAttribute.max_stack = 4 + parameterTypes.length * 2; // not optimal but should be ok
             codeAttribute.attribute_name_index = getOrCreateUtf8Constant("Code");
 
             int nameIndex = getOrCreateUtf8Constant("<init>");
@@ -180,6 +173,13 @@ public class ClassBuilder {
             }
 
             code.append(Instruction.invokespecial, ByteCodeParser.int2toBytes(superConstructorIndex));
+
+            for (FieldDescription<?> field : fields) {
+                if (field.initializer != null) {
+                    field.initializer.consume(code);
+                }
+            }
+
             code.append(Instruction.return_);
             codeAttribute.code = code.build();
             codeAttribute.code_length = codeAttribute.code.length;
@@ -208,7 +208,11 @@ public class ClassBuilder {
         if (reader.findFieldIndex(fi -> fi.name_index == nameIndex && fi.descriptor_index == descriptorIndex) != -1)
             return this;
 
-        fields.add(new FieldDescription<>(name, type, initValue, null));
+        fields.add(new FieldDescription<>(name, type, initValue == null ? null : code -> {
+            code.append(Instruction.aload_0);
+            addLoadConstant(code, initValue, type);
+            code.append(Instruction.putfield, getOrCreateFieldRefBytes(name));
+        }));
 
         FieldInfo fi = new FieldInfo();
         fi.access_flags = AccessFlags.ACC_PUBLIC;
@@ -311,7 +315,7 @@ public class ClassBuilder {
         if (reader.findFieldIndex(fi -> fi.name_index == nameIndex && fi.descriptor_index == descriptorIndex) != -1)
             return this;
 
-        fields.add(new FieldDescription<>(name, type, null, initializer));
+        fields.add(new FieldDescription<>(name, type, initializer));
 
         FieldInfo fi = new FieldInfo();
         fi.access_flags = AccessFlags.ACC_PUBLIC;
