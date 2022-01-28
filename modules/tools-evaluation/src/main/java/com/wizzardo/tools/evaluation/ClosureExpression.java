@@ -83,9 +83,9 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
     }
 
     public Object getAgainst(Map<String, Object> model, Object thisObject, Object... arg) {
-        HashMap<String, Object> local = model != null ? new HashMap<String, Object>(model) : new HashMap<String, Object>(2, 1);
-        if (context != model)
-            local.putAll(context);
+        HashMap<String, Object> local = new HashMap<>(context);
+        if (context != model && model != null)
+            local.putAll(model);
 
         if (context != thisObject) {
             local.put("delegate", thisObject);
