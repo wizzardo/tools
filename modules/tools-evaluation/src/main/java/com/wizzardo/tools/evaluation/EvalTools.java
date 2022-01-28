@@ -886,12 +886,12 @@ public class EvalTools {
         if (isClosure(exp) || (isLambda = isJavaLambda(exp))) {
             ClosureExpression closure = new ClosureExpression();
             if (isLambda) {
-                exp = closure.parseArguments(exp);
+                exp = closure.parseArguments(exp, imports, model);
                 if (exp.startsWith("{"))
                     exp = exp.substring(1, exp.length() - 1).trim();
             } else {
                 exp = exp.substring(1, exp.length() - 1).trim();
-                exp = closure.parseArguments(exp);
+                exp = closure.parseArguments(exp, imports, model);
             }
 
             List<Statement> statements = getStatements(exp);
@@ -1154,8 +1154,8 @@ public class EvalTools {
                             if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
                                 ((Operation) action).leftPart(new Expression.Holder(name));
                             }
-                            if (type != null && type.contains("<"))
-                                type = type.substring(0, type.indexOf('<'));
+//                            if (type != null && type.contains("<"))
+//                                type = type.substring(0, type.indexOf('<'));
                             Class typeClass = findClass(type, imports, model);
                             return new Expression.DefineAndSet(typeClass, name, action, type);
                         } else if (m.group(5).equals("(")) {
@@ -1172,16 +1172,16 @@ public class EvalTools {
                                 closure = (ClosureHolder) prepare("{ " + args + " -> " + block.substring(1), model, functions, imports, isTemplate);
                             }
 
-                            if (type != null && type.contains("<"))
-                                type = type.substring(0, type.indexOf('<'));
+//                            if (type != null && type.contains("<"))
+//                                type = type.substring(0, type.indexOf('<'));
                             Class typeClass = findClass(type, imports, model);
                             if (typeClass == null)
                                 typeClass = Object.class;
                             return new Expression.MethodDefinition(modifiers, typeClass, name, closure);
                         } else {
                             model.put(name, null);
-                            if (type != null && type.contains("<"))
-                                type = type.substring(0, type.indexOf('<'));
+//                            if (type != null && type.contains("<"))
+//                                type = type.substring(0, type.indexOf('<'));
 
                             if (model.containsKey("class " + type))
                                 return new Expression.DefinitionWithClassExpression((ClassExpression) model.get("class " + type), name);
@@ -1700,6 +1700,12 @@ public class EvalTools {
     }
 
     public static Class findClass(String s, List<String> imports, Map model) {
+        if (s == null)
+            return null;
+
+        if (s.contains("<"))
+            s = s.substring(0, s.indexOf('<')).trim();
+
         if (model instanceof ScriptEngine.Binding) {
             ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
             if (binding.classCache.containsKey(s))

@@ -30,6 +30,10 @@ public class ClosureLookup extends Expression {
 
     @Override
     public Object get(Map<String, Object> model) {
+        return get(model, args);
+    }
+
+    public Object get(Map<String, Object> model, Object[] args) {
         if (model == null)
             return lookupInFunctions();
 

@@ -5,12 +5,10 @@ import com.wizzardo.tools.bytecode.ClassBuilder;
 import com.wizzardo.tools.bytecode.DynamicProxy;
 import com.wizzardo.tools.bytecode.DynamicProxyFactory;
 import com.wizzardo.tools.bytecode.Handler;
+import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.Unchecked;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
 import java.util.*;
 
 public class ClassExpression extends Expression {
@@ -124,7 +122,7 @@ public class ClassExpression extends Expression {
                 proxy.setHandler((that, method, args1) -> {
                     ClosureHolder closureHolder = findMethod(method, args1);
                     if (closureHolder == null)
-                        throw new IllegalArgumentException("Cannot find method " + method + " " + Arrays.toString(args) + " in " + this);
+                        throw new IllegalArgumentException("Cannot find method " + method + " " + Arrays.toString(args1) + " in " + this);
 
                     ClosureExpression closure = (ClosureExpression) closureHolder.get(instance.context);
                     return closure.getAgainst(closure.context, proxy, args1);
@@ -182,12 +180,41 @@ public class ClassExpression extends Expression {
         if ("this".equals(method))
             method = name;
 
+        outer:
         for (int i = 0; i < definitions.size(); i++) {
             Expression e = definitions.get(i);
             if (e instanceof MethodDefinition) {
                 MethodDefinition md = (MethodDefinition) e;
-                if (md.name.equals(method) && md.action.closure.args.length == (args == null ? 0 : args.length))
-                    return md.action;
+                if (!md.name.equals(method))
+                    continue;
+                if (md.action.closure.args.length != (args == null ? 0 : args.length))
+                    continue;
+                for (int j = 0; j < md.action.closure.args.length; j++) {
+                    Pair<String, Class> pair = md.action.closure.args[j];
+                    Class param = pair.value;
+                    Object arg = args[j];
+                    if (arg == null) {
+                        if (param.isPrimitive())
+                            continue outer;
+                    } else {
+                        Class<?> argClass = arg.getClass();
+                        if (param.isPrimitive()) {
+                            if (Function.boxing.get(param) == argClass)
+                                continue;
+                            int a = Function.indexOfClass(argClass, Function.Boxed);
+                            if (a < 0)
+                                continue outer;
+                            int p = Function.indexOfClass(param, Function.primitives);
+                            if (p < 0)
+                                continue outer;
+                            if (p < a)
+                                continue outer;
+                        } else if (argClass != param && !param.isAssignableFrom(argClass)) {
+                            continue outer;
+                        }
+                    }
+                }
+                return md.action;
             }
         }
         return null;
@@ -207,11 +234,30 @@ public class ClassExpression extends Expression {
                     .fieldSetter("handler");
 
             builder.implement(interfaces);
+            builder.implement(superClass.getInterfaces());
 
             for (Class<?> anInterface : interfaces) {
                 for (Method method : anInterface.getMethods()) {
                     if (builder.hasMethod(method))
                         continue;
+
+                    DynamicProxyFactory.addHandlerCallForMethod(builder, method, false);
+                }
+            }
+
+            Method[] superMethods = superClass.getMethods();
+            for (Class<?> anInterface : superClass.getInterfaces()) {
+                for (Method method : anInterface.getMethods()) {
+                    if (builder.hasMethod(method))
+                        continue;
+
+                    if (Arrays.stream(superMethods).anyMatch(it -> it.getName().equals(method.getName())
+                            && !Modifier.isAbstract(it.getModifiers())
+                            && it.getParameterCount() == method.getParameterCount()
+                            && Arrays.equals(it.getParameterTypes(), method.getParameterTypes())
+                    )) {
+                        continue;
+                    }
 
                     DynamicProxyFactory.addHandlerCallForMethod(builder, method, false);
                 }

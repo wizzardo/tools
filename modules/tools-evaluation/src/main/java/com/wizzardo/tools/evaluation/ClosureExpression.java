@@ -120,7 +120,7 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         expressions.add(expression);
     }
 
-    public String parseArguments(String exp) {
+    public String parseArguments(String exp, List<String> imports, Map<String, Object> model) {
         int i = exp.indexOf("->");
         if (i >= 0 && EvalTools.countOpenBrackets(exp, 0, i) == 0 && !EvalTools.inString(exp, 0, i)) {
             String args = exp.substring(0, i).trim();
@@ -154,17 +154,23 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
                         classStart = findNextArgumentStart(args, classEnd);
                         classEnd = findNextArgumentClassEnd(args, classStart);
                     }
+
                     if (classEnd == args.length() || args.charAt(classEnd) == ',') {
-                        l.add(new Pair<String, Class>(args.substring(classStart, classEnd), Object.class));
+                        String name = args.substring(classStart, classEnd);
+                        l.add(new Pair<>(name, Object.class));
                         from = classEnd + 1;
                     } else {
                         int nameStart = findNextArgumentStart(args, classEnd);
                         int nameEnd = findNextArgumentNameEnd(args, nameStart);
                         if (nameStart == nameEnd) {
-                            l.add(new Pair<String, Class>(args.substring(classStart, classEnd), Object.class));
+                            String name = args.substring(classStart, classEnd);
+                            l.add(new Pair<>(name, Object.class));
                             from = classEnd + 1;
                         } else {
-                            l.add(new Pair<String, Class>(args.substring(nameStart, nameEnd), Object.class));
+                            String name = args.substring(nameStart, nameEnd);
+                            String typeName = args.substring(classStart, classEnd);
+                            Class type = EvalTools.findClass(typeName, imports, model);
+                            l.add(new Pair<>(name, type == null ? Object.class : type));
                             from = nameEnd + 1;
                         }
                     }

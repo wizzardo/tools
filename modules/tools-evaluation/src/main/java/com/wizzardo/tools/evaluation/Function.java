@@ -248,7 +248,15 @@ public class Function extends Expression {
             Object[] arr = null;
 //        System.out.println("evaluate method: "+toString());
 
-            Object instance = thatObject.get(model);
+            Object instance;
+            if(thatObject instanceof ClosureLookup){
+                if (args != null)
+                    arr = resolveArgs(model);
+
+                instance = ((ClosureLookup) thatObject).get(model, arr);
+            } else
+                instance = thatObject.get(model);
+
             if (instance == null && thatObject instanceof VariableOrFieldOfThis) {
                 if (VariableOrFieldOfThis.hasDelegate(model))
                     instance = ((VariableOrFieldOfThis) thatObject).function.get(model);
@@ -618,8 +626,7 @@ public class Function extends Expression {
     }
 
     private MethodInvoker wrapMethod(final Method m) {
-        if (Modifier.isPublic(m.getModifiers()))
-            m.setAccessible(true);
+        m.setAccessible(true);
 
         return new MethodInvoker() {
             @Override
@@ -949,7 +956,7 @@ public class Function extends Expression {
         }
     };
 
-    private int indexOfClass(Class clazz, Class[] classes) {
+    protected static int indexOfClass(Class clazz, Class[] classes) {
         for (int i = 0; i < classes.length; i++) {
             if (clazz == classes[i])
                 return i;
@@ -957,8 +964,8 @@ public class Function extends Expression {
         return -1;
     }
 
-    private static final Class[] primitives = new Class[]{byte.class, short.class, char.class, int.class, long.class, float.class, double.class};
-    private static final Class[] Boxed = new Class[]{Byte.class, Short.class, Character.class, Integer.class, Long.class, Float.class, Double.class};
+    protected static final Class[] primitives = new Class[]{byte.class, short.class, char.class, int.class, long.class, float.class, double.class};
+    protected static final Class[] Boxed = new Class[]{Byte.class, Short.class, Character.class, Integer.class, Long.class, Float.class, Double.class};
 
 
     public Expression getThatObject() {
