@@ -836,14 +836,6 @@ public class Function extends Expression {
     }
 
     private <T> Mapper<Object[], T> findConstructor(Class<T> clazz, Object[] args, Object instance, List<Mapper<Object[], Object[]>> argsMappers) {
-        Class<?>[] argsClasses = null;
-        if (args != null) {
-            argsClasses = new Class[args.length];
-            for (int i = 0; i < args.length; i++) {
-                if (args[i] != null)
-                    argsClasses[i] = args[i].getClass();
-            }
-        }
         if (clazz.equals(ClassExpression.class)) {
             final ClassExpression cl = (ClassExpression) instance;
             return new Mapper<Object[], T>() {
@@ -859,8 +851,24 @@ public class Function extends Expression {
             };
         }
 
+        return wrapConstructor(findConstructor(clazz, args, argsMappers));
+    }
+
+    protected <T> Constructor<T> findConstructor(Class<T> clazz, Object[] args, List<Mapper<Object[], Object[]>> argsMappers) {
+        Class<?>[] argsClasses = null;
+        if (args != null) {
+            argsClasses = new Class[args.length];
+            for (int i = 0; i < args.length; i++) {
+                if (args[i] != null)
+                    argsClasses[i] = args[i].getClass();
+            }
+        }
+        if (clazz.equals(ClassExpression.class)) {
+            return null;
+        }
+
         try {
-            return wrapConstructor(clazz.getConstructor(argsClasses));
+            return clazz.getConstructor(argsClasses);
         } catch (NoSuchMethodException ignored) {
         }
         outer:
@@ -886,7 +894,7 @@ public class Function extends Expression {
                         continue outer;
                     }
                 }
-                return wrapConstructor(c);
+                return c;
             }
         }
 
@@ -928,7 +936,7 @@ public class Function extends Expression {
         return methods;
     }
 
-    private static final Map<Class, Class> boxing = new HashMap<Class, Class>() {
+    protected static final Map<Class, Class> boxing = new HashMap<Class, Class>() {
         {
             put(int.class, Integer.class);
             put(double.class, Double.class);

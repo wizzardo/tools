@@ -1616,6 +1616,29 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_def_class_constructor_chained() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("test", EvalTools.prepare("" +
+                "class Holder {\n" +
+                "  String value = 'value' \n" +
+                "  boolean flag \n" +
+                "  Holder(String v) {\n" +
+                "    value = v;\n" +
+                "  }\n" +
+                "  Holder(String v, boolean b) {\n" +
+                "    this(v)\n" +
+                "    flag = b\n" +
+                "  }\n" +
+                "  public Holder() {\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "new Holder('test', true).value\n" +
+                "").get(model).toString());
+
+    }
+
+    @Test
     public void test_script_engine() {
         ScriptEngine scriptEngine = new ScriptEngine(new File("src/test/resources/groovy"));
 

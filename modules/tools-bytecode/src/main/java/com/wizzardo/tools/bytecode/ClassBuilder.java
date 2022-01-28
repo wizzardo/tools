@@ -188,12 +188,15 @@ public class ClassBuilder {
         });
     }
 
-    public ClassBuilder implement(Class<?> intrface) {
-        if (!intrface.isInterface())
-            throw new IllegalArgumentException("Class " + intrface.getCanonicalName() + " is not an interface");
+    public ClassBuilder implement(Class<?>... interfaces) {
+        if (interfaces != null)
+            for (Class<?> anInterface : interfaces) {
+                if (!anInterface.isInterface())
+                    throw new IllegalArgumentException("Class " + anInterface.getCanonicalName() + " is not an interface");
 
-        int index = getOrCreateClassConstant(intrface);
-        appendInterface(index);
+                int index = getOrCreateClassConstant(anInterface);
+                appendInterface(index);
+            }
         return this;
     }
 
@@ -270,21 +273,21 @@ public class ClassBuilder {
         if (type.isPrimitive()) {
             int constant;
             if (type == int.class) {
-                constant = getOrCreateIntegerConstant((Integer) value);
+                constant = getOrCreateIntegerConstant(((Number) value).intValue());
             } else if (type == char.class) {
                 constant = getOrCreateIntegerConstant((Character) value);
             } else if (type == byte.class) {
-                constant = getOrCreateIntegerConstant(((Byte) value).intValue());
+                constant = getOrCreateIntegerConstant(((Number) value).intValue());
             } else if (type == short.class) {
-                constant = getOrCreateIntegerConstant(((Short) value).intValue());
+                constant = getOrCreateIntegerConstant(((Number) value).intValue());
             } else if (type == long.class) {
-                constant = getOrCreateLongConstant((Long) value);
+                constant = getOrCreateLongConstant(((Number) value).longValue());
                 code.append(Instruction.ldc2_w, int2toBytes(constant));
                 return;
             } else if (type == float.class) {
-                constant = getOrCreateFloatConstant((Float) value);
+                constant = getOrCreateFloatConstant(((Number) value).floatValue());
             } else if (type == double.class) {
-                constant = getOrCreateDoubleConstant((Double) value);
+                constant = getOrCreateDoubleConstant(((Number) value).doubleValue());
                 code.append(Instruction.ldc2_w, int2toBytes(constant));
                 return;
             } else if (type == boolean.class) {
@@ -562,11 +565,15 @@ public class ClassBuilder {
     }
 
     public boolean hasMethod(Method method) {
-        int nameIndex = reader.findUtf8ConstantIndex(method.getName().getBytes(StandardCharsets.UTF_8));
+        return hasMethod(method.getName(), method.getParameterTypes(), method.getReturnType());
+    }
+
+    public boolean hasMethod(String name, Class<?>[] args, Class<?> returnType) {
+        int nameIndex = reader.findUtf8ConstantIndex(name.getBytes(StandardCharsets.UTF_8));
         if (nameIndex == -1)
             return false;
 
-        String descriptor = getMethodDescriptor(method);
+        String descriptor = getMethodDescriptor(args, returnType);
         int descriptorIndex = reader.findUtf8ConstantIndex(descriptor.getBytes(StandardCharsets.UTF_8));
         return descriptorIndex != -1;
     }
@@ -580,6 +587,9 @@ public class ClassBuilder {
     }
 
     public String getFieldDescription(Class type) {
+        if (type == null)
+            throw new NullPointerException("Field type should not be null");
+
         if (type.isPrimitive()) {
             if (type == int.class)
                 return "I";

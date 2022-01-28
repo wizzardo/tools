@@ -971,12 +971,27 @@ public class EvalTools {
                     }
                 }
 
+                Class<?> superClass = Object.class;
+                String anExtends = m.group("extends");
+                if (anExtends != null && !anExtends.isEmpty()) {
+                    anExtends = anExtends.trim();
+                    anExtends = anExtends.substring("extends ".length()).trim();
+                    Matcher typeMatcher = TYPE.matcher(anExtends);
+
+                    if (typeMatcher.find()) {
+                        String toExtend = typeMatcher.group(1);
+                        superClass = findClass(toExtend.trim(), imports, model);
+                        if (superClass == null)
+                            throw new IllegalStateException("Cannot find class to extend: " + toExtend);
+                    } else
+                        throw new IllegalStateException("Cannot find class to extend: " + anExtends);
+                }
+
                 exp = exp.substring(m.end(), exp.length() - 1).trim();
                 List<String> lines = getBlocks(exp);
 
                 List<Expression> definitions = new ArrayList<Expression>(lines.size());
-                ClassExpression classExpression = new ClassExpression(className, definitions);
-                classExpression.interfaces = interfaces;
+                ClassExpression classExpression = new ClassExpression(className, definitions, superClass, interfaces);
                 String parentClass = null;
                 if (model instanceof ScriptEngine.Binding) {
                     ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
@@ -1139,7 +1154,10 @@ public class EvalTools {
                             if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
                                 ((Operation) action).leftPart(new Expression.Holder(name));
                             }
-                            return new Expression.DefineAndSet(type, name, action);
+                            if (type != null && type.contains("<"))
+                                type = type.substring(0, type.indexOf('<'));
+                            Class typeClass = findClass(type, imports, model);
+                            return new Expression.DefineAndSet(typeClass, name, action, type);
                         } else if (m.group(5).equals("(")) {
                             int argsEnd = findCloseBracket(exp, m.end());
                             ClosureHolder closure;
@@ -1154,7 +1172,12 @@ public class EvalTools {
                                 closure = (ClosureHolder) prepare("{ " + args + " -> " + block.substring(1), model, functions, imports, isTemplate);
                             }
 
-                            return new Expression.MethodDefinition(modifiers, type, name, closure);
+                            if (type != null && type.contains("<"))
+                                type = type.substring(0, type.indexOf('<'));
+                            Class typeClass = findClass(type, imports, model);
+                            if (typeClass == null)
+                                typeClass = Object.class;
+                            return new Expression.MethodDefinition(modifiers, typeClass, name, closure);
                         } else {
                             model.put(name, null);
                             if (type != null && type.contains("<"))

@@ -169,14 +169,16 @@ public abstract class Expression {
     }
 
     public static class DefineAndSet extends Expression {
-        public final String type;
+        public final Class type;
         public final String name;
         public final Expression action;
+        public final String typeDefinition;
 
-        public DefineAndSet(String type, String name, Expression action) {
+        public DefineAndSet(Class type, String name, Expression action, String typeDefinition) {
             this.type = type;
             this.name = name;
             this.action = action;
+            this.typeDefinition = typeDefinition;
         }
 
         @Override
@@ -186,7 +188,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new DefineAndSet(type, name, action);
+            return new DefineAndSet(type, name, action, typeDefinition);
         }
 
         @Override
@@ -203,13 +205,13 @@ public abstract class Expression {
 
     public static class MethodDefinition extends Expression {
         public final String modifiers;
-        public final String type;
+        public final Class returnType;
         public final String name;
         public final ClosureHolder action;
 
-        public MethodDefinition(String modifiers, String type, String name, ClosureHolder action) {
+        public MethodDefinition(String modifiers, Class returnType, String name, ClosureHolder action) {
             this.modifiers = modifiers;
-            this.type = type;
+            this.returnType = returnType;
             this.name = name;
             this.action = action;
         }
@@ -221,7 +223,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new MethodDefinition(modifiers, type, name, action);
+            return new MethodDefinition(modifiers, returnType, name, action);
         }
 
         @Override
@@ -233,7 +235,7 @@ public abstract class Expression {
 
         @Override
         public String toString() {
-            return type + " " + name + " " + action;
+            return returnType + " " + name + " " + action;
         }
     }
 

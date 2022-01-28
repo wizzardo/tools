@@ -101,29 +101,30 @@ public class Generator {
         List<FieldDescription> fields = (List<FieldDescription>) Flow.of(definitions)
                 .map(expression -> {
                     if (expression instanceof Expression.Definition) {
-                        Class clazz = ((Expression.Definition) expression).type;
+                        Expression.Definition definition = (Expression.Definition) expression;
+                        Class clazz = definition.type;
                         if (clazz != null)
-                            return createFieldDescription(getFieldType(clazz), clazz, ((Expression.Definition) expression).name);
+                            return createFieldDescription(getFieldType(clazz), clazz, definition.name);
 
-                        if (((Expression.Definition) expression).typeDefinition != null) {
-                            Pair<String, ClassExpression> resolve = model.resolve(((Expression.Definition) expression).typeDefinition);
+                        if (definition.typeDefinition != null) {
+                            Pair<String, ClassExpression> resolve = model.resolve(definition.typeDefinition);
                             if (resolve != null && (clazz = getFieldType(resolve.value)) != null) {
-                                return createFieldDescription(clazz, resolve.value, ((Expression.Definition) expression).name);
+                                return createFieldDescription(clazz, resolve.value, definition.name);
                             }
                         }
 
                     } else if (expression instanceof Expression.DefineAndSet) {
-                        String type = ((Expression.DefineAndSet) expression).type;
-                        if (((Expression.DefineAndSet) expression).action instanceof Operation && ((Operation) ((Expression.DefineAndSet) expression).action).rightPart() instanceof ClosureHolder)
+                        Expression.DefineAndSet defineAndSet = (Expression.DefineAndSet) expression;
+                        if (defineAndSet.action instanceof Operation && ((Operation) defineAndSet.action).rightPart() instanceof ClosureHolder)
                             return null;
 
-                        Class clazz = EvalTools.findClass(type, imports, model);
+                        Class clazz = defineAndSet.type;
                         if (clazz != null)
-                            return createFieldDescription(getFieldType(clazz), clazz, ((Expression.DefineAndSet) expression).name);
+                            return createFieldDescription(getFieldType(clazz), clazz, defineAndSet.name);
 
-                        Pair<String, ClassExpression> resolve = model.resolve(type);
+                        Pair<String, ClassExpression> resolve = model.resolve(defineAndSet.typeDefinition);
                         if (resolve != null && (clazz = getFieldType(resolve.value)) != null) {
-                            return createFieldDescription(clazz, resolve.value, ((Expression.DefineAndSet) expression).name);
+                            return createFieldDescription(clazz, resolve.value, defineAndSet.name);
                         }
                     } else if (expression instanceof Expression.DefinitionWithClassExpression) {
                         ClassExpression classExpression = ((Expression.DefinitionWithClassExpression) expression).type;
