@@ -613,6 +613,7 @@ public class EvalTools {
                     }
                     if (c == '"' || c == '\'') {
                         inString = true;
+                        stringChar = c;
                     }
                 }
             }
