@@ -426,8 +426,18 @@ public class EvalTools {
                         throw new IllegalStateException("more then one statement in condition: " + statement);
 
                     AsBooleanExpression condition = new AsBooleanExpression(EvalTools.prepare(args.get(0), model, functions, imports));
-                    Expression then = bodyStatement != null ? bodyStatement.prepare(model, functions, imports) : EvalTools.prepare(body, model, functions, imports);
-                    Expression elseExpression = optionalStatement != null ? optionalStatement.prepare(model, functions, imports) : EvalTools.prepare(optional, model, functions, imports);
+                    Expression then;
+                    if (bodyStatement != null)
+                        then = bodyStatement.prepare(model, functions, imports);
+                    else
+                        then = EvalTools.prepare(body, model, functions, imports);
+
+                    Expression elseExpression;
+                    if (optionalStatement != null)
+                        elseExpression = optionalStatement.prepare(model, functions, imports);
+                    else
+                        elseExpression = EvalTools.prepare(optional, model, functions, imports);
+
                     if (elseExpression == null)
                         return new IfExpression(condition, then);
                     else
@@ -809,6 +819,428 @@ public class EvalTools {
         return prepare(exp, model, functions, imports, false);
     }
 
+    protected static Expression prepareClosure(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+        boolean isLambda = false;
+        if (isClosure(exp) || (isLambda = isJavaLambda(exp))) {
+            ClosureExpression closure = new ClosureExpression();
+            if (isLambda) {
+                exp = closure.parseArguments(exp, imports, model);
+                if (exp.startsWith("{"))
+                    exp = exp.substring(1, exp.length() - 1).trim();
+            } else {
+                exp = exp.substring(1, exp.length() - 1).trim();
+                exp = closure.parseArguments(exp, imports, model);
+            }
+
+            List<Statement> statements = getStatements(exp);
+            for (Statement s : statements) {
+                switch (s.type) {
+                    case IF:
+                    case FOR:
+                    case WHILE:
+                        closure.add(s.prepare(model, functions, imports));
+                        break;
+
+                    case BLOCK: {
+                        List<String> lines = getBlocks(s.statement);
+                        if (lines.isEmpty())
+                            continue;
+
+                        for (String line : lines) {
+                            if (isLineCommented(line))
+                                continue;
+                            closure.add(prepare(line, model, functions, imports, false));
+                        }
+                        break;
+                    }
+
+                    default:
+                        throw new IllegalStateException("not implemented yet");
+                }
+
+            }
+            return new ClosureHolder(closure);
+        }
+        return null;
+    }
+
+    protected static Expression prepareClass(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+        Matcher m = CLASS_DEF.matcher(exp);
+        if (m.find() && findCloseBracket(exp, m.end()) == exp.length() - 1) {
+            String className = m.group(3);
+            String type = m.group(2);
+
+            if ("interface".equals(type))
+                return new Expression() {
+                    @Override
+                    public void setVariable(Variable v) {
+
+                    }
+
+                    @Override
+                    public Expression clone() {
+                        return null;
+                    }
+
+                    @Override
+                    public Object get(Map<String, Object> model) {
+                        return null;
+                    }
+                };
+
+            boolean isEnum = "enum".equals(type);
+            Class[] interfaces = new Class[0];
+            String anImplements = m.group("implements");
+            if (anImplements != null && !anImplements.isEmpty()) {
+                anImplements = anImplements.trim();
+                anImplements = anImplements.substring("implements ".length()).trim();
+                Matcher interfacesMatcher = TYPE.matcher(anImplements);
+
+                List<String> interfacesNames = new ArrayList<>();
+                while (interfacesMatcher.find()) {
+                    interfacesNames.add(interfacesMatcher.group(1));
+                }
+                interfaces = new Class[interfacesNames.size()];
+                for (int i = 0; i < interfacesNames.size(); i++) {
+                    Class aClass = findClass(interfacesNames.get(i).trim(), imports, model);
+                    interfaces[i] = aClass;
+                    if (aClass == null)
+                        throw new IllegalStateException("Cannot find interface to implement: " + interfacesNames.get(i));
+                    if (!aClass.isInterface())
+                        throw new IllegalStateException("Cannot implement " + interfacesNames.get(i) + " - it's not an interface!");
+                }
+            }
+
+            Class<?> superClass = Object.class;
+            String anExtends = m.group("extends");
+            if (anExtends != null && !anExtends.isEmpty()) {
+                anExtends = anExtends.trim();
+                anExtends = anExtends.substring("extends ".length()).trim();
+                Matcher typeMatcher = TYPE.matcher(anExtends);
+
+                if (typeMatcher.find()) {
+                    String toExtend = typeMatcher.group(1);
+                    superClass = findClass(toExtend.trim(), imports, model);
+                    if (superClass == null)
+                        throw new IllegalStateException("Cannot find class to extend: " + toExtend);
+                } else
+                    throw new IllegalStateException("Cannot find class to extend: " + anExtends);
+            }
+
+            exp = exp.substring(m.end(), exp.length() - 1).trim();
+            List<String> lines = getBlocks(exp);
+
+            List<Expression> definitions = new ArrayList<Expression>(lines.size());
+            ClassExpression classExpression = new ClassExpression(className, definitions, superClass, interfaces);
+            String parentClass = null;
+            if (model instanceof ScriptEngine.Binding) {
+                ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
+                if (binding.currentClass == null)
+                    classExpression.packageName = binding.pack;
+                else {
+                    classExpression.packageName = binding.pack + "." + binding.currentClass;
+                    parentClass = binding.currentClass;
+                }
+                binding.currentClass = className;
+            }
+            model.put("class " + className, classExpression);
+            Object prevClass = model.put("current class", classExpression);
+
+            for (int i = isEnum ? 1 : 0; i < lines.size(); i++) {
+                String s = lines.get(i);
+                if (isLineCommented(s))
+                    continue;
+
+                boolean isStatic = false;
+                Matcher staticMatcher = STATIC_BLOCK.matcher(s);
+                if (staticMatcher.find()) {
+                    s = s.substring("static ".length()).trim();
+                    isStatic = true;
+                }
+
+                if (s.startsWith(className) && s.charAt(className.length()) == '(') {
+                    s = "protected " + s; // workaround for default access modifier
+                }
+
+                Expression prepare = prepare(s, model, functions, imports, false);
+                if (prepare instanceof ClosureHolder) {
+                    ClosureExpression closure = ((ClosureHolder) prepare).closure;
+                    closure.setContext(classExpression.context);
+                    prepare = closure;
+                }
+                definitions.add(prepare);
+            }
+
+            model.put("current class", prevClass);
+            classExpression.init();
+
+            if (isEnum) {
+                classExpression.isEnum = true;
+                List<String> enums = parseArgs(lines.get(0));
+                for (int i = 0; i < enums.size(); i++) {
+                    String s = enums.get(i);
+                    int argsStart = s.indexOf('(');
+
+                    String name;
+                    Object[] args = null;
+
+                    if (argsStart != -1) {
+                        name = s.substring(0, argsStart);
+
+                        String argsRaw = trimBrackets(s.substring(name.length()));
+                        if (argsRaw.length() > 0) {
+                            List<String> arr = parseArgs(argsRaw);
+                            args = new Object[arr.size()];
+                            for (int j = 0; j < arr.size(); j++) {
+                                args[j] = prepare(arr.get(j), model, functions, imports, false).get();
+                            }
+                        } else {
+                            args = new Object[0];
+                        }
+                    } else {
+                        name = s;
+                        args = new Object[0];
+                    }
+                    classExpression.context.put(name, classExpression.newInstance(args));
+                }
+            }
+
+            if (model instanceof ScriptEngine.Binding) {
+                ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
+                binding.currentClass = parentClass;
+            }
+
+            return classExpression;
+        }
+
+        return null;
+    }
+
+    protected static Expression prepareBlock(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+        List<Statement> statements = getStatements(exp);
+        Expression.BlockExpression block = new Expression.BlockExpression();
+        for (Statement s : statements) {
+            switch (s.type) {
+                case IF:
+                case FOR:
+                case WHILE:
+                    block.add(s.prepare(model, functions, imports));
+                    break;
+
+                case BLOCK: {
+                    List<String> lines = getBlocks(s.statement);
+                    if (lines.isEmpty())
+                        continue;
+
+                    if (lines.size() > 1) {
+                        for (String line : lines) {
+                            if (isLineCommented(line))
+                                continue;
+                            block.add(prepare(line, model, functions, imports, false));
+                        }
+                    } else if (statements.size() > 1 || !lines.get(0).equals(s.statement)) {
+                        block.add(prepare(lines.get(0), model, functions, imports, false));
+                    }
+                    break;
+                }
+
+                default:
+                    throw new IllegalStateException("not implemented yet");
+            }
+
+        }
+
+        if (block.size() == 1)
+            return block.get(0);
+
+        if (!block.isEmpty())
+            return block;
+
+        return null;
+    }
+
+    protected static Expression prepareDefinition(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+        Matcher m = DEF.matcher(exp);
+        if (m.find()) {
+            String modifiers = m.group(1);
+            if (modifiers != null)
+                modifiers = modifiers.trim();
+
+            String generics = m.group(2);
+            String type = m.group(3);
+            if (type != null)
+                type = type.replaceAll("\\s", "");
+
+            if (!"new".equals(type)) {
+                String name = m.group(4);
+                if (m.group(5).equals("=")) {
+                    exp = name + " =" + exp.substring(m.group(0).length());
+                    Expression action = prepare(exp, model, functions, imports);
+                    if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
+                        ((Operation) action).leftPart(new Expression.Holder(name));
+                    }
+//                            if (type != null && type.contains("<"))
+//                                type = type.substring(0, type.indexOf('<'));
+                    Class typeClass = findClass(type, imports, model);
+                    return new Expression.DefineAndSet(typeClass, name, action, type);
+                } else if (m.group(5).equals("(")) {
+                    int argsEnd = findCloseBracket(exp, m.end());
+                    ClosureHolder closure;
+                    if (argsEnd == m.end()) {
+                        closure = (ClosureHolder) prepare(exp.substring(argsEnd + 1), model, functions, imports);
+                    } else {
+                        String block = exp.substring(argsEnd + 1).trim();
+                        if (!block.startsWith("{"))
+                            throw new IllegalStateException("Cannot parse: " + exp);
+
+                        String args = exp.substring(m.end(), argsEnd);
+                        closure = (ClosureHolder) prepare("{ " + args + " -> " + block.substring(1), model, functions, imports);
+                    }
+
+//                            if (type != null && type.contains("<"))
+//                                type = type.substring(0, type.indexOf('<'));
+                    Class typeClass = findClass(type, imports, model);
+                    if (typeClass == null)
+                        typeClass = Object.class;
+                    return new Expression.MethodDefinition(modifiers, typeClass, name, closure);
+                } else {
+                    model.put(name, null);
+//                            if (type != null && type.contains("<"))
+//                                type = type.substring(0, type.indexOf('<'));
+
+                    if (model.containsKey("class " + type))
+                        return new Expression.DefinitionWithClassExpression((ClassExpression) model.get("class " + type), name);
+
+                    Class typeClass = findClass(type, imports, model);
+                    if (typeClass == null)
+                        return new Expression.Definition(type, name);
+
+                    return new Expression.Definition(typeClass, name);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected static Expression prepareAction(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+        Matcher m = ACTIONS.matcher(exp);
+        List<String> exps = new ArrayList<String>();
+        List<Operation> operations = new ArrayList<Operation>();
+        int last = 0;
+        Operation operation = null;
+        Expression lastExpressionHolder = null;
+        boolean ternary = false;
+        int ternaryInner = 0;
+        while (m.find()) {
+            if (ternary) {
+                if (inString(exp, 0, m.start()))
+                    continue;
+
+                if (m.group().equals("?")) {
+                    ternaryInner++;
+                    continue;
+                }
+                if (!m.group().equals(":")) {
+                    continue;
+                }
+                if (ternaryInner > 0) {
+                    ternaryInner--;
+                    continue;
+                }
+            }
+            if ("?.".equals(m.group()))
+                continue;
+
+//                System.out.println(m.group());
+            if (!inString(exp, 0, m.start()) && countOpenBrackets(exp, 0, m.start()) == 0) {
+                String subexpression = exp.substring(last, m.start()).trim();
+                if (subexpression.startsWith("new ") && (m.group().equals("<") || m.group().equals(">"))) {
+                    continue;
+                }
+                exps.add(subexpression);
+                lastExpressionHolder = prepare(subexpression, model, functions, imports);
+                if (operation != null) {
+                    //complete last operation
+                    operation.end(m.start());
+                    operation.rightPart(lastExpressionHolder);
+                }
+                operation = new Operation(lastExpressionHolder, Operator.get(m.group()), last, m.end());
+                operations.add(operation);
+                //add operation to list
+                last = m.end();
+                if (ternary) {
+                    lastExpressionHolder = prepare(exp.substring(last), model, functions, imports);
+                    operation.rightPart(lastExpressionHolder);
+                    break;
+                }
+                if (m.group().equals("?")) {
+                    ternary = true;
+                }
+            }
+        }
+        if (operation != null) {
+            if (last != exp.length()) {
+                exps.add(exp.substring(last).trim());
+                operation.end(exp.length());
+                operation.rightPart(prepare(exp.substring(last), model, functions, imports));
+            }
+
+            return prioritize(operations);
+        }
+
+        return null;
+    }
+
+    protected static Expression prepareTemplate(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
+        if (!isTemplate && exp.startsWith("\"\"\"") && exp.endsWith("\"\"\"") && inString(exp, 0, exp.length() - 1)) {
+            return prepare(exp.substring(3, exp.length() - 3), model, functions, imports, true);
+        }
+        if (!isTemplate && exp.startsWith("\"") && exp.endsWith("\"") && isTemplate(exp, 0, exp.length() - 1)) {
+            String quote = exp.charAt(0) + "";
+            exp = exp.substring(1, exp.length() - 1).replace("\\" + quote, quote);
+            return prepare(exp, model, functions, imports, true);
+        }
+
+        if (isTemplate) {
+            TemplateBuilder tb = new TemplateBuilder();
+            Matcher m = VARIABLE.matcher(exp);
+            int start = 0;
+            int end = 0;
+            while ((start = exp.indexOf("$", start)) != -1) {
+                if (start >= 0 && exp.charAt(start + 1) == '{') {
+                    if (end != start)
+                        tb.append(exp.substring(end, start));
+
+                    end = findCloseBracket(exp, start + 2);
+                    String sub = exp.substring(start + 2, end);
+                    tb.append(prepare(sub, model, functions, imports, false));
+                    end++;
+                } else {
+                    if (m.find(start)) {
+                        if (m.start() != end)
+                            tb.append(exp.substring(end, m.start()));
+                        String sub = m.group(1);
+                        tb.append(prepare(sub, model, functions, imports, false));
+                        end = m.end();
+                    }
+                }
+                start = end;
+            }
+            if (end != exp.length())
+                tb.append(exp.substring(end, exp.length()));
+
+            return tb;
+        }
+
+        return null;
+    }
+
+    protected static Expression prepareSMTH(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+
+        return null;
+    }
+
     public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
 //        System.out.println("try to prepare: " + exp);
         if (exp == null) {
@@ -841,278 +1273,27 @@ public class EvalTools {
         }
 
         {
-            if (!isTemplate && exp.startsWith("\"\"\"") && exp.endsWith("\"\"\"") && inString(exp, 0, exp.length() - 1)) {
-                return prepare(exp.substring(3, exp.length() - 3), model, functions, imports, true);
-            }
-            if (!isTemplate && exp.startsWith("\"") && exp.endsWith("\"") && isTemplate(exp, 0, exp.length() - 1)) {
-                String quote = exp.charAt(0) + "";
-                exp = exp.substring(1, exp.length() - 1).replace("\\" + quote, quote);
-                return prepare(exp, model, functions, imports, true);
-            }
-
-            if (isTemplate) {
-                TemplateBuilder tb = new TemplateBuilder();
-                Matcher m = VARIABLE.matcher(exp);
-                int start = 0;
-                int end = 0;
-                while ((start = exp.indexOf("$", start)) != -1) {
-                    if (start >= 0 && exp.charAt(start + 1) == '{') {
-                        if (end != start)
-                            tb.append(exp.substring(end, start));
-
-                        end = findCloseBracket(exp, start + 2);
-                        String sub = exp.substring(start + 2, end);
-                        tb.append(prepare(sub, model, functions, imports, false));
-                        end++;
-                    } else {
-                        if (m.find(start)) {
-                            if (m.start() != end)
-                                tb.append(exp.substring(end, m.start()));
-                            String sub = m.group(1);
-                            tb.append(prepare(sub, model, functions, imports, false));
-                            end = m.end();
-                        }
-                    }
-                    start = end;
-                }
-                if (end != exp.length())
-                    tb.append(exp.substring(end, exp.length()));
-
-                return tb;
-            }
-        }
-
-        boolean isLambda = false;
-        if (isClosure(exp) || (isLambda = isJavaLambda(exp))) {
-            ClosureExpression closure = new ClosureExpression();
-            if (isLambda) {
-                exp = closure.parseArguments(exp, imports, model);
-                if (exp.startsWith("{"))
-                    exp = exp.substring(1, exp.length() - 1).trim();
-            } else {
-                exp = exp.substring(1, exp.length() - 1).trim();
-                exp = closure.parseArguments(exp, imports, model);
-            }
-
-            List<Statement> statements = getStatements(exp);
-            for (Statement s : statements) {
-                switch (s.type) {
-                    case IF:
-                    case FOR:
-                    case WHILE:
-                        closure.add(s.prepare(model, functions, imports));
-                        break;
-
-                    case BLOCK: {
-                        List<String> lines = getBlocks(s.statement);
-                        if (lines.isEmpty())
-                            continue;
-
-                        for (String line : lines) {
-                            if (isLineCommented(line))
-                                continue;
-                            closure.add(prepare(line, model, functions, imports, isTemplate));
-                        }
-                        break;
-                    }
-
-                    default:
-                        throw new IllegalStateException("not implemented yet");
-                }
-
-            }
-            return new ClosureHolder(closure);
+            Expression result = prepareTemplate(exp, model, functions, imports, isTemplate);
+            if (result != null)
+                return result;
         }
 
         {
-            Matcher m = CLASS_DEF.matcher(exp);
-            if (m.find() && findCloseBracket(exp, m.end()) == exp.length() - 1) {
-                String className = m.group(3);
-                String type = m.group(2);
-
-                if ("interface".equals(type))
-                    return new Expression() {
-                        @Override
-                        public void setVariable(Variable v) {
-
-                        }
-
-                        @Override
-                        public Expression clone() {
-                            return null;
-                        }
-
-                        @Override
-                        public Object get(Map<String, Object> model) {
-                            return null;
-                        }
-                    };
-
-                boolean isEnum = "enum".equals(type);
-                Class[] interfaces = new Class[0];
-                String anImplements = m.group("implements");
-                if (anImplements != null && !anImplements.isEmpty()) {
-                    anImplements = anImplements.trim();
-                    anImplements = anImplements.substring("implements ".length()).trim();
-                    Matcher interfacesMatcher = TYPE.matcher(anImplements);
-
-                    List<String> interfacesNames = new ArrayList<>();
-                    while (interfacesMatcher.find()) {
-                        interfacesNames.add(interfacesMatcher.group(1));
-                    }
-                    interfaces = new Class[interfacesNames.size()];
-                    for (int i = 0; i < interfacesNames.size(); i++) {
-                        Class aClass = findClass(interfacesNames.get(i).trim(), imports, model);
-                        interfaces[i] = aClass;
-                        if (aClass == null)
-                            throw new IllegalStateException("Cannot find interface to implement: " + interfacesNames.get(i));
-                        if (!aClass.isInterface())
-                            throw new IllegalStateException("Cannot implement " + interfacesNames.get(i) + " - it's not an interface!");
-                    }
-                }
-
-                Class<?> superClass = Object.class;
-                String anExtends = m.group("extends");
-                if (anExtends != null && !anExtends.isEmpty()) {
-                    anExtends = anExtends.trim();
-                    anExtends = anExtends.substring("extends ".length()).trim();
-                    Matcher typeMatcher = TYPE.matcher(anExtends);
-
-                    if (typeMatcher.find()) {
-                        String toExtend = typeMatcher.group(1);
-                        superClass = findClass(toExtend.trim(), imports, model);
-                        if (superClass == null)
-                            throw new IllegalStateException("Cannot find class to extend: " + toExtend);
-                    } else
-                        throw new IllegalStateException("Cannot find class to extend: " + anExtends);
-                }
-
-                exp = exp.substring(m.end(), exp.length() - 1).trim();
-                List<String> lines = getBlocks(exp);
-
-                List<Expression> definitions = new ArrayList<Expression>(lines.size());
-                ClassExpression classExpression = new ClassExpression(className, definitions, superClass, interfaces);
-                String parentClass = null;
-                if (model instanceof ScriptEngine.Binding) {
-                    ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
-                    if (binding.currentClass == null)
-                        classExpression.packageName = binding.pack;
-                    else {
-                        classExpression.packageName = binding.pack + "." + binding.currentClass;
-                        parentClass = binding.currentClass;
-                    }
-                    binding.currentClass = className;
-                }
-                model.put("class " + className, classExpression);
-                Object prevClass = model.put("current class", classExpression);
-
-                for (int i = isEnum ? 1 : 0; i < lines.size(); i++) {
-                    String s = lines.get(i);
-                    if (isLineCommented(s))
-                        continue;
-
-                    boolean isStatic = false;
-                    Matcher staticMatcher = STATIC_BLOCK.matcher(s);
-                    if (staticMatcher.find()) {
-                        s = s.substring("static ".length()).trim();
-                        isStatic = true;
-                    }
-
-                    if (s.startsWith(className) && s.charAt(className.length()) == '(') {
-                        s = "protected " + s; // workaround for default access modifier
-                    }
-
-                    Expression prepare = prepare(s, model, functions, imports, isTemplate);
-                    if (prepare instanceof ClosureHolder) {
-                        ClosureExpression closure = ((ClosureHolder) prepare).closure;
-                        closure.setContext(classExpression.context);
-                        prepare = closure;
-                    }
-                    definitions.add(prepare);
-                }
-
-                model.put("current class", prevClass);
-                classExpression.init();
-
-                if (isEnum) {
-                    classExpression.isEnum = true;
-                    List<String> enums = parseArgs(lines.get(0));
-                    for (int i = 0; i < enums.size(); i++) {
-                        String s = enums.get(i);
-                        int argsStart = s.indexOf('(');
-
-                        String name;
-                        Object[] args = null;
-
-                        if (argsStart != -1) {
-                            name = s.substring(0, argsStart);
-
-                            String argsRaw = trimBrackets(s.substring(name.length()));
-                            if (argsRaw.length() > 0) {
-                                List<String> arr = parseArgs(argsRaw);
-                                args = new Object[arr.size()];
-                                for (int j = 0; j < arr.size(); j++) {
-                                    args[j] = prepare(arr.get(j), model, functions, imports, isTemplate).get();
-                                }
-                            } else {
-                                args = new Object[0];
-                            }
-                        } else {
-                            name = s;
-                            args = new Object[0];
-                        }
-                        classExpression.context.put(name, classExpression.newInstance(args));
-                    }
-                }
-
-                if (model instanceof ScriptEngine.Binding) {
-                    ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
-                    binding.currentClass = parentClass;
-                }
-
-                return classExpression;
-            }
+            Expression result = prepareClosure(exp, model, functions, imports);
+            if (result != null)
+                return result;
         }
 
         {
-            List<Statement> statements = getStatements(exp);
-            Expression.BlockExpression block = new Expression.BlockExpression();
-            for (Statement s : statements) {
-                switch (s.type) {
-                    case IF:
-                    case FOR:
-                    case WHILE:
-                        block.add(s.prepare(model, functions, imports));
-                        break;
+            Expression result = prepareClass(exp, model, functions, imports);
+            if (result != null)
+                return result;
+        }
 
-                    case BLOCK: {
-                        List<String> lines = getBlocks(s.statement);
-                        if (lines.isEmpty())
-                            continue;
-
-                        if (lines.size() > 1) {
-                            for (String line : lines) {
-                                if (isLineCommented(line))
-                                    continue;
-                                block.add(prepare(line, model, functions, imports, isTemplate));
-                            }
-                        } else if (statements.size() > 1 || !lines.get(0).equals(s.statement)) {
-                            block.add(prepare(lines.get(0), model, functions, imports, isTemplate));
-                        }
-                        break;
-                    }
-
-                    default:
-                        throw new IllegalStateException("not implemented yet");
-                }
-
-            }
-
-            if (block.size() == 1)
-                return block.get(0);
-
-            if (!block.isEmpty())
-                return block;
+        {
+            Expression result = prepareBlock(exp, model, functions, imports);
+            if (result != null)
+                return result;
         }
 
         {
@@ -1127,150 +1308,31 @@ public class EvalTools {
                 return new Expression.VariableOrFieldOfThis(exp);
             }
 
-            {
-                Matcher m = RETURN.matcher(exp);
-                if (m.find()) {
-                    return new Expression.ReturnExpression(prepare(exp.substring(6), model, functions, imports, isTemplate));
-                }
+            Matcher m = RETURN.matcher(exp);
+            if (m.find()) {
+                return new Expression.ReturnExpression(prepare(exp.substring(6), model, functions, imports, isTemplate));
             }
-
-            {
-                Matcher m = DEF.matcher(exp);
-                if (m.find()) {
-                    String modifiers = m.group(1);
-                    if (modifiers != null)
-                        modifiers = modifiers.trim();
-
-                    String generics = m.group(2);
-                    String type = m.group(3);
-                    if (type != null)
-                        type = type.replaceAll("\\s", "");
-
-                    if (!"new".equals(type)) {
-                        String name = m.group(4);
-                        if (m.group(5).equals("=")) {
-                            exp = name + " =" + exp.substring(m.group(0).length());
-                            Expression action = prepare(exp, model, functions, imports, isTemplate);
-                            if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
-                                ((Operation) action).leftPart(new Expression.Holder(name));
-                            }
-//                            if (type != null && type.contains("<"))
-//                                type = type.substring(0, type.indexOf('<'));
-                            Class typeClass = findClass(type, imports, model);
-                            return new Expression.DefineAndSet(typeClass, name, action, type);
-                        } else if (m.group(5).equals("(")) {
-                            int argsEnd = findCloseBracket(exp, m.end());
-                            ClosureHolder closure;
-                            if (argsEnd == m.end()) {
-                                closure = (ClosureHolder) prepare(exp.substring(argsEnd + 1), model, functions, imports, isTemplate);
-                            } else {
-                                String block = exp.substring(argsEnd + 1).trim();
-                                if (!block.startsWith("{"))
-                                    throw new IllegalStateException("Cannot parse: " + exp);
-
-                                String args = exp.substring(m.end(), argsEnd);
-                                closure = (ClosureHolder) prepare("{ " + args + " -> " + block.substring(1), model, functions, imports, isTemplate);
-                            }
-
-//                            if (type != null && type.contains("<"))
-//                                type = type.substring(0, type.indexOf('<'));
-                            Class typeClass = findClass(type, imports, model);
-                            if (typeClass == null)
-                                typeClass = Object.class;
-                            return new Expression.MethodDefinition(modifiers, typeClass, name, closure);
-                        } else {
-                            model.put(name, null);
-//                            if (type != null && type.contains("<"))
-//                                type = type.substring(0, type.indexOf('<'));
-
-                            if (model.containsKey("class " + type))
-                                return new Expression.DefinitionWithClassExpression((ClassExpression) model.get("class " + type), name);
-
-                            Class typeClass = findClass(type, imports, model);
-                            if (typeClass == null)
-                                return new Expression.Definition(type, name);
-
-                            return new Expression.Definition(typeClass, name);
-                        }
-                    }
-                }
-            }
-        }
-
-        {
-            Matcher m = ACTIONS.matcher(exp);
-            List<String> exps = new ArrayList<String>();
-            List<Operation> operations = new ArrayList<Operation>();
-            int last = 0;
-            Operation operation = null;
-            Expression lastExpressionHolder = null;
-            boolean ternary = false;
-            int ternaryInner = 0;
-            while (m.find()) {
-                if (ternary) {
-                    if (inString(exp, 0, m.start()))
-                        continue;
-
-                    if (m.group().equals("?")) {
-                        ternaryInner++;
-                        continue;
-                    }
-                    if (!m.group().equals(":")) {
-                        continue;
-                    }
-                    if (ternaryInner > 0) {
-                        ternaryInner--;
-                        continue;
-                    }
-                }
-                if ("?.".equals(m.group()))
-                    continue;
-
-//                System.out.println(m.group());
-                if (!inString(exp, 0, m.start()) && countOpenBrackets(exp, 0, m.start()) == 0) {
-                    String subexpression = exp.substring(last, m.start()).trim();
-                    if (subexpression.startsWith("new ") && (m.group().equals("<") || m.group().equals(">"))) {
-                        continue;
-                    }
-                    exps.add(subexpression);
-                    lastExpressionHolder = prepare(subexpression, model, functions, imports, isTemplate);
-                    if (operation != null) {
-                        //complete last operation
-                        operation.end(m.start());
-                        operation.rightPart(lastExpressionHolder);
-                    }
-                    operation = new Operation(lastExpressionHolder, Operator.get(m.group()), last, m.end());
-                    operations.add(operation);
-                    //add operation to list
-                    last = m.end();
-                    if (ternary) {
-                        lastExpressionHolder = prepare(exp.substring(last), model, functions, imports, isTemplate);
-                        operation.rightPart(lastExpressionHolder);
-                        break;
-                    }
-                    if (m.group().equals("?")) {
-                        ternary = true;
-                    }
-                }
-            }
-            if (operation != null) {
-                if (last != exp.length()) {
-                    exps.add(exp.substring(last).trim());
-                    operation.end(exp.length());
-                    operation.rightPart(prepare(exp.substring(last), model, functions, imports, isTemplate));
-                }
-
-                return prioritize(operations);
-            }
-        }
-
-        {
             if (exp.equals("[]")) {
                 return new Expression.CollectionExpression();
             }
             if (exp.equals("[:]")) {
                 return new Expression.MapExpression();
             }
+        }
+
+        {
+            Expression result = prepareDefinition(exp, model, functions, imports);
+            if (result != null)
+                return result;
+        }
+
+        {
+            Expression result = prepareAction(exp, model, functions, imports);
+            if (result != null)
+                return result;
+        }
+
+        {
             if (isMap(exp)) {
                 Map<String, Expression> map = new LinkedHashMap<String, Expression>();
                 for (Map.Entry<String, String> entry : parseMap(exp).entrySet()) {
