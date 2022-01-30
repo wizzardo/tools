@@ -4,6 +4,7 @@
  */
 package com.wizzardo.tools.evaluation;
 
+import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.Array;
@@ -33,7 +34,6 @@ public class EvalTools {
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?|instanceof");
     private static final Pattern DEF = Pattern.compile("^((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
-    private static final Pattern RETURN = Pattern.compile("^return\\b");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum|interface) +([A-Za-z0-9_]+)" +
             "(?<extends> +extends +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" + ")?" +
@@ -64,6 +64,20 @@ public class EvalTools {
             }
         }
         return n;
+    }
+
+    protected static int nextNotEmptyChar(int from, String s) {
+        int length = s.length();
+        int i = from;
+        for (; i < length; i++) {
+            if (s.charAt(i) <= ' ')
+                continue;
+            break;
+        }
+        if (i == length)
+            return -1;
+
+        return i;
     }
 
     protected static int findCloseBracket(String s, int from) {
@@ -418,7 +432,7 @@ public class EvalTools {
         public Statement() {
         }
 
-        public Expression prepare(Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+        public Expression prepare(EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
             switch (type) {
                 case IF: {
                     List<String> args = getBlocks(statement, true);
@@ -758,7 +772,7 @@ public class EvalTools {
     }
 
     public static Expression prepareTemplate(String exp) {
-        return prepare(exp, null, null, null, true);
+        return prepare(exp, (Map<String, Object>) null, null, null, true);
     }
 
     public static Expression prepare(String exp) {
@@ -820,7 +834,11 @@ public class EvalTools {
         return prepare(exp, model, functions, imports, false);
     }
 
-    protected static Expression prepareClosure(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepare(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        return prepare(exp, model, functions, imports, false);
+    }
+
+    protected static Expression prepareClosure(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         boolean isLambda = false;
         if (isClosure(exp) || (isLambda = isJavaLambda(exp))) {
             ClosureExpression closure = new ClosureExpression();
@@ -833,13 +851,18 @@ public class EvalTools {
                 exp = closure.parseArguments(exp, imports, model);
             }
 
+            EvaluationContext localModel = model.createLocalContext();
+            for (Pair<String, Class> arg : closure.args) {
+                localModel.put(arg.key, null);
+            }
+
             List<Statement> statements = getStatements(exp);
             for (Statement s : statements) {
                 switch (s.type) {
                     case IF:
                     case FOR:
                     case WHILE:
-                        closure.add(s.prepare(model, functions, imports));
+                        closure.add(s.prepare(localModel, functions, imports));
                         break;
 
                     case BLOCK: {
@@ -850,7 +873,7 @@ public class EvalTools {
                         for (String line : lines) {
                             if (isLineCommented(line))
                                 continue;
-                            closure.add(prepare(line, model, functions, imports, false));
+                            closure.add(prepare(line, localModel, functions, imports, false));
                         }
                         break;
                     }
@@ -865,7 +888,7 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareClass(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareClass(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = CLASS_DEF.matcher(exp);
         if (m.find() && findCloseBracket(exp, m.end()) == exp.length() - 1) {
             String className = m.group(3);
@@ -1017,7 +1040,7 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareBlock(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareBlock(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         List<Statement> statements = getStatements(exp);
         Expression.BlockExpression block = new Expression.BlockExpression();
         for (Statement s : statements) {
@@ -1060,7 +1083,7 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareDefinition(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareDefinition(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = DEF.matcher(exp);
         if (m.find()) {
             String modifiers = m.group(1);
@@ -1075,6 +1098,7 @@ public class EvalTools {
             if (!"new".equals(type)) {
                 String name = m.group(4);
                 if (m.group(5).equals("=")) {
+                    model.put(name, null);
                     exp = name + " =" + exp.substring(m.group(0).length());
                     Expression action = prepare(exp, model, functions, imports);
                     if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
@@ -1085,6 +1109,7 @@ public class EvalTools {
                     Class typeClass = findClass(type, imports, model);
                     return new Expression.DefineAndSet(typeClass, name, action, type);
                 } else if (m.group(5).equals("(")) {
+                    model.put(name, null);
                     int argsEnd = findCloseBracket(exp, m.end());
                     ClosureHolder closure;
                     if (argsEnd == m.end()) {
@@ -1124,7 +1149,7 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareAction(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareAction(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = ACTIONS.matcher(exp);
         List<String> exps = new ArrayList<String>();
         List<Operation> operations = new ArrayList<Operation>();
@@ -1193,7 +1218,7 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareTemplate(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
+    protected static Expression prepareTemplate(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
         if (!isTemplate && exp.startsWith("\"\"\"") && exp.endsWith("\"\"\"") && inString(exp, 0, exp.length() - 1)) {
             return prepare(exp.substring(3, exp.length() - 3), model, functions, imports, true);
         }
@@ -1237,12 +1262,83 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareSMTH(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports) {
+    static class PrepareResolveClassResult {
+        final String exp;
+        final Expression thatObject;
 
+        PrepareResolveClassResult(String exp, Expression thatObject) {
+            this.exp = exp;
+            this.thatObject = thatObject;
+        }
+    }
+
+    protected static PrepareResolveClassResult prepareResolveClass(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        Expression thatObject;
+        Matcher m = CLASS.matcher(exp);
+        if (m.find()) {
+            String className = m.group(1);
+            if (className.endsWith(".class"))
+                className = className.substring(0, className.length() - ".class".length());
+            else {
+                int dot = exp.indexOf(".");
+                if (dot != -1) {
+                    if (model.containsKey(exp.substring(0, dot)))
+                        return null;
+                } else {
+                    if (model.containsKey(exp))
+                        return null;
+                }
+            }
+
+            StringBuilder sb = new StringBuilder(className);
+
+            Class clazz;
+            int i;
+            do {
+                className = sb.toString();
+                ClassExpression cl = (ClassExpression) model.get("class " + className);
+                if (cl != null) {
+                    thatObject = cl;
+                    return new PrepareResolveClassResult(exp.substring(sb.length()), thatObject);
+                } else {
+                    clazz = findClass(className, imports, model);
+                    if (clazz == null) {
+                        int lastDot = sb.lastIndexOf(".");
+                        if (lastDot != -1) {
+                            sb.setCharAt(lastDot, '$');
+                            clazz = findClass(sb.toString(), imports, model);
+                            sb.setCharAt(lastDot, '.');
+                        }
+                    }
+
+                    if (clazz != null) {
+                        thatObject = new Expression.Holder(clazz);
+                        return new PrepareResolveClassResult(exp.substring(sb.length()), thatObject);
+                    }
+                }
+
+                i = sb.lastIndexOf(".");
+                if (i > 0)
+                    sb.setLength(i);
+            } while (i > 0);
+
+            if (m.group(0).endsWith(".class")) {
+                className = m.group(0);
+                if (className.endsWith(".class"))
+                    className = className.substring(0, className.length() - ".class".length());
+
+                thatObject = new Expression.ResolveClass(className);
+                return new PrepareResolveClassResult(exp.substring(m.group(0).length()), thatObject);
+            }
+        }
         return null;
     }
 
     public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
+        return prepare(exp, new EvaluationContext(model), functions, imports, isTemplate);
+    }
+
+    public static Expression prepare(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
 //        System.out.println("try to prepare: " + exp);
         if (exp == null) {
             return null;
@@ -1264,10 +1360,6 @@ public class EvalTools {
 
         if (isTemplate && exp.length() == 0)
             return new Expression.Holder("", true);
-
-        if (model == null) {
-            model = new HashMap<String, Object>();
-        }
 
         if (functions == null) {
             functions = new HashMap<String, UserFunction>();
@@ -1309,8 +1401,7 @@ public class EvalTools {
                 return new Expression.VariableOrFieldOfThis(exp);
             }
 
-            Matcher m = RETURN.matcher(exp);
-            if (m.find()) {
+            if (exp.startsWith("return ")) {
                 return new Expression.ReturnExpression(prepare(exp.substring(6), model, functions, imports, isTemplate));
             }
             if (exp.equals("[]")) {
@@ -1393,53 +1484,10 @@ public class EvalTools {
         }
 
         if (thatObject == null) {
-            Matcher m = CLASS.matcher(exp);
-            if (m.find()) {
-                String className = m.group(1);
-                if (className.endsWith(".class"))
-                    className = className.substring(0, className.length() - ".class".length());
-
-                StringBuilder sb = new StringBuilder(className);
-
-                Class clazz = null;
-                int i;
-                do {
-                    className = sb.toString();
-                    ClassExpression cl = (ClassExpression) model.get("class " + className);
-                    if (cl != null) {
-                        thatObject = cl;
-                        exp = exp.substring(sb.length());
-                    } else {
-                        clazz = findClass(className, imports, model);
-                        if (clazz == null) {
-                            int lastDot = sb.lastIndexOf(".");
-                            if (lastDot != -1) {
-                                sb.setCharAt(lastDot, '$');
-                                clazz = findClass(sb.toString(), imports, model);
-                                sb.setCharAt(lastDot, '.');
-                            }
-                        }
-
-                        if (clazz != null) {
-                            thatObject = new Expression.Holder(clazz);
-                            exp = exp.substring(sb.length());
-                            break;
-                        }
-                    }
-
-                    i = sb.lastIndexOf(".");
-                    if (i > 0)
-                        sb.setLength(i);
-                } while (i > 0);
-
-                if (clazz == null && thatObject == null && m.group(0).endsWith(".class")) {
-                    className = m.group(0);
-                    if (className.endsWith(".class"))
-                        className = className.substring(0, className.length() - ".class".length());
-
-                    thatObject = new Expression.ResolveClass(className);
-                    exp = exp.substring(m.group(0).length());
-                }
+            PrepareResolveClassResult result = prepareResolveClass(exp, model, functions, imports);
+            if (result != null) {
+                thatObject = result.thatObject;
+                exp = result.exp;
             }
         }
 

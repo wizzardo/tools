@@ -41,7 +41,7 @@ public class ScriptEngine {
         this.fileFilter = fileFilter;
     }
 
-    public static class Binding extends HashMap<String, Object> {
+    public static class Binding extends EvaluationContext {
         protected File root;
         protected String pack;
         protected String path;
@@ -58,6 +58,7 @@ public class ScriptEngine {
         }
 
         public Binding(File root, String pack, List<String> imports, FileFilter filter) {
+            super();
             this.root = root;
             this.pack = pack;
             this.path = pack.replace('.', '/') + '/';
