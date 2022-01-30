@@ -789,10 +789,6 @@ public abstract class Expression {
             }
             return Number0x.BINARY;
         } else {
-            i++;
-            if (i >= length)
-                return null;
-
             for (; i < length; i++) {
                 c = s.charAt(i);
                 if (c >= '0' && c <= '7')

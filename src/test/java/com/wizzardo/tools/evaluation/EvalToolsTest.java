@@ -49,6 +49,7 @@ public class EvalToolsTest {
         assertEquals((Object) 15, EvalTools.evaluate("0b1111"));
         assertEquals((Object) 83, EvalTools.evaluate("0123"));
         assertEquals((Object) 0f, EvalTools.evaluate("0f"));
+        assertEquals((Object) 0.5, EvalTools.evaluate("0.5"));
         assertEquals("olo123", EvalTools.evaluate("\"olo\"+1+(1+1)+3"));
         assertEquals("olo123", EvalTools.evaluate("'olo'+1+(1+1)+3"));
         assertEquals("OLO123", EvalTools.evaluate("(\"olo\"+1+(1+1)+3).toUpperCase()"));
