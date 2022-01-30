@@ -8,6 +8,7 @@ import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1273,20 +1274,42 @@ public class EvalTools {
     }
 
     protected static PrepareResolveClassResult prepareResolveClass(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
-        Expression thatObject;
         Matcher m = CLASS.matcher(exp);
         if (m.find()) {
             String className = m.group(1);
-            if (className.endsWith(".class"))
+            boolean endsWithClass = className.endsWith(".class");
+            if (endsWithClass) {
                 className = className.substring(0, className.length() - ".class".length());
-            else {
-                int dot = exp.indexOf(".");
+            } else {
+                int dot = className.indexOf(".");
                 if (dot != -1) {
                     if (model.containsKey(exp.substring(0, dot)))
                         return null;
                 } else {
                     if (model.containsKey(exp))
                         return null;
+                }
+
+                Class clazz;
+                while (dot != -1) {
+                    String name = className.substring(0, dot);
+                    ClassExpression cl = (ClassExpression) model.get("class " + className);
+                    if (cl != null) {
+                        return new PrepareResolveClassResult(exp.substring(name.length()), cl);
+                    }
+
+                    clazz = findClass(name, imports, model);
+                    int prev = dot;
+                    dot = className.indexOf('.', dot + 1);
+                    if (clazz != null) {
+                        if (dot == -1 || clazz.isEnum()) {
+                            return new PrepareResolveClassResult(exp.substring(prev), new Expression.Holder(clazz));
+                        }
+                        Field field = Function.findField(clazz, className.substring(prev + 1, dot));
+                        if (field != null) {
+                            return new PrepareResolveClassResult(exp.substring(prev), new Expression.Holder(clazz));
+                        }
+                    }
                 }
             }
 
@@ -1298,8 +1321,7 @@ public class EvalTools {
                 className = sb.toString();
                 ClassExpression cl = (ClassExpression) model.get("class " + className);
                 if (cl != null) {
-                    thatObject = cl;
-                    return new PrepareResolveClassResult(exp.substring(sb.length()), thatObject);
+                    return new PrepareResolveClassResult(exp.substring(sb.length()), cl);
                 } else {
                     clazz = findClass(className, imports, model);
                     if (clazz == null) {
@@ -1312,8 +1334,7 @@ public class EvalTools {
                     }
 
                     if (clazz != null) {
-                        thatObject = new Expression.Holder(clazz);
-                        return new PrepareResolveClassResult(exp.substring(sb.length()), thatObject);
+                        return new PrepareResolveClassResult(exp.substring(sb.length()), new Expression.Holder(clazz));
                     }
                 }
 
@@ -1322,13 +1343,12 @@ public class EvalTools {
                     sb.setLength(i);
             } while (i > 0);
 
-            if (m.group(0).endsWith(".class")) {
+            if (endsWithClass) {
                 className = m.group(0);
-                if (className.endsWith(".class"))
+                if (endsWithClass)
                     className = className.substring(0, className.length() - ".class".length());
 
-                thatObject = new Expression.ResolveClass(className);
-                return new PrepareResolveClassResult(exp.substring(m.group(0).length()), thatObject);
+                return new PrepareResolveClassResult(exp.substring(m.group(0).length()), new Expression.ResolveClass(className));
             }
         }
         return null;

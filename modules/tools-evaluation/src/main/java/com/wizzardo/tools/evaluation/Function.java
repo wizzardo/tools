@@ -496,7 +496,7 @@ public class Function extends Expression {
         return null;
     }
 
-    protected Field findField(Class clazz, String name) {
+    protected static Field findField(Class clazz, String name) {
         while (clazz != null)
             try {
                 return clazz.getDeclaredField(name);
