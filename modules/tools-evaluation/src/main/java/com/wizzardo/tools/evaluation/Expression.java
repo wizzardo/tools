@@ -8,8 +8,6 @@ import com.wizzardo.tools.interfaces.Mapper;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Moxa
@@ -609,52 +607,47 @@ public abstract class Expression {
         if (exp == null) {
             return null;
         }
-        Matcher m;
         if (isString(exp)) {
             String quote = exp.charAt(0) + "";
             return exp.substring(1, exp.length() - 1).replace("\\" + quote, quote);
         }
 
-        m = numberOx.matcher(exp);
-        if (m.matches()) {
-            if (m.groupCount() > 1 && m.group(1) != null) {
-                String value = removeUnderscores(m.group(2));
-                String prefix = m.group(1);
-                if ("0x".equalsIgnoreCase(prefix))
-                    return Integer.valueOf(value, 16);
-                if ("0b".equalsIgnoreCase(prefix))
-                    return Integer.valueOf(value, 2);
-                if ("0".equals(prefix) && !value.toLowerCase().endsWith("f"))
+        {
+            Number0x number0x = isNumber0x(exp);
+            if (number0x != null) {
+                String value = removeUnderscores(exp);
+                if (number0x == Number0x.HEX)
+                    return Integer.valueOf(value.substring(2), 16);
+                if (number0x == Number0x.BINARY)
+                    return Integer.valueOf(value.substring(2), 2);
+                if (number0x == Number0x.OCTAL)
                     return Integer.valueOf(value, 8);
             }
         }
 
-        m = number.matcher(exp);
-        if (m.matches()) {
-            if (m.groupCount() > 1 && m.group(2).length() > 0) {
-                char suffix = m.group(2).charAt(0);
-                String value = removeUnderscores(m.group(1));
-                if (suffix == 'd' || suffix == 'D') {
-                    return Double.valueOf(value);
-                } else if (suffix == 'f' || suffix == 'F') {
-                    return Float.valueOf(value);
-                } else if (suffix == 'l' || suffix == 'L') {
-                    return Long.valueOf(value);
-                } else if (suffix == 'b' || suffix == 'B') {
-                    return Byte.valueOf(value);
-                }
-            } else {
+
+        {
+            NumberSimpleFormat simpleFormat = isNumber(exp);
+            if (simpleFormat != null) {
                 String value = removeUnderscores(exp);
-                try {
+                if (simpleFormat == NumberSimpleFormat.INT)
                     return Integer.valueOf(value);
-                } catch (NumberFormatException e) {
+                if (simpleFormat == NumberSimpleFormat.LONG)
+                    return Long.valueOf(value.substring(0, value.length() - 1));
+                if (simpleFormat == NumberSimpleFormat.SHORT)
+                    return Short.valueOf(value.substring(0, value.length() - 1));
+                if (simpleFormat == NumberSimpleFormat.FLOAT)
+                    return Float.valueOf(value.substring(0, value.length() - 1));
+                if (simpleFormat == NumberSimpleFormat.DOUBLE && (value.charAt(value.length() - 1) == 'd' || value.charAt(value.length() - 1) == 'D'))
+                    return Double.valueOf(value.substring(0, value.length() - 1));
+                if (simpleFormat == NumberSimpleFormat.DOUBLE)
                     return Double.valueOf(value);
-                }
             }
         }
-        m = bool.matcher(exp);
-        if (m.matches()) {
-            return Boolean.valueOf(exp);
+        {
+            Boolean result = parseBoolean(exp);
+            if (result != null)
+                return result;
         }
         return null;
     }
@@ -664,13 +657,14 @@ public abstract class Expression {
         char quote = 0;
         int length = s.length();
         for (int i = 0; i < length; i++) {
+            char c = s.charAt(i);
             if (!inString) {
-                if (s.charAt(i) == '\"' || s.charAt(i) == '\'') {
-                    quote = s.charAt(i);
+                if (c == '\"' || c == '\'') {
+                    quote = c;
                     inString = true;
                 } else
                     return false;
-            } else if (s.charAt(i) == quote && s.charAt(i - 1) != '\\') {
+            } else if (c == quote && s.charAt(i - 1) != '\\') {
                 return i == length - 1;
             }
         }
@@ -679,13 +673,239 @@ public abstract class Expression {
 
 
     static String removeUnderscores(String s) {
-        return underscore.matcher(s).replaceAll("");
+        int length = s.length();
+        int i = 0;
+        for (; i < length; i++) {
+            if (s.charAt(i) == '_')
+                break;
+        }
+        if (i == length)
+            return s;
+
+        StringBuilder sb = new StringBuilder(length - 1);
+        sb.append(s, 0, i);
+        i++;
+        int from = i;
+        for (; i < length; i++) {
+            if (s.charAt(i) == '_') {
+                sb.append(s, from, i);
+                from = i + 1;
+            }
+        }
+        if (from != i)
+            sb.append(s, from, i);
+
+
+        return sb.toString();
     }
 
-    private static final Pattern number = Pattern.compile("([\\d_]+\\.?[\\d_]*)([dflbDFLB]?)");
-    private static final Pattern numberOx = Pattern.compile("(0[xbXB]?)([\\d_abcdefABCDEF]+)");
-    private static final Pattern underscore = Pattern.compile("_");
-    private static final Pattern bool = Pattern.compile("true|false", Pattern.CASE_INSENSITIVE);
+    private static Boolean parseBoolean(String s) {
+        int length = s.length();
+        if (length == 4) {
+            char c = s.charAt(0);
+            if (!(c == 't' || c == 'T'))
+                return null;
+            c = s.charAt(1);
+            if (!(c == 'r' || c == 'R'))
+                return null;
+            c = s.charAt(2);
+            if (!(c == 'u' || c == 'U'))
+                return null;
+            c = s.charAt(3);
+            if (!(c == 'e' || c == 'E'))
+                return null;
+            return Boolean.TRUE;
+        } else if (length == 5) {
+            char c = s.charAt(0);
+            if (!(c == 'f' || c == 'F'))
+                return null;
+            c = s.charAt(1);
+            if (!(c == 'a' || c == 'A'))
+                return null;
+            c = s.charAt(2);
+            if (!(c == 'l' || c == 'L'))
+                return null;
+            c = s.charAt(3);
+            if (!(c == 's' || c == 'S'))
+                return null;
+            c = s.charAt(4);
+            if (!(c == 'e' || c == 'E'))
+                return null;
+            return Boolean.FALSE;
+        } else
+            return null;
+    }
+
+    enum Number0x {
+        BINARY, OCTAL, HEX
+    }
+
+    private static Number0x isNumber0x(String s) {
+        if (s == null || s.isEmpty())
+            return null;
+
+        if (s.charAt(0) != '0')
+            return null;
+
+        int length = s.length();
+        int i = 1;
+
+        if (i >= length)
+            return null;
+
+        char c = s.charAt(i);
+        if (c == 'x' || c == 'X') {
+            i++;
+            if (i >= length)
+                return null;
+
+            for (; i < length; i++) {
+                c = s.charAt(i);
+                if (c >= 'a' && c <= 'f')
+                    continue;
+                if (c >= 'A' && c <= 'F')
+                    continue;
+                if (c >= '0' && c <= '9')
+                    continue;
+                if (c == '_')
+                    continue;
+
+                return null;
+            }
+            return Number0x.HEX;
+        } else if (c == 'b' || c == 'B') {
+            i++;
+            if (i >= length)
+                return null;
+
+            for (; i < length; i++) {
+                c = s.charAt(i);
+                if (c == '0' || c == '1')
+                    continue;
+                if (c == '_')
+                    continue;
+
+                return null;
+            }
+            return Number0x.BINARY;
+        } else {
+            i++;
+            if (i >= length)
+                return null;
+
+            for (; i < length; i++) {
+                c = s.charAt(i);
+                if (c >= '0' && c <= '7')
+                    continue;
+                if (c == '_')
+                    continue;
+
+                return null;
+            }
+            return Number0x.OCTAL;
+        }
+    }
+
+    enum NumberSimpleFormat {
+        INT, SHORT, LONG, FLOAT, DOUBLE
+    }
+
+    private static NumberSimpleFormat isNumber(String s) {
+        if (s == null || s.isEmpty())
+            return null;
+
+        int length = s.length();
+        char c = s.charAt(length - 1);
+        if (c == 'l' || c == 'L') {
+            if (length == 1)
+                return null;
+            for (int i = 0; i < length - 1; i++) {
+                c = s.charAt(i);
+                if (c >= '0' && c <= '9')
+                    continue;
+                if (c == '_')
+                    continue;
+
+                return null;
+            }
+            return NumberSimpleFormat.LONG;
+        }
+        if (c == 's' || c == 'S') {
+            if (length == 1)
+                return null;
+            for (int i = 0; i < length - 1; i++) {
+                c = s.charAt(i);
+                if (c >= '0' && c <= '9')
+                    continue;
+                if (c == '_')
+                    continue;
+
+                return null;
+            }
+            return NumberSimpleFormat.SHORT;
+        }
+        if (c == 'f' || c == 'F') {
+            if (length == 1)
+                return null;
+            boolean hasDot = false;
+            for (int i = 0; i < length - 1; i++) {
+                c = s.charAt(i);
+                if (c >= '0' && c <= '9')
+                    continue;
+                if (c == '_')
+                    continue;
+                if (c == '.') {
+                    if (hasDot)
+                        return null;
+                    hasDot = true;
+                    continue;
+                }
+
+                return null;
+            }
+            return NumberSimpleFormat.FLOAT;
+        }
+        if (c == 'd' || c == 'D') {
+            if (length == 1)
+                return null;
+            boolean hasDot = false;
+            for (int i = 0; i < length - 1; i++) {
+                c = s.charAt(i);
+                if (c >= '0' && c <= '9')
+                    continue;
+                if (c == '_')
+                    continue;
+                if (c == '.') {
+                    if (hasDot)
+                        return null;
+                    hasDot = true;
+                    continue;
+                }
+
+                return null;
+            }
+            return NumberSimpleFormat.DOUBLE;
+        }
+
+        boolean hasDot = false;
+        for (int i = 0; i < length; i++) {
+            c = s.charAt(i);
+            if (c >= '0' && c <= '9')
+                continue;
+            if (c == '_')
+                continue;
+            if (c == '.') {
+                if (hasDot)
+                    return null;
+                hasDot = true;
+                continue;
+            }
+
+            return null;
+        }
+        return hasDot ? NumberSimpleFormat.DOUBLE : NumberSimpleFormat.INT;
+    }
+
 
     @Override
     public String toString() {
