@@ -1785,6 +1785,14 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_java_lambda_2() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("FOO", EvalTools.prepare("" +
+                "def c = (s) -> s.toUpperCase()\n" +
+                "c('foo')").get(model).toString());
+    }
+
+    @Test
     public void test_meta_methods() {
         Map<String, Object> model = new HashMap<String, Object>();
         Assert.assertEquals("foo", EvalTools.prepare("" +

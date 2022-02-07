@@ -33,7 +33,7 @@ public class EvalTools {
     private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
     private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
-    private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?|instanceof");
+    private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|->|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?|instanceof");
     private static final Pattern DEF = Pattern.compile("^((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum|interface) +([A-Za-z0-9_]+)" +
@@ -1160,15 +1160,22 @@ public class EvalTools {
         boolean ternary = false;
         int ternaryInner = 0;
         while (m.find()) {
+            String find = m.group();
+            if ("->".equals(find) && operation != null) {
+                String s = trimBrackets(exp.substring(last).trim());
+                Expression closure = prepareClosure(s, model, functions, imports);
+                operation.rightPart(closure);
+                return operation;
+            }
             if (ternary) {
                 if (inString(exp, 0, m.start()))
                     continue;
 
-                if (m.group().equals("?")) {
+                if (find.equals("?")) {
                     ternaryInner++;
                     continue;
                 }
-                if (!m.group().equals(":")) {
+                if (!find.equals(":")) {
                     continue;
                 }
                 if (ternaryInner > 0) {
@@ -1176,13 +1183,13 @@ public class EvalTools {
                     continue;
                 }
             }
-            if ("?.".equals(m.group()))
+            if ("?.".equals(find))
                 continue;
 
 //                System.out.println(m.group());
             if (!inString(exp, 0, m.start()) && countOpenBrackets(exp, 0, m.start()) == 0) {
                 String subexpression = exp.substring(last, m.start()).trim();
-                if (subexpression.startsWith("new ") && (m.group().equals("<") || m.group().equals(">"))) {
+                if (subexpression.startsWith("new ") && (find.equals("<") || find.equals(">"))) {
                     continue;
                 }
                 exps.add(subexpression);
@@ -1192,7 +1199,7 @@ public class EvalTools {
                     operation.end(m.start());
                     operation.rightPart(lastExpressionHolder);
                 }
-                operation = new Operation(lastExpressionHolder, Operator.get(m.group()), last, m.end());
+                operation = new Operation(lastExpressionHolder, Operator.get(find), last, m.end());
                 operations.add(operation);
                 //add operation to list
                 last = m.end();
@@ -1201,7 +1208,7 @@ public class EvalTools {
                     operation.rightPart(lastExpressionHolder);
                     break;
                 }
-                if (m.group().equals("?")) {
+                if (find.equals("?")) {
                     ternary = true;
                 }
             }
