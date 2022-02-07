@@ -200,7 +200,10 @@ class BuildPlugin implements Plugin<Project> {
                             def packageName = tablesGenerator.getPackageName().get()
 
                             Generator generator = new Generator(out, packageName);
-                            generator.createTables(new File(src).listFiles());
+
+                            def files = new File(src).listFiles()
+                            if (files)
+                                generator.createTables(files);
                         }
                     }
                 }
