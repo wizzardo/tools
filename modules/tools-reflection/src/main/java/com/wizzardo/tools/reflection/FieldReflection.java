@@ -1,11 +1,8 @@
 package com.wizzardo.tools.reflection;
 
-import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.field.Type;
-import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 /**
  * @author: wizzardo

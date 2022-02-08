@@ -111,16 +111,19 @@ public abstract class Expression {
         public final Class<?> type;
         public final String name;
         public final String typeDefinition;
+        public final String modifiers;
 
-        public Definition(Class<?> type, String name) {
+        public Definition(Class<?> type, String name, String modifiers) {
             super(name);
             this.type = type;
             this.name = name;
+            this.modifiers = modifiers;
             this.typeDefinition = null;
         }
 
-        public Definition(String type, String name) {
+        public Definition(String type, String name, String modifiers) {
             super(name);
+            this.modifiers = modifiers;
             this.type = null;
             this.name = name;
             this.typeDefinition = type;
@@ -171,12 +174,14 @@ public abstract class Expression {
         public final String name;
         public final Expression action;
         public final String typeDefinition;
+        public final String modifiers;
 
-        public DefineAndSet(Class type, String name, Expression action, String typeDefinition) {
+        public DefineAndSet(Class type, String name, Expression action, String typeDefinition, String modifiers) {
             this.type = type;
             this.name = name;
             this.action = action;
             this.typeDefinition = typeDefinition;
+            this.modifiers = modifiers;
         }
 
         @Override
@@ -186,7 +191,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new DefineAndSet(type, name, action, typeDefinition);
+            return new DefineAndSet(type, name, action, typeDefinition, modifiers);
         }
 
         @Override

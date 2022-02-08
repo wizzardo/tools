@@ -15,6 +15,7 @@ public class ClassExpression extends Expression {
 
     protected boolean isEnum;
     protected List<Expression> definitions;
+    protected List<Expression> definitionsStatic;
     protected Map<String, Object> context;
     protected String packageName;
     protected String name;
@@ -22,17 +23,18 @@ public class ClassExpression extends Expression {
     protected Class<?> superClass;
     protected Class<?> proxyClass;
 
-    public ClassExpression(String name, List<Expression> definitions, Class<?> superClass, Class<?>[] interfaces) {
-        this(name, definitions, superClass, interfaces, null);
+    public ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces) {
+        this(name, definitions, definitionsStatic, superClass, interfaces, null);
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass) {
-        this(name, definitions, superClass, interfaces, proxyClass, new HashMap<>());
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass) {
+        this(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>());
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, Map<String, Object> context) {
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, Map<String, Object> context) {
         this.name = name;
         this.definitions = definitions;
+        this.definitionsStatic = definitionsStatic;
         this.superClass = superClass;
         this.interfaces = interfaces;
         this.proxyClass = proxyClass;
@@ -72,7 +74,11 @@ public class ClassExpression extends Expression {
         for (Expression expression : definitions) {
             l.add(expression.clone());
         }
-        return new ClassExpression(name, l, superClass, interfaces, proxyClass, new HashMap<>(context));
+        List<Expression> definitionsStatic = new ArrayList<Expression>(this.definitionsStatic.size());
+        for (Expression expression : this.definitionsStatic) {
+            definitionsStatic.add(expression.clone());
+        }
+        return new ClassExpression(name, l, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>(context));
     }
 
     @Override
@@ -91,7 +97,7 @@ public class ClassExpression extends Expression {
     }
 
     public Object newInstance(Object[] args) {
-        ClassExpression instance = new ClassExpression(name, definitions, superClass, interfaces, proxyClass);
+        ClassExpression instance = new ClassExpression(name, definitions, definitionsStatic, superClass, interfaces, proxyClass);
         instance.context.put("this", instance);
         instance.init();
         Object result = instance;
@@ -180,6 +186,14 @@ public class ClassExpression extends Expression {
         if ("this".equals(method))
             method = name;
 
+        ClosureHolder closureHolder = findMethod(definitions, method, args);
+        if (closureHolder != null)
+            return closureHolder;
+
+        return findMethod(definitionsStatic, method, args);
+    }
+
+    protected ClosureHolder findMethod(List<Expression> definitions, String method, Object[] args) {
         outer:
         for (int i = 0; i < definitions.size(); i++) {
             Expression e = definitions.get(i);
@@ -340,6 +354,14 @@ public class ClassExpression extends Expression {
     }
 
     protected void init() {
+        init(definitions);
+    }
+
+    protected void initStatic() {
+        init(definitionsStatic);
+    }
+
+    protected void init(List<Expression> definitions) {
         for (Expression expression : definitions) {
             if (expression instanceof MethodDefinition) {
                 continue;

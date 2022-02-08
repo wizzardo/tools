@@ -955,8 +955,9 @@ public class EvalTools {
             exp = exp.substring(m.end(), exp.length() - 1).trim();
             List<String> lines = getBlocks(exp);
 
-            List<Expression> definitions = new ArrayList<Expression>(lines.size());
-            ClassExpression classExpression = new ClassExpression(className, definitions, superClass, interfaces);
+            List<Expression> definitions = new ArrayList<Expression>();
+            List<Expression> definitionsStatic = new ArrayList<Expression>();
+            ClassExpression classExpression = new ClassExpression(className, definitions, definitionsStatic, superClass, interfaces);
             String parentClass = null;
             if (model instanceof ScriptEngine.Binding) {
                 ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
@@ -992,12 +993,22 @@ public class EvalTools {
                     ClosureExpression closure = ((ClosureHolder) prepare).closure;
                     closure.setContext(classExpression.context);
                     prepare = closure;
+                } else if (prepare instanceof Expression.DefineAndSet) {
+                    isStatic = ((Expression.DefineAndSet) prepare).modifiers.contains("static");
+                } else if (prepare instanceof Expression.Definition) {
+                    isStatic = ((Expression.Definition) prepare).modifiers.contains("static");
+                } else if (prepare instanceof Expression.MethodDefinition) {
+                    isStatic = ((Expression.MethodDefinition) prepare).modifiers.contains("static");
                 }
-                definitions.add(prepare);
+
+                if (isStatic)
+                    definitionsStatic.add(prepare);
+                else
+                    definitions.add(prepare);
             }
 
             model.put("current class", prevClass);
-            classExpression.init();
+            classExpression.initStatic();
 
             if (isEnum) {
                 classExpression.isEnum = true;
@@ -1090,6 +1101,8 @@ public class EvalTools {
             String modifiers = m.group(1);
             if (modifiers != null)
                 modifiers = modifiers.trim();
+            else
+                modifiers = "";
 
             String generics = m.group(2);
             String type = m.group(3);
@@ -1108,7 +1121,7 @@ public class EvalTools {
 //                            if (type != null && type.contains("<"))
 //                                type = type.substring(0, type.indexOf('<'));
                     Class typeClass = findClass(type, imports, model);
-                    return new Expression.DefineAndSet(typeClass, name, action, type);
+                    return new Expression.DefineAndSet(typeClass, name, action, type, modifiers);
                 } else if (m.group(5).equals("(")) {
                     model.put(name, null);
                     int argsEnd = findCloseBracket(exp, m.end());
@@ -1140,9 +1153,9 @@ public class EvalTools {
 
                     Class typeClass = findClass(type, imports, model);
                     if (typeClass == null)
-                        return new Expression.Definition(type, name);
+                        return new Expression.Definition(type, name, modifiers);
 
-                    return new Expression.Definition(typeClass, name);
+                    return new Expression.Definition(typeClass, name, modifiers);
                 }
             }
         }
