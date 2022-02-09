@@ -80,7 +80,7 @@ public class ClassBuilder {
         methodInfo.attributes[0] = codeAttribute;
 
         codeAttribute.max_locals = 2;
-        codeAttribute.max_stack = 4;
+        codeAttribute.max_stack = 6;
         codeAttribute.attribute_name_index = getOrCreateUtf8Constant("Code");
 
         int superConstructorNameAndTypeIndex = getOrCreateNameAndTypeConstant(nameIndex, descriptorIndex);
@@ -306,9 +306,60 @@ public class ClassBuilder {
                 code.append(Instruction.ldc_w, int2toBytes(constant));
         } else if (type.isEnum()) {
             code.append(Instruction.getstatic, int2toBytes(getOrCreateFieldRef((Enum) value)));
-        } else {
+        } else if (type == String.class) {
+            int constant = getOrCreateStringConstant(((String) value));
+            if (constant < 255)
+                code.append(Instruction.ldc, int1toBytes(constant));
+            else
+                code.append(Instruction.ldc_w, int2toBytes(constant));
+        } else if (type == Object.class && (value instanceof Number || value instanceof Boolean)) {
+            int constant = 0;
+            boolean longDoubleConst = false;
+            String methodName = "valueOf";
+            Class boxed = null;
+            Class primitive = null;
+            if (value instanceof Integer) {
+                constant = getOrCreateIntegerConstant((Integer) value);
+                boxed = Integer.class;
+                primitive = int.class;
+            } else if (value instanceof Short) {
+                constant = getOrCreateIntegerConstant((Short) value);
+                boxed = Short.class;
+                primitive = short.class;
+            } else if (value instanceof Byte) {
+                constant = getOrCreateIntegerConstant((Byte) value);
+                boxed = Byte.class;
+                primitive = byte.class;
+            } else if (value instanceof Boolean) {
+                constant = getOrCreateIntegerConstant((Boolean) value ? 1 : 0);
+                boxed = Boolean.class;
+                primitive = boolean.class;
+            } else if (value instanceof Long) {
+                constant = getOrCreateLongConstant((Long) value);
+                boxed = Long.class;
+                primitive = long.class;
+                longDoubleConst = true;
+            } else if (value instanceof Float) {
+                constant = getOrCreateFloatConstant((Float) value);
+                boxed = Float.class;
+                primitive = float.class;
+            } else if (value instanceof Double) {
+                constant = getOrCreateDoubleConstant((Double) value);
+                boxed = Double.class;
+                primitive = double.class;
+                longDoubleConst = true;
+            }
+
+            if (longDoubleConst) {
+                code.append(Instruction.ldc2_w, int2toBytes(constant));
+            } else if (constant < 255)
+                code.append(Instruction.ldc, int1toBytes(constant));
+            else
+                code.append(Instruction.ldc_w, int2toBytes(constant));
+            int methodRef = getOrCreateMethodRef(getOrCreateClassConstant(boxed), methodName, new Class[]{primitive}, boxed);
+            code.append(Instruction.invokestatic, ByteCodeParser.int2toBytes(methodRef));
+        } else
             throw new IllegalStateException();
-        }
     }
 
     protected <T> ClassBuilder fieldCallMethod(String name, Class<T> type, Consumer<CodeBuilder> initializer) {

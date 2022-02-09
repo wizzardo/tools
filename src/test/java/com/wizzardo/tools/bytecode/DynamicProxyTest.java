@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DynamicProxyTest {
 
@@ -548,5 +549,162 @@ public class DynamicProxyTest {
         Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
         Object instance = aClass.newInstance();
         Assert.assertEquals(TestEnum.ONE, aClass.getDeclaredField("a").get(instance));
+    }
+
+
+//    public static class AtomicHolder {
+//        AtomicReference<Boolean> reference = new AtomicReference<>(true);
+//    }
+
+    @Test
+    public void test_proxy_field_with_boxing_int() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "AtomicHolder";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .fieldCallConstructor("ref", AtomicReference.class, AtomicReference.class.getConstructor(Object.class), 1)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Field field = aClass.getDeclaredField("ref");
+        Object o = field.get(instance);
+        Assert.assertTrue(o != null);
+        Assert.assertEquals(AtomicReference.class, o.getClass());
+        Assert.assertEquals(Integer.valueOf(1), ((AtomicReference) o).get());
+    }
+
+    @Test
+    public void test_proxy_field_with_boxing_long() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "AtomicHolder";
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .fieldCallConstructor("ref", AtomicReference.class, AtomicReference.class.getConstructor(Object.class), 1L)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Field field = aClass.getDeclaredField("ref");
+        Object o = field.get(instance);
+        Assert.assertTrue(o != null);
+        Assert.assertEquals(AtomicReference.class, o.getClass());
+        Assert.assertEquals(Long.valueOf(1), ((AtomicReference) o).get());
+    }
+
+    @Test
+    public void test_proxy_field_with_boxing_short() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "AtomicHolder";
+        short value = 1;
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .fieldCallConstructor("ref", AtomicReference.class, AtomicReference.class.getConstructor(Object.class), value)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Field field = aClass.getDeclaredField("ref");
+        Object o = field.get(instance);
+        Assert.assertTrue(o != null);
+        Assert.assertEquals(AtomicReference.class, o.getClass());
+        Assert.assertEquals(Short.valueOf(value), ((AtomicReference) o).get());
+    }
+
+    @Test
+    public void test_proxy_field_with_boxing_byte() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "AtomicHolder";
+        byte value = 1;
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .fieldCallConstructor("ref", AtomicReference.class, AtomicReference.class.getConstructor(Object.class), value)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Field field = aClass.getDeclaredField("ref");
+        Object o = field.get(instance);
+        Assert.assertTrue(o != null);
+        Assert.assertEquals(AtomicReference.class, o.getClass());
+        Assert.assertEquals(Byte.valueOf(value), ((AtomicReference) o).get());
+    }
+
+    @Test
+    public void test_proxy_field_with_boxing_float() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "AtomicHolder";
+        float value = 1;
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .fieldCallConstructor("ref", AtomicReference.class, AtomicReference.class.getConstructor(Object.class), value)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Field field = aClass.getDeclaredField("ref");
+        Object o = field.get(instance);
+        Assert.assertTrue(o != null);
+        Assert.assertEquals(AtomicReference.class, o.getClass());
+        Assert.assertEquals(Float.valueOf(value), ((AtomicReference) o).get());
+    }
+
+    @Test
+    public void test_proxy_field_with_boxing_double() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "AtomicHolder";
+        double value = 1;
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .fieldCallConstructor("ref", AtomicReference.class, AtomicReference.class.getConstructor(Object.class), value)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Field field = aClass.getDeclaredField("ref");
+        Object o = field.get(instance);
+        Assert.assertTrue(o != null);
+        Assert.assertEquals(AtomicReference.class, o.getClass());
+        Assert.assertEquals(Double.valueOf(value), ((AtomicReference) o).get());
+    }
+
+    @Test
+    public void test_proxy_field_with_boxing_boolean() throws NoSuchFieldException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        String name = "AtomicHolder";
+        boolean value = true;
+        ClassBuilder builder = new ClassBuilder()
+                .setSuperClass(Object.class)
+                .setClassFullName(name)
+                .fieldCallConstructor("ref", AtomicReference.class, AtomicReference.class.getConstructor(Object.class), value)
+                .withDefaultConstructor();
+
+        byte[] bytes = builder.build();
+//        FileTools.bytes("/tmp/" + name + ".class", bytes);
+
+        Class<?> aClass = DynamicProxyFactory.loadClass(name, bytes);
+        Object instance = aClass.newInstance();
+        Field field = aClass.getDeclaredField("ref");
+        Object o = field.get(instance);
+        Assert.assertTrue(o != null);
+        Assert.assertEquals(AtomicReference.class, o.getClass());
+        Assert.assertEquals(Boolean.valueOf(value), ((AtomicReference) o).get());
     }
 }
