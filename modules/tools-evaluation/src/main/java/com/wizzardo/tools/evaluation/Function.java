@@ -249,7 +249,7 @@ public class Function extends Expression {
 //        System.out.println("evaluate method: "+toString());
 
             Object instance;
-            if(thatObject instanceof ClosureLookup){
+            if (thatObject instanceof ClosureLookup) {
                 if (args != null)
                     arr = resolveArgs(model);
 
@@ -557,15 +557,25 @@ public class Function extends Expression {
 
         if (ClassExpression.class.equals(clazz)) {
             ClassExpression cl = (ClassExpression) instance;
-            ClosureHolder closureHolder = cl.findMethod(method, args);
-            if (closureHolder == null)
+            MethodDefinition methodDefinition = cl.findMethod(method, args);
+            ClosureExpression closure = null;
+
+            if (methodDefinition != null) {
+                closure = (ClosureExpression) methodDefinition.action.get(cl.context);
+            } else {
+                Object o = cl.context.get(method);
+                if (o instanceof ClosureExpression)
+                    closure = ((ClosureExpression) o);
+            }
+
+            if (closure == null)
                 throw new IllegalArgumentException("Cannot find method " + method + " " + Arrays.toString(args) + " in " + this);
 
-            ClosureExpression closure = (ClosureExpression) closureHolder.get(cl.context);
+            ClosureExpression finalClosure = closure;
             return new EvalTools.ClosureInvoker() {
                 @Override
                 public Object map(Object instance, Object[] args) {
-                    return closure.getAgainst(null, cl, args);
+                    return finalClosure.getAgainst(null, cl, args);
                 }
 
                 @Override

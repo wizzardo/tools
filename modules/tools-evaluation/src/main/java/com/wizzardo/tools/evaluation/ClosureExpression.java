@@ -120,11 +120,11 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         expressions.add(expression);
     }
 
-    public String parseArguments(String exp, List<String> imports, Map<String, Object> model) {
+    public String parseArguments(String exp, List<String> imports, EvaluationContext model) {
         int i = exp.indexOf("->");
         if (i >= 0 && EvalTools.countOpenBrackets(exp, 0, i) == 0 && !EvalTools.inString(exp, 0, i)) {
             String args = exp.substring(0, i).trim();
-            exp = exp.substring(i + 2).trim();
+            String body = exp.substring(i + 2).trim();
 
             if (args.startsWith("(") && args.endsWith(")"))
                 args = args.substring(1, args.length() - 1);
@@ -156,6 +156,9 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
                     }
 
                     if (classEnd == args.length() || args.charAt(classEnd) == ',') {
+                        if (!isValidName(args, classStart, classEnd)) {
+                            return exp;
+                        }
                         String name = args.substring(classStart, classEnd);
                         l.add(new Pair<>(name, Object.class));
                         from = classEnd + 1;
@@ -164,9 +167,15 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
                         int nameEnd = findNextArgumentNameEnd(args, nameStart);
                         if (nameStart == nameEnd) {
                             String name = args.substring(classStart, classEnd);
+                            if (!isValidName(args, classStart, classEnd)) {
+                                return exp;
+                            }
                             l.add(new Pair<>(name, Object.class));
                             from = classEnd + 1;
                         } else {
+                            if (!isValidName(args, nameStart, nameEnd)) {
+                                return exp;
+                            }
                             String name = args.substring(nameStart, nameEnd);
                             String typeName = args.substring(classStart, classEnd);
                             Class type = EvalTools.findClass(typeName, imports, model);
@@ -177,11 +186,29 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
 
                 }
                 this.args = l.toArray(new Pair[l.size()]);
-            } else {
-                this.args = EMPTY_ARGS;
             }
+            return body;
         }
         return exp;
+    }
+
+    protected static boolean isValidName(String name) {
+        return isValidName(name, 0, name.length());
+    }
+    protected static boolean isValidName(String name, int from, int to) {
+        for (int i = from; i < to; i++) {
+            char c = name.charAt(i);
+            if (c >= 'a' && c <= 'z')
+                continue;
+            if (c >= 'A' && c <= 'Z')
+                continue;
+            if (c >= '0' && c <= '9')
+                continue;
+            if (c == '_' || c == '$')
+                continue;
+            return false;
+        }
+        return true;
     }
 
     protected static int findNextArgumentStart(String args, int from) {

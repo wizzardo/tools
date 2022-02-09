@@ -126,12 +126,16 @@ public class ClassExpression extends Expression {
                 }
                 DynamicProxy proxy = (DynamicProxy) result;
                 proxy.setHandler((that, method, args1) -> {
-                    ClosureHolder closureHolder = findMethod(method, args1);
-                    if (closureHolder == null)
+                    MethodDefinition md = findMethod(method, args1);
+                    if (md == null)
                         throw new IllegalArgumentException("Cannot find method " + method + " " + Arrays.toString(args1) + " in " + this);
 
-                    ClosureExpression closure = (ClosureExpression) closureHolder.get(instance.context);
-                    return closure.getAgainst(closure.context, proxy, args1);
+                    ClosureExpression closure = (ClosureExpression) md.action.get(instance.context);
+                    Object r = closure.getAgainst(closure.context, proxy, args1);
+                    if (r instanceof ClosureExpression && !md.returnType.isAssignableFrom(r.getClass()) && Function.isSAMInterface(md.returnType)) {
+                        return Function.wrapClosureAsProxy((ClosureExpression) r, md.returnType);
+                    }
+                    return r;
                 });
             } else {
                 Class<?>[] interfacesToImplement = new Class[interfaces.length + 1];
@@ -182,18 +186,18 @@ public class ClassExpression extends Expression {
         return result;
     }
 
-    public ClosureHolder findMethod(String method, Object[] args) {
+    public MethodDefinition findMethod(String method, Object[] args) {
         if ("this".equals(method))
             method = name;
 
-        ClosureHolder closureHolder = findMethod(definitions, method, args);
-        if (closureHolder != null)
-            return closureHolder;
+        MethodDefinition md = findMethod(definitions, method, args);
+        if (md != null)
+            return md;
 
         return findMethod(definitionsStatic, method, args);
     }
 
-    protected ClosureHolder findMethod(List<Expression> definitions, String method, Object[] args) {
+    protected MethodDefinition findMethod(List<Expression> definitions, String method, Object[] args) {
         outer:
         for (int i = 0; i < definitions.size(); i++) {
             Expression e = definitions.get(i);
@@ -228,7 +232,7 @@ public class ClassExpression extends Expression {
                         }
                     }
                 }
-                return md.action;
+                return md;
             }
         }
         return null;

@@ -44,14 +44,14 @@ public class ClosureLookup extends Expression {
 
         Object delegate = model.get("delegate");
         if (delegate instanceof ClassExpression) {
-            ClosureHolder method = ((ClassExpression) delegate).findMethod(functionName, args);
+            MethodDefinition method = ((ClassExpression) delegate).findMethod(functionName, args);
             if (method != null)
-                return method.get(model);
+                return method.action.get(model);
         }
         if (parent != null) {
-            ClosureHolder method = parent.findMethod(functionName, args);
+            MethodDefinition method = parent.findMethod(functionName, args);
             if (method != null)
-                return method.get(model);
+                return method.action.get(model);
         }
 
         localFunction = lookupInFunctions();
