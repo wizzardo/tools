@@ -82,4 +82,8 @@ public class EvaluationContext extends HashMap<String, Object> {
     public EvaluationContext createLocalContext() {
         return new EvaluationContext(this);
     }
+
+    public EvaluationContext getRoot() {
+        return parent != null ? parent.getRoot() : this;
+    }
 }

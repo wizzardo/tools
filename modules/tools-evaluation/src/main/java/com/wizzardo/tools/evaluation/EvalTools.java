@@ -959,8 +959,8 @@ public class EvalTools {
             List<Expression> definitionsStatic = new ArrayList<Expression>();
             ClassExpression classExpression = new ClassExpression(className, definitions, definitionsStatic, superClass, interfaces);
             String parentClass = null;
-            if (model instanceof ScriptEngine.Binding) {
-                ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
+            if (model.getRoot() instanceof ScriptEngine.Binding) {
+                ScriptEngine.Binding binding = (ScriptEngine.Binding) model.getRoot();
                 if (binding.currentClass == null)
                     classExpression.packageName = binding.pack;
                 else {
@@ -969,7 +969,7 @@ public class EvalTools {
                 }
                 binding.currentClass = className;
             }
-            model.put("class " + className, classExpression);
+            model.getRoot().put("class " + className, classExpression);
             Object prevClass = model.put("current class", classExpression);
 
             for (int i = isEnum ? 1 : 0; i < lines.size(); i++) {
@@ -1041,8 +1041,8 @@ public class EvalTools {
                 }
             }
 
-            if (model instanceof ScriptEngine.Binding) {
-                ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
+            if (model.getRoot() instanceof ScriptEngine.Binding) {
+                ScriptEngine.Binding binding = (ScriptEngine.Binding) model.getRoot();
                 binding.currentClass = parentClass;
             }
 
@@ -1313,7 +1313,7 @@ public class EvalTools {
                 Class clazz;
                 while (dot != -1) {
                     String name = className.substring(0, dot);
-                    ClassExpression cl = (ClassExpression) model.get("class " + className);
+                    ClassExpression cl = (ClassExpression) model.get("class " + name);
                     if (cl != null) {
                         return new PrepareResolveClassResult(exp.substring(name.length()), cl);
                     }
@@ -1850,15 +1850,15 @@ public class EvalTools {
         }
     }
 
-    public static Class findClass(String s, List<String> imports, Map model) {
+    public static Class findClass(String s, List<String> imports, EvaluationContext model) {
         if (s == null)
             return null;
 
         if (s.contains("<"))
             s = s.substring(0, s.indexOf('<')).trim();
 
-        if (model instanceof ScriptEngine.Binding) {
-            ScriptEngine.Binding binding = (ScriptEngine.Binding) model;
+        if (model.getRoot() instanceof ScriptEngine.Binding) {
+            ScriptEngine.Binding binding = (ScriptEngine.Binding) model.getRoot();
             if (binding.classCache.containsKey(s))
                 return binding.classCache.get(s);
 
