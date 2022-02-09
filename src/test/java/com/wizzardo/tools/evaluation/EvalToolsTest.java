@@ -1563,6 +1563,22 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_def_class_static_block_lambda_inside() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("foo", EvalTools.prepare("" +
+                "class StaticBlock {\n" +
+                "  static Callable lambda \n" +
+                "  static {\n" +
+                "    lambda = () -> 'foo'\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "StaticBlock.lambda()\n" +
+                "").get(model).toString());
+
+    }
+
+    @Test
     public void test_def_class_static_var_init_by_method() {
         Map<String, Object> model = new HashMap<String, Object>();
         Assert.assertEquals("VALUE", EvalTools.prepare("" +
@@ -1797,6 +1813,14 @@ public class EvalToolsTest {
         Map<String, Object> model = new HashMap<String, Object>();
         Assert.assertEquals("foo", EvalTools.prepare("" +
                 "com.wizzardo.tools.misc.With.with(new StringBuilder(), {it.append('foo')})\n" +
+                "").get(model).toString());
+    }
+
+    @Test
+    public void test_meta_methods_lambda() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("foo", EvalTools.prepare("" +
+                "def sb = com.wizzardo.tools.misc.With.with(new StringBuilder(), (it) -> it.append('foo'))\n" +
                 "").get(model).toString());
     }
 

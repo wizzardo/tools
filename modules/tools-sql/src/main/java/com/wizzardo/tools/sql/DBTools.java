@@ -41,19 +41,31 @@ public class DBTools {
     }
 
     public <R> R withBuilder(Mapper<QueryBuilder.WrapConnectionStep, R> mapper) {
-        try (Connection connection = createConnection()) {
-            return mapper.map(QueryBuilder.withConnection(connection));
-        } catch (Exception e) {
-            throw Unchecked.rethrow(e);
-        }
+        return withDB(connection -> mapper.map(QueryBuilder.withConnection(connection)));
     }
 
     public void consume(Consumer<QueryBuilder.WrapConnectionStep> consumer) {
-        try (Connection connection = createConnection()) {
+        withDB(connection -> {
             consumer.consume(QueryBuilder.withConnection(connection));
-        } catch (Exception e) {
-            throw Unchecked.rethrow(e);
-        }
+            return null;
+        });
+    }
+
+    public <R> R transaction(Mapper<QueryBuilder.WrapConnectionStep, R> mapper) {
+        return withDB(c -> {
+            try {
+                c.setAutoCommit(false);
+                R result = mapper.map(QueryBuilder.withConnection(c));
+                c.commit();
+                return result;
+            } catch (Exception e) {
+                c.rollback();
+                throw Unchecked.rethrow(e);
+            } finally {
+                c.setAutoCommit(true);
+            }
+        });
+
     }
 
     public static class SchemaHistory {
@@ -133,6 +145,8 @@ public class DBTools {
                     System.out.println(migration);
                     e.printStackTrace();
                     c.rollback();
+                } finally {
+                    c.setAutoCommit(true);
                 }
                 return true;
             });

@@ -1174,7 +1174,7 @@ public class EvalTools {
         int ternaryInner = 0;
         while (m.find()) {
             String find = m.group();
-            if ("->".equals(find) && operation != null) {
+            if ("->".equals(find) && operation != null && !inString(exp, 0, m.start()) && countOpenBrackets(exp, 0, m.start()) == 0) {
                 String s = trimBrackets(exp.substring(last).trim());
                 Expression closure = prepareClosure(s, model, functions, imports);
                 operation.rightPart(closure);
