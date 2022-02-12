@@ -334,11 +334,20 @@ public class Operation extends Expression {
                 break;
             }
             case INSTANCEOF: {
-                if (!(ob2 instanceof Class))
-                    throw new IllegalArgumentException("Right part of instanceof must be a class");
+                if (ob2 instanceof Class) {
+                    result = ((Class) ob2).isAssignableFrom(ob1.getClass());
+                    break;
+                }
+                if ((ob2 instanceof ClassExpression)) {
+                    if (!(ob1 instanceof ClassExpression))
+                        return false;
 
-                result = ((Class) ob2).isAssignableFrom(ob1.getClass());
-                break;
+                    ClassExpression right = (ClassExpression) ob2;
+                    ClassExpression left = (ClassExpression) ob1;
+                    return right.getName().equals(left.getName()) && left.getPackageName().equals(right.getPackageName());
+                }
+
+                throw new IllegalArgumentException("Right part of instanceof must be a class");
             }
             default:
                 throw new UnsupportedOperationException("Not yet implemented:" + this.operator);
