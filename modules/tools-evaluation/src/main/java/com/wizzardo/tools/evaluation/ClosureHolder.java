@@ -10,7 +10,8 @@ public class ClosureHolder extends Expression {
 
     protected final ClosureExpression closure;
 
-    public ClosureHolder(ClosureExpression closure) {
+    public ClosureHolder(ClosureExpression closure, EvaluationContext context) {
+        super(context);
         this.closure = closure;
     }
 

@@ -8,7 +8,15 @@ public class ForEachExpression extends Expression {
     private Expression iterable;
     private Expression thenStatement;
 
-    public ForEachExpression(Expression definition, Expression iterable, Expression thenStatement) {
+    public ForEachExpression(Expression definition, Expression iterable, Expression thenStatement, EvaluationContext context) {
+        super(context);
+        this.definition = definition;
+        this.iterable = iterable;
+        this.thenStatement = thenStatement;
+    }
+
+    protected ForEachExpression(Expression definition, Expression iterable, Expression thenStatement, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
         this.definition = definition;
         this.iterable = iterable;
         this.thenStatement = thenStatement;
@@ -23,7 +31,7 @@ public class ForEachExpression extends Expression {
 
     @Override
     public Expression clone() {
-        return new ForEachExpression(definition.clone(), iterable.clone(), thenStatement.clone());
+        return new ForEachExpression(definition.clone(), iterable.clone(), thenStatement.clone(), file, lineNumber, linePosition);
     }
 
     @Override

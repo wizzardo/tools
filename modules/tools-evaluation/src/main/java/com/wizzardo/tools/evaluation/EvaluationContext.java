@@ -4,6 +4,9 @@ import java.util.*;
 
 public class EvaluationContext extends HashMap<String, Object> {
     protected final EvaluationContext parent;
+    protected String file;
+    protected int lineNumber;
+    protected int linePosition;
 
     public EvaluationContext() {
         this.parent = null;
@@ -85,5 +88,17 @@ public class EvaluationContext extends HashMap<String, Object> {
 
     public EvaluationContext getRoot() {
         return parent != null ? parent.getRoot() : this;
+    }
+
+    public String getFileName() {
+        return file;
+    }
+
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
+    public int getLinePosition() {
+        return linePosition;
     }
 }

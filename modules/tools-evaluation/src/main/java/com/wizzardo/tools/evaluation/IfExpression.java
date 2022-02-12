@@ -10,12 +10,27 @@ public class IfExpression extends Expression {
     private AsBooleanExpression condition;
     private Expression thenStatement;
 
-    public IfExpression(AsBooleanExpression condition, Expression thenStatement) {
+    public IfExpression(AsBooleanExpression condition, Expression thenStatement, EvaluationContext context) {
+        super(context);
         this.condition = condition;
         this.thenStatement = thenStatement;
     }
 
-    public IfExpression(AsBooleanExpression condition, Expression thenStatement, Expression elseStatement) {
+    public IfExpression(AsBooleanExpression condition, Expression thenStatement, Expression elseStatement, EvaluationContext context) {
+        super(context);
+        this.condition = condition;
+        this.thenStatement = thenStatement;
+        this.elseStatement = elseStatement;
+    }
+
+    protected IfExpression(AsBooleanExpression condition, Expression thenStatement, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+        this.condition = condition;
+        this.thenStatement = thenStatement;
+    }
+
+    private IfExpression(AsBooleanExpression condition, Expression thenStatement, Expression elseStatement, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
         this.condition = condition;
         this.thenStatement = thenStatement;
         this.elseStatement = elseStatement;
@@ -34,9 +49,9 @@ public class IfExpression extends Expression {
     @Override
     public Expression clone() {
         if (elseStatement != null)
-            return new IfExpression((AsBooleanExpression) condition.clone(), thenStatement.clone(), elseStatement.clone());
+            return new IfExpression((AsBooleanExpression) condition.clone(), thenStatement.clone(), elseStatement.clone(), file, lineNumber, linePosition);
         else
-            return new IfExpression((AsBooleanExpression) condition.clone(), thenStatement.clone());
+            return new IfExpression((AsBooleanExpression) condition.clone(), thenStatement.clone(), file, lineNumber, linePosition);
     }
 
     @Override

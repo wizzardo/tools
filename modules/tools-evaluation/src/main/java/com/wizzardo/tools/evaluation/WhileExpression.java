@@ -6,7 +6,14 @@ public class WhileExpression extends Expression {
     private AsBooleanExpression condition;
     private Expression thenStatement;
 
-    public WhileExpression(AsBooleanExpression condition, Expression thenStatement) {
+    public WhileExpression(AsBooleanExpression condition, Expression thenStatement, EvaluationContext context) {
+        super(context);
+        this.condition = condition;
+        this.thenStatement = thenStatement;
+    }
+
+    protected WhileExpression(AsBooleanExpression condition, Expression thenStatement, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
         this.condition = condition;
         this.thenStatement = thenStatement;
     }
@@ -19,7 +26,7 @@ public class WhileExpression extends Expression {
 
     @Override
     public Expression clone() {
-        return new WhileExpression((AsBooleanExpression) condition.clone(), thenStatement.clone());
+        return new WhileExpression((AsBooleanExpression) condition.clone(), thenStatement.clone(), file, lineNumber, linePosition);
     }
 
     @Override

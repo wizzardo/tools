@@ -23,15 +23,27 @@ public class ClassExpression extends Expression {
     protected Class<?> superClass;
     protected Class<?> proxyClass;
 
-    public ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces) {
-        this(name, definitions, definitionsStatic, superClass, interfaces, null);
+    public ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, EvaluationContext evaluationContext) {
+        this(name, definitions, definitionsStatic, superClass, interfaces, null, evaluationContext);
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass) {
-        this(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>());
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, EvaluationContext evaluationContext) {
+        this(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>(), evaluationContext);
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, Map<String, Object> context) {
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, Map<String, Object> context, EvaluationContext evaluationContext) {
+        super(evaluationContext);
+        this.name = name;
+        this.definitions = definitions;
+        this.definitionsStatic = definitionsStatic;
+        this.superClass = superClass;
+        this.interfaces = interfaces;
+        this.proxyClass = proxyClass;
+        this.context = context;
+    }
+
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, Map<String, Object> context, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
         this.name = name;
         this.definitions = definitions;
         this.definitionsStatic = definitionsStatic;
@@ -78,7 +90,7 @@ public class ClassExpression extends Expression {
         for (Expression expression : this.definitionsStatic) {
             definitionsStatic.add(expression.clone());
         }
-        return new ClassExpression(name, l, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>(context));
+        return new ClassExpression(name, l, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>(context), file, lineNumber, linePosition);
     }
 
     @Override
@@ -97,7 +109,7 @@ public class ClassExpression extends Expression {
     }
 
     public Object newInstance(Object[] args) {
-        ClassExpression instance = new ClassExpression(name, definitions, definitionsStatic, superClass, interfaces, proxyClass);
+        ClassExpression instance = new ClassExpression(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>(), file, lineNumber, linePosition);
         instance.context.put("this", instance);
         instance.init();
         Object result = instance;

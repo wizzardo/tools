@@ -24,17 +24,26 @@ public class Operation extends Expression {
     private int start, end;
     private volatile boolean checkedForSimplify = false;
 
-    public Operation(Expression leftPart, Expression rightPart, Operator operator) {
+    public Operation(Expression leftPart, Expression rightPart, Operator operator, EvaluationContext context) {
+        super(context);
         this.leftPart = wrapBooleanOperationLeft(leftPart, operator);
         this.rightPart = wrapBooleanOperationRight(rightPart, operator);
         this.operator = operator;
     }
 
-    public Operation(Expression leftPart, Operator operator, int start, int end) {
+    public Operation(Expression leftPart, Operator operator, int start, int end, EvaluationContext context) {
+        super(context);
         this.leftPart = wrapBooleanOperationLeft(leftPart, operator);
         this.operator = operator;
         this.start = start;
         this.end = end;
+    }
+
+    protected Operation(Expression leftPart, Expression rightPart, Operator operator, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+        this.leftPart = wrapBooleanOperationLeft(leftPart, operator);
+        this.rightPart = wrapBooleanOperationRight(rightPart, operator);
+        this.operator = operator;
     }
 
     private Expression wrapBooleanOperationLeft(Expression exp, Operator operator) {
@@ -44,7 +53,7 @@ public class Operation extends Expression {
             case OR2:
             case TERNARY:
                 if (exp != null)
-                    return new AsBooleanExpression(exp);
+                    return new AsBooleanExpression(exp, file, lineNumber, linePosition);
         }
         return exp;
     }
@@ -56,7 +65,7 @@ public class Operation extends Expression {
             case OR2:
             case NOT:
                 if (exp != null)
-                    return new AsBooleanExpression(exp);
+                    return new AsBooleanExpression(exp, file, lineNumber, linePosition);
         }
         return exp;
     }
@@ -71,7 +80,7 @@ public class Operation extends Expression {
 
     @Override
     public Operation clone() {
-        return new Operation(leftPart == null ? null : leftPart.clone(), rightPart == null ? null : rightPart.clone(), operator);
+        return new Operation(leftPart == null ? null : leftPart.clone(), rightPart == null ? null : rightPart.clone(), operator, file, lineNumber, linePosition);
     }
 
     @Override
@@ -497,7 +506,7 @@ public class Operation extends Expression {
         return shiftLeft(ob1, ob2);
     }
 
-    private static Object and(Object ob1,Object ob2) {
+    private static Object and(Object ob1, Object ob2) {
         if (ob1 instanceof Number) {
             if (ob2 instanceof Number) {
                 Number right = (Number) ob2;
@@ -548,7 +557,7 @@ public class Operation extends Expression {
             return ((Number) ob1).byteValue() << right.intValue();
         }
 
-        throw new IllegalArgumentException("can not cast "+ob1+" to int type");
+        throw new IllegalArgumentException("can not cast " + ob1 + " to int type");
     }
 
     private static Object shiftRight(Object ob1, Object ob2) {
@@ -574,7 +583,7 @@ public class Operation extends Expression {
             return ((Number) ob1).byteValue() >> right.intValue();
         }
 
-        throw new IllegalArgumentException("can not cast "+ob1+" to int type");
+        throw new IllegalArgumentException("can not cast " + ob1 + " to int type");
     }
 
     private static Object shiftRightUnsigned(Object ob1, Object ob2) {
@@ -600,7 +609,7 @@ public class Operation extends Expression {
             return ((Number) ob1).byteValue() >>> right.intValue();
         }
 
-        throw new IllegalArgumentException("can not cast "+ob1+" to int type");
+        throw new IllegalArgumentException("can not cast " + ob1 + " to int type");
     }
 
     private static Object set(Expression leftPart, Expression rightPart, Map<String, Object> model, Operator operator) {

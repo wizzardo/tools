@@ -18,12 +18,22 @@ public class UserFunction extends Expression {
     private boolean notCreateOwnModel = false;
 
     public UserFunction(String name, String exp, String... argsNames) {
+        this(name, exp, null, argsNames);
+    }
+
+    public UserFunction(String name, Expression eh, String... argsNames) {
+        this(name, eh, null, argsNames);
+    }
+
+    public UserFunction(String name, String exp, EvaluationContext context, String... argsNames) {
+        super(context);
         this.exp = exp;
         this.name = name;
         this.argsNames = argsNames;
     }
 
-    public UserFunction(String name, Expression eh, String... argsNames) {
+    public UserFunction(String name, Expression eh, EvaluationContext context, String... argsNames) {
+        super(context);
         this.eh = eh;
         this.name = name;
         this.argsNames = argsNames;

@@ -12,7 +12,16 @@ public class ClosureLookup extends Expression {
     protected final Object[] args;
     protected final ClassExpression parent;
 
-    public ClosureLookup(String functionName, Map<String, UserFunction> functions, int argsCount, ClassExpression parent) {
+    public ClosureLookup(String functionName, Map<String, UserFunction> functions, int argsCount, ClassExpression parent, EvaluationContext context) {
+        super(context);
+        this.functionName = functionName;
+        this.functions = functions;
+        this.parent = parent;
+        args = new Object[argsCount];
+    }
+
+    protected ClosureLookup(String functionName, Map<String, UserFunction> functions, int argsCount, ClassExpression parent, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
         this.functionName = functionName;
         this.functions = functions;
         this.parent = parent;

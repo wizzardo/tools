@@ -8,7 +8,16 @@ public class ForExpression extends Expression {
     private Expression iterator;
     private Expression thenStatement;
 
-    public ForExpression(Expression definition, AsBooleanExpression condition, Expression iterator, Expression thenStatement) {
+    public ForExpression(Expression definition, AsBooleanExpression condition, Expression iterator, Expression thenStatement, EvaluationContext context) {
+        super(context);
+        this.definition = definition;
+        this.condition = condition;
+        this.iterator = iterator;
+        this.thenStatement = thenStatement;
+    }
+
+    protected ForExpression(Expression definition, AsBooleanExpression condition, Expression iterator, Expression thenStatement, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
         this.definition = definition;
         this.condition = condition;
         this.iterator = iterator;
@@ -25,7 +34,7 @@ public class ForExpression extends Expression {
 
     @Override
     public Expression clone() {
-        return new ForExpression(definition.clone(), (AsBooleanExpression) condition.clone(), iterator.clone(), thenStatement.clone());
+        return new ForExpression(definition.clone(), (AsBooleanExpression) condition.clone(), iterator.clone(), thenStatement.clone(), file, lineNumber, linePosition);
     }
 
     @Override

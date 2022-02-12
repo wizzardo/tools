@@ -14,6 +14,14 @@ import java.util.Map;
 public class TemplateBuilder extends Expression {
     private List<Expression> parts = new ArrayList<Expression>();
 
+    protected TemplateBuilder(String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+    }
+
+    public TemplateBuilder(EvaluationContext context) {
+        super(context);
+    }
+
     @Override
     public void setVariable(Variable v) {
         for (Expression e : parts)
@@ -22,7 +30,7 @@ public class TemplateBuilder extends Expression {
 
     @Override
     public Expression clone() {
-        TemplateBuilder tb = new TemplateBuilder();
+        TemplateBuilder tb = new TemplateBuilder(file, lineNumber, linePosition);
         for (Expression e : parts) {
             tb.parts.add(e.clone());
         }
@@ -80,7 +88,7 @@ public class TemplateBuilder extends Expression {
     }
 
     public TemplateBuilder append(String s) {
-        parts.add(new Holder(s, true));
+        parts.add(new Holder(s, true, file, lineNumber, linePosition));
         return this;
     }
 

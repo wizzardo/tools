@@ -17,6 +17,31 @@ public abstract class Expression {
     protected String exp;
     protected Object result;
     protected boolean hardcoded = false;
+    protected String file;
+    protected int lineNumber;
+    protected int linePosition;
+
+    protected Expression(String file, int lineNumber, int linePosition) {
+        this.file = file;
+        this.lineNumber = lineNumber;
+        this.linePosition = linePosition;
+    }
+
+    protected Expression(EvaluationContext context) {
+        this(context == null ? null : context.getFileName(), context == null ? 0 : context.lineNumber, context == null ? 0 : context.linePosition);
+    }
+
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
+    public int getLinePosition() {
+        return linePosition;
+    }
+
+    public String getFileName() {
+        return file;
+    }
 
     public static class Holder extends Expression {
 
@@ -27,9 +52,11 @@ public abstract class Expression {
         protected Variable variable;
 
         private Holder() {
+            super(null, 0, 0);
         }
 
-        public Holder(String exp) {
+        public Holder(String exp, EvaluationContext context) {
+            super(context);
             this.exp = exp;
             Object result = parse(exp);
             if (result != null) {
@@ -38,25 +65,49 @@ public abstract class Expression {
             }
         }
 
-        public Holder(String exp, boolean hardcoded) {
+        public Holder(String exp, boolean hardcoded, EvaluationContext context) {
+            super(context);
             if (hardcoded)
                 result = exp;
             this.exp = exp;
             this.hardcoded = hardcoded;
         }
 
-        public Holder(Class clazz) {
+        public Holder(String exp, boolean hardcoded, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
+            if (hardcoded)
+                result = exp;
+            this.exp = exp;
+            this.hardcoded = hardcoded;
+        }
+
+        protected Holder(String exp, Object result, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
+            this.exp = exp;
+            hardcoded = true;
+            this.result = result;
+        }
+
+        protected Holder(String exp, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
+            this.exp = exp;
+        }
+
+        public Holder(Class clazz, EvaluationContext context) {
+            super(context);
             hardcoded = true;
             this.result = clazz;
             exp = clazz.getCanonicalName();
         }
 
-        public Holder(Object result) {
+        public Holder(Object result, EvaluationContext context) {
+            super(context);
             hardcoded = true;
             this.result = result;
         }
 
-        public Holder(String exp, Object result) {
+        public Holder(String exp, Object result, EvaluationContext context) {
+            super(context);
             hardcoded = true;
             this.result = result;
             this.exp = exp;
@@ -83,10 +134,10 @@ public abstract class Expression {
         @Override
         public Expression clone() {
             if (hardcoded) {
-                return new Holder(exp, result);
+                return new Holder(exp, result, file, lineNumber, linePosition);
             }
 
-            Holder holder = new Holder(exp);
+            Holder holder = new Holder(exp, file, lineNumber, linePosition);
             holder.variable = variable;
             return holder;
         }
@@ -113,16 +164,16 @@ public abstract class Expression {
         public final String typeDefinition;
         public final String modifiers;
 
-        public Definition(Class<?> type, String name, String modifiers) {
-            super(name);
+        public Definition(Class<?> type, String name, String modifiers, EvaluationContext context) {
+            super(name, context);
             this.type = type;
             this.name = name;
             this.modifiers = modifiers;
             this.typeDefinition = null;
         }
 
-        public Definition(String type, String name, String modifiers) {
-            super(name);
+        public Definition(String type, String name, String modifiers, EvaluationContext context) {
+            super(name, context);
             this.modifiers = modifiers;
             this.type = null;
             this.name = name;
@@ -134,23 +185,34 @@ public abstract class Expression {
         public final ClassExpression type;
         public final String name;
 
-        public DefinitionWithClassExpression(ClassExpression type, String name) {
-            super(name);
+        public DefinitionWithClassExpression(ClassExpression type, String name, EvaluationContext context) {
+            super(name, context);
+            this.type = type;
+            this.name = name;
+        }
+
+        protected DefinitionWithClassExpression(ClassExpression type, String name, String file, int lineNumber, int linePosition) {
+            super(name, file, lineNumber, linePosition);
             this.type = type;
             this.name = name;
         }
 
         @Override
         public Expression clone() {
-            return new DefinitionWithClassExpression(type, name);
+            return new DefinitionWithClassExpression(type, name, file, lineNumber, linePosition);
         }
     }
 
     public static class ResolveClass extends Holder {
         public final String className;
 
-        public ResolveClass(String name) {
-            super(name);
+        public ResolveClass(String name, EvaluationContext context) {
+            super(name, context);
+            this.className = "class " + name;
+        }
+
+        protected ResolveClass(String name, String file, int lineNumber, int linePosition) {
+            super(name, file, lineNumber, linePosition);
             this.className = "class " + name;
         }
 
@@ -165,7 +227,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new ResolveClass(exp);
+            return new ResolveClass(exp, file, lineNumber, linePosition);
         }
     }
 
@@ -176,7 +238,17 @@ public abstract class Expression {
         public final String typeDefinition;
         public final String modifiers;
 
-        public DefineAndSet(Class type, String name, Expression action, String typeDefinition, String modifiers) {
+        public DefineAndSet(Class type, String name, Expression action, String typeDefinition, String modifiers, EvaluationContext context) {
+            super(context);
+            this.type = type;
+            this.name = name;
+            this.action = action;
+            this.typeDefinition = typeDefinition;
+            this.modifiers = modifiers;
+        }
+
+        protected DefineAndSet(Class type, String name, Expression action, String typeDefinition, String modifiers, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
             this.type = type;
             this.name = name;
             this.action = action;
@@ -191,7 +263,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new DefineAndSet(type, name, action, typeDefinition, modifiers);
+            return new DefineAndSet(type, name, action, typeDefinition, modifiers, file, lineNumber, linePosition);
         }
 
         @Override
@@ -212,7 +284,16 @@ public abstract class Expression {
         public final String name;
         public final ClosureHolder action;
 
-        public MethodDefinition(String modifiers, Class returnType, String name, ClosureHolder action) {
+        public MethodDefinition(String modifiers, Class returnType, String name, ClosureHolder action, EvaluationContext context) {
+            super(context);
+            this.modifiers = modifiers;
+            this.returnType = returnType;
+            this.name = name;
+            this.action = action;
+        }
+
+        protected MethodDefinition(String modifiers, Class returnType, String name, ClosureHolder action, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
             this.modifiers = modifiers;
             this.returnType = returnType;
             this.name = name;
@@ -226,7 +307,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new MethodDefinition(modifiers, returnType, name, action);
+            return new MethodDefinition(modifiers, returnType, name, action, file, lineNumber, linePosition);
         }
 
         @Override
@@ -248,10 +329,18 @@ public abstract class Expression {
         public final Function function;
         protected Variable variable;
 
-        public VariableOrFieldOfThis(String exp) {
+        public VariableOrFieldOfThis(String exp, EvaluationContext context) {
+            super(context);
             this.exp = exp;
-            thisHolder = new Expression.Holder("delegate");
-            function = new Function(thisHolder, exp);
+            thisHolder = new Expression.Holder("delegate", context);
+            function = new Function(thisHolder, exp, context);
+        }
+
+        protected VariableOrFieldOfThis(String exp, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
+            this.exp = exp;
+            thisHolder = new Expression.Holder("delegate", file, lineNumber, linePosition);
+            function = new Function(thisHolder, exp, file, lineNumber, linePosition);
         }
 
         @Override
@@ -262,7 +351,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            VariableOrFieldOfThis expression = new VariableOrFieldOfThis(exp);
+            VariableOrFieldOfThis expression = new VariableOrFieldOfThis(exp, file, lineNumber, linePosition);
             expression.variable = variable;
             return expression;
         }
@@ -291,11 +380,22 @@ public abstract class Expression {
     public static class MapExpression extends Expression {
         protected Map<String, Expression> map;
 
-        public MapExpression(Map<String, Expression> map) {
+        public MapExpression(Map<String, Expression> map, EvaluationContext context) {
+            super(context);
             this.map = map;
         }
 
-        public MapExpression() {
+        protected MapExpression(Map<String, Expression> map, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
+            this.map = map;
+        }
+
+        public MapExpression(EvaluationContext context) {
+            super(context);
+        }
+
+        protected MapExpression(String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
         }
 
         @Override
@@ -316,7 +416,7 @@ public abstract class Expression {
             for (Map.Entry<String, Expression> entry : map.entrySet()) {
                 m.put(entry.getKey(), entry.getValue().clone());
             }
-            return new MapExpression(m);
+            return new MapExpression(m, file, lineNumber, linePosition);
         }
 
         @Override
@@ -352,11 +452,22 @@ public abstract class Expression {
     public static class CollectionExpression extends Expression {
         protected Collection<Expression> collection;
 
-        public CollectionExpression(Collection<Expression> collection) {
+        public CollectionExpression(Collection<Expression> collection, EvaluationContext context) {
+            super(context);
             this.collection = collection;
         }
 
-        public CollectionExpression() {
+        public CollectionExpression(EvaluationContext context) {
+            super(context);
+        }
+
+        protected CollectionExpression(Collection<Expression> collection, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
+            this.collection = collection;
+        }
+
+        protected CollectionExpression(String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
         }
 
         @Override
@@ -386,7 +497,7 @@ public abstract class Expression {
                 l.add(expression.clone());
             }
 
-            return new CollectionExpression(l);
+            return new CollectionExpression(l, file, lineNumber, linePosition);
         }
 
         @Override
@@ -416,11 +527,16 @@ public abstract class Expression {
         protected Mapper<Object, Object> primitiveMapper;
         protected boolean isArray;
 
-        public CastExpression(Class clazz, Expression inner) {
-            this(clazz, inner, false);
+        public CastExpression(Class clazz, Expression inner, EvaluationContext context) {
+            this(clazz, inner, false, context);
         }
 
-        public CastExpression(Class clazz, Expression inner, boolean isArray) {
+        public CastExpression(Class clazz, Expression inner, boolean isArray, EvaluationContext context) {
+            this(clazz, inner, isArray, context.getFileName(), context.getLineNumber(), context.getLinePosition());
+        }
+
+        protected CastExpression(Class clazz, Expression inner, boolean isArray, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
             this.clazz = clazz;
             this.inner = inner;
             this.isArray = isArray;
@@ -477,7 +593,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            return new CastExpression(clazz, inner.clone(), isArray);
+            return new CastExpression(clazz, inner.clone(), isArray, file, lineNumber, linePosition);
         }
 
         @Override
@@ -510,7 +626,13 @@ public abstract class Expression {
     public static class ReturnExpression extends Expression {
         protected Expression inner;
 
-        public ReturnExpression(Expression inner) {
+        public ReturnExpression(Expression inner, EvaluationContext context) {
+            super(context);
+            this.inner = inner;
+        }
+
+        protected ReturnExpression(Expression inner, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
             this.inner = inner;
         }
 
@@ -525,7 +647,7 @@ public abstract class Expression {
             if (inner == null)
                 return this;
 
-            return new ReturnExpression(inner.clone());
+            return new ReturnExpression(inner.clone(), file, lineNumber, linePosition);
         }
 
         @Override
@@ -546,6 +668,14 @@ public abstract class Expression {
     public static class BlockExpression extends Expression {
         protected List<Expression> expressions = new ArrayList<Expression>();
 
+        protected BlockExpression(EvaluationContext context) {
+            super(context);
+        }
+
+        protected BlockExpression(String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
+        }
+
         @Override
         public void setVariable(Variable v) {
             for (Expression expression : expressions) {
@@ -559,7 +689,7 @@ public abstract class Expression {
 
         @Override
         public Expression clone() {
-            BlockExpression clone = new BlockExpression();
+            BlockExpression clone = new BlockExpression(file, lineNumber, linePosition);
             for (Expression expression : expressions) {
                 clone.add(expression);
             }

@@ -17,6 +17,14 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
     protected Pair<String, Class>[] args = EMPTY_ARGS;
     protected Map<String, Object> context = Collections.emptyMap();
 
+    protected ClosureExpression(String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+    }
+
+    public ClosureExpression(EvaluationContext context) {
+        super(context);
+    }
+
     @Override
     public void setVariable(Variable v) {
         for (Expression e : expressions)
@@ -29,7 +37,7 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
 
     @Override
     public Expression clone() {
-        ClosureExpression clone = new ClosureExpression();
+        ClosureExpression clone = new ClosureExpression(file, lineNumber, linePosition);
         clone.args = args;
         for (Expression expression : expressions) {
             clone.add(expression.clone());

@@ -41,59 +41,117 @@ public class Function extends Expression {
     protected boolean hardcodeChecked = false;
     protected boolean safeNavigation = false;
 
-    public Function(Expression thatObject, MethodInvoker method, Expression[] args) {
+    public Function(Expression thatObject, MethodInvoker method, Expression[] args, EvaluationContext context) {
+        super(context);
         this.thatObject = thatObject;
         this.method = method;
         this.args = args;
     }
 
-    public Function(Expression thatObject, MethodInvoker method, Expression[] args, boolean safeNavigation) {
+    public Function(Expression thatObject, MethodInvoker method, Expression[] args, boolean safeNavigation, EvaluationContext context) {
+        super(context);
         this.thatObject = thatObject;
         this.method = method;
         this.args = args;
         this.safeNavigation = safeNavigation;
     }
 
-    public Function(Expression thatObject, String methodName, Expression[] args) {
+    protected Function(Expression thatObject, MethodInvoker method, Expression[] args, boolean safeNavigation, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+        this.thatObject = thatObject;
+        this.method = method;
+        this.args = args;
+        this.safeNavigation = safeNavigation;
+    }
+
+    public Function(Expression thatObject, String methodName, Expression[] args, EvaluationContext context) {
+        super(context);
         this.thatObject = thatObject;
         this.args = args;
         this.methodName = methodName;
     }
 
-    public Function(Expression thatObject, String methodName, Expression[] args, boolean safeNavigation) {
+    protected Function(Expression thatObject, String methodName, Expression[] args, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+        this.thatObject = thatObject;
+        this.args = args;
+        this.methodName = methodName;
+    }
+
+    public Function(Expression thatObject, String methodName, Expression[] args, boolean safeNavigation, EvaluationContext context) {
+        super(context);
         this.thatObject = thatObject;
         this.args = args;
         this.methodName = methodName;
         this.safeNavigation = safeNavigation;
     }
 
-    public Function(Mapper<Object[], Object> constructor, Expression[] args) {
+    protected Function(Expression thatObject, String methodName, Expression[] args, boolean safeNavigation, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+        this.thatObject = thatObject;
+        this.args = args;
+        this.methodName = methodName;
+        this.safeNavigation = safeNavigation;
+    }
+
+    public Function(Mapper<Object[], Object> constructor, Expression[] args, EvaluationContext context) {
+        super(context);
         this.args = args;
         this.constructor = constructor;
     }
 
-    public Function(Expression object, MethodInvoker method) {
+    protected Function(Mapper<Object[], Object> constructor, Expression[] args, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+        this.args = args;
+        this.constructor = constructor;
+    }
+
+    public Function(Expression object, MethodInvoker method, EvaluationContext context) {
+        super(context);
         this.thatObject = object;
         this.method = method;
     }
 
-    public Function(Expression thatObject, String fieldName) {
+    public Function(Expression thatObject, String fieldName, EvaluationContext context) {
+        super(context);
+        this.thatObject = thatObject;
+        this.fieldName = fieldName;
+    }
+    protected Function(Expression thatObject, String fieldName, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber,linePosition);
         this.thatObject = thatObject;
         this.fieldName = fieldName;
     }
 
-    public Function(Expression thatObject, String fieldName, boolean safeNavigation) {
+    public Function(Expression thatObject, String fieldName, boolean safeNavigation, EvaluationContext context) {
+        super(context);
         this.thatObject = thatObject;
         this.fieldName = fieldName;
         this.safeNavigation = safeNavigation;
     }
 
-    public Function(Expression thatObject, Field field) {
+    protected Function(Expression thatObject, String fieldName, boolean safeNavigation, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
+        this.thatObject = thatObject;
+        this.fieldName = fieldName;
+        this.safeNavigation = safeNavigation;
+    }
+
+    public Function(Expression thatObject, Field field, EvaluationContext context) {
+        super(context);
         this.thatObject = thatObject;
         this.field = field;
     }
 
-    public Function(Expression thatObject, Field field, boolean safeNavigation) {
+    public Function(Expression thatObject, Field field, boolean safeNavigation, EvaluationContext context) {
+        super(context);
+        this.thatObject = thatObject;
+        this.field = field;
+        this.safeNavigation = safeNavigation;
+    }
+
+    protected Function(Expression thatObject, Field field, boolean safeNavigation, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
         this.thatObject = thatObject;
         this.field = field;
         this.safeNavigation = safeNavigation;
@@ -118,18 +176,18 @@ public class Function extends Expression {
             }
         }
         if (constructor != null) {
-            return new Function(constructor, args);
+            return new Function(constructor, args, file, lineNumber, linePosition);
         }
         if (field != null) {
-            return new Function(thatObject, field, safeNavigation);
+            return new Function(thatObject, field, safeNavigation, file, lineNumber, linePosition);
         }
         if (fieldName != null) {
-            return new Function(thatObject, fieldName, safeNavigation);
+            return new Function(thatObject, fieldName, safeNavigation, file, lineNumber, linePosition);
         }
         if (method != null) {
-            return new Function(thatObject.clone(), method, args, safeNavigation);
+            return new Function(thatObject.clone(), method, args, safeNavigation, file, lineNumber, linePosition);
         }
-        return new Function(thatObject.clone(), methodName, args, safeNavigation);
+        return new Function(thatObject.clone(), methodName, args, safeNavigation, file, lineNumber, linePosition);
     }
 
     private ThreadLocal<Object[]> tempArray = new ThreadLocal<Object[]>();
@@ -313,11 +371,11 @@ public class Function extends Expression {
             }
             if (method == null) {
                 if (instance instanceof TemplateBuilder.GString) {
-                    thatObject = new Function(thatObject, "toString", new Expression[0]);
+                    thatObject = new Function(thatObject, "toString", new Expression[0], file, lineNumber, linePosition);
                     return get(model);
                 } else if (!methodName.equals("execute")) {
                     Expression prevThatObject = thatObject;
-                    thatObject = new Function(thatObject, methodName);
+                    thatObject = new Function(thatObject, methodName, file, lineNumber, linePosition);
                     String methodNameHolder = methodName;
                     methodName = "execute";
                     try {

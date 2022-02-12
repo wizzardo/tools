@@ -14,7 +14,13 @@ public class AsBooleanExpression extends Expression {
     private Expression condition;
     private Boolean result;
 
-    public AsBooleanExpression(Expression condition) {
+    public AsBooleanExpression(Expression condition, EvaluationContext context) {
+        super(context);
+        this.condition = condition;
+    }
+
+    protected AsBooleanExpression(Expression condition, String file, int lineNumber, int linePosition) {
+        super(file, lineNumber, linePosition);
         this.condition = condition;
     }
 
@@ -25,7 +31,7 @@ public class AsBooleanExpression extends Expression {
 
     @Override
     public Expression clone() {
-        return new AsBooleanExpression(condition.clone());
+        return new AsBooleanExpression(condition.clone(), file, lineNumber, linePosition);
     }
 
     @Override
