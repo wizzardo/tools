@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author Moxa
@@ -24,14 +25,14 @@ public class EvalTools {
     private static AtomicInteger variableCounter = new AtomicInteger();
     private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d_]+)(\\.[A-Z]?[a-zA-Z\\d_]+)*)(\\[)?]?");
     private static final Pattern TYPE = Pattern.compile(CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)*\\>)*");
-    private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*");
-    private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
-    private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)+\\>)?" + "\\)");
-    private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
+    private static final Pattern NEW = Pattern.compile("new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*");
+    private static final Pattern CLASS = Pattern.compile(CLEAN_CLASS.pattern());
+    private static final Pattern CAST = Pattern.compile("\\(" + CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)+\\>)?" + "\\)");
+    private static final Pattern FUNCTION = Pattern.compile("([a-z_]+\\w*)\\(.+");
     private static final Pattern COMMA = Pattern.compile(",");
     private static final Pattern MAP_KEY_VALUE = Pattern.compile("[a-zA-Z\\d]+ *: *.+");
     private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
-    private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
+    private static final Pattern LIST = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|->|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?|instanceof");
     private static final Pattern DEF = Pattern.compile("^((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
@@ -189,30 +190,115 @@ public class EvalTools {
         return inString;
     }
 
-    protected static LinkedList<String> getParts(String s) {
-        LinkedList<String> l = new LinkedList<String>();
+    protected static List<String> getParts(String s) {
+        return getParts(s, 0, s.length()).stream().map(it -> it.toString().trim()).collect(Collectors.toList());
+    }
+
+    static int trimLeft(String exp, int from, int to) {
+        while (from < to && exp.charAt(from) <= ' ')
+            from++;
+        return from;
+    }
+
+    static int trimRight(String exp, int from, int to) {
+        while (from < to && exp.charAt(to - 1) <= ' ')
+            to--;
+        return to;
+    }
+
+    static class ExpressionPart {
+        final String source;
+        final int from;
+        final int to;
+        final int start;
+        final int end;
+        final int startBracketsTrimmed;
+        final int endBracketsTrimmed;
+        int hash;
+
+        ExpressionPart(String source, int from, int to) {
+            this.source = source;
+            this.from = from;
+            this.to = to;
+            int start = trimLeft(source, from, to);
+            int end = trimRight(source, from, to);
+            this.start = start;
+            this.end = end;
+            int brackets = countWrappingBrackets(source, start, end);
+            while (brackets > 0) {
+                start = trimLeft(source, start + 1, end - 1);
+                end = trimRight(source, start, end - 1);
+                brackets--;
+            }
+            this.startBracketsTrimmed = start;
+            this.endBracketsTrimmed = end;
+        }
+
+        @Override
+        public String toString() {
+            return source.substring(from, to);
+        }
+
+        public boolean startsWith(String s) {
+            return source.startsWith(s, start);
+        }
+
+        public boolean endsWith(String s) {
+            return source.startsWith(s, end - s.length());
+        }
+
+        public String substring(int i) {
+            return source.substring(start + i, end);
+        }
+
+        public boolean wrappedWith(String starts, String ends) {
+            return startsWith(starts) && endsWith(ends);
+        }
+
+        @Override
+        public int hashCode() {
+            if (hash != 0)
+                return hash;
+            int h = 0;
+            for (int i = start; i < end; i++) {
+                h = 31 * h + source.charAt(i);
+            }
+            return hash = h;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof String) {
+                String s = String.valueOf(obj);
+                return s.length() == end - start && source.startsWith(s, start);
+            }
+            return super.equals(obj);
+        }
+    }
+
+    protected static LinkedList<ExpressionPart> getParts(String s, int from, int to) {
+        LinkedList<ExpressionPart> l = new LinkedList<ExpressionPart>();
         boolean inString = false;
         boolean spaceSeparator = false;
         char quote = 0;
-        char[] chars = s.toCharArray();
-        int from = 0;
         int brackets = 0;
         int squareBrackets = 0;
         int curlyBraces = 0;
         loop:
-        for (int i = 0; i < chars.length; i++) {
+        for (int i = from; i < to; i++) {
+            char c = s.charAt(i);
             if (!inString) {
-                switch (chars[i]) {
+                switch (c) {
                     case '"':
                     case '\'': {
-                        quote = chars[i];
+                        quote = c;
                         inString = true;
                         break;
                     }
                     case ' ': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
                             spaceSeparator = true;
-                            l.add(trim(chars, from, i));
+                            l.add(new ExpressionPart(s, from, i));
                             from = i + 1;
 
                             break loop;
@@ -222,7 +308,7 @@ public class EvalTools {
                     }
                     case '(': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(trim(chars, from, i));
+                            l.add(new ExpressionPart(s, from, i));
                             from = i;
                         }
                         brackets++;
@@ -230,7 +316,7 @@ public class EvalTools {
                     }
                     case '{': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(trim(chars, from, i));
+                            l.add(new ExpressionPart(s, from, i));
                             from = i;
                         }
                         curlyBraces++;
@@ -238,7 +324,7 @@ public class EvalTools {
                     }
                     case '[': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(trim(chars, from, i));
+                            l.add(new ExpressionPart(s, from, i));
                             from = i;
                         }
                         squareBrackets++;
@@ -247,7 +333,7 @@ public class EvalTools {
                     case ')': {
                         brackets--;
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
-                            l.add(trim(chars, from, i + 1));
+                            l.add(new ExpressionPart(s, from, i + 1));
                             from = i + 1;
                         }
                         break;
@@ -255,7 +341,7 @@ public class EvalTools {
                     case '}': {
                         curlyBraces--;
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
-                            l.add(trim(chars, from, i + 1));
+                            l.add(new ExpressionPart(s, from, i + 1));
                             from = i + 1;
                         }
                         break;
@@ -263,34 +349,31 @@ public class EvalTools {
                     case ']': {
                         squareBrackets--;
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
-                            l.add(trim(chars, from, i + 1));
+                            l.add(new ExpressionPart(s, from, i + 1));
                             from = i + 1;
                         }
                         break;
                     }
                     case '.': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            if (i > 0 && (chars[i - 1] == '*' || chars[i - 1] == '?'))
+                            if (i > 0 && (s.charAt(i - 1) == '*' || s.charAt(i - 1) == '?'))
                                 if (i - from == 1)
                                     continue;
                                 else
                                     i--;
 
-                            l.add(trim(chars, from, i));
+                            l.add(new ExpressionPart(s, from, i));
                             from = i;
                         }
                         break;
                     }
                 }
-            } else if ((chars[i] == quote) && i > 1 && chars[i - 1] != '\\') {
+            } else if ((c == quote) && i > 1 && s.charAt(i - 1) != '\\') {
                 inString = false;
             }
         }
-        if (from != chars.length) {
-            if (spaceSeparator)
-                l.add("(" + trim(chars, from, chars.length) + ")");
-            else
-                l.add(trim(chars, from, chars.length));
+        if (from != to) {
+            l.add(new ExpressionPart(s, from, to));
         }
         return l;
     }
@@ -308,6 +391,47 @@ public class EvalTools {
 
     public static void setDefaultEvaluatingStrategy(EvaluatingStrategy defaultEvaluatingStrategy) {
         EvalTools.defaultEvaluatingStrategy = defaultEvaluatingStrategy;
+    }
+
+    static int countWrappingBrackets(String s, int from, int to) {
+        int count = 0;
+        while (isWrappingBrackets(s, from, to)) {
+            count++;
+            from++;
+            to--;
+            from = trimLeft(s, from, to);
+            to = trimRight(s, from, to);
+        }
+        return count;
+    }
+
+    static boolean isWrappingBrackets(String s, int from, int to) {
+        if (!(s.startsWith("(", from) && s.startsWith(")", to - 1)))
+            return false;
+
+        int brackets = 0;
+        boolean inString = false;
+        char quote = 0;
+        for (int i = from; i < to; i++) {
+            char c = s.charAt(i);
+            if (!inString) {
+                if (c == '\"' || c == '\'') {
+                    quote = c;
+                    inString = true;
+                } else if (c == '(') {
+                    brackets++;
+                } else if (c == ')') {
+                    brackets--;
+                    if (brackets == 0 && i != to - 1)
+                        return false;
+                }
+            } else {
+                if (c == quote && s.charAt(i - 1) != '\\') {
+                    inString = false;
+                }
+            }
+        }
+        return brackets == 0;
     }
 
     public static String trimBrackets(String s) {
@@ -349,14 +473,14 @@ public class EvalTools {
         return s;
     }
 
-    private static boolean isMap(String s) {
-        if (!s.startsWith("[") || !s.endsWith("]")) {
+    private static boolean isMap(String s, int from, int to) {
+        if (!s.startsWith("[", from) || !s.startsWith("]", to - 1)) {
             return false;
         }
         boolean quotesSingle = false;
         boolean quotesDouble = false;
         int brackets = 0;
-        for (int i = 1; i < s.length(); i++) {
+        for (int i = from + 1; i < to; i++) {
             switch (s.charAt(i)) {
                 case '\'':
                     if (!quotesDouble)
@@ -386,28 +510,30 @@ public class EvalTools {
         return false;
     }
 
-    private static boolean isList(String s) {
-        return s.startsWith("[") && s.endsWith("]");
+    private static boolean isList(String s, int from, int to) {
+        return s.startsWith("[", from) && s.startsWith("]", to - 1);
     }
 
-    private static boolean isClosure(String exp) {
-        if (exp.startsWith("{") && exp.endsWith("}"))
+    private static boolean isClosure(String exp, int from, int to) {
+        if (exp.startsWith("{", from) && exp.startsWith("}", to - 1))
             return true;
 
         return false;
     }
 
-    static boolean isJavaLambda(String exp) {
-        int i = exp.indexOf("->");
+    static boolean isJavaLambda(String exp, int from, int to) {
+        int i = exp.indexOf("->", from);
+        if (i < 0 || i >= to)
+            return false;
 
-        int eq = exp.indexOf("=");
+        int eq = exp.indexOf("=", from);
         if (eq > 0 && eq < i)
             return false;
 
-        if (exp.startsWith("return "))
+        if (exp.startsWith("return ", from))
             return false;
 
-        if (i > 0 && !inString(exp, 0, i) && countOpenBrackets(exp, 0, i) == 0) {
+        if (!inString(exp, from, i) && countOpenBrackets(exp, from, i) == 0) {
             return true;
         }
 
@@ -511,12 +637,15 @@ public class EvalTools {
     }
 
     static List<Statement> getStatements(String s) {
+        return getStatements(s, 0, s.length());
+    }
+
+    static List<Statement> getStatements(String s, int from, int to) {
         List<Statement> statements = new ArrayList<Statement>();
         Matcher m = IF_FOR_WHILE.matcher(s);
-        int start = 0;
-        int to = s.length();
-        int searchOffset = 0;
-        while (m.find(searchOffset)) {
+        int start = from;
+        int searchOffset = from;
+        while (m.find(searchOffset) && m.start() < to) {
             if (countOpenBrackets(s, start, m.start()) != 0) {
                 searchOffset = m.end();
                 continue;
@@ -542,7 +671,7 @@ public class EvalTools {
     static int getBlock(String s, int from, int to, Statement statement) {
         Matcher m = IF_FOR_WHILE.matcher(s);
         int start = from;
-        if (m.find(start)) {
+        if (m.find(start) && m.start() < to) {
             String before = s.substring(start, m.start()).trim();
             if (before.length() > 0) {
                 return getStringBlock(s, from, to, statement);
@@ -791,7 +920,6 @@ public class EvalTools {
     }
 
     public static String readImports(String script, List<String> imports) {
-        script = removeComments(script.trim());
         int s, n;
         int position = 0;
         position = skipCommentLine(script, position);
@@ -839,17 +967,24 @@ public class EvalTools {
         return prepare(exp, model, functions, imports, false);
     }
 
-    protected static Expression prepareClosure(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareClosure(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         boolean isLambda = false;
-        if (isClosure(exp) || (isLambda = isJavaLambda(exp))) {
+        if (isClosure(exp, from, to) || (isLambda = isJavaLambda(exp, from, to))) {
             ClosureExpression closure = new ClosureExpression(model);
             if (isLambda) {
-                exp = closure.parseArguments(exp, imports, model);
-                if (exp.startsWith("{"))
-                    exp = exp.substring(1, exp.length() - 1).trim();
+                from = closure.parseArguments(exp, from, to, imports, model);
+                if (exp.startsWith("{")) {
+                    from++;
+                    to--;
+                    from = trimLeft(exp, from, to);
+                    to = trimRight(exp, from, to);
+                }
             } else {
-                exp = exp.substring(1, exp.length() - 1).trim();
-                exp = closure.parseArguments(exp, imports, model);
+                from++;
+                to--;
+                from = trimLeft(exp, from, to);
+                to = trimRight(exp, from, to);
+                from = closure.parseArguments(exp, from, to, imports, model);
             }
 
             EvaluationContext localModel = model.createLocalContext();
@@ -857,7 +992,7 @@ public class EvalTools {
                 localModel.put(arg.key, null);
             }
 
-            List<Statement> statements = getStatements(exp);
+            List<Statement> statements = getStatements(exp, from, to);
             for (Statement s : statements) {
                 switch (s.type) {
                     case IF:
@@ -889,7 +1024,7 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareClass(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareClass(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = CLASS_DEF.matcher(exp);
         if (m.find() && findCloseBracket(exp, m.end()) == exp.length() - 1) {
             String className = m.group(3);
@@ -1052,8 +1187,8 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareBlock(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
-        List<Statement> statements = getStatements(exp);
+    protected static Expression prepareBlock(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        List<Statement> statements = getStatements(exp, from, to);
         Expression.BlockExpression block = new Expression.BlockExpression(model);
         for (Statement s : statements) {
             switch (s.type) {
@@ -1095,9 +1230,11 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareDefinition(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareDefinition(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = DEF.matcher(exp);
-        if (m.find()) {
+        if (m.find(from)) {
+            if (m.start() >= to)
+                return null;
             String modifiers = m.group(1);
             if (modifiers != null)
                 modifiers = modifiers.trim();
@@ -1163,59 +1300,71 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareAction(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareAction(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = ACTIONS.matcher(exp);
         List<String> exps = new ArrayList<String>();
         List<Operation> operations = new ArrayList<Operation>();
-        int last = 0;
+        int last = from;
+        int position = from;
         Operation operation = null;
         Expression lastExpressionHolder = null;
         boolean ternary = false;
         int ternaryInner = 0;
-        while (m.find()) {
+        while (m.find(position)) {
+            int start = m.start();
+            if (start >= to)
+                break;
+
             String find = m.group();
-            if ("->".equals(find) && operation != null && !inString(exp, 0, m.start()) && countOpenBrackets(exp, 0, m.start()) == 0) {
-                String s = trimBrackets(exp.substring(last).trim());
-                Expression closure = prepareClosure(s, model, functions, imports);
+            if ("->".equals(find) && operation != null && !inString(exp, from, start) && countOpenBrackets(exp, from, start) == 0) {
+                Expression closure = prepareClosure(exp, last, to, model, functions, imports);
                 operation.rightPart(closure);
+                position = m.end();
                 return operation;
             }
             if (ternary) {
-                if (inString(exp, 0, m.start()))
+                if (inString(exp, 0, start)) {
+                    position = m.end();
                     continue;
+                }
 
                 if (find.equals("?")) {
                     ternaryInner++;
+                    position = m.end();
                     continue;
                 }
                 if (!find.equals(":")) {
+                    position = m.end();
                     continue;
                 }
                 if (ternaryInner > 0) {
                     ternaryInner--;
+                    position = m.end();
                     continue;
                 }
             }
-            if ("?.".equals(find))
+            if ("?.".equals(find)) {
+                position = m.end();
                 continue;
+            }
 
-//                System.out.println(m.group());
-            if (!inString(exp, 0, m.start()) && countOpenBrackets(exp, 0, m.start()) == 0) {
-                String subexpression = exp.substring(last, m.start()).trim();
+            if (!inString(exp, from, start) && countOpenBrackets(exp, from, start) == 0) {
+                String subexpression = exp.substring(last, start).trim();
                 if (subexpression.startsWith("new ") && (find.equals("<") || find.equals(">"))) {
+                    position = m.end();
                     continue;
                 }
                 exps.add(subexpression);
-                lastExpressionHolder = prepare(subexpression, model, functions, imports);
+                lastExpressionHolder = prepare(exp, last, start, model, functions, imports, false);
                 if (operation != null) {
                     //complete last operation
-                    operation.end(m.start());
+                    operation.end(start);
                     operation.rightPart(lastExpressionHolder);
                 }
                 operation = new Operation(lastExpressionHolder, Operator.get(find), last, m.end(), model);
                 operations.add(operation);
                 //add operation to list
-                last = m.end();
+                last = position = m.end();
                 if (ternary) {
                     lastExpressionHolder = prepare(exp.substring(last), model, functions, imports);
                     operation.rightPart(lastExpressionHolder);
@@ -1225,12 +1374,13 @@ public class EvalTools {
                     ternary = true;
                 }
             }
+            position = m.end();
         }
         if (operation != null) {
             if (last != exp.length()) {
                 exps.add(exp.substring(last).trim());
                 operation.end(exp.length());
-                operation.rightPart(prepare(exp.substring(last), model, functions, imports));
+                operation.rightPart(prepare(exp.substring(last, to), model, functions, imports));
             }
 
             return prioritize(operations);
@@ -1239,22 +1389,25 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareTemplate(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
-        if (!isTemplate && exp.startsWith("\"\"\"") && exp.endsWith("\"\"\"") && inString(exp, 0, exp.length() - 1)) {
-            return prepare(exp.substring(3, exp.length() - 3), model, functions, imports, true);
+    protected static Expression prepareTemplate(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
+        if (!isTemplate && exp.startsWith("\"\"\"", from) && exp.startsWith("\"\"\"", to - 3) && inString(exp, from, to - 1)) {
+            return prepare(exp.substring(from + 3, to - 3), model, functions, imports, true);
         }
-        if (!isTemplate && exp.startsWith("\"") && exp.endsWith("\"") && isTemplate(exp, 0, exp.length() - 1)) {
+        if (!isTemplate && exp.startsWith("\"", from) && exp.startsWith("\"", to - 1) && isTemplate(exp, from, to - 1)) {
             String quote = exp.charAt(0) + "";
-            exp = exp.substring(1, exp.length() - 1).replace("\\" + quote, quote);
+            exp = exp.substring(from + 1, to - 1).replace("\\" + quote, quote);
             return prepare(exp, model, functions, imports, true);
         }
 
         if (isTemplate) {
             TemplateBuilder tb = new TemplateBuilder(model);
             Matcher m = VARIABLE.matcher(exp);
-            int start = 0;
-            int end = 0;
+            int start = from;
+            int end = from;
             while ((start = exp.indexOf("$", start)) != -1) {
+                if (start >= to)
+                    break;
+
                 if (start >= 0 && exp.charAt(start + 1) == '{') {
                     if (end != start)
                         tb.append(exp.substring(end, start));
@@ -1274,8 +1427,8 @@ public class EvalTools {
                 }
                 start = end;
             }
-            if (end != exp.length())
-                tb.append(exp.substring(end, exp.length()));
+            if (end != to)
+                tb.append(exp.substring(end, to));
 
             return tb;
         }
@@ -1284,18 +1437,18 @@ public class EvalTools {
     }
 
     static class PrepareResolveClassResult {
-        final String exp;
         final Expression thatObject;
+        final int position;
 
-        PrepareResolveClassResult(String exp, Expression thatObject) {
-            this.exp = exp;
+        PrepareResolveClassResult(Expression thatObject, int position) {
             this.thatObject = thatObject;
+            this.position = position;
         }
     }
 
-    protected static PrepareResolveClassResult prepareResolveClass(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static PrepareResolveClassResult prepareResolveClass(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = CLASS.matcher(exp);
-        if (m.find()) {
+        if (m.find(from) && m.start() == from) {
             String className = m.group(1);
             boolean endsWithClass = className.endsWith(".class");
             if (endsWithClass) {
@@ -1303,7 +1456,7 @@ public class EvalTools {
             } else {
                 int dot = className.indexOf(".");
                 if (dot != -1) {
-                    if (model.containsKey(exp.substring(0, dot)))
+                    if (model.containsKey(className.substring(0, dot)))
                         return null;
                 } else {
                     if (model.containsKey(exp))
@@ -1315,7 +1468,7 @@ public class EvalTools {
                     String name = className.substring(0, dot);
                     ClassExpression cl = (ClassExpression) model.get("class " + name);
                     if (cl != null) {
-                        return new PrepareResolveClassResult(exp.substring(name.length()), cl);
+                        return new PrepareResolveClassResult(cl, from + name.length());
                     }
 
                     clazz = findClass(name, imports, model);
@@ -1323,11 +1476,11 @@ public class EvalTools {
                     dot = className.indexOf('.', dot + 1);
                     if (clazz != null) {
                         if (dot == -1 || clazz.isEnum()) {
-                            return new PrepareResolveClassResult(exp.substring(prev), new Expression.Holder(clazz, model));
+                            return new PrepareResolveClassResult(new Expression.Holder(clazz, model), from + prev);
                         }
-                        Field field = Function.findField(clazz, className.substring(prev + 1, dot));
+                        Field field = Function.findField(clazz, className.substring(from + prev + 1, dot));
                         if (field != null) {
-                            return new PrepareResolveClassResult(exp.substring(prev), new Expression.Holder(clazz, model));
+                            return new PrepareResolveClassResult(new Expression.Holder(clazz, model), from + prev);
                         }
                     }
                 }
@@ -1341,7 +1494,7 @@ public class EvalTools {
                 className = sb.toString();
                 ClassExpression cl = (ClassExpression) model.get("class " + className);
                 if (cl != null) {
-                    return new PrepareResolveClassResult(exp.substring(sb.length()), cl);
+                    return new PrepareResolveClassResult(cl, from + sb.length());
                 } else {
                     clazz = findClass(className, imports, model);
                     if (clazz == null) {
@@ -1354,7 +1507,7 @@ public class EvalTools {
                     }
 
                     if (clazz != null) {
-                        return new PrepareResolveClassResult(exp.substring(sb.length()), new Expression.Holder(clazz, model));
+                        return new PrepareResolveClassResult(new Expression.Holder(clazz, model), from + sb.length());
                     }
                 }
 
@@ -1368,7 +1521,7 @@ public class EvalTools {
                 if (endsWithClass)
                     className = className.substring(0, className.length() - ".class".length());
 
-                return new PrepareResolveClassResult(exp.substring(m.group(0).length()), new Expression.ResolveClass(className, model));
+                return new PrepareResolveClassResult(new Expression.ResolveClass(className, model), from + m.group(0).length());
             }
         }
         return null;
@@ -1379,26 +1532,39 @@ public class EvalTools {
     }
 
     public static Expression prepare(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
-//        System.out.println("try to prepare: " + exp);
+        if (exp == null)
+            return null;
+        return prepare(exp, 0, exp.length(), model, functions, imports, isTemplate);
+    }
+
+    public static Expression prepare(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
         if (exp == null) {
             return null;
         }
-        //remove comments
-        exp = removeComments(exp);
+
+        int start = from;
+        if (from == 0 && to == exp.length())
+            exp = removeComments(exp);
 
         if (!isTemplate) {
-            exp = exp.trim();
-            String trimmed = trimBrackets(exp);
-            while (trimmed != exp) {
-                exp = trimmed;
-                trimmed = trimBrackets(exp);
+            start = trimLeft(exp, from, to);
+            to = trimRight(exp, start, to);
+
+            int brackets = countWrappingBrackets(exp, start, to);
+            while (brackets > 0) {
+                start++;
+                to--;
+                start = trimLeft(exp, start, to);
+                to = trimRight(exp, start, to);
+                brackets--;
             }
-            if (exp.length() == 0) {
+            if (to - start <= 0) {
                 return null;
             }
         }
+        model.getRoot().lineNumber += countNewLines(exp, from, start);
 
-        if (isTemplate && exp.length() == 0)
+        if (isTemplate && to - from == 0)
             return new Expression.Holder("", true, model);
 
         if (functions == null) {
@@ -1406,76 +1572,78 @@ public class EvalTools {
         }
 
         {
-            Expression result = prepareTemplate(exp, model, functions, imports, isTemplate);
+            Expression result = prepareTemplate(exp, start, to, model, functions, imports, isTemplate);
             if (result != null)
                 return result;
         }
 
         {
-            Expression result = prepareClosure(exp, model, functions, imports);
+            Expression result = prepareClosure(exp, start, to, model, functions, imports);
             if (result != null)
                 return result;
         }
 
         {
-            Expression result = prepareClass(exp, model, functions, imports);
+            Expression result = prepareClass(exp, start, to, model, functions, imports);
             if (result != null)
                 return result;
         }
 
         {
-            Expression result = prepareBlock(exp, model, functions, imports);
+            Expression result = prepareBlock(exp, start, to, model, functions, imports);
             if (result != null)
                 return result;
         }
 
         {
-            if (exp.equals("null")) {
+            ExpressionPart expressionPart = new ExpressionPart(exp, start, to);
+
+            if (expressionPart.equals("null")) {
                 return Expression.Holder.NULL;
             }
-            Object obj = Expression.parse(exp);
+            Object obj = Expression.parse(exp, start, to);
             if (obj != null) {
-                return new Expression.Holder(exp, model);
+                return new Expression.Holder(exp, obj, model);
             }
             if (model.containsKey(exp)) {
                 return new Expression.VariableOrFieldOfThis(exp, model);
             }
 
-            if (exp.startsWith("return ")) {
+            if (expressionPart.startsWith("return ")) {
                 return new Expression.ReturnExpression(prepare(exp.substring(6), model, functions, imports, isTemplate), model);
             }
-            if (exp.equals("[]")) {
+            if (expressionPart.equals("[]")) {
                 return new Expression.CollectionExpression(model);
             }
-            if (exp.equals("[:]")) {
+            if (expressionPart.equals("[:]")) {
                 return new Expression.MapExpression(model);
             }
         }
 
         {
-            Expression result = prepareDefinition(exp, model, functions, imports);
+            Expression result = prepareDefinition(exp, start, to, model, functions, imports);
             if (result != null)
                 return result;
         }
 
         {
-            Expression result = prepareAction(exp, model, functions, imports);
+            Expression result = prepareAction(exp, start, to, model, functions, imports);
             if (result != null)
                 return result;
         }
 
         {
-            if (isMap(exp)) {
+            if (isMap(exp, start, to)) {
                 Map<String, Expression> map = new LinkedHashMap<String, Expression>();
-                for (Map.Entry<String, String> entry : parseMap(exp).entrySet()) {
+                for (Map.Entry<String, String> entry : parseMap(exp, start, to).entrySet()) {
                     map.put(entry.getKey(), prepare(entry.getValue(), model, functions, imports, isTemplate));
                 }
                 return new Expression.MapExpression(map, model);
             }
-            if (isList(exp)) {
+            if (isList(exp, start, to)) {
                 List<Expression> l = new ArrayList<Expression>();
-                exp = exp.substring(1, exp.length() - 1);
-                List<String> arr = parseArgs(exp);
+//                exp = exp.substring(1, exp.length() - 1);
+                List<String> arr = parseArgs(exp, start + 1, to - 1);
                 for (String anArr : arr) {
                     l.add(prepare(anArr, model, functions, imports, isTemplate));
                 }
@@ -1488,13 +1656,13 @@ public class EvalTools {
         Class arrayClass = null;
         {
             Matcher m = NEW.matcher(exp);
-            if (m.find()) {
+            if (m.find(start) && m.start() == start) {
                 String className = m.group(1);
                 ClassExpression cl = (ClassExpression) model.get("class " + className);
                 if (cl != null) {
                     thatObject = cl;
                     methodName = CONSTRUCTOR;
-                    exp = exp.substring(m.end());
+                    from = start = m.end();
                 } else {
                     Class clazz = findClass(className, imports, model);
 
@@ -1503,11 +1671,11 @@ public class EvalTools {
                             thatObject = new Expression.Holder(Array.class, model);
                             methodName = "newInstance";
                             arrayClass = clazz;
-                            exp = exp.substring(m.end() - 1);
+                            from = start = m.end() - 1;
                         } else {
                             thatObject = new Expression.Holder(clazz, model);
                             methodName = CONSTRUCTOR;
-                            exp = exp.substring(m.end());
+                            from = start = m.end();
                         }
                     } else
                         Unchecked.rethrow(new ClassNotFoundException("Can not find class '" + className + "'"));
@@ -1517,30 +1685,23 @@ public class EvalTools {
 
         if (thatObject == null) {
             Matcher m = LIST.matcher(exp);
-            if (m.find()) {
+            if (m.find(start) && m.start() == start) {
                 thatObject = new Expression.Holder(m.group(1), model);
-                exp = exp.substring(m.group(1).length());
+                from = start = m.end(1);
             }
         }
 
         if (thatObject == null) {
-            PrepareResolveClassResult result = prepareResolveClass(exp, model, functions, imports);
+            PrepareResolveClassResult result = prepareResolveClass(exp, start, to, model, functions, imports);
             if (result != null) {
                 thatObject = result.thatObject;
-                exp = result.exp;
+                start = from = result.position;
             }
         }
 
         if (thatObject == null) {
             Matcher m = CAST.matcher(exp);
-            while (m.find()) {
-                if (m.start(6) >= 0) {
-                    //remove generics
-                    exp = exp.substring(0, m.start(6)) + exp.substring(m.end(6));
-                    m = CAST.matcher(exp);
-                    continue;
-                }
-
+            if (m.find(start) && m.start() == start) {
                 String className = m.group(1);
                 Class clazz = findClass(className, imports, model);
                 if (clazz == null) {
@@ -1550,9 +1711,8 @@ public class EvalTools {
                 }
 
                 if (clazz != null) {
-                    exp = exp.substring(m.end());
                     boolean isArray = m.group(5) != null;
-                    return new Expression.CastExpression(clazz, prepare(exp, model, functions, imports, isTemplate), isArray, model);
+                    return new Expression.CastExpression(clazz, prepare(exp, m.end(), to, model, functions, imports, isTemplate), isArray, model);
                 }
                 if (model.containsKey("class " + className)) {
                     exp = exp.substring(m.end());
@@ -1564,19 +1724,19 @@ public class EvalTools {
 
         if (thatObject == null) {
             Matcher m = FUNCTION.matcher(exp);
-            if (m.find()) {
+            if (m.find(start) && m.start() == start) {
 //                System.out.println("find user function: " + m.group(1) + "\t from " + exp);
 //                System.out.println("available functions: " + functions);
                 ClassExpression currentClass = (ClassExpression) model.get("current class");
                 String functionName = m.group(1);
                 List<String> args = parseArgs(exp.substring(functionName.length() + 1, exp.length() - 1));
                 thatObject = new ClosureLookup(functionName, functions, args.size(), currentClass, model);
-                exp = exp.substring(functionName.length());
+                start = from = start + functionName.length();
             }
         }
 
 
-        List<String> parts = getParts(exp);
+        List<ExpressionPart> parts = getParts(exp, start, to);
         String last = null;
 //        System.out.println(exp);
         while (!parts.isEmpty()) {
@@ -1586,23 +1746,25 @@ public class EvalTools {
             last = temp;
 
 
-            if (thatObject == null && parts.size() == 1 && parts.get(0).equals(exp)) {
-                thatObject = new Expression.VariableOrFieldOfThis(parts.remove(0), model);
+            if (thatObject == null && parts.size() == 1 && parts.get(0).from == start && parts.get(0).to == to) {
+                ExpressionPart part = parts.remove(0);
+                thatObject = new Expression.VariableOrFieldOfThis(part.toString(), model);
                 continue;
             }
             if (thatObject == null) {
-                thatObject = prepare(parts.remove(0), model, functions, imports, isTemplate);
+                ExpressionPart part = parts.remove(0);
+                thatObject = prepare(part.source, part.from, part.to, model, functions, imports, isTemplate);
                 continue;
             }
 
             //.concat("ololo")
             if (parts.size() >= 2 && parts.get(0).startsWith(".")
-                    && ((parts.get(1).startsWith("(") && parts.get(1).endsWith(")")) || (parts.get(1).startsWith("{") && parts.get(1).endsWith("}")))) {
+                    && (parts.get(1).wrappedWith("(", ")") || parts.get(1).wrappedWith("{", "}") || parts.get(1).start - parts.get(0).end > 0)) {
                 methodName = parts.remove(0).substring(1);
                 Expression[] args = null;
-                String argsRaw = trimBrackets(parts.remove(0));
-                if (argsRaw.length() > 0) {
-                    List<String> arr = parseArgs(argsRaw);
+                ExpressionPart part = parts.remove(0);
+                if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
+                    List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
                     args = new Expression[arr.size()];
                     for (int i = 0; i < arr.size(); i++) {
                         args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
@@ -1612,12 +1774,12 @@ public class EvalTools {
 
                 //?.concat("ololo")
             } else if (parts.size() >= 2 && parts.get(0).startsWith("?.")
-                    && ((parts.get(1).startsWith("(") && parts.get(1).endsWith(")")) || (parts.get(1).startsWith("{") && parts.get(1).endsWith("}")))) {
+                    && (parts.get(1).wrappedWith("(", ")") || parts.get(1).wrappedWith("{", "}") || parts.get(1).start - parts.get(0).end > 0)) {
                 methodName = parts.remove(0).substring(2);
                 Expression[] args = null;
-                String argsRaw = trimBrackets(parts.remove(0));
-                if (argsRaw.length() > 0) {
-                    List<String> arr = parseArgs(argsRaw);
+                ExpressionPart part = parts.remove(0);
+                if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
+                    List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
                     args = new Expression[arr.size()];
                     for (int i = 0; i < arr.size(); i++) {
                         args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
@@ -1627,24 +1789,33 @@ public class EvalTools {
 
                 //*.concat("ololo")
             } else if (parts.size() >= 1 && parts.get(0).startsWith("*.")) {
-                String var = getTempVariableName();
-                Expression[] args = new Expression[1];
-                methodName = parts.remove(0).substring(1);
-                String argsRaw;
-                if (parts.size() >= 1 && parts.get(0).startsWith("(") && parts.get(0).endsWith(")"))
-                    argsRaw = parts.remove(0);
-                else
-                    argsRaw = "";
+                methodName = parts.remove(0).substring(2);
+                ClosureExpression closure = new ClosureExpression(model);
+                Expression.VariableOrFieldOfThis it = new Expression.VariableOrFieldOfThis("it", model);
+                if (parts.size() >= 1 && parts.get(0).wrappedWith("(", ")")) {
+                    Expression[] args = null;
+                    ExpressionPart part = parts.remove(0);
+                    if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
+                        List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
+                        args = new Expression[arr.size()];
+                        for (int i = 0; i < arr.size(); i++) {
+                            args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
+                        }
+                    }
+                    closure.add(new Function(it, methodName, args, model));
+                } else {
+                    closure.add(new Function(it, methodName, model));
+                }
 
-                args[0] = prepare("{" + var + " -> " + var + methodName + argsRaw + "}", model, functions, imports, isTemplate);
-                thatObject = new Function(thatObject, "collect", args, model);
+                ClosureHolder closureHolder = new ClosureHolder(closure, model);
+                thatObject = new Function(thatObject, "collect", new Expression[]{closureHolder}, model);
 
                 //("ololo")
             } else if (parts.get(0).startsWith("(") && parts.get(0).endsWith(")")) {
                 Expression[] args = null;
-                String argsRaw = trimBrackets(parts.remove(0));
-                if (argsRaw.length() > 0) {
-                    List<String> arr = parseArgs(argsRaw);
+                ExpressionPart part = parts.remove(0);
+                if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
+                    List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
                     args = new Expression[arr.size()];
                     for (int i = 0; i < arr.size(); i++) {
                         args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
@@ -1677,27 +1848,26 @@ public class EvalTools {
                 thatObject = new Function(thatObject, field, true, model);
 
                 //[0]
-            } else if (parts.get(0).startsWith("[") && parts.get(0).endsWith("]")) {
-                String argsRaw = parts.remove(0);
-                argsRaw = argsRaw.substring(1, argsRaw.length() - 1);
+            } else if (parts.get(0).wrappedWith("[", "]")) {
+                ExpressionPart argsRaw = parts.remove(0);
                 if (arrayClass == null)
-                    thatObject = new Operation(thatObject, prepare(argsRaw, model, functions, imports, isTemplate), Operator.GET, model);
+                    thatObject = new Operation(thatObject, prepare(argsRaw.source, argsRaw.start + 1, argsRaw.to - 1, model, functions, imports, isTemplate), Operator.GET, model);
                 else {
-                    List<String> moreArgs = Collections.emptyList();
+                    List<ExpressionPart> moreArgs = Collections.emptyList();
                     while (!parts.isEmpty() && parts.get(0).startsWith("[") && parts.get(0).endsWith("]")) {
-                        String anotherDimentions = parts.remove(0);
-                        anotherDimentions = anotherDimentions.substring(1, anotherDimentions.length() - 1);
+                        ExpressionPart anotherDimentions = parts.remove(0);
                         if (moreArgs.isEmpty())
-                            moreArgs = new ArrayList<String>(4);
+                            moreArgs = new ArrayList<ExpressionPart>(4);
 
                         moreArgs.add(anotherDimentions);
                     }
                     Expression[] args = new Expression[2 + moreArgs.size()];
                     args[0] = new Expression.Holder(arrayClass, model);
-                    args[1] = prepare(argsRaw, model, functions, imports, isTemplate);
+                    args[1] = prepare(argsRaw.source, argsRaw.start + 1, argsRaw.to - 1, model, functions, imports, isTemplate);
                     if (!moreArgs.isEmpty()) {
                         for (int i = 0; i < moreArgs.size(); i++) {
-                            args[i + 2] = prepare(moreArgs.get(i), model, functions, imports, isTemplate);
+                            ExpressionPart part = moreArgs.get(i);
+                            args[i + 2] = prepare(part.source, part.start + 1, part.to - 1, model, functions, imports, isTemplate);
                         }
                     }
                     thatObject = new Function(thatObject, methodName, args, model);
@@ -1707,9 +1877,9 @@ public class EvalTools {
                 //execute closure
             } else if (parts.size() == 1) {
                 Expression[] args = null;
-                String argsRaw = trimBrackets(parts.remove(0));
-                if (argsRaw.length() > 0) {
-                    List<String> arr = parseArgs(argsRaw);
+                ExpressionPart part = parts.remove(0);
+                if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
+                    List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
                     args = new Expression[arr.size()];
                     for (int i = 0; i < arr.size(); i++) {
                         args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
@@ -1724,6 +1894,7 @@ public class EvalTools {
 
     private static String removeComments(String exp) {
         int comment = -1;
+        int length = exp.length();
         do {
             comment = exp.indexOf("/*", comment + 1);
             if (comment != -1 && !inString(exp, 0, comment)) {
@@ -1731,9 +1902,11 @@ public class EvalTools {
                 if (commentEnd == -1)
                     throw new IllegalStateException("Cannot find end of comment block for exp '" + exp + "'");
 
-                exp = exp.substring(0, comment) + exp.substring(commentEnd + 2);
+                exp = exp.substring(0, comment) + exp.substring(comment, commentEnd + 2).replaceAll("[^\\s]", " ") + exp.substring(commentEnd + 2);
             }
         } while (comment != -1);
+
+        assert exp.length() == length;
         return exp;
     }
 
@@ -1805,11 +1978,38 @@ public class EvalTools {
         return from;
     }
 
-    protected static int skipWhitespaces(String s, int position) {
-        int limit = s.length();
-        while (position < limit && s.charAt(position) <= ' ')
-            position++;
-        return position;
+    protected static int skipWhitespaces(String s, int from) {
+        return skipWhitespaces(s, from, s.length());
+    }
+
+    protected static int skipWhitespaces(String s, int from, int to) {
+        while (from < to && s.charAt(from) <= ' ')
+            from++;
+        return from;
+    }
+
+    protected static int countNewLines(String s, int from, int to) {
+        int count = 0;
+        boolean r = false;
+        for (int i = from; i < to; i++) {
+
+            char c = s.charAt(i);
+            if (r) {
+                if (c == '\r') {
+                    count++;
+                } else {
+                    r = false;
+                }
+            } else {
+                if (c == '\r') {
+                    count++;
+                    r = true;
+                } else if (c == '\n') {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     protected static int skipUntil(String s, int position, char until) {
@@ -2032,19 +2232,25 @@ public class EvalTools {
     }
 
     private static List<String> parseArgs(String argsRaw) {
+        return parseArgs(argsRaw, 0, argsRaw.length());
+    }
+
+    private static List<String> parseArgs(String argsRaw, int from, int to) {
         ArrayList<String> l = new ArrayList<String>();
         Matcher m = COMMA.matcher(argsRaw);
-        int last = 0;
-        while (m.find()) {
+        int last = from;
+        int position = from;
+        while (m.find(position)) {
+            if (m.start() >= to)
+                break;
             if (countOpenBrackets(argsRaw, last, m.start()) == 0 && !inString(argsRaw, last, m.start())) {
                 l.add(argsRaw.substring(last, m.start()).trim());
                 last = m.end();
             }
+            position = m.end();
         }
-        if (last > 0) {
-            l.add(argsRaw.substring(last).trim());
-        } else if (last == 0 && argsRaw.length() > 0) {
-            l.add(argsRaw.trim());
+        if (last > from || to - from > 0) {
+            l.add(argsRaw.substring(last, to).trim());
         }
 
         int mapStart = -1;
@@ -2080,16 +2286,16 @@ public class EvalTools {
         return l;
     }
 
-    private static Map<String, String> parseMap(String s) {
+    private static Map<String, String> parseMap(String s, int from, int to) {
         Map<String, String> m = new LinkedHashMap<String, String>();
-        s = s.substring(1, s.length() - 1);
         boolean quotesSingle = false;
         boolean quotesDouble = false;
         StringBuilder sb = new StringBuilder();
         String key = null;
         boolean escape = false;
         int brackets = 0;
-        for (int i = 0; i < s.length(); i++) {
+        to--;
+        for (int i = from + 1; i < to; i++) {
             char ch = s.charAt(i);
             switch (ch) {
                 case '\'':

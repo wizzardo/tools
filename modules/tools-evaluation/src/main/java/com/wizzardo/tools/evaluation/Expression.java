@@ -739,18 +739,26 @@ public abstract class Expression {
     }
 
     static Object parse(String exp) {
+        return parse(exp, 0, exp.length());
+    }
+
+    static Object parse(String exp, int from, int to) {
         if (exp == null) {
             return null;
         }
-        if (isString(exp)) {
-            String quote = exp.charAt(0) + "";
-            return exp.substring(1, exp.length() - 1).replace("\\" + quote, quote);
+
+        from = EvalTools.trimLeft(exp, from, to);
+        to = EvalTools.trimRight(exp, from, to);
+
+        if (isString(exp, from, to)) {
+            String quote = exp.charAt(from) + "";
+            return exp.substring(from + 1, to - 1).replace("\\" + quote, quote);
         }
 
         {
-            Number0x number0x = isNumber0x(exp);
+            Number0x number0x = isNumber0x(exp, from, to);
             if (number0x != null) {
-                String value = removeUnderscores(exp);
+                String value = removeUnderscores(exp, from, to);
                 if (number0x == Number0x.HEX)
                     return Integer.valueOf(value.substring(2), 16);
                 if (number0x == Number0x.BINARY)
@@ -762,9 +770,9 @@ public abstract class Expression {
 
 
         {
-            NumberSimpleFormat simpleFormat = isNumber(exp);
+            NumberSimpleFormat simpleFormat = isNumber(exp, from, to);
             if (simpleFormat != null) {
-                String value = removeUnderscores(exp);
+                String value = removeUnderscores(exp, from, to);
                 if (simpleFormat == NumberSimpleFormat.INT)
                     return Integer.valueOf(value);
                 if (simpleFormat == NumberSimpleFormat.LONG)
@@ -780,18 +788,17 @@ public abstract class Expression {
             }
         }
         {
-            Boolean result = parseBoolean(exp);
+            Boolean result = parseBoolean(exp, from, to);
             if (result != null)
                 return result;
         }
         return null;
     }
 
-    protected static boolean isString(String s) {
+    protected static boolean isString(String s, int from, int to) {
         boolean inString = false;
         char quote = 0;
-        int length = s.length();
-        for (int i = 0; i < length; i++) {
+        for (int i = from; i < to; i++) {
             char c = s.charAt(i);
             if (!inString) {
                 if (c == '\"' || c == '\'') {
@@ -800,70 +807,71 @@ public abstract class Expression {
                 } else
                     return false;
             } else if (c == quote && s.charAt(i - 1) != '\\') {
-                return i == length - 1;
+                return i == to - 1;
             }
         }
         return false;
     }
 
 
-    static String removeUnderscores(String s) {
-        int length = s.length();
-        int i = 0;
-        for (; i < length; i++) {
+    static String removeUnderscores(String s, int from, int to) {
+        int i = from;
+        for (; i < to; i++) {
             if (s.charAt(i) == '_')
                 break;
         }
-        if (i == length)
-            return s;
+        if (i == to)
+            if (from == 0 && to == s.length())
+                return s;
+            else
+                return s.substring(from, to);
 
-        StringBuilder sb = new StringBuilder(length - 1);
-        sb.append(s, 0, i);
+        StringBuilder sb = new StringBuilder(to - from - 1);
+        sb.append(s, from, i);
         i++;
-        int from = i;
-        for (; i < length; i++) {
+        int start = i;
+        for (; i < to; i++) {
             if (s.charAt(i) == '_') {
-                sb.append(s, from, i);
-                from = i + 1;
+                sb.append(s, start, i);
+                start = i + 1;
             }
         }
-        if (from != i)
-            sb.append(s, from, i);
+        if (start != i)
+            sb.append(s, start, i);
 
 
         return sb.toString();
     }
 
-    private static Boolean parseBoolean(String s) {
-        int length = s.length();
-        if (length == 4) {
-            char c = s.charAt(0);
+    private static Boolean parseBoolean(String s, int from, int to) {
+        if (to - from == 4) {
+            char c = s.charAt(from);
             if (!(c == 't' || c == 'T'))
                 return null;
-            c = s.charAt(1);
+            c = s.charAt(from + 1);
             if (!(c == 'r' || c == 'R'))
                 return null;
-            c = s.charAt(2);
+            c = s.charAt(from + 2);
             if (!(c == 'u' || c == 'U'))
                 return null;
-            c = s.charAt(3);
+            c = s.charAt(from + 3);
             if (!(c == 'e' || c == 'E'))
                 return null;
             return Boolean.TRUE;
-        } else if (length == 5) {
-            char c = s.charAt(0);
+        } else if (to - from == 5) {
+            char c = s.charAt(from);
             if (!(c == 'f' || c == 'F'))
                 return null;
-            c = s.charAt(1);
+            c = s.charAt(from + 1);
             if (!(c == 'a' || c == 'A'))
                 return null;
-            c = s.charAt(2);
+            c = s.charAt(from + 2);
             if (!(c == 'l' || c == 'L'))
                 return null;
-            c = s.charAt(3);
+            c = s.charAt(from + 3);
             if (!(c == 's' || c == 'S'))
                 return null;
-            c = s.charAt(4);
+            c = s.charAt(from + 4);
             if (!(c == 'e' || c == 'E'))
                 return null;
             return Boolean.FALSE;
@@ -875,26 +883,25 @@ public abstract class Expression {
         BINARY, OCTAL, HEX
     }
 
-    private static Number0x isNumber0x(String s) {
+    private static Number0x isNumber0x(String s, int from, int to) {
         if (s == null || s.isEmpty())
             return null;
 
-        if (s.charAt(0) != '0')
+        if (s.charAt(from) != '0')
             return null;
 
-        int length = s.length();
-        int i = 1;
+        int i = from + 1;
 
-        if (i >= length)
+        if (i >= to)
             return null;
 
         char c = s.charAt(i);
         if (c == 'x' || c == 'X') {
             i++;
-            if (i >= length)
+            if (i >= to)
                 return null;
 
-            for (; i < length; i++) {
+            for (; i < to; i++) {
                 c = s.charAt(i);
                 if (c >= 'a' && c <= 'f')
                     continue;
@@ -910,10 +917,10 @@ public abstract class Expression {
             return Number0x.HEX;
         } else if (c == 'b' || c == 'B') {
             i++;
-            if (i >= length)
+            if (i >= to)
                 return null;
 
-            for (; i < length; i++) {
+            for (; i < to; i++) {
                 c = s.charAt(i);
                 if (c == '0' || c == '1')
                     continue;
@@ -924,7 +931,7 @@ public abstract class Expression {
             }
             return Number0x.BINARY;
         } else {
-            for (; i < length; i++) {
+            for (; i < to; i++) {
                 c = s.charAt(i);
                 if (c >= '0' && c <= '7')
                     continue;
@@ -941,16 +948,15 @@ public abstract class Expression {
         INT, SHORT, LONG, FLOAT, DOUBLE
     }
 
-    private static NumberSimpleFormat isNumber(String s) {
+    private static NumberSimpleFormat isNumber(String s, int from, int to) {
         if (s == null || s.isEmpty())
             return null;
 
-        int length = s.length();
-        char c = s.charAt(length - 1);
+        char c = s.charAt(to - 1);
         if (c == 'l' || c == 'L') {
-            if (length == 1)
+            if (to - from == 1)
                 return null;
-            for (int i = 0; i < length - 1; i++) {
+            for (int i = from; i < to - 1; i++) {
                 c = s.charAt(i);
                 if (c >= '0' && c <= '9')
                     continue;
@@ -962,9 +968,9 @@ public abstract class Expression {
             return NumberSimpleFormat.LONG;
         }
         if (c == 's' || c == 'S') {
-            if (length == 1)
+            if (to - from == 1)
                 return null;
-            for (int i = 0; i < length - 1; i++) {
+            for (int i = from; i < to - 1; i++) {
                 c = s.charAt(i);
                 if (c >= '0' && c <= '9')
                     continue;
@@ -976,10 +982,10 @@ public abstract class Expression {
             return NumberSimpleFormat.SHORT;
         }
         if (c == 'f' || c == 'F') {
-            if (length == 1)
+            if (to - from == 1)
                 return null;
             boolean hasDot = false;
-            for (int i = 0; i < length - 1; i++) {
+            for (int i = from; i < to - 1; i++) {
                 c = s.charAt(i);
                 if (c >= '0' && c <= '9')
                     continue;
@@ -997,10 +1003,10 @@ public abstract class Expression {
             return NumberSimpleFormat.FLOAT;
         }
         if (c == 'd' || c == 'D') {
-            if (length == 1)
+            if (to - from == 1)
                 return null;
             boolean hasDot = false;
-            for (int i = 0; i < length - 1; i++) {
+            for (int i = from; i < to - 1; i++) {
                 c = s.charAt(i);
                 if (c >= '0' && c <= '9')
                     continue;
@@ -1019,7 +1025,7 @@ public abstract class Expression {
         }
 
         boolean hasDot = false;
-        for (int i = 0; i < length; i++) {
+        for (int i = from; i < to; i++) {
             c = s.charAt(i);
             if (c >= '0' && c <= '9')
                 continue;

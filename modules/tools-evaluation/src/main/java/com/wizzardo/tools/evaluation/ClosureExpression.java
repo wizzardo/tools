@@ -128,11 +128,10 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         expressions.add(expression);
     }
 
-    public String parseArguments(String exp, List<String> imports, EvaluationContext model) {
-        int i = exp.indexOf("->");
-        if (i >= 0 && EvalTools.countOpenBrackets(exp, 0, i) == 0 && !EvalTools.inString(exp, 0, i)) {
-            String args = exp.substring(0, i).trim();
-            String body = exp.substring(i + 2).trim();
+    public int parseArguments(String exp, int from, int to, List<String> imports, EvaluationContext model) {
+        int i = exp.indexOf("->", from);
+        if (i >= 0 && i < to && EvalTools.countOpenBrackets(exp, from, i) == 0 && !EvalTools.inString(exp, from, i)) {
+            String args = exp.substring(from, i).trim();
 
             if (args.startsWith("(") && args.endsWith(")"))
                 args = args.substring(1, args.length() - 1);
@@ -153,10 +152,10 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
 //                    else
 //                        this.args[i] = new Pair<String, Class>(kv[0], Object.class);
 //                }
-                int from = 0;
+                int start = 0;
                 ArrayList<Pair<String, Class>> l = new ArrayList<Pair<String, Class>>();
-                while ((from = findNextArgumentStart(args, from)) != -1) {
-                    int classStart = from;
+                while ((start = findNextArgumentStart(args, start)) != -1) {
+                    int classStart = start;
                     int classEnd = findNextArgumentClassEnd(args, classStart);
                     if (args.startsWith("final ", classStart)) {
                         classStart = findNextArgumentStart(args, classEnd);
@@ -165,44 +164,45 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
 
                     if (classEnd == args.length() || args.charAt(classEnd) == ',') {
                         if (!isValidName(args, classStart, classEnd)) {
-                            return exp;
+                            return from;
                         }
                         String name = args.substring(classStart, classEnd);
                         l.add(new Pair<>(name, Object.class));
-                        from = classEnd + 1;
+                        start = classEnd + 1;
                     } else {
                         int nameStart = findNextArgumentStart(args, classEnd);
                         int nameEnd = findNextArgumentNameEnd(args, nameStart);
                         if (nameStart == nameEnd) {
                             String name = args.substring(classStart, classEnd);
                             if (!isValidName(args, classStart, classEnd)) {
-                                return exp;
+                                return from;
                             }
                             l.add(new Pair<>(name, Object.class));
-                            from = classEnd + 1;
+                            start = classEnd + 1;
                         } else {
                             if (!isValidName(args, nameStart, nameEnd)) {
-                                return exp;
+                                return from;
                             }
                             String name = args.substring(nameStart, nameEnd);
                             String typeName = args.substring(classStart, classEnd);
                             Class type = EvalTools.findClass(typeName, imports, model);
                             l.add(new Pair<>(name, type == null ? Object.class : type));
-                            from = nameEnd + 1;
+                            start = nameEnd + 1;
                         }
                     }
 
                 }
                 this.args = l.toArray(new Pair[l.size()]);
             }
-            return body;
+            return i + 2;
         }
-        return exp;
+        return from;
     }
 
     protected static boolean isValidName(String name) {
         return isValidName(name, 0, name.length());
     }
+
     protected static boolean isValidName(String name, int from, int to) {
         for (int i = from; i < to; i++) {
             char c = name.charAt(i);
