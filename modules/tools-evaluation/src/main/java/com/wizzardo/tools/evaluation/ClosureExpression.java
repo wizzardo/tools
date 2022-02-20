@@ -128,75 +128,97 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         expressions.add(expression);
     }
 
-    public int parseArguments(String exp, int from, int to, List<String> imports, EvaluationContext model) {
+    public int findAndParseArguments(String exp, int from, int to, List<String> imports, EvaluationContext model) {
         int i = exp.indexOf("->", from);
         if (i >= 0 && i < to && EvalTools.countOpenBrackets(exp, from, i) == 0 && !EvalTools.inString(exp, from, i)) {
-            String args = exp.substring(from, i).trim();
+            int next = parseArguments(exp, from, i, imports, model);
+            if (next == -1)
+                return from;
+            return next + 2;
+        }
+        return from;
+    }
 
-            if (args.startsWith("(") && args.endsWith(")"))
-                args = args.substring(1, args.length() - 1);
+    int parseArguments(String exp, int from, int to, List<String> imports, EvaluationContext model) {
+        String args = exp.substring(from, to).trim();
 
-            args = args.trim();
-            if (!args.isEmpty()) {
-//                String[] pairs = args.split(",\\s*");
-//                this.args = new Pair[pairs.length];
-//
-//                for (i = 0; i < pairs.length; i++) {
-//                    String pair = pairs[i];
-//                    if (pair.startsWith("final "))
-//                        pair = pair.substring(6);
-//
-//                    String[] kv = pair.trim().split(" ");
-//                    if (kv.length == 2)
-//                        this.args[i] = new Pair<String, Class>(kv[1], Object.class);
-//                    else
-//                        this.args[i] = new Pair<String, Class>(kv[0], Object.class);
-//                }
-                int start = 0;
-                ArrayList<Pair<String, Class>> l = new ArrayList<Pair<String, Class>>();
-                while ((start = findNextArgumentStart(args, start)) != -1) {
-                    int classStart = start;
-                    int classEnd = findNextArgumentClassEnd(args, classStart);
-                    if (args.startsWith("final ", classStart)) {
-                        classStart = findNextArgumentStart(args, classEnd);
-                        classEnd = findNextArgumentClassEnd(args, classStart);
+        if (args.startsWith("(") && args.endsWith(")"))
+            args = args.substring(1, args.length() - 1);
+
+        args = args.trim();
+        if (!args.isEmpty()) {
+            int start = 0;
+            ArrayList<Pair<String, Class>> l = new ArrayList<>();
+            while ((start = findNextArgumentStart(args, start)) != -1) {
+                int classStart = start;
+                int classEnd = findNextArgumentClassEnd(args, classStart);
+                if (args.startsWith("final ", classStart)) {
+                    classStart = findNextArgumentStart(args, classEnd);
+                    classEnd = findNextArgumentClassEnd(args, classStart);
+                }
+
+                if (classEnd == args.length() || args.charAt(classEnd) == ',') {
+                    if (!isValidName(args, classStart, classEnd)) {
+                        return -1;
                     }
-
-                    if (classEnd == args.length() || args.charAt(classEnd) == ',') {
-                        if (!isValidName(args, classStart, classEnd)) {
-                            return from;
-                        }
+                    String name = args.substring(classStart, classEnd);
+                    l.add(new Pair<>(name, Object.class));
+                    start = classEnd + 1;
+                } else {
+                    int nameStart = findNextArgumentStart(args, classEnd);
+                    int nameEnd = findNextArgumentNameEnd(args, nameStart);
+                    if (nameStart == nameEnd) {
                         String name = args.substring(classStart, classEnd);
+                        if (!isValidName(args, classStart, classEnd)) {
+                            return -1;
+                        }
                         l.add(new Pair<>(name, Object.class));
                         start = classEnd + 1;
                     } else {
-                        int nameStart = findNextArgumentStart(args, classEnd);
-                        int nameEnd = findNextArgumentNameEnd(args, nameStart);
-                        if (nameStart == nameEnd) {
-                            String name = args.substring(classStart, classEnd);
-                            if (!isValidName(args, classStart, classEnd)) {
-                                return from;
-                            }
-                            l.add(new Pair<>(name, Object.class));
-                            start = classEnd + 1;
-                        } else {
-                            if (!isValidName(args, nameStart, nameEnd)) {
-                                return from;
-                            }
-                            String name = args.substring(nameStart, nameEnd);
-                            String typeName = args.substring(classStart, classEnd);
-                            Class type = EvalTools.findClass(typeName, imports, model);
-                            l.add(new Pair<>(name, type == null ? Object.class : type));
-                            start = nameEnd + 1;
+                        if (!isValidName(args, nameStart, nameEnd)) {
+                            return -1;
                         }
+                        String name = args.substring(nameStart, nameEnd);
+                        String typeName = args.substring(classStart, classEnd);
+                        Class type = EvalTools.findClass(typeName, imports, model);
+                        l.add(new Pair<>(name, type == null ? Object.class : type));
+                        start = nameEnd + 1;
                     }
-
                 }
-                this.args = l.toArray(new Pair[l.size()]);
+
             }
-            return i + 2;
+            this.args = l.toArray(new Pair[l.size()]);
         }
-        return from;
+        return to;
+    }
+
+    void parseBody(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        List<EvalTools.Statement> statements = EvalTools.getStatements(exp, from, to);
+        for (EvalTools.Statement s : statements) {
+            switch (s.type) {
+                case IF:
+                case FOR:
+                case WHILE:
+                    add(s.prepare(model, functions, imports));
+                    break;
+
+                case BLOCK: {
+                    List<EvalTools.ExpressionPart> lines = EvalTools.getBlocks(s.statement);
+                    if (lines.isEmpty())
+                        continue;
+
+                    for (EvalTools.ExpressionPart line : lines) {
+                        if (EvalTools.isLineCommented(line))
+                            continue;
+                        add(EvalTools.prepare(line, model, functions, imports));
+                    }
+                    break;
+                }
+
+                default:
+                    throw new IllegalStateException("not implemented yet");
+            }
+        }
     }
 
     protected static boolean isValidName(String name) {

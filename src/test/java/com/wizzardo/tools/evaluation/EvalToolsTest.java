@@ -818,33 +818,33 @@ public class EvalToolsTest {
         l = EvalTools.getStatements("if(true) { System.out.println(\"true\"); }");
         assertEquals(1, l.size());
         s = l.get(0);
-        assertEquals("true", s.statement);
-        assertEquals(" System.out.println(\"true\"); ", s.body);
+        assertEquals("true", s.statement.toString());
+        assertEquals(" System.out.println(\"true\"); ", s.body.toString());
 
         l = EvalTools.getStatements("if(true) System.out.println(\"true\");");
         assertEquals(1, l.size());
         s = l.get(0);
-        assertEquals("true", s.statement);
-        assertEquals("System.out.println(\"true\")", s.body);
+        assertEquals("true", s.statement.toString());
+        assertEquals("System.out.println(\"true\")", s.body.toString());
 
         l = EvalTools.getStatements("if(true)" +
                 "System.out.println(\"true\");" +
                 "System.out.println(\"other\");");
         assertEquals(2, l.size());
         s = l.get(0);
-        assertEquals("true", s.statement);
-        assertEquals("System.out.println(\"true\")", s.body);
-        assertEquals("System.out.println(\"other\");", l.get(1).statement);
+        assertEquals("true", s.statement.toString());
+        assertEquals("System.out.println(\"true\")", s.body.toString());
+        assertEquals("System.out.println(\"other\");", l.get(1).statement.toString());
 
         l = EvalTools.getStatements("if(true) if(!false)" +
                 "System.out.println(\"true\");" +
                 "System.out.println(\"other\");");
         assertEquals(2, l.size());
         s = l.get(0);
-        assertEquals("true", s.statement);
-        assertEquals("!false", s.bodyStatement.statement);
-        assertEquals("System.out.println(\"true\")", s.bodyStatement.body);
-        assertEquals("System.out.println(\"other\");", l.get(1).statement);
+        assertEquals("true", s.statement.toString());
+        assertEquals("!false", s.bodyStatement.statement.toString());
+        assertEquals("System.out.println(\"true\")", s.bodyStatement.body.toString());
+        assertEquals("System.out.println(\"other\");", l.get(1).statement.toString());
 
 
         exp = "if(\ni\n>\n0\n)\n" +
@@ -1700,7 +1700,7 @@ public class EvalToolsTest {
 
         expression = EvalTools.prepare("" +
                 "class Holder {\n" +
-                "    static String create(final String s) {\n" +
+                "    static Callable<String> create(final String s) {\n" +
                 "        def closure = {\n" +
                 "           s\n" +
                 "        }\n" +
@@ -2021,5 +2021,19 @@ public class EvalToolsTest {
 
         Assert.assertTrue(filter.allow("test"));
         Assert.assertFalse(filter.allow(null));
+    }
+
+    @Test
+    public void test_line_number() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Assert.assertEquals(1, EvalTools.prepare("" +
+                "def a = 1\n" +
+                "", model).getLineNumber());
+
+        Assert.assertEquals(2, EvalTools.prepare("" +
+                "\n" +
+                "def a = 1\n" +
+                "", model).getLineNumber());
     }
 }

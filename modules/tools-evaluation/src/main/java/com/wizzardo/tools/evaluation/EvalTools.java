@@ -35,7 +35,9 @@ public class EvalTools {
     private static final Pattern LIST = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|->|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?|instanceof");
-    private static final Pattern DEF = Pattern.compile("^((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s|\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])+)([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|\\()");
+    //    private static final Pattern DEF = Pattern.compile("((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)(\\s+[a-zA-Z_]+[a-zA-Z_\\d]*)? *($|=|\\()", Pattern.MULTILINE);
+    private static final Pattern DEF_METHOD = Pattern.compile("((?:static|final|private|protected|public|synchronized|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(void\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)(\\s+[a-zA-Z_]+[a-zA-Z_\\d]*)? *(\\()");
+    private static final Pattern DEF_VARIABLE = Pattern.compile("((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)\\s+([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|;)", Pattern.MULTILINE);
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum|interface) +([A-Za-z0-9_]+)" +
             "(?<extends> +extends +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" + ")?" +
@@ -66,20 +68,6 @@ public class EvalTools {
             }
         }
         return n;
-    }
-
-    protected static int nextNotEmptyChar(int from, String s) {
-        int length = s.length();
-        int i = from;
-        for (; i < length; i++) {
-            if (s.charAt(i) <= ' ')
-                continue;
-            break;
-        }
-        if (i == length)
-            return -1;
-
-        return i;
     }
 
     protected static int findCloseBracket(String s, int from) {
@@ -216,12 +204,16 @@ public class EvalTools {
         final int endBracketsTrimmed;
         int hash;
 
+        ExpressionPart(String source) {
+            this(source, 0, source.length());
+        }
+
         ExpressionPart(String source, int from, int to) {
             this.source = source;
             this.from = from;
             this.to = to;
             int start = trimLeft(source, from, to);
-            int end = trimRight(source, from, to);
+            int end = trimRight(source, start, to);
             this.start = start;
             this.end = end;
             int brackets = countWrappingBrackets(source, start, end);
@@ -272,7 +264,20 @@ public class EvalTools {
                 String s = String.valueOf(obj);
                 return s.length() == end - start && source.startsWith(s, start);
             }
+            if (obj instanceof ExpressionPart) {
+                ExpressionPart other = (ExpressionPart) obj;
+                return start == other.start && end == other.end && source.equals(other.source);
+            }
             return super.equals(obj);
+        }
+
+        public boolean contains(String s) {
+            int i = source.indexOf(s, start);
+            return i >= 0 && i < end;
+        }
+
+        public boolean isNotBlank() {
+            return end - start > 0;
         }
     }
 
@@ -298,17 +303,22 @@ public class EvalTools {
                     case ' ': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0) {
                             spaceSeparator = true;
-                            l.add(new ExpressionPart(s, from, i));
-                            from = i + 1;
+                            ExpressionPart part = new ExpressionPart(s, from, i);
+                            if (part.isNotBlank()) {
+                                l.add(part);
+                                from = i + 1;
 
-                            break loop;
+                                break loop;
+                            }
                         }
 
                         break;
                     }
                     case '(': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(new ExpressionPart(s, from, i));
+                            ExpressionPart part = new ExpressionPart(s, from, i);
+                            if (part.isNotBlank())
+                                l.add(part);
                             from = i;
                         }
                         brackets++;
@@ -316,7 +326,9 @@ public class EvalTools {
                     }
                     case '{': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(new ExpressionPart(s, from, i));
+                            ExpressionPart part = new ExpressionPart(s, from, i);
+                            if (part.isNotBlank())
+                                l.add(part);
                             from = i;
                         }
                         curlyBraces++;
@@ -324,7 +336,9 @@ public class EvalTools {
                     }
                     case '[': {
                         if (brackets == 0 && curlyBraces == 0 && squareBrackets == 0 && i != from) {
-                            l.add(new ExpressionPart(s, from, i));
+                            ExpressionPart part = new ExpressionPart(s, from, i);
+                            if (part.isNotBlank())
+                                l.add(part);
                             from = i;
                         }
                         squareBrackets++;
@@ -362,7 +376,9 @@ public class EvalTools {
                                 else
                                     i--;
 
-                            l.add(new ExpressionPart(s, from, i));
+                            ExpressionPart part = new ExpressionPart(s, from, i);
+                            if (part.isNotBlank())
+                                l.add(part);
                             from = i;
                         }
                         break;
@@ -541,18 +557,22 @@ public class EvalTools {
     }
 
     static List<String> getBlocks(String exp) {
+        return getBlocks(exp, 0, exp.length(), false).stream().map(it -> it.toString().trim()).collect(Collectors.toList());
+    }
+
+    static List<ExpressionPart> getBlocks(ExpressionPart exp) {
         return getBlocks(exp, false);
     }
 
     static class Statement {
         Type type = Type.BLOCK;
-        String statement;
-        String body;
-        String optional;
+        ExpressionPart statement;
+        ExpressionPart body;
+        ExpressionPart optional;
         Statement bodyStatement;
         Statement optionalStatement;
 
-        public Statement(String statement) {
+        public Statement(ExpressionPart statement) {
             this.statement = statement;
         }
 
@@ -562,7 +582,7 @@ public class EvalTools {
         public Expression prepare(EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
             switch (type) {
                 case IF: {
-                    List<String> args = getBlocks(statement, true);
+                    List<ExpressionPart> args = getBlocks(statement, true);
                     if (args.size() > 1)
                         throw new IllegalStateException("more then one statement in condition: " + statement);
 
@@ -585,7 +605,7 @@ public class EvalTools {
                         return new IfExpression(condition, then, elseExpression, model);
                 }
                 case WHILE: {
-                    List<String> args = getBlocks(statement, true);
+                    List<ExpressionPart> args = getBlocks(statement, true);
                     if (args.size() > 1)
                         throw new IllegalStateException("more then one statement in condition: " + statement);
 
@@ -594,9 +614,9 @@ public class EvalTools {
                     return new WhileExpression(condition, then, model);
                 }
                 case FOR: {
-                    List<String> args = getBlocks(statement, true, true);
+                    List<ExpressionPart> args = getBlocks(statement, true, true);
                     if (args.size() == 1 && args.get(0).contains(":")) {
-                        String[] split = args.get(0).split(":", 2);
+                        String[] split = args.get(0).toString().split(":", 2);
                         Expression def = EvalTools.prepare(split[0].trim(), model, functions, imports);
                         Expression iterable = EvalTools.prepare(split[1].trim(), model, functions, imports);
 
@@ -604,7 +624,7 @@ public class EvalTools {
                         return new ForEachExpression(def, iterable, then, model);
                     }
                     if (args.size() == 1 && args.get(0).contains(" in ")) {
-                        String[] split = args.get(0).split(" +in +", 2);
+                        String[] split = args.get(0).toString().split(" +in +", 2);
                         Expression def = EvalTools.prepare(split[0].trim(), model, functions, imports);
                         Expression iterable = EvalTools.prepare(split[1].trim(), model, functions, imports);
 
@@ -652,7 +672,8 @@ public class EvalTools {
             }
 
             if (m.start() != start) {
-                statements.add(new Statement(s.substring(start, m.start())));
+//                statements.add(new Statement(s.substring(start, m.start())));
+                statements.add(new Statement(new ExpressionPart(s, start, m.start())));
             }
 
             Statement statement = new Statement();
@@ -661,9 +682,10 @@ public class EvalTools {
             statements.add(statement.bodyStatement);
         }
         if (start != to) {
-            String sub = s.substring(start, to).trim();
-            if (sub.length() > 0)
-                statements.add(new Statement(sub));
+//            String sub = s.substring(start, to).trim();
+            ExpressionPart expressionPart = new ExpressionPart(s, start, to);
+            if (expressionPart.end - expressionPart.start > 0)
+                statements.add(new Statement(expressionPart));
         }
         return statements;
     }
@@ -691,7 +713,8 @@ public class EvalTools {
                 statement.optionalStatement = inner;
 
             inner.type = Statement.Type.valueOf(m.group(1).toUpperCase());
-            inner.statement = s.substring(m.end(), close);
+//            inner.statement = s.substring(m.end(), close);
+            inner.statement = new ExpressionPart(s, m.end(), close);
 
             char ch = 0;
             for (start = close + 1; start < to; start++) {
@@ -709,7 +732,8 @@ public class EvalTools {
                 if (close < 0)
                     throw new IllegalStateException("can't find closing bracket in expression: " + s.substring(from, to));
 
-                inner.body = s.substring(start, close);
+//                inner.body = s.substring(start, close);
+                inner.body = new ExpressionPart(s, start, close);
                 start = close + 1;
 
                 if (inner.type == Statement.Type.IF)
@@ -748,10 +772,13 @@ public class EvalTools {
 
                 if (brackets == 0) {
                     if (c == ';' || c == '\n') {
-                        if (statement.bodyStatement == null && statement.body == null)
-                            statement.body = s.substring(from, i).trim();
-                        else
-                            statement.optional = s.substring(from, i).trim();
+                        if (statement.bodyStatement == null && statement.body == null) {
+//                            statement.body = s.substring(from, i).trim();
+                            statement.body = new ExpressionPart(s, from, i);
+                        } else {
+//                            statement.optional = s.substring(from, i).trim();
+                            statement.optional = new ExpressionPart(s, from, i);
+                        }
 
                         return i + (c == ';' ? 1 : 0);
                     }
@@ -763,10 +790,13 @@ public class EvalTools {
             }
             last = c;
         }
-        if (statement.bodyStatement == null && statement.body == null)
-            statement.body = s.substring(from, to).trim();
-        else
-            statement.optional = s.substring(from, to).trim();
+        if (statement.bodyStatement == null && statement.body == null) {
+//            statement.body = s.substring(from, to).trim();
+            statement.body = new ExpressionPart(s, from, to);
+        } else {
+//            statement.optional = s.substring(from, to).trim();
+            statement.optional = new ExpressionPart(s, from, to);
+        }
         return to;
     }
 
@@ -804,27 +834,37 @@ public class EvalTools {
             if (close < 0)
                 throw new IllegalStateException("can't find closing bracket in expression: " + s.substring(from, to));
 
-            statement.optional = s.substring(start, close);
+//            statement.optional = s.substring(start, close);
+            statement.optional = new ExpressionPart(s, start, close);
             return close + 1;
         } else {
             return getBlock(s, start, to, statement);
         }
     }
 
-    static List<String> getBlocks(String exp, boolean ignoreNewLine) {
-        return getBlocks(exp, ignoreNewLine, false);
+    static List<ExpressionPart> getBlocks(String exp, int from, int to, boolean ignoreNewLine) {
+        return getBlocks(exp, from, to, ignoreNewLine, false);
     }
 
-    static List<String> getBlocks(String exp, boolean ignoreNewLine, boolean withEmptyStatements) {
-        List<String> list = new ArrayList<String>();
+    static List<ExpressionPart> getBlocks(ExpressionPart part, boolean ignoreNewLine) {
+        return getBlocks(part, ignoreNewLine, false);
+    }
+
+    static List<ExpressionPart> getBlocks(ExpressionPart part, boolean ignoreNewLine, boolean withEmptyStatements) {
+        return getBlocks(part.source, part.start, part.end, ignoreNewLine, withEmptyStatements);
+    }
+
+    static List<ExpressionPart> getBlocks(String exp, int from, int to, boolean ignoreNewLine, boolean withEmptyStatements) {
+        List<ExpressionPart> list = new ArrayList<ExpressionPart>();
 
         StringBuilder sb = new StringBuilder(128);
         char last = 0, stringChar = 0;
         boolean inString = false;
         int brackets = 0;
-        int length = exp.length();
+        int length = to;
+        int start = from;
         boolean lineEndedWithSemicolon = true;
-        for (int i = 0; i < length; i++) {
+        for (int i = from; i < length; i++) {
             char c = exp.charAt(i);
             if (inString) {
                 if (c == stringChar && last != '\\') {
@@ -842,14 +882,20 @@ public class EvalTools {
 
                 if (brackets == 0) {
                     if (c == '.' && trim(sb).length() == 0 && !lineEndedWithSemicolon) {
-                        sb.append(list.remove(list.size() - 1));
+//                        sb.append(list.remove(list.size() - 1));
                     }
                     if (c == ';' || c == '\n') {
                         lineEndedWithSemicolon = c == ';';
                         cleanLine(sb);
-                        if (withEmptyStatements || sb.length() > 0)
-                            list.add(sb.toString());
+                        ExpressionPart part = new ExpressionPart(exp, start, i);
+                        if (ignoreNewLine)
+                            part = removeRN(part);
+//                        if (withEmptyStatements || sb.length() > 0)
+//                            list.add(sb.toString());
+                        if (withEmptyStatements || part.end - part.start > 0)
+                            list.add(part);
                         sb.setLength(0);
+                        start = i + 1;
                         continue;
                     }
                     if (c == '"' || c == '\'') {
@@ -862,10 +908,60 @@ public class EvalTools {
             sb.append(c);
         }
         cleanLine(sb);
-        if (withEmptyStatements || sb.length() > 0)
-            list.add(sb.toString());
+        if (to - start > 0 || withEmptyStatements) {
+            ExpressionPart part = new ExpressionPart(exp, start, to);
+            if (ignoreNewLine)
+                part = removeRN(part);
+            if (part.end - part.start > 0 || withEmptyStatements)
+                list.add(part);
+        }
+
+        for (int i = list.size() - 1; i > 0; i--) {
+            if (list.get(i).startsWith(".") && !list.get(i - 1).endsWith(";")) {
+                list.set(i - 1, new ExpressionPart(exp, list.get(i - 1).from, list.get(i).to));
+                list.remove(i);
+            }
+        }
+//        if (withEmptyStatements || sb.length() > 0)
+//            list.add(sb.toString());
 
         return list;
+    }
+
+    static ExpressionPart removeRN(ExpressionPart part) {
+        int from = part.start;
+        int last = from;
+        boolean inString = false;
+        char quote = 0;
+        StringBuilder sb = null;
+        for (int i = from; i < part.end; i++) {
+            char c = part.source.charAt(i);
+            if (!inString) {
+                if ((c == '\'' || c == '\"') && (i == 0 || part.source.charAt(i - 1) != '\\')) {
+                    quote = c;
+                    inString = true;
+                    continue;
+                }
+                if (c == '\n' || c == '\r') {
+                    if (i != last) {
+                        if (sb == null)
+                            sb = new StringBuilder(part.end - part.start);
+
+                        sb.append(part.source, last, i);
+                    }
+                    last = i + 1;
+                }
+            } else if (c == quote && part.source.charAt(i - 1) != '\\') {
+                inString = false;
+            }
+        }
+        if (sb == null)
+            return part;
+
+        if (last != part.end) {
+            sb.append(part.source, last, part.end);
+        }
+        return new ExpressionPart(sb.toString());
     }
 
     static StringBuilder cleanLine(StringBuilder line) {
@@ -972,7 +1068,7 @@ public class EvalTools {
         if (isClosure(exp, from, to) || (isLambda = isJavaLambda(exp, from, to))) {
             ClosureExpression closure = new ClosureExpression(model);
             if (isLambda) {
-                from = closure.parseArguments(exp, from, to, imports, model);
+                from = closure.findAndParseArguments(exp, from, to, imports, model);
                 if (exp.startsWith("{")) {
                     from++;
                     to--;
@@ -984,7 +1080,7 @@ public class EvalTools {
                 to--;
                 from = trimLeft(exp, from, to);
                 to = trimRight(exp, from, to);
-                from = closure.parseArguments(exp, from, to, imports, model);
+                from = closure.findAndParseArguments(exp, from, to, imports, model);
             }
 
             EvaluationContext localModel = model.createLocalContext();
@@ -992,33 +1088,7 @@ public class EvalTools {
                 localModel.put(arg.key, null);
             }
 
-            List<Statement> statements = getStatements(exp, from, to);
-            for (Statement s : statements) {
-                switch (s.type) {
-                    case IF:
-                    case FOR:
-                    case WHILE:
-                        closure.add(s.prepare(localModel, functions, imports));
-                        break;
-
-                    case BLOCK: {
-                        List<String> lines = getBlocks(s.statement);
-                        if (lines.isEmpty())
-                            continue;
-
-                        for (String line : lines) {
-                            if (isLineCommented(line))
-                                continue;
-                            closure.add(prepare(line, localModel, functions, imports, false));
-                        }
-                        break;
-                    }
-
-                    default:
-                        throw new IllegalStateException("not implemented yet");
-                }
-
-            }
+            closure.parseBody(exp, from, to, model, functions, imports);
             return new ClosureHolder(closure, model);
         }
         return null;
@@ -1026,7 +1096,7 @@ public class EvalTools {
 
     protected static Expression prepareClass(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = CLASS_DEF.matcher(exp);
-        if (m.find() && findCloseBracket(exp, m.end()) == exp.length() - 1) {
+        if (m.find(from) && m.start() < to && findCloseBracket(exp, m.end()) == to - 1) {
             String className = m.group(3);
             String type = m.group(2);
 
@@ -1087,8 +1157,8 @@ public class EvalTools {
                     throw new IllegalStateException("Cannot find class to extend: " + anExtends);
             }
 
-            exp = exp.substring(m.end(), exp.length() - 1).trim();
-            List<String> lines = getBlocks(exp);
+//            exp = exp.substring(m.end(), exp.length() - 1).trim();
+            List<ExpressionPart> lines = getBlocks(exp, m.end(), to - 1, false);
 
             List<Expression> definitions = new ArrayList<Expression>();
             List<Expression> definitionsStatic = new ArrayList<Expression>();
@@ -1108,22 +1178,23 @@ public class EvalTools {
             Object prevClass = model.put("current class", classExpression);
 
             for (int i = isEnum ? 1 : 0; i < lines.size(); i++) {
-                String s = lines.get(i);
+                ExpressionPart s = lines.get(i);
                 if (isLineCommented(s))
                     continue;
 
                 boolean isStatic = false;
-                Matcher staticMatcher = STATIC_BLOCK.matcher(s);
-                if (staticMatcher.find()) {
-                    s = s.substring("static ".length()).trim();
+                Matcher staticMatcher = STATIC_BLOCK.matcher(s.source);
+                if (staticMatcher.find(s.start) && staticMatcher.start() < s.end) {
+//                    s = s.substring("static ".length()).trim();
                     isStatic = true;
+                    s = new ExpressionPart(s.source, s.start + 7, s.end);
                 }
+//
+//                if (s.startsWith(className) && s.charAt(className.length()) == '(') {
+//                    s = "protected " + s; // workaround for default access modifier
+//                }
 
-                if (s.startsWith(className) && s.charAt(className.length()) == '(') {
-                    s = "protected " + s; // workaround for default access modifier
-                }
-
-                Expression prepare = prepare(s, model, functions, imports, false);
+                Expression prepare = prepare(s, model, functions, imports);
                 if (prepare instanceof ClosureHolder) {
                     ClosureExpression closure = ((ClosureHolder) prepare).closure;
                     closure.setContext(classExpression.context);
@@ -1147,7 +1218,8 @@ public class EvalTools {
 
             if (isEnum) {
                 classExpression.isEnum = true;
-                List<String> enums = parseArgs(lines.get(0));
+                ExpressionPart part = lines.get(0);
+                List<String> enums = parseArgs(part.source, part.start, part.end);
                 for (int i = 0; i < enums.size(); i++) {
                     String s = enums.get(i);
                     int argsStart = s.indexOf('(');
@@ -1199,18 +1271,18 @@ public class EvalTools {
                     break;
 
                 case BLOCK: {
-                    List<String> lines = getBlocks(s.statement);
+                    List<ExpressionPart> lines = getBlocks(s.statement);
                     if (lines.isEmpty())
                         continue;
 
                     if (lines.size() > 1) {
-                        for (String line : lines) {
+                        for (ExpressionPart line : lines) {
                             if (isLineCommented(line))
                                 continue;
-                            block.add(prepare(line, model, functions, imports, false));
+                            block.add(prepare(line, model, functions, imports));
                         }
                     } else if (statements.size() > 1 || !lines.get(0).equals(s.statement)) {
-                        block.add(prepare(lines.get(0), model, functions, imports, false));
+                        block.add(prepare(lines.get(0), model, functions, imports));
                     }
                     break;
                 }
@@ -1230,9 +1302,67 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareDefinition(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
-        Matcher m = DEF.matcher(exp);
-        if (m.find(from)) {
+    protected static Expression prepareVariableDefinition(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        Matcher m = DEF_VARIABLE.matcher(exp);
+        if (m.find(from) && m.start() == from) {
+            if (m.start() >= to)
+                return null;
+            String modifiers = m.group(1);
+            if (modifiers != null)
+                modifiers = modifiers.trim();
+            else
+                modifiers = "";
+
+//            String generics = m.group(2);
+            String type = m.group(2);
+            if (type != null)
+                type = type.replaceAll("\\s", "");
+
+            if (!"new".equals(type)) {
+                String name = m.group(3);
+                if (name != null)
+                    name = name.trim();
+//                else if (type.equals("this") || type.equals("super"))
+//                    return null;
+//                else
+//                    name = type;
+
+                if (m.group(4).equals("=")) {
+                    if (name != null)
+                        model.put(name, null);
+
+//                    exp = name + " =" + exp.substring(m.group(0).length());
+                    Expression action = prepare(exp, m.start(3), to, model, functions, imports, false);
+                    if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
+                        ((Operation) action).leftPart(new Expression.Holder(name, model));
+                    }
+//                            if (type != null && type.contains("<"))
+//                                type = type.substring(0, type.indexOf('<'));
+                    Class typeClass = findClass(type, imports, model);
+                    return new Expression.DefineAndSet(typeClass, name, action, type, modifiers, model);
+                } else {
+                    model.put(name, null);
+//                            if (type != null && type.contains("<"))
+//                                type = type.substring(0, type.indexOf('<'));
+
+                    if (model.containsKey("class " + type))
+                        return new Expression.DefinitionWithClassExpression((ClassExpression) model.get("class " + type), name, model);
+
+                    Class typeClass = findClass(type, imports, model);
+                    if (typeClass == null)
+                        return new Expression.Definition(type, name, modifiers, model);
+
+                    return new Expression.Definition(typeClass, name, modifiers, model);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected static Expression prepareMethodDefinition(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        Matcher m = DEF_METHOD.matcher(exp);
+        if (m.find(from) && m.start() == from) {
             if (m.start() >= to)
                 return null;
             String modifiers = m.group(1);
@@ -1248,52 +1378,44 @@ public class EvalTools {
 
             if (!"new".equals(type)) {
                 String name = m.group(4);
-                if (m.group(5).equals("=")) {
-                    model.put(name, null);
-                    exp = name + " =" + exp.substring(m.group(0).length());
-                    Expression action = prepare(exp, model, functions, imports);
-                    if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
-                        ((Operation) action).leftPart(new Expression.Holder(name, model));
-                    }
-//                            if (type != null && type.contains("<"))
-//                                type = type.substring(0, type.indexOf('<'));
-                    Class typeClass = findClass(type, imports, model);
-                    return new Expression.DefineAndSet(typeClass, name, action, type, modifiers, model);
-                } else if (m.group(5).equals("(")) {
-                    model.put(name, null);
-                    int argsEnd = findCloseBracket(exp, m.end());
-                    ClosureHolder closure;
-                    if (argsEnd == m.end()) {
-                        closure = (ClosureHolder) prepare(exp.substring(argsEnd + 1), model, functions, imports);
-                    } else {
-                        String block = exp.substring(argsEnd + 1).trim();
-                        if (!block.startsWith("{"))
-                            throw new IllegalStateException("Cannot parse: " + exp);
+                if (name != null)
+                    name = name.trim();
+                else if (type.equals("this") || type.equals("super") || type.contains("."))
+                    return null;
+                else if (model.get("current class") != null && ((ClassExpression) model.get("current class")).getName().equals(type))
+                    name = type;
+                else
+                    return null;
 
-                        String args = exp.substring(m.end(), argsEnd);
-                        closure = (ClosureHolder) prepare("{ " + args + " -> " + block.substring(1), model, functions, imports);
-                    }
+                if (name != null)
+                    model.put(name, null);
 
-//                            if (type != null && type.contains("<"))
-//                                type = type.substring(0, type.indexOf('<'));
-                    Class typeClass = findClass(type, imports, model);
-                    if (typeClass == null)
-                        typeClass = Object.class;
-                    return new Expression.MethodDefinition(modifiers, typeClass, name, closure, model);
+                int argsEnd = findCloseBracket(exp, m.end());
+                ClosureHolder closure;
+                if (argsEnd == m.end()) {
+                    closure = (ClosureHolder) prepare(exp, argsEnd + 1, to, model, functions, imports, false);
                 } else {
-                    model.put(name, null);
+                    int blockStart = trimLeft(exp, argsEnd + 1, to);
+                    if (!exp.startsWith("{", blockStart))
+                        throw new IllegalStateException("Cannot parse: " + exp.substring(from, to));
+
+                    ClosureExpression c = new ClosureExpression(model);
+                    c.parseArguments(exp, m.end(), argsEnd, imports, model);
+                    EvaluationContext localModel = model.createLocalContext();
+                    for (Pair<String, Class> arg : c.args) {
+                        localModel.put(arg.key, null);
+                    }
+                    c.parseBody(exp, blockStart + 1, to - 1, localModel, functions, imports);
+                    ClosureHolder closureHolder = new ClosureHolder(c, model);
+                    closure = closureHolder;
+                }
+
 //                            if (type != null && type.contains("<"))
 //                                type = type.substring(0, type.indexOf('<'));
-
-                    if (model.containsKey("class " + type))
-                        return new Expression.DefinitionWithClassExpression((ClassExpression) model.get("class " + type), name, model);
-
-                    Class typeClass = findClass(type, imports, model);
-                    if (typeClass == null)
-                        return new Expression.Definition(type, name, modifiers, model);
-
-                    return new Expression.Definition(typeClass, name, modifiers, model);
-                }
+                Class typeClass = findClass(type, imports, model);
+                if (typeClass == null)
+                    typeClass = Object.class;
+                return new Expression.MethodDefinition(modifiers, typeClass, name == null ? type : name, closure, model);
             }
         }
 
@@ -1537,6 +1659,12 @@ public class EvalTools {
         return prepare(exp, 0, exp.length(), model, functions, imports, isTemplate);
     }
 
+    static Expression prepare(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        if (exp == null)
+            return null;
+        return prepare(exp.source, exp.start, exp.end, model, functions, imports, false);
+    }
+
     public static Expression prepare(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
         if (exp == null) {
             return null;
@@ -1610,7 +1738,7 @@ public class EvalTools {
             }
 
             if (expressionPart.startsWith("return ")) {
-                return new Expression.ReturnExpression(prepare(exp.substring(6), model, functions, imports, isTemplate), model);
+                return new Expression.ReturnExpression(prepare(expressionPart.source, expressionPart.start + 6, expressionPart.end, model, functions, imports, isTemplate), model);
             }
             if (expressionPart.equals("[]")) {
                 return new Expression.CollectionExpression(model);
@@ -1621,7 +1749,12 @@ public class EvalTools {
         }
 
         {
-            Expression result = prepareDefinition(exp, start, to, model, functions, imports);
+            Expression result = prepareVariableDefinition(exp, start, to, model, functions, imports);
+            if (result != null)
+                return result;
+        }
+        {
+            Expression result = prepareMethodDefinition(exp, start, to, model, functions, imports);
             if (result != null)
                 return result;
         }
@@ -1963,6 +2096,10 @@ public class EvalTools {
     }
 
     protected static boolean isLineCommented(String s) {
+        return s.startsWith("//");
+    }
+
+    protected static boolean isLineCommented(ExpressionPart s) {
         return s.startsWith("//");
     }
 
