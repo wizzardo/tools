@@ -20,6 +20,11 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
     - run: ./gradlew check --no-daemon
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: test-results/**/*.xml
     - run: ./gradlew codeCoverageReport --no-daemon
     - name: Upload coverage reports to Codecov
       run: bash <(curl -s https://codecov.io/bash)
