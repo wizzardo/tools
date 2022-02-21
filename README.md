@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/wizzardo/tools.svg?branch=master)](https://travis-ci.org/wizzardo/tools)
+[![Build](https://github.com/wizzardo/tools/actions/workflows/gradle.yml/badge.svg)](https://github.com/wizzardo/tools/actions/workflows/gradle.yml)
 [![codecov](https://codecov.io/gh/wizzardo/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/wizzardo/tools)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.wizzardo.tools/tools/badge.svg)](https://mvnrepository.com/artifact/com.wizzardo.tools/tools/latest)
 
@@ -31,11 +31,11 @@ maven:
 
 gradle:
 ```
-compile 'com.wizzardo.tools:tools:0.19'
+compile 'com.wizzardo.tools:tools:0.23'
 
 // or by module:
 
-def tools_version = "0.19"
+def tools_version = "0.23"
 compile "com.wizzardo.tools:tools-cache:${tools_version}"
 compile "com.wizzardo.tools:tools-collections:${tools_version}"
 compile "com.wizzardo.tools:tools-evaluation:${tools_version}"

@@ -194,7 +194,7 @@ public class EvalTools {
         return to;
     }
 
-    static class ExpressionPart {
+    static class ExpressionPart implements CharSequence {
         final String source;
         final int from;
         final int to;
@@ -227,12 +227,33 @@ public class EvalTools {
         }
 
         @Override
+        public int length() {
+            return end - start;
+        }
+
+        @Override
+        public char charAt(int index) {
+            if (index < 0 || index >= end)
+                throw new IndexOutOfBoundsException();
+            return source.charAt(start + index);
+        }
+
+        @Override
+        public CharSequence subSequence(int start, int end) {
+            return new ExpressionPart(source, this.start + start, this.start + end);
+        }
+
+        @Override
         public String toString() {
-            return source.substring(from, to);
+            return source.substring(start, end);
         }
 
         public boolean startsWith(String s) {
             return source.startsWith(s, start);
+        }
+
+        public boolean startsWith(String s, int i) {
+            return source.startsWith(s, start + i);
         }
 
         public boolean endsWith(String s) {
@@ -1302,11 +1323,11 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareVariableDefinition(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareVariableDefinition(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = DEF_VARIABLE.matcher(exp);
-        if (m.find(from) && m.start() == from) {
-            if (m.start() >= to)
-                return null;
+        if (m.find() && m.start() == 0) {
+//            if (m.start() >= to)
+//                return null;
             String modifiers = m.group(1);
             if (modifiers != null)
                 modifiers = modifiers.trim();
@@ -1332,7 +1353,7 @@ public class EvalTools {
                         model.put(name, null);
 
 //                    exp = name + " =" + exp.substring(m.group(0).length());
-                    Expression action = prepare(exp, m.start(3), to, model, functions, imports, false);
+                    Expression action = prepare(exp.source, exp.start + m.start(3), exp.end, model, functions, imports, false);
                     if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
                         ((Operation) action).leftPart(new Expression.Holder(name, model));
                     }
@@ -1360,11 +1381,11 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareMethodDefinition(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static Expression prepareMethodDefinition(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = DEF_METHOD.matcher(exp);
-        if (m.find(from) && m.start() == from) {
-            if (m.start() >= to)
-                return null;
+        if (m.find() && m.start() == 0) {
+//            if (m.start() >= to)
+//                return null;
             String modifiers = m.group(1);
             if (modifiers != null)
                 modifiers = modifiers.trim();
@@ -1390,22 +1411,22 @@ public class EvalTools {
                 if (name != null)
                     model.put(name, null);
 
-                int argsEnd = findCloseBracket(exp, m.end());
+                int argsEnd = findCloseBracket(exp.source, exp.start + m.end()) - exp.start;
                 ClosureHolder closure;
                 if (argsEnd == m.end()) {
-                    closure = (ClosureHolder) prepare(exp, argsEnd + 1, to, model, functions, imports, false);
+                    closure = (ClosureHolder) prepare(exp.source, exp.start + argsEnd + 1, exp.end, model, functions, imports, false);
                 } else {
-                    int blockStart = trimLeft(exp, argsEnd + 1, to);
-                    if (!exp.startsWith("{", blockStart))
-                        throw new IllegalStateException("Cannot parse: " + exp.substring(from, to));
+                    int blockStart = trimLeft(exp.source, exp.start + argsEnd + 1, exp.end);
+                    if (!exp.startsWith("{", blockStart - exp.start))
+                        throw new IllegalStateException("Cannot parse: " + exp);
 
                     ClosureExpression c = new ClosureExpression(model);
-                    c.parseArguments(exp, m.end(), argsEnd, imports, model);
+                    c.parseArguments(exp.source, exp.start + m.end(), exp.start + argsEnd, imports, model);
                     EvaluationContext localModel = model.createLocalContext();
                     for (Pair<String, Class> arg : c.args) {
                         localModel.put(arg.key, null);
                     }
-                    c.parseBody(exp, blockStart + 1, to - 1, localModel, functions, imports);
+                    c.parseBody(exp.source, blockStart + 1, exp.end - 1, localModel, functions, imports);
                     ClosureHolder closureHolder = new ClosureHolder(c, model);
                     closure = closureHolder;
                 }
@@ -1723,9 +1744,8 @@ public class EvalTools {
                 return result;
         }
 
+        ExpressionPart expressionPart = new ExpressionPart(exp, start, to);
         {
-            ExpressionPart expressionPart = new ExpressionPart(exp, start, to);
-
             if (expressionPart.equals("null")) {
                 return Expression.Holder.NULL;
             }
@@ -1749,12 +1769,12 @@ public class EvalTools {
         }
 
         {
-            Expression result = prepareVariableDefinition(exp, start, to, model, functions, imports);
+            Expression result = prepareVariableDefinition(expressionPart, model, functions, imports);
             if (result != null)
                 return result;
         }
         {
-            Expression result = prepareMethodDefinition(exp, start, to, model, functions, imports);
+            Expression result = prepareMethodDefinition(expressionPart, model, functions, imports);
             if (result != null)
                 return result;
         }
@@ -2036,6 +2056,27 @@ public class EvalTools {
                     throw new IllegalStateException("Cannot find end of comment block for exp '" + exp + "'");
 
                 exp = exp.substring(0, comment) + exp.substring(comment, commentEnd + 2).replaceAll("[^\\s]", " ") + exp.substring(commentEnd + 2);
+            }
+        } while (comment != -1);
+
+        do {
+            comment = exp.indexOf("//", comment + 1);
+            if (comment != -1 && !inString(exp, 0, comment)) {
+                int r = exp.indexOf("\r", comment);
+                int n = exp.indexOf("\n", comment);
+                int commentEnd;
+                if (r != -1 && n != -1) {
+                    if (n != r + 1)
+                        throw new IllegalStateException("Cannot find end of comment for exp '" + exp + "'");
+                    commentEnd = r;
+                } else if (r != -1) {
+                    commentEnd = r;
+                } else if (n != -1) {
+                    commentEnd = n;
+                } else
+                    commentEnd = exp.length();
+
+                exp = exp.substring(0, comment) + exp.substring(comment, commentEnd).replaceAll("[^\\s]", " ") + exp.substring(commentEnd);
             }
         } while (comment != -1);
 

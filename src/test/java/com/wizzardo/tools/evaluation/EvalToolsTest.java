@@ -819,7 +819,7 @@ public class EvalToolsTest {
         assertEquals(1, l.size());
         s = l.get(0);
         assertEquals("true", s.statement.toString());
-        assertEquals(" System.out.println(\"true\"); ", s.body.toString());
+        assertEquals("System.out.println(\"true\");", s.body.toString());
 
         l = EvalTools.getStatements("if(true) System.out.println(\"true\");");
         assertEquals(1, l.size());
