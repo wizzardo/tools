@@ -28,4 +28,6 @@ jobs:
     - run: ./gradlew codeCoverageReport --no-daemon
     - uses: codecov/codecov-action@v2
       with:
+        directory: ./build/reports/jacoco/codeCoverageReport/
+        files: codeCoverageReport.xml
         verbose: true # optional (default = false)
