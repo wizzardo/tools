@@ -714,6 +714,9 @@ public class ClassBuilder {
     }
 
     protected int getOrCreateClassConstant(Class<?> clazz) {
+        if (clazz.isArray()) {
+            return getOrCreateClassConstant(getFieldDescription(clazz));
+        }
         return getOrCreateClassConstant(clazz.getTypeName());
     }
 
