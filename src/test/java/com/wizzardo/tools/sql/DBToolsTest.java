@@ -265,7 +265,7 @@ public class DBToolsTest {
             sum += sql.length();
         }
         stopwatch.stop();
-        assertThat(stopwatch.getDuration()).isLessThan(150_000_000);
+        assertThat(stopwatch.getDuration()).isLessThan(300_000_000);
         assertThat(sum).isNotEqualTo(0);
     }
 

@@ -25,7 +25,7 @@ maven:
 <dependency>
     <groupId>com.wizzardo.tools</groupId>
     <artifactId>tools</artifactId>
-    <version>0.19</version>
+    <version>0.23</version>
 </dependency>
 ```
 
