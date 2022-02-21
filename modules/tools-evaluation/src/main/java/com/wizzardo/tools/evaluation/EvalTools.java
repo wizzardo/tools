@@ -1757,7 +1757,7 @@ public class EvalTools {
                 return new Expression.VariableOrFieldOfThis(exp, model);
             }
 
-            if (expressionPart.startsWith("return ")) {
+            if (expressionPart.startsWith("return ") || expressionPart.equals("return")) {
                 return new Expression.ReturnExpression(prepare(expressionPart.source, expressionPart.start + 6, expressionPart.end, model, functions, imports, isTemplate), model);
             }
             if (expressionPart.equals("[]")) {

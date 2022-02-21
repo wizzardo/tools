@@ -60,7 +60,7 @@ public class ClosureLookup extends Expression {
         if (parent != null) {
             MethodDefinition method = parent.findMethod(functionName, args);
             if (method != null)
-                return method.action.get(model);
+                return method.action.closure;
         }
 
         localFunction = lookupInFunctions();

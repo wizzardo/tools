@@ -168,6 +168,10 @@ public class ClassExpression extends Expression {
         }
 
         for (Expression expression : definitions) {
+            if (expression instanceof MethodDefinition) {
+                ((MethodDefinition) expression).action.closure.setContext(instance.context);
+            }
+
             if (expression instanceof DefineAndSet && ((DefineAndSet) expression).action instanceof Operation) {
                 Operation operation = (Operation) ((DefineAndSet) expression).action;
                 if (operation.operator() == Operator.EQUAL && operation.leftPart().exp.equals(name)) {

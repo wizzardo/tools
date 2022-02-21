@@ -95,10 +95,10 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         if (context != model && model != null)
             local.putAll(model);
 
-        if (context != thisObject) {
+//        if (context != thisObject) {
             local.put("delegate", thisObject);
             local.put("this", thisObject);
-        }
+//        }
 //        if (model != null)
 //            local.put("this", model);
 
