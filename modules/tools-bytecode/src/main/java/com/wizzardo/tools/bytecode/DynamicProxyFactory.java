@@ -1,12 +1,15 @@
 package com.wizzardo.tools.bytecode;
 
 import com.wizzardo.tools.bytecode.fields.FieldSetter;
+import com.wizzardo.tools.io.FileTools;
+import com.wizzardo.tools.io.IOTools;
 import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.misc.With;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -106,12 +109,27 @@ public class DynamicProxyFactory {
 //            e.printStackTrace();
 //        }
 
-        return Unchecked.call(() -> new ClassLoader() {
-            @Override
-            public Class<?> findClass(String name) {
-                return defineClass(name, bytes, 0, bytes.length);
-            }
-        }.loadClass(name));
+        try {
+            return new ClassLoader() {
+                @Override
+                public Class<?> findClass(String name) {
+                    return defineClass(name, bytes, 0, bytes.length);
+                }
+            }.loadClass(name);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw Unchecked.rethrow(e);
+        } catch (ClassFormatError e) {
+            e.printStackTrace();
+            Unchecked.run(() -> {
+                FileTools.bytes("/tmp/" + name + ".class", bytes);
+                Process process = Runtime.getRuntime().exec("javap -v /tmp/" + name + ".class");
+                System.out.println(new String(IOTools.bytes(process.getInputStream())));
+                System.out.println(new String(IOTools.bytes(process.getErrorStream())));
+            });
+
+            throw new RuntimeException(e);
+        }
     }
 
     public static ClassBuilder createBuilder(String fullName, Class<?> superClass) {

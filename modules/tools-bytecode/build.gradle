@@ -1,5 +1,6 @@
 dependencies {
     compile project(':modules:tools-misc')
+    compile project(':modules:tools-io')
 }
 
 sourceCompatibility = 1.8
