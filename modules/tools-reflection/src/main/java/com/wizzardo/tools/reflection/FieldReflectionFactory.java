@@ -12,7 +12,7 @@ import java.lang.reflect.Modifier;
  */
 public class FieldReflectionFactory {
 
-    protected static final Unsafe unsafe = UnsafeTools.getUnsafe();
+    protected static boolean isUnsafeAvailable = UnsafeTools.getUnsafe() != null;
 
     protected static final boolean putInt = hasMethod(Unsafe.class, "putInt", Object.class, long.class, int.class);
     protected static final boolean putLong = hasMethod(Unsafe.class, "putLong", Object.class, long.class, long.class);
@@ -122,7 +122,7 @@ public class FieldReflectionFactory {
     }
 
     protected boolean isUnsafeAvailable(Field field) {
-        return unsafe != null && (field.getModifiers() & Modifier.STATIC) == 0;
+        return isUnsafeAvailable && (field.getModifiers() & Modifier.STATIC) == 0;
     }
 
     protected FieldReflection createShortReflectionGetterSetter(Field field) {

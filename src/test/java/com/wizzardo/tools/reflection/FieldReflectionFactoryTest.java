@@ -140,14 +140,10 @@ public class FieldReflectionFactoryTest {
         Assert.assertTrue(factory.create(TestClass.class, "string") instanceof ObjectUnsafeGetterSetter);
     }
 
-    private void switchUnsafe(boolean enabled) throws NoSuchFieldException, IllegalAccessException {
-        Field field = FieldReflectionFactory.class.getDeclaredField("unsafe");
-
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
-        field.setAccessible(true);
-        field.set(null, enabled ? UnsafeTools.getUnsafe() : null);
+    private void switchUnsafe(boolean enabled) {
+        if (enabled)
+            FieldReflectionFactory.isUnsafeAvailable = UnsafeTools.getUnsafe() != null;
+        else
+            FieldReflectionFactory.isUnsafeAvailable = false;
     }
 }
