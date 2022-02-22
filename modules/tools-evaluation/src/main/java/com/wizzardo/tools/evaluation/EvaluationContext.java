@@ -5,7 +5,7 @@ import java.util.*;
 public class EvaluationContext extends HashMap<String, Object> {
     protected final EvaluationContext parent;
     protected String file;
-    protected int lineNumber = 1;
+    protected int lineNumber = -1;
     protected int linePosition = 1;
 
     public EvaluationContext() {
@@ -95,10 +95,10 @@ public class EvaluationContext extends HashMap<String, Object> {
     }
 
     public int getLineNumber() {
-        return getRoot().lineNumber;
+        return lineNumber == -1 ? (parent == null ? 1 : parent.getLineNumber()) : lineNumber;
     }
 
     public int getLinePosition() {
-        return getRoot().linePosition;
+        return linePosition;
     }
 }

@@ -28,7 +28,7 @@ public abstract class Expression {
     }
 
     protected Expression(EvaluationContext context) {
-        this(context == null ? null : context.getFileName(), context == null ? 0 : context.lineNumber, context == null ? 0 : context.linePosition);
+        this(context == null ? null : context.getFileName(), context == null ? 0 : context.getLineNumber(), context == null ? 0 : context.getLinePosition());
     }
 
     public int getLineNumber() {

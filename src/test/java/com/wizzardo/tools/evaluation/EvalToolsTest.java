@@ -515,9 +515,9 @@ public class EvalToolsTest {
 
     @Test
     public void testTrimBrackets() throws Exception {
-        assertEquals("sin((1+2)/(3))", EvalTools.trimBrackets("sin((1+2)/(3))"));
-        assertEquals("sin((1+2)/3)", EvalTools.trimBrackets("(sin((1+2)/3))"));
-        assertEquals("sin((1+2)/3)", EvalTools.trimBrackets("((sin((1+2)/3)))"));
+        assertEquals("sin((1+2)/(3))", new EvalTools.ExpressionPart("sin((1+2)/(3))").trimBrackets());
+        assertEquals("sin((1+2)/3)", new EvalTools.ExpressionPart("(sin((1+2)/3))").trimBrackets());
+        assertEquals("sin((1+2)/3)", new EvalTools.ExpressionPart("((sin((1+2)/3)))").trimBrackets());
     }
 
     @Test
@@ -1646,7 +1646,7 @@ public class EvalToolsTest {
     @Test
     public void test_def_class_constructor_chained() {
         Map<String, Object> model = new HashMap<String, Object>();
-        Assert.assertEquals("test", EvalTools.prepare("" +
+        Expression expression = EvalTools.prepare("" +
                 "class Holder {\n" +
                 "  String value = 'value' \n" +
                 "  boolean flag \n" +
@@ -1662,8 +1662,8 @@ public class EvalToolsTest {
                 "}\n" +
                 "\n" +
                 "new Holder('test', true).value\n" +
-                "").get(model).toString());
-
+                "");
+        Assert.assertEquals("test", expression.get(model).toString());
     }
 
     @Test

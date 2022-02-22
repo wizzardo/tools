@@ -194,7 +194,7 @@ public class EvalTools {
         return to;
     }
 
-    static class ExpressionPart implements CharSequence {
+    public static class ExpressionPart implements CharSequence {
         final String source;
         final int from;
         final int to;
@@ -204,11 +204,11 @@ public class EvalTools {
         final int endBracketsTrimmed;
         int hash;
 
-        ExpressionPart(String source) {
+        public ExpressionPart(String source) {
             this(source, 0, source.length());
         }
 
-        ExpressionPart(String source, int from, int to) {
+        public ExpressionPart(String source, int from, int to) {
             this.source = source;
             this.from = from;
             this.to = to;
@@ -248,6 +248,10 @@ public class EvalTools {
             return source.substring(start, end);
         }
 
+        public String trimBrackets() {
+            return source.substring(startBracketsTrimmed, endBracketsTrimmed);
+        }
+
         public boolean startsWith(String s) {
             return source.startsWith(s, start);
         }
@@ -262,6 +266,10 @@ public class EvalTools {
 
         public String substring(int i) {
             return source.substring(start + i, end);
+        }
+
+        public String substring(int from, int to) {
+            return source.substring(start + from, start + to);
         }
 
         public boolean wrappedWith(String starts, String ends) {
@@ -299,6 +307,11 @@ public class EvalTools {
 
         public boolean isNotBlank() {
             return end - start > 0;
+        }
+
+        public int indexOf(char c) {
+            int i = source.indexOf(c, start);
+            return i >= end ? -1 : i;
         }
     }
 
@@ -469,45 +482,6 @@ public class EvalTools {
             }
         }
         return brackets == 0;
-    }
-
-    public static String trimBrackets(String s) {
-        int db = s.indexOf("((");
-        if (db != -1) {
-            String t = s.substring(db + 2);
-            Matcher m = BRACKETS.matcher(t);
-            int brackets = 2;
-            boolean innerBrackets = false;
-            while (m.find()) {
-                if (m.group().equals("(")) {
-                    if (brackets < 2)
-                        innerBrackets = true;
-                    brackets++;
-                } else if (m.group().equals(")")) {
-                    brackets--;
-                }
-                if (!innerBrackets && brackets == 0 && m.start() > 0 && t.charAt(m.start() - 1) == ')') {
-                    return trimBrackets(s.substring(0, db + 1) + t.substring(0, m.start() - 1) + t.substring(m.start()));
-                }
-            }
-        }
-
-        if (s.startsWith("(") && s.endsWith(")")) {
-            Matcher m = BRACKETS.matcher(s);
-            int brackets = 0;
-            while (m.find()) {
-                if (m.group().equals("(")) {
-                    brackets++;
-                } else if (m.group().equals(")")) {
-                    brackets--;
-                }
-                if (brackets == 0 && m.end() != s.length()) {
-                    return s;
-                }
-            }
-            return s.substring(1, s.length() - 1);
-        }
-        return s;
     }
 
     private static boolean isMap(String s, int from, int to) {
@@ -1240,9 +1214,9 @@ public class EvalTools {
             if (isEnum) {
                 classExpression.isEnum = true;
                 ExpressionPart part = lines.get(0);
-                List<String> enums = parseArgs(part.source, part.start, part.end);
+                List<ExpressionPart> enums = parseArgs(part.source, part.start, part.end);
                 for (int i = 0; i < enums.size(); i++) {
-                    String s = enums.get(i);
+                    ExpressionPart s = enums.get(i);
                     int argsStart = s.indexOf('(');
 
                     String name;
@@ -1251,18 +1225,15 @@ public class EvalTools {
                     if (argsStart != -1) {
                         name = s.substring(0, argsStart);
 
-                        String argsRaw = trimBrackets(s.substring(name.length()));
-                        if (argsRaw.length() > 0) {
-                            List<String> arr = parseArgs(argsRaw);
-                            args = new Object[arr.size()];
-                            for (int j = 0; j < arr.size(); j++) {
-                                args[j] = prepare(arr.get(j), model, functions, imports, false).get();
-                            }
+                        ExpressionPart argsRaw = new ExpressionPart(s.source, s.start + name.length(), s.to);
+                        if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
+                            List<Expression> arr = prepareArgs(argsRaw.source, argsRaw.startBracketsTrimmed, argsRaw.endBracketsTrimmed, model, functions, imports);
+                            args = arr.toArray(new Expression[arr.size()]);
                         } else {
                             args = new Object[0];
                         }
                     } else {
-                        name = s;
+                        name = s.toString();
                         args = new Object[0];
                     }
                     classExpression.context.put(name, classExpression.newInstance(args));
@@ -1326,8 +1297,6 @@ public class EvalTools {
     protected static Expression prepareVariableDefinition(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = DEF_VARIABLE.matcher(exp);
         if (m.find() && m.start() == 0) {
-//            if (m.start() >= to)
-//                return null;
             String modifiers = m.group(1);
             if (modifiers != null)
                 modifiers = modifiers.trim();
@@ -1384,8 +1353,6 @@ public class EvalTools {
     protected static Expression prepareMethodDefinition(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = DEF_METHOD.matcher(exp);
         if (m.find() && m.start() == 0) {
-//            if (m.start() >= to)
-//                return null;
             String modifiers = m.group(1);
             if (modifiers != null)
                 modifiers = modifiers.trim();
@@ -1445,7 +1412,6 @@ public class EvalTools {
 
     protected static Expression prepareAction(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = ACTIONS.matcher(exp);
-        List<String> exps = new ArrayList<String>();
         List<Operation> operations = new ArrayList<Operation>();
         int last = from;
         int position = from;
@@ -1492,12 +1458,11 @@ public class EvalTools {
             }
 
             if (!inString(exp, from, start) && countOpenBrackets(exp, from, start) == 0) {
-                String subexpression = exp.substring(last, start).trim();
+                ExpressionPart subexpression = new ExpressionPart(exp, last, start);
                 if (subexpression.startsWith("new ") && (find.equals("<") || find.equals(">"))) {
                     position = m.end();
                     continue;
                 }
-                exps.add(subexpression);
                 lastExpressionHolder = prepare(exp, last, start, model, functions, imports, false);
                 if (operation != null) {
                     //complete last operation
@@ -1509,7 +1474,7 @@ public class EvalTools {
                 //add operation to list
                 last = position = m.end();
                 if (ternary) {
-                    lastExpressionHolder = prepare(exp.substring(last), model, functions, imports);
+                    lastExpressionHolder = prepare(exp, last, to, model, functions, imports, false);
                     operation.rightPart(lastExpressionHolder);
                     break;
                 }
@@ -1520,10 +1485,9 @@ public class EvalTools {
             position = m.end();
         }
         if (operation != null) {
-            if (last != exp.length()) {
-                exps.add(exp.substring(last).trim());
-                operation.end(exp.length());
-                operation.rightPart(prepare(exp.substring(last, to), model, functions, imports));
+            if (last != to) {
+                operation.end(to);
+                operation.rightPart(prepare(exp, last, to, model, functions, imports, false));
             }
 
             return prioritize(operations);
@@ -1621,7 +1585,7 @@ public class EvalTools {
                         if (dot == -1 || clazz.isEnum()) {
                             return new PrepareResolveClassResult(new Expression.Holder(clazz, model), from + prev);
                         }
-                        Field field = Function.findField(clazz, className.substring(from + prev + 1, dot));
+                        Field field = Function.findField(clazz, className.substring(prev + 1, dot));
                         if (field != null) {
                             return new PrepareResolveClassResult(new Expression.Holder(clazz, model), from + prev);
                         }
@@ -1681,9 +1645,13 @@ public class EvalTools {
     }
 
     static Expression prepare(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        return prepare(exp, model, functions, imports, false);
+    }
+
+    static Expression prepare(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
         if (exp == null)
             return null;
-        return prepare(exp.source, exp.start, exp.end, model, functions, imports, false);
+        return prepare(exp.source, exp.start, exp.end, model, functions, imports, isTemplate);
     }
 
     public static Expression prepare(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
@@ -1711,7 +1679,9 @@ public class EvalTools {
                 return null;
             }
         }
-        model.getRoot().lineNumber += countNewLines(exp, from, start);
+
+        ExpressionPart expressionPart = new ExpressionPart(exp, start, to);
+        model.lineNumber = 1 + countNewLines(exp, 0, start);
 
         if (isTemplate && to - from == 0)
             return new Expression.Holder("", true, model);
@@ -1744,7 +1714,6 @@ public class EvalTools {
                 return result;
         }
 
-        ExpressionPart expressionPart = new ExpressionPart(exp, start, to);
         {
             if (expressionPart.equals("null")) {
                 return Expression.Holder.NULL;
@@ -1794,13 +1763,12 @@ public class EvalTools {
                 return new Expression.MapExpression(map, model);
             }
             if (isList(exp, start, to)) {
-                List<Expression> l = new ArrayList<Expression>();
-//                exp = exp.substring(1, exp.length() - 1);
-                List<String> arr = parseArgs(exp, start + 1, to - 1);
-                for (String anArr : arr) {
-                    l.add(prepare(anArr, model, functions, imports, isTemplate));
-                }
-                return new Expression.CollectionExpression(l, model);
+//                List<Expression> l = new ArrayList<Expression>();
+                List<Expression> arr = prepareArgs(exp, start + 1, to - 1, model, functions, imports);
+//                for (ExpressionPart anArr : arr) {
+//                    l.add(prepare(anArr, model, functions, imports, isTemplate));
+//                }
+                return new Expression.CollectionExpression(arr, model);
             }
         }
 
@@ -1882,7 +1850,7 @@ public class EvalTools {
 //                System.out.println("available functions: " + functions);
                 ClassExpression currentClass = (ClassExpression) model.get("current class");
                 String functionName = m.group(1);
-                List<String> args = parseArgs(exp.substring(functionName.length() + 1, exp.length() - 1));
+                List<ExpressionPart> args = parseArgs(exp.substring(functionName.length() + 1, exp.length() - 1));
                 thatObject = new ClosureLookup(functionName, functions, args.size(), currentClass, model);
                 start = from = start + functionName.length();
             }
@@ -1917,11 +1885,8 @@ public class EvalTools {
                 Expression[] args = null;
                 ExpressionPart part = parts.remove(0);
                 if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
-                    List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
-                    args = new Expression[arr.size()];
-                    for (int i = 0; i < arr.size(); i++) {
-                        args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
-                    }
+                    List<Expression> arr = prepareArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed, model, functions, imports);
+                    args = arr.toArray(new Expression[arr.size()]);
                 }
                 thatObject = new Function(thatObject, methodName, args, model);
 
@@ -1932,11 +1897,8 @@ public class EvalTools {
                 Expression[] args = null;
                 ExpressionPart part = parts.remove(0);
                 if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
-                    List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
-                    args = new Expression[arr.size()];
-                    for (int i = 0; i < arr.size(); i++) {
-                        args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
-                    }
+                    List<Expression> arr = prepareArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed, model, functions, imports);
+                    args = arr.toArray(new Expression[arr.size()]);
                 }
                 thatObject = new Function(thatObject, methodName, args, true, model);
 
@@ -1949,11 +1911,8 @@ public class EvalTools {
                     Expression[] args = null;
                     ExpressionPart part = parts.remove(0);
                     if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
-                        List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
-                        args = new Expression[arr.size()];
-                        for (int i = 0; i < arr.size(); i++) {
-                            args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
-                        }
+                        List<Expression> arr = prepareArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed, model, functions, imports);
+                        args = arr.toArray(new Expression[arr.size()]);
                     }
                     closure.add(new Function(it, methodName, args, model));
                 } else {
@@ -1968,11 +1927,8 @@ public class EvalTools {
                 Expression[] args = null;
                 ExpressionPart part = parts.remove(0);
                 if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
-                    List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
-                    args = new Expression[arr.size()];
-                    for (int i = 0; i < arr.size(); i++) {
-                        args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
-                    }
+                    List<Expression> arr = prepareArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed, model, functions, imports);
+                    args = arr.toArray(new Expression[arr.size()]);
                 }
                 if (methodName == null) {
                     if (Function.findMeta(null, thatObject.exp, false) != null) {
@@ -2032,11 +1988,8 @@ public class EvalTools {
                 Expression[] args = null;
                 ExpressionPart part = parts.remove(0);
                 if (part.endBracketsTrimmed - part.startBracketsTrimmed > 0) {
-                    List<String> arr = parseArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed);
-                    args = new Expression[arr.size()];
-                    for (int i = 0; i < arr.size(); i++) {
-                        args[i] = prepare(arr.get(i), model, functions, imports, isTemplate);
-                    }
+                    List<Expression> arr = prepareArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed, model, functions, imports);
+                    args = arr.toArray(new Expression[arr.size()]);
                 }
                 thatObject = new Function(thatObject, "execute", args, model);
             }
@@ -2409,12 +2362,12 @@ public class EvalTools {
         return null;
     }
 
-    private static List<String> parseArgs(String argsRaw) {
+    private static List<ExpressionPart> parseArgs(String argsRaw) {
         return parseArgs(argsRaw, 0, argsRaw.length());
     }
 
-    private static List<String> parseArgs(String argsRaw, int from, int to) {
-        ArrayList<String> l = new ArrayList<String>();
+    private static List<ExpressionPart> parseArgs(String argsRaw, int from, int to) {
+        ArrayList<ExpressionPart> l = new ArrayList<ExpressionPart>();
         Matcher m = COMMA.matcher(argsRaw);
         int last = from;
         int position = from;
@@ -2422,44 +2375,43 @@ public class EvalTools {
             if (m.start() >= to)
                 break;
             if (countOpenBrackets(argsRaw, last, m.start()) == 0 && !inString(argsRaw, last, m.start())) {
-                l.add(argsRaw.substring(last, m.start()).trim());
+                l.add(new ExpressionPart(argsRaw, last, m.start()));
                 last = m.end();
             }
             position = m.end();
         }
         if (last > from || to - from > 0) {
-            l.add(argsRaw.substring(last, to).trim());
+            l.add(new ExpressionPart(argsRaw, last, to));
         }
+        return l;
+    }
+
+    private static List<Expression> prepareArgs(String argsRaw, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+        List<ExpressionPart> args = parseArgs(argsRaw, from, to);
+        ArrayList<Expression> l = new ArrayList<Expression>(args.size());
 
         int mapStart = -1;
         int mapEnd = -1;
-        while (mapStart == -1) {
-            for (int i = 0; i < l.size(); i++) {
-                String arg = l.get(i);
-                if (MAP_KEY_VALUE.matcher(arg).matches()) {
-                    if (mapStart == -1)
-                        mapStart = mapEnd = i;
-                    else
-                        mapEnd = i;
-                } else if (mapStart != -1)
-                    break;
-            }
-
-            if (mapStart != -1) {
-                StringBuilder sb = new StringBuilder("[");
-                for (int i = mapStart; i <= mapEnd; i++) {
-                    if (sb.length() > 1)
-                        sb.append(", ");
-                    sb.append(l.remove(mapStart));
+        for (int i = 0; i < args.size(); i++) {
+            ExpressionPart arg = args.get(i);
+            if (MAP_KEY_VALUE.matcher(arg).matches()) {
+                int j = i + 1;
+                for (; j < args.size(); j++) {
+                    if (!MAP_KEY_VALUE.matcher(args.get(j)).matches())
+                        break;
                 }
-                sb.append("]");
-                l.add(mapStart, sb.toString());
-            } else
-                break;
+                ExpressionPart lastMapArg = args.get(j - 1);
 
-            //reset
-            mapStart = -1;
-            mapEnd = -1;
+                Map<String, String> namedArgs = parseMap(argsRaw, arg.start - 1, lastMapArg.end + 1);
+                Map<String, Expression> map = new LinkedHashMap<String, Expression>();
+                for (Map.Entry<String, String> entry : namedArgs.entrySet()) {
+                    map.put(entry.getKey(), prepare(entry.getValue(), model, functions, imports, false));
+                }
+                l.add(new Expression.MapExpression(map, model));
+                i = j - 1;
+                continue;
+            }
+            l.add(prepare(arg, model, functions, imports));
         }
         return l;
     }
