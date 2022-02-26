@@ -25,18 +25,18 @@ public class EvalTools {
     private static AtomicInteger variableCounter = new AtomicInteger();
     private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d_]+)(\\.[A-Z]?[a-zA-Z\\d_]+)*)(\\[)?]?");
     private static final Pattern TYPE = Pattern.compile(CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)*\\>)*");
-    private static final Pattern NEW = Pattern.compile("new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*");
-    private static final Pattern CLASS = Pattern.compile(CLEAN_CLASS.pattern());
-    private static final Pattern CAST = Pattern.compile("\\(" + CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)+\\>)?" + "\\)");
-    private static final Pattern FUNCTION = Pattern.compile("([a-z_]+\\w*)\\(.+");
+    private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*");
+    private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
+    private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)+\\>)?" + "\\)");
+    private static final Pattern FUNCTION = Pattern.compile("^([a-z_]+\\w*)\\(.+");
     private static final Pattern COMMA = Pattern.compile(",");
     private static final Pattern MAP_KEY_VALUE = Pattern.compile("[a-zA-Z\\d]+ *: *.+");
     private static final Pattern IF_FOR_WHILE = Pattern.compile("(if|for|while) *\\(");
-    private static final Pattern LIST = Pattern.compile("([a-z]+[a-zA-Z\\d]*)\\[");
+    private static final Pattern LIST = Pattern.compile("^([a-z]+[a-zA-Z\\d]*)\\[");
     private static final Pattern VARIABLE = Pattern.compile("\\$([\\.a-z]+[\\.a-zA-Z]*)");
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|->|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?|instanceof");
     //    private static final Pattern DEF = Pattern.compile("((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)(\\s+[a-zA-Z_]+[a-zA-Z_\\d]*)? *($|=|\\()", Pattern.MULTILINE);
-    private static final Pattern DEF_METHOD = Pattern.compile("((?:static|final|private|protected|public|synchronized|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(void\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)(\\s+[a-zA-Z_]+[a-zA-Z_\\d]*)? *(\\()");
+    private static final Pattern DEF_METHOD = Pattern.compile("^((?:static|final|private|protected|public|synchronized|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(void\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)(\\s+[a-zA-Z_]+[a-zA-Z_\\d]*)? *(\\()");
     private static final Pattern DEF_VARIABLE = Pattern.compile("((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)\\s+([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|;)", Pattern.MULTILINE);
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
     private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum|interface) +([A-Za-z0-9_]+)" +
@@ -689,8 +689,8 @@ public class EvalTools {
         Matcher m = IF_FOR_WHILE.matcher(s);
         int start = from;
         if (m.find(start) && m.start() < to) {
-            String before = s.substring(start, m.start()).trim();
-            if (before.length() > 0) {
+            ExpressionPart before = new ExpressionPart(s, start, m.start());
+            if (before.isNotBlank()) {
                 return getStringBlock(s, from, to, statement);
             }
             if (m.start() >= to || m.end() >= to)
@@ -851,8 +851,6 @@ public class EvalTools {
 
     static List<ExpressionPart> getBlocks(String exp, int from, int to, boolean ignoreNewLine, boolean withEmptyStatements) {
         List<ExpressionPart> list = new ArrayList<ExpressionPart>();
-
-        StringBuilder sb = new StringBuilder(128);
         char last = 0, stringChar = 0;
         boolean inString = false;
         int brackets = 0;
@@ -876,20 +874,13 @@ public class EvalTools {
                     continue;
 
                 if (brackets == 0) {
-                    if (c == '.' && trim(sb).length() == 0 && !lineEndedWithSemicolon) {
-//                        sb.append(list.remove(list.size() - 1));
-                    }
                     if (c == ';' || c == '\n') {
                         lineEndedWithSemicolon = c == ';';
-                        cleanLine(sb);
                         ExpressionPart part = new ExpressionPart(exp, start, i);
                         if (ignoreNewLine)
                             part = removeRN(part);
-//                        if (withEmptyStatements || sb.length() > 0)
-//                            list.add(sb.toString());
                         if (withEmptyStatements || part.end - part.start > 0)
                             list.add(part);
-                        sb.setLength(0);
                         start = i + 1;
                         continue;
                     }
@@ -900,9 +891,7 @@ public class EvalTools {
                 }
             }
             last = c;
-            sb.append(c);
         }
-        cleanLine(sb);
         if (to - start > 0 || withEmptyStatements) {
             ExpressionPart part = new ExpressionPart(exp, start, to);
             if (ignoreNewLine)
@@ -917,8 +906,6 @@ public class EvalTools {
                 list.remove(i);
             }
         }
-//        if (withEmptyStatements || sb.length() > 0)
-//            list.add(sb.toString());
 
         return list;
     }
@@ -1152,7 +1139,6 @@ public class EvalTools {
                     throw new IllegalStateException("Cannot find class to extend: " + anExtends);
             }
 
-//            exp = exp.substring(m.end(), exp.length() - 1).trim();
             List<ExpressionPart> lines = getBlocks(exp, m.end(), to - 1, false);
 
             List<Expression> definitions = new ArrayList<Expression>();
@@ -1303,7 +1289,6 @@ public class EvalTools {
             else
                 modifiers = "";
 
-//            String generics = m.group(2);
             String type = m.group(2);
             if (type != null)
                 type = type.replaceAll("\\s", "");
@@ -1312,28 +1297,19 @@ public class EvalTools {
                 String name = m.group(3);
                 if (name != null)
                     name = name.trim();
-//                else if (type.equals("this") || type.equals("super"))
-//                    return null;
-//                else
-//                    name = type;
 
                 if (m.group(4).equals("=")) {
                     if (name != null)
                         model.put(name, null);
 
-//                    exp = name + " =" + exp.substring(m.group(0).length());
                     Expression action = prepare(exp.source, exp.start + m.start(3), exp.end, model, functions, imports, false);
                     if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
                         ((Operation) action).leftPart(new Expression.Holder(name, model));
                     }
-//                            if (type != null && type.contains("<"))
-//                                type = type.substring(0, type.indexOf('<'));
                     Class typeClass = findClass(type, imports, model);
                     return new Expression.DefineAndSet(typeClass, name, action, type, modifiers, model);
                 } else {
                     model.put(name, null);
-//                            if (type != null && type.contains("<"))
-//                                type = type.substring(0, type.indexOf('<'));
 
                     if (model.containsKey("class " + type))
                         return new Expression.DefinitionWithClassExpression((ClassExpression) model.get("class " + type), name, model);
@@ -1352,7 +1328,7 @@ public class EvalTools {
 
     protected static Expression prepareMethodDefinition(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = DEF_METHOD.matcher(exp);
-        if (m.find() && m.start() == 0) {
+        if (m.find()) {
             String modifiers = m.group(1);
             if (modifiers != null)
                 modifiers = modifiers.trim();
@@ -1398,8 +1374,6 @@ public class EvalTools {
                     closure = closureHolder;
                 }
 
-//                            if (type != null && type.contains("<"))
-//                                type = type.substring(0, type.indexOf('<'));
                 Class typeClass = findClass(type, imports, model);
                 if (typeClass == null)
                     typeClass = Object.class;
@@ -1553,9 +1527,9 @@ public class EvalTools {
         }
     }
 
-    protected static PrepareResolveClassResult prepareResolveClass(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+    protected static PrepareResolveClassResult prepareResolveClass(ExpressionPart exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
         Matcher m = CLASS.matcher(exp);
-        if (m.find(from) && m.start() == from) {
+        if (m.find()) {
             String className = m.group(1);
             boolean endsWithClass = className.endsWith(".class");
             if (endsWithClass) {
@@ -1575,7 +1549,7 @@ public class EvalTools {
                     String name = className.substring(0, dot);
                     ClassExpression cl = (ClassExpression) model.get("class " + name);
                     if (cl != null) {
-                        return new PrepareResolveClassResult(cl, from + name.length());
+                        return new PrepareResolveClassResult(cl, exp.start + name.length());
                     }
 
                     clazz = findClass(name, imports, model);
@@ -1583,11 +1557,11 @@ public class EvalTools {
                     dot = className.indexOf('.', dot + 1);
                     if (clazz != null) {
                         if (dot == -1 || clazz.isEnum()) {
-                            return new PrepareResolveClassResult(new Expression.Holder(clazz, model), from + prev);
+                            return new PrepareResolveClassResult(new Expression.Holder(clazz, model), exp.start + prev);
                         }
                         Field field = Function.findField(clazz, className.substring(prev + 1, dot));
                         if (field != null) {
-                            return new PrepareResolveClassResult(new Expression.Holder(clazz, model), from + prev);
+                            return new PrepareResolveClassResult(new Expression.Holder(clazz, model), exp.start + prev);
                         }
                     }
                 }
@@ -1601,7 +1575,7 @@ public class EvalTools {
                 className = sb.toString();
                 ClassExpression cl = (ClassExpression) model.get("class " + className);
                 if (cl != null) {
-                    return new PrepareResolveClassResult(cl, from + sb.length());
+                    return new PrepareResolveClassResult(cl, exp.start + sb.length());
                 } else {
                     clazz = findClass(className, imports, model);
                     if (clazz == null) {
@@ -1614,7 +1588,7 @@ public class EvalTools {
                     }
 
                     if (clazz != null) {
-                        return new PrepareResolveClassResult(new Expression.Holder(clazz, model), from + sb.length());
+                        return new PrepareResolveClassResult(new Expression.Holder(clazz, model), exp.start + sb.length());
                     }
                 }
 
@@ -1628,7 +1602,7 @@ public class EvalTools {
                 if (endsWithClass)
                     className = className.substring(0, className.length() - ".class".length());
 
-                return new PrepareResolveClassResult(new Expression.ResolveClass(className, model), from + m.group(0).length());
+                return new PrepareResolveClassResult(new Expression.ResolveClass(className, model), exp.start + m.group(0).length());
             }
         }
         return null;
@@ -1763,11 +1737,7 @@ public class EvalTools {
                 return new Expression.MapExpression(map, model);
             }
             if (isList(exp, start, to)) {
-//                List<Expression> l = new ArrayList<Expression>();
                 List<Expression> arr = prepareArgs(exp, start + 1, to - 1, model, functions, imports);
-//                for (ExpressionPart anArr : arr) {
-//                    l.add(prepare(anArr, model, functions, imports, isTemplate));
-//                }
                 return new Expression.CollectionExpression(arr, model);
             }
         }
@@ -1776,14 +1746,14 @@ public class EvalTools {
         String methodName = null;
         Class arrayClass = null;
         {
-            Matcher m = NEW.matcher(exp);
-            if (m.find(start) && m.start() == start) {
+            Matcher m = NEW.matcher(expressionPart);
+            if (m.find()) {
                 String className = m.group(1);
                 ClassExpression cl = (ClassExpression) model.get("class " + className);
                 if (cl != null) {
                     thatObject = cl;
                     methodName = CONSTRUCTOR;
-                    from = start = m.end();
+                    from = start = expressionPart.start + m.end();
                 } else {
                     Class clazz = findClass(className, imports, model);
 
@@ -1792,11 +1762,11 @@ public class EvalTools {
                             thatObject = new Expression.Holder(Array.class, model);
                             methodName = "newInstance";
                             arrayClass = clazz;
-                            from = start = m.end() - 1;
+                            from = start = expressionPart.start + m.end() - 1;
                         } else {
                             thatObject = new Expression.Holder(clazz, model);
                             methodName = CONSTRUCTOR;
-                            from = start = m.end();
+                            from = start = expressionPart.start + m.end();
                         }
                     } else
                         Unchecked.rethrow(new ClassNotFoundException("Can not find class '" + className + "'"));
@@ -1805,15 +1775,15 @@ public class EvalTools {
         }
 
         if (thatObject == null) {
-            Matcher m = LIST.matcher(exp);
-            if (m.find(start) && m.start() == start) {
+            Matcher m = LIST.matcher(expressionPart);
+            if (m.find()) {
                 thatObject = new Expression.Holder(m.group(1), model);
-                from = start = m.end(1);
+                from = start = expressionPart.start + m.end(1);
             }
         }
 
         if (thatObject == null) {
-            PrepareResolveClassResult result = prepareResolveClass(exp, start, to, model, functions, imports);
+            PrepareResolveClassResult result = prepareResolveClass(expressionPart, model, functions, imports);
             if (result != null) {
                 thatObject = result.thatObject;
                 start = from = result.position;
@@ -1821,8 +1791,8 @@ public class EvalTools {
         }
 
         if (thatObject == null) {
-            Matcher m = CAST.matcher(exp);
-            if (m.find(start) && m.start() == start) {
+            Matcher m = CAST.matcher(expressionPart);
+            if (m.find()) {
                 String className = m.group(1);
                 Class clazz = findClass(className, imports, model);
                 if (clazz == null) {
@@ -1833,19 +1803,18 @@ public class EvalTools {
 
                 if (clazz != null) {
                     boolean isArray = m.group(5) != null;
-                    return new Expression.CastExpression(clazz, prepare(exp, m.end(), to, model, functions, imports, isTemplate), isArray, model);
+                    return new Expression.CastExpression(clazz, prepare(exp, expressionPart.start + m.end(), to, model, functions, imports, isTemplate), isArray, model);
                 }
                 if (model.containsKey("class " + className)) {
-                    exp = exp.substring(m.end());
-                    return prepare(exp, model, functions, imports, isTemplate);
+                    return prepare(exp, expressionPart.start + m.end(), to, model, functions, imports, isTemplate);
                 }
                 throw new IllegalStateException("Cannot find class to cast (" + className + ") for expression '" + exp + "'");
             }
         }
 
         if (thatObject == null) {
-            Matcher m = FUNCTION.matcher(exp);
-            if (m.find(start) && m.start() == start) {
+            Matcher m = FUNCTION.matcher(expressionPart);
+            if (m.find()) {
 //                System.out.println("find user function: " + m.group(1) + "\t from " + exp);
 //                System.out.println("available functions: " + functions);
                 ClassExpression currentClass = (ClassExpression) model.get("current class");
