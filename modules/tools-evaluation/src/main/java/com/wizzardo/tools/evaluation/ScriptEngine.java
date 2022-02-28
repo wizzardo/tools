@@ -5,10 +5,8 @@ import com.wizzardo.tools.misc.Pair;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ScriptEngine {
     public static final FileFilter NOOP_FILTER = new FileFilter() {
@@ -52,6 +50,9 @@ public class ScriptEngine {
         protected String currentClass;
         protected long findClassDuration = 0;
         protected long findClassCount = 0;
+        protected boolean perfCountersEnabled = false;
+        protected long perfCounterStart;
+        protected Map<String, AtomicLong> perfCounters = new HashMap<>();
 
         public Binding(File root, String pack, List<String> imports) {
             this(root, pack, imports, NOOP_FILTER);
@@ -198,6 +199,47 @@ public class ScriptEngine {
 
         protected Binding createBidding(File root, String pack, List<String> imports, FileFilter fileFilter) {
             return new Binding(root, pack, imports, fileFilter);
+        }
+
+        @Override
+        public boolean isPerfCountersEnabled() {
+            return perfCountersEnabled;
+        }
+
+        @Override
+        public void setPerfCountersEnabled(boolean enabled) {
+            perfCountersEnabled = enabled;
+        }
+
+        @Override
+        public void startPerfCounter() {
+            if (perfCountersEnabled)
+                perfCounterStart = System.nanoTime();
+        }
+
+        @Override
+        public void stopPerfCounter(String name) {
+            if (!perfCountersEnabled)
+                return;
+
+            long end = System.nanoTime();
+            AtomicLong counter = perfCounters.get(name);
+            if (counter == null)
+                perfCounters.put(name, counter = new AtomicLong());
+
+            counter.addAndGet(end - perfCounterStart);
+        }
+
+        public Map<String, AtomicLong> getPerfCounters() {
+            return perfCounters;
+        }
+
+        public void printPerfCounters() {
+            ArrayList<Entry<String, AtomicLong>> entries = new ArrayList<>(perfCounters.entrySet());
+            Collections.sort(entries, Comparator.<Entry<String, AtomicLong>>comparingLong(value -> value.getValue().get()).reversed());
+            for (Entry<String, AtomicLong> entry : entries) {
+                System.out.println(entry.getKey() + ": " + (entry.getValue().get() / 1000 / 1000f) + "ms");
+            }
         }
     }
 }

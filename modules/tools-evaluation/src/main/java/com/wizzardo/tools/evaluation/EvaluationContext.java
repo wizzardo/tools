@@ -101,4 +101,25 @@ public class EvaluationContext extends HashMap<String, Object> {
     public int getLinePosition() {
         return linePosition;
     }
+
+    public boolean isPerfCountersEnabled() {
+        return parent != null && getRoot().isPerfCountersEnabled();
+    }
+
+    public void setPerfCountersEnabled(boolean enabled) {
+        if (parent != null)
+            parent.setPerfCountersEnabled(enabled);
+        else
+            throw new IllegalStateException("Not implemented yet");
+    }
+
+    public void startPerfCounter() {
+        if (parent != null)
+            parent.startPerfCounter();
+    }
+
+    public void stopPerfCounter(String name) {
+        if (parent != null)
+            parent.stopPerfCounter(name);
+    }
 }
