@@ -2036,4 +2036,12 @@ public class EvalToolsTest {
                 "def a = 1\n" +
                 "", model).getLineNumber());
     }
+
+    @Test
+    public void test_indexOfWord() {
+        String s = "public static class";
+        Assert.assertEquals(s.indexOf("public"), EvalTools.indexOfWord(s, "public", 0, s.length()));
+        Assert.assertEquals(s.indexOf("static"), EvalTools.indexOfWord(s, "static", 0, s.length()));
+        Assert.assertEquals(s.indexOf("class"), EvalTools.indexOfWord(s, "class", 0, s.length()));
+    }
 }

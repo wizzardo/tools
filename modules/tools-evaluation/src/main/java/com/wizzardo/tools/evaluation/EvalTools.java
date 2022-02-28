@@ -37,9 +37,9 @@ public class EvalTools {
     private static final Pattern ACTIONS = Pattern.compile("\\+\\+|--|->|\\.\\.|\\?:|\\?\\.|\\*=|\\*(?!\\.)|/=?|\\+=?|-=?|:|<<|>>>|>>|<=?|>=?|==?|%|!=?|\\?|&&?|\\|\\|?|instanceof");
     //    private static final Pattern DEF = Pattern.compile("((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)(\\s+[a-zA-Z_]+[a-zA-Z_\\d]*)? *($|=|\\()", Pattern.MULTILINE);
     private static final Pattern DEF_METHOD = Pattern.compile("^((?:static|final|private|protected|public|synchronized|\\s+)+)*(<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>)?\\s*(void\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)(\\s+[a-zA-Z_]+[a-zA-Z_\\d]*)? *(\\()");
-    private static final Pattern DEF_VARIABLE = Pattern.compile("((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)\\s+([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|;)", Pattern.MULTILINE);
+    private static final Pattern DEF_VARIABLE = Pattern.compile("^((?:static|final|private|protected|public|volatile|transient|\\s+)+)*(def\\s+|[a-zA-Z_\\d\\.]+(?:\\s*<[\\s,a-zA-Z_\\d\\.<>\\[\\]]+>|\\s*\\[\\])*)\\s+([a-zA-Z_]+[a-zA-Z_\\d]*) *($|=|;)");
     private static final Pattern BRACKETS = Pattern.compile("[\\(\\)]");
-    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public)*\\b(class|enum|interface) +([A-Za-z0-9_]+)" +
+    private static final Pattern CLASS_DEF = Pattern.compile("(static|private|protected|public|abstract|\\s+)*\\b(class|enum|interface) +([A-Za-z0-9_]+)" + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" +
             "(?<extends> +extends +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" + ")?" +
             "(?<implements> +implements(,? +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*" + ")+)?" +
             " *\\{");
@@ -1076,13 +1076,154 @@ public class EvalTools {
         return null;
     }
 
-    protected static Expression prepareClass(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
-        Matcher m = CLASS_DEF.matcher(exp);
-        if (m.find(from) && m.start() < to && findCloseBracket(exp, m.end()) == to - 1) {
-            String className = m.group(3);
-            String type = m.group(2);
+    static class ClassDefinitionResult {
+        final int modifiersStart;
+        final int modifiersEnd;
+        final int typeStart;
+        final int typeEnd;
+        final int nameStart;
+        final int nameEnd;
+        final int genericsStart;
+        final int genericsEnd;
+        final int extendsStart;
+        final int extendsEnd;
+        final int implementsStart;
+        final int implementsEnd;
+        final int bodyStart;
 
-            if ("interface".equals(type))
+        ClassDefinitionResult(int modifiersStart, int modifiersEnd, int typeStart, int typeEnd, int nameStart, int nameEnd, int genericsStart, int genericsEnd, int extendsStart, int extendsEnd, int implementsStart, int implementsEnd, int bodyStart) {
+            this.modifiersStart = modifiersStart;
+            this.modifiersEnd = modifiersEnd;
+            this.typeStart = typeStart;
+            this.typeEnd = typeEnd;
+            this.nameStart = nameStart;
+            this.nameEnd = nameEnd;
+            this.genericsStart = genericsStart;
+            this.genericsEnd = genericsEnd;
+            this.extendsStart = extendsStart;
+            this.extendsEnd = extendsEnd;
+            this.implementsStart = implementsStart;
+            this.implementsEnd = implementsEnd;
+            this.bodyStart = bodyStart;
+        }
+    }
+
+    static ClassDefinitionResult findClassDefinition(String exp, int from, int to) {
+        int modifiersEnd = findModifiersEnd(exp, from, to);
+        if (modifiersEnd == -1)
+            return null;
+
+        int typeStart = skipWhitespaces(exp, modifiersEnd, to);
+        if (typeStart == to)
+            return null;
+
+        int typeEnd = skipNonWhitespaces(exp, typeStart, to);
+        if (typeEnd == to)
+            return null;
+
+        if (!(substringEquals(exp, typeStart, typeEnd, "class") || substringEquals(exp, typeStart, typeEnd, "interface") || substringEquals(exp, typeStart, typeEnd, "enum")))
+            return null;
+
+        int bodyStart = indexOf(exp, '{', typeEnd, to);
+        if (bodyStart == -1)
+            return null;
+
+        int nameStart = skipWhitespaces(exp, typeEnd, bodyStart);
+        if (nameStart == bodyStart)
+            return null;
+
+        int nameEnd = skipNonWhitespaces(exp, nameStart, bodyStart);
+
+        int genericsEnd = -1;
+        int genericsStart = indexOf(exp, '<', nameStart, nameEnd);
+        if (genericsStart != -1) {
+            nameEnd = genericsStart;
+            genericsEnd = findGenericsEnd(exp, genericsStart, to);
+            if (genericsEnd == -1)
+                return null;
+        } else {
+            genericsStart = skipWhitespaces(exp, typeEnd, bodyStart);
+            if (genericsStart != bodyStart && exp.charAt(genericsStart) == '<') {
+                genericsEnd = findGenericsEnd(exp, genericsStart, to);
+                if (genericsEnd == -1)
+                    return null;
+            } else {
+                genericsStart = -1;
+            }
+        }
+
+        int extendsStart = indexOfWord(exp, "extends", nameEnd, bodyStart);
+        int implementsStart = indexOfWord(exp, "implements", nameEnd, bodyStart);
+
+        int extendsEnd = extendsStart == -1 ? -1 : (implementsStart == -1 ? bodyStart : (implementsStart < extendsStart ? bodyStart : implementsStart));
+        int implementsEnd = implementsStart == -1 ? -1 : (extendsStart == -1 ? bodyStart : (extendsStart < implementsStart ? bodyStart : extendsStart));
+
+        bodyStart++;
+        return new ClassDefinitionResult(from, modifiersEnd, typeStart, typeEnd, nameStart, nameEnd, genericsStart, genericsEnd, extendsStart, extendsEnd, implementsStart, implementsEnd, bodyStart);
+    }
+
+    static int findGenericsEnd(String exp, int from, int to) {
+        int genericsEnd = indexOf(exp, '>', from, to);
+        if (genericsEnd == -1)
+            return -1;
+        int subgenerics = from;
+        while ((subgenerics = indexOf(exp, '<', subgenerics + 1, genericsEnd)) != -1) {
+            genericsEnd = indexOf(exp, '>', genericsEnd + 1, to);
+            if (genericsEnd == -1)
+                return -1;
+        }
+        return genericsEnd;
+    }
+
+    static int findModifiersEnd(String exp, int from, int to) {
+        int last = from;
+        do {
+            int i = skipWhitespaces(exp, last, to);
+            if (i == to)
+                return -1;
+
+            i = skipNonWhitespaces(exp, last, to);
+            if (i == to)
+                return -1;
+
+            if (substringEquals(exp, last, i, "public")) {
+                last = i;
+                continue;
+            }
+            if (substringEquals(exp, last, i, "static")) {
+                last = i;
+                continue;
+            }
+            if (substringEquals(exp, last, i, "private")) {
+                last = i;
+                continue;
+            }
+            if (substringEquals(exp, last, i, "abstract")) {
+                last = i;
+                continue;
+            }
+            if (substringEquals(exp, last, i, "protected")) {
+                last = i;
+                continue;
+            }
+            return last;
+        } while (last != -1);
+        return -1;
+    }
+
+    protected static Expression prepareClass(String exp, int from, int to, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports) {
+//        Matcher m = CLASS_DEF.matcher(exp);
+//        boolean find = m.find(from);
+        ClassDefinitionResult cd = findClassDefinition(exp, from, to);
+//        if (find && m.start() < to && classDefinition == null)
+//            throw new RuntimeException();
+//        if (!find && classDefinition != null)
+//            throw new RuntimeException();
+
+        if (cd != null && findCloseBracket(exp, cd.bodyStart) == to - 1) {
+            String className = exp.substring(cd.nameStart, cd.nameEnd);
+
+            if (substringEquals(exp, cd.typeStart, cd.typeEnd, "interface"))
                 return new Expression(model) {
                     @Override
                     public void setVariable(Variable v) {
@@ -1100,9 +1241,9 @@ public class EvalTools {
                     }
                 };
 
-            boolean isEnum = "enum".equals(type);
+            boolean isEnum = substringEquals(exp, cd.typeStart, cd.typeEnd, "enum");
             Class[] interfaces = new Class[0];
-            String anImplements = m.group("implements");
+            String anImplements = cd.implementsStart == -1 ? null : exp.substring(cd.implementsStart, cd.implementsEnd);
             if (anImplements != null && !anImplements.isEmpty()) {
                 anImplements = anImplements.trim();
                 anImplements = anImplements.substring("implements ".length()).trim();
@@ -1124,7 +1265,7 @@ public class EvalTools {
             }
 
             Class<?> superClass = Object.class;
-            String anExtends = m.group("extends");
+            String anExtends = cd.extendsStart == -1 ? null : exp.substring(cd.extendsStart, cd.extendsEnd);
             if (anExtends != null && !anExtends.isEmpty()) {
                 anExtends = anExtends.trim();
                 anExtends = anExtends.substring("extends ".length()).trim();
@@ -1139,7 +1280,7 @@ public class EvalTools {
                     throw new IllegalStateException("Cannot find class to extend: " + anExtends);
             }
 
-            List<ExpressionPart> lines = getBlocks(exp, m.end(), to - 1, false);
+            List<ExpressionPart> lines = getBlocks(exp, cd.bodyStart, to - 1, false);
 
             List<Expression> definitions = new ArrayList<Expression>();
             List<Expression> definitionsStatic = new ArrayList<Expression>();
@@ -1360,6 +1501,11 @@ public class EvalTools {
                     closure = (ClosureHolder) prepare(exp.source, exp.start + argsEnd + 1, exp.end, model, functions, imports, false);
                 } else {
                     int blockStart = trimLeft(exp.source, exp.start + argsEnd + 1, exp.end);
+                    if (exp.startsWith("throws", blockStart - exp.start)) {
+                        blockStart = skipUntil(exp.source, blockStart, '{');
+                        if (blockStart == -1)
+                            throw new IllegalStateException("Cannot parse: " + exp);
+                    }
                     if (!exp.startsWith("{", blockStart - exp.start))
                         throw new IllegalStateException("Cannot parse: " + exp);
 
@@ -2086,6 +2232,48 @@ public class EvalTools {
         while (from < to && s.charAt(from) <= ' ')
             from++;
         return from;
+    }
+
+    protected static int skipNonWhitespaces(String s, int from, int to) {
+        while (from < to && s.charAt(from) > ' ')
+            from++;
+        return from;
+    }
+
+    protected static int indexOf(String s, char c, int from, int to) {
+        while (from < to) {
+            if (s.charAt(from) == c)
+                return from;
+            from++;
+        }
+        return -1;
+    }
+
+    protected static int indexOf(String s, String substring, int from, int to) {
+        while (from < to) {
+            if (s.startsWith(substring, from))
+                return from;
+            from++;
+        }
+        return -1;
+    }
+
+    protected static int indexOfWord(String s, String substring, int from, int to) {
+        int length = substring.length();
+        int limit = to - length;
+        while (from <= limit) {
+            if ((from == 0 || s.charAt(from - 1) <= ' ')
+                    && (from + length == to || s.charAt(from + length) <= ' ')
+                    && s.startsWith(substring, from)
+            )
+                return from;
+            from++;
+        }
+        return -1;
+    }
+
+    protected static boolean substringEquals(String s, int from, int to, String substring) {
+        return to - from == substring.length() && s.startsWith(substring, from);
     }
 
     protected static int countNewLines(String s, int from, int to) {
