@@ -341,8 +341,6 @@ public class EvalTools {
                             if (part.isNotBlank()) {
                                 l.add(part);
                                 from = i + 1;
-
-                                break loop;
                             }
                         }
 
@@ -1051,7 +1049,8 @@ public class EvalTools {
             ClosureExpression closure = new ClosureExpression(model);
             if (isLambda) {
                 from = closure.findAndParseArguments(exp, from, to, imports, model);
-                if (exp.startsWith("{")) {
+                from = trimLeft(exp, from, to);
+                if (exp.startsWith("{", from)) {
                     from++;
                     to--;
                     from = trimLeft(exp, from, to);
@@ -1182,10 +1181,16 @@ public class EvalTools {
             if (i == to)
                 return -1;
 
+            last = i;
+
             i = skipNonWhitespaces(exp, last, to);
             if (i == to)
                 return -1;
 
+            if (substringEquals(exp, last, i, "final")) {
+                last = i;
+                continue;
+            }
             if (substringEquals(exp, last, i, "public")) {
                 last = i;
                 continue;
@@ -1236,7 +1241,7 @@ public class EvalTools {
                     }
 
                     @Override
-                    public Object get(Map<String, Object> model) {
+                    protected Object doExecute(Map<String, Object> model) {
                         return null;
                     }
                 };
