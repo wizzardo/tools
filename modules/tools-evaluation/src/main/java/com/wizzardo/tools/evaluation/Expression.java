@@ -665,6 +665,45 @@ public abstract class Expression {
         }
     }
 
+    public static class ThrowExpression extends Expression {
+        protected Expression inner;
+
+        public ThrowExpression(Expression inner, EvaluationContext context) {
+            super(context);
+            this.inner = inner;
+        }
+
+        protected ThrowExpression(Expression inner, String file, int lineNumber, int linePosition) {
+            super(file, lineNumber, linePosition);
+            this.inner = inner;
+        }
+
+        @Override
+        public void setVariable(Variable v) {
+            if (inner != null)
+                inner.setVariable(v);
+        }
+
+        @Override
+        public Expression clone() {
+            if (inner == null)
+                return this;
+
+            return new ThrowExpression(inner.clone(), file, lineNumber, linePosition);
+        }
+
+        @Override
+        protected Object doExecute(Map<String, Object> model) {
+            Exception e = (Exception) inner.get(model);
+            throw Unchecked.rethrow(e);
+        }
+
+        @Override
+        public String toString() {
+            return inner.toString();
+        }
+    }
+
     public static class BlockExpression extends Expression {
         protected List<Expression> expressions = new ArrayList<Expression>();
 

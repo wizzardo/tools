@@ -1854,6 +1854,9 @@ public class EvalTools {
             if (expressionPart.startsWith("return ") || expressionPart.equals("return")) {
                 return new Expression.ReturnExpression(prepare(expressionPart.source, expressionPart.start + 6, expressionPart.end, model, functions, imports, isTemplate), model);
             }
+            if (expressionPart.startsWith("throw ")) {
+                return new Expression.ThrowExpression(prepare(expressionPart.source, expressionPart.start + 5, expressionPart.end, model, functions, imports, isTemplate), model);
+            }
             if (expressionPart.equals("[]")) {
                 return new Expression.CollectionExpression(model);
             }
