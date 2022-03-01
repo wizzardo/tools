@@ -49,7 +49,7 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
     }
 
     @Override
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
 //        HashMap<String, Object> local = new HashMap<String, Object>(model);
         Object ob = null;
         for (Expression expression : expressions) {

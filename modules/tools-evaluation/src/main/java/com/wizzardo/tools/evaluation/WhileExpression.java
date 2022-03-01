@@ -30,7 +30,7 @@ public class WhileExpression extends Expression {
     }
 
     @Override
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
         while ((Boolean) condition.get(model)) {
             Object o = thenStatement.get(model);
             if (o != null && o instanceof ReturnResultHolder)

@@ -38,7 +38,7 @@ public class TemplateBuilder extends Expression {
     }
 
     @Override
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
         if (hardcoded)
             return result;
 

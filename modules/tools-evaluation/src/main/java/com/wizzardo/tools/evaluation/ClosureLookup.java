@@ -38,7 +38,7 @@ public class ClosureLookup extends Expression {
     }
 
     @Override
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
         return get(model, args);
     }
 

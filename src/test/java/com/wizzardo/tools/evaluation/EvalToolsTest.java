@@ -379,23 +379,21 @@ public class EvalToolsTest {
         EvalTools.evaluate("def x=0..10", model);
 
         assertEquals((Object) 5, EvalTools.evaluate("x.get(5)", model));
-        boolean exception = false;
-        try {
-            EvalTools.evaluate("x.put(5)", model);
-        } catch (Exception e) {
-            Assert.assertEquals(NoSuchMethodException.class, e.getClass());
-            exception = true;
-        }
-        assertTrue(exception);
 
-        exception = false;
-        try {
-            EvalTools.evaluate("x.b", model);
-        } catch (Exception e) {
-            Assert.assertEquals(NoSuchFieldException.class, e.getClass());
-            exception = true;
-        }
-        assertTrue(exception);
+        Map<String, Object> finalModel = model;
+        checkException(new Runnable() {
+            @Override
+            public void run() {
+                EvalTools.evaluate("x.put(5)", finalModel);
+            }
+        }, NoSuchMethodException.class, "com.wizzardo.tools.collections.Range.put([5]), at x.put(5)");
+
+        checkException(new Runnable() {
+            @Override
+            public void run() {
+                EvalTools.evaluate("x.b", finalModel);
+            }
+        }, NoSuchFieldException.class, "Cannot find getter x.b");
 
         model.clear();
         model.put("it", 1);
@@ -1206,6 +1204,9 @@ public class EvalToolsTest {
             runnable.run();
             b = true;
         } catch (Exception e) {
+//            e.printStackTrace();
+            if (e instanceof CallStack.EvaluationException)
+                e = (Exception) e.getCause();
             Assert.assertEquals(exceptionClass, e.getClass());
             Assert.assertEquals(message, e.getMessage());
         }
@@ -1916,21 +1917,18 @@ public class EvalToolsTest {
     public void test_exceptions() {
         Map<String, Object> model = new HashMap<String, Object>();
 
-        boolean exception = false;
-        try {
-            EvalTools.evaluate("" +
-                    "def c = { -> \n" +
-                    "  int a = 1;\n" +
-                    "  a.toUpperCase();\n" +
-                    "  return a;\n" +
-                    "}\n" +
-                    "c()", model);
-        } catch (Exception e) {
-            Assert.assertEquals(NoSuchMethodException.class, e.getClass());
-            Assert.assertEquals("java.lang.Integer.toUpperCase(), at a.toUpperCase()", e.getMessage());
-            exception = true;
-        }
-        assertTrue(exception);
+        checkException(new Runnable() {
+            @Override
+            public void run() {
+                EvalTools.evaluate("" +
+                        "def c = { -> \n" +
+                        "  int a = 1;\n" +
+                        "  a.toUpperCase();\n" +
+                        "  return a;\n" +
+                        "}\n" +
+                        "c()", model);
+            }
+        }, NoSuchMethodException.class, "java.lang.Integer.toUpperCase(), at a.toUpperCase()");
     }
 
     @Test
@@ -1943,6 +1941,19 @@ public class EvalToolsTest {
                 "  .append('w')\n" +
                 "  .append('e')\n" +
                 "  .toString()\n" +
+                "", model));
+    }
+
+    @Test
+    public void test_builder_pattern_2() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Assert.assertEquals("qwe", EvalTools.evaluate("" +
+                "com.wizzardo.tools.misc.With.with(new StringBuilder(), (it) -> it\n" +
+                "  .append('q')\n" +
+                "  .append('w')\n" +
+                "  .append('e')\n" +
+                ").toString()\n" +
                 "", model));
     }
 

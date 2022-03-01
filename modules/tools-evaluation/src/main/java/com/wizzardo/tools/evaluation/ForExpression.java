@@ -38,7 +38,7 @@ public class ForExpression extends Expression {
     }
 
     @Override
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
         definition.get(model);
         try {
             while ((Boolean) condition.get(model)) {

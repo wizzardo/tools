@@ -143,7 +143,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             if (hardcoded)
                 return result;
 
@@ -217,7 +217,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             ClassExpression cl = (ClassExpression) model.get(className);
             if (cl == null)
                 return null;
@@ -267,7 +267,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             model.put(name, null);
             return action.get(model);
         }
@@ -311,7 +311,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             Object c = action.get(model);
             model.put(name, c);
             return c;
@@ -357,7 +357,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             if (variable != null)
                 return variable.get();
 
@@ -420,7 +420,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             if (map == null)
                 return new HashMap();
 
@@ -501,7 +501,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             if (collection == null)
                 return new ArrayList();
 
@@ -597,7 +597,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             Object o = inner.get(model);
             if (isArray) {
                 if (!o.getClass().isArray() || o.getClass().getComponentType() != clazz)
@@ -651,7 +651,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             if (inner == null)
                 return new ReturnResultHolder(null);
 
@@ -697,7 +697,7 @@ public abstract class Expression {
         }
 
         @Override
-        public Object get(Map<String, Object> model) {
+        protected Object doExecute(Map<String, Object> model) {
             Object ob = null;
             for (Expression expression : expressions) {
                 ob = expression.get(model);
@@ -728,7 +728,19 @@ public abstract class Expression {
 
     public abstract Expression clone();
 
-    public abstract Object get(Map<String, Object> model);
+    public Object get(Map<String, Object> model) {
+        CallStack callStack = CallStack.current();
+        callStack.append(this);
+        try {
+            return doExecute(model);
+        } catch (Exception e) {
+            throw callStack.throwException(e);
+        } finally {
+            callStack.removeLast();
+        }
+    }
+
+    protected abstract Object doExecute(Map<String, Object> model);
 
     public Object get() {
         return get(null);

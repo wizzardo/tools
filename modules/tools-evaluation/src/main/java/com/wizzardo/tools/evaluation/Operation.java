@@ -197,7 +197,7 @@ public class Operation extends Expression {
             Operator.MULTIPLY_EQUAL
     );
 
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
         if (hardcoded)
             return result;
         //System.out.println("execute: " + this);

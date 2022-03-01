@@ -55,7 +55,7 @@ public class IfExpression extends Expression {
     }
 
     @Override
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
         if ((Boolean) condition.get(model)) {
             return thenStatement.get(model);
         } else if (elseStatement != null) {

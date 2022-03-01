@@ -90,7 +90,7 @@ public class UserFunction extends Expression {
         return argsNames[i];
     }
 
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
         Map<String, Object> m;
         if (notCreateOwnModel) {
             m = model;

@@ -298,7 +298,7 @@ public class Function extends Expression {
         }
     }
 
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
         if (hardcoded) {
             return result;
         }
@@ -381,6 +381,8 @@ public class Function extends Expression {
                     try {
                         return get(model);
                     } catch (Exception e) {
+                        if (e instanceof CallStack.EvaluationException)
+                            e = (Exception) e.getCause();
                         if (!e.getClass().equals(NoSuchFieldException.class))
                             throw Unchecked.rethrow(e);
                         else {

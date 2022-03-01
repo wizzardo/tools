@@ -94,7 +94,7 @@ public class ClassExpression extends Expression {
     }
 
     @Override
-    public Object get(Map<String, Object> model) {
+    protected Object doExecute(Map<String, Object> model) {
 //        HashMap<String, Object> local = new HashMap<String, Object>(model);
 //        Object ob = null;
 //        for (Expression expression : definitions) {
