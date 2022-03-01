@@ -1957,6 +1957,19 @@ public class EvalToolsTest {
                 "", model));
     }
 
+    @Test
+    public void test_quotes_in_string() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Assert.assertEquals("before \"value\" after", EvalTools.evaluate("" +
+                "new StringBuilder()\n" +
+                "  .append(\"before \\\"\")\n" +
+                "  .append(\"value\")\n" +
+                "  .append(\"\\\" after\")\n" +
+                "  .toString()\n" +
+                "", model));
+    }
+
     static class NonNullFilter implements com.wizzardo.tools.interfaces.Filter {
         @Override
         public boolean allow(Object o) {

@@ -1626,7 +1626,7 @@ public class EvalTools {
             return prepare(exp.substring(from + 3, to - 3), model, functions, imports, true);
         }
         if (!isTemplate && exp.startsWith("\"", from) && exp.startsWith("\"", to - 1) && isTemplate(exp, from, to - 1)) {
-            String quote = exp.charAt(0) + "";
+            String quote = exp.charAt(from) + "";
             exp = exp.substring(from + 1, to - 1).replace("\\" + quote, quote);
             return prepare(exp, model, functions, imports, true);
         }
