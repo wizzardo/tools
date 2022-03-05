@@ -585,6 +585,87 @@ public class ClassBuilder {
         return this;
     }
 
+    public ClassBuilder fieldGetter(String name) {
+        byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
+        int nameIndex = reader.findUtf8ConstantIndex(nameBytes);
+        if (nameIndex == -1)
+            throw new IllegalArgumentException("There is no field with name '" + name + "'");
+
+        String getterName = "get" + name.substring(0, 1).toUpperCase() + name.substring(1);
+        int getterNameIndex = getOrCreateUtf8Constant(getterName);
+
+        int fieldIndex = reader.findFieldIndex(fi -> fi.name_index == nameIndex);
+        if (fieldIndex == -1)
+            throw new IllegalArgumentException("There is no field with name '" + name + "'");
+
+        FieldInfo field = reader.fields[fieldIndex];
+        ConstantPoolInfo.CONSTANT_Utf8_info fieldDescriptor = (ConstantPoolInfo.CONSTANT_Utf8_info) reader.constantPool[field.descriptor_index];
+
+        String getterDescriptor = "()" + new String(fieldDescriptor.bytes, StandardCharsets.UTF_8);
+        int getterDescriptorIndex = getOrCreateUtf8Constant(getterDescriptor);
+
+        if (reader.findMethodIndex(mi -> mi.name_index == getterNameIndex && mi.descriptor_index == getterDescriptorIndex) != -1)
+            return this;
+
+        MethodInfo mi = new MethodInfo();
+        mi.access_flags = AccessFlags.ACC_PUBLIC;
+        mi.name_index = getterNameIndex;
+        mi.descriptor_index = getterDescriptorIndex;
+        mi.attributes_count = 1;
+        mi.attributes = new AttributeInfo[1];
+
+        Code_attribute ca = new Code_attribute(reader);
+        mi.attributes[0] = ca;
+        ca.max_locals = 2;
+        ca.max_stack = 2;
+        ca.attribute_name_index = getOrCreateUtf8Constant("Code");
+
+        Class returnType = Object.class;
+        if (fieldDescriptor.bytes.length == 1) {
+            if (fieldDescriptor.bytes[0] == 'I')
+                returnType = int.class;
+            else if (fieldDescriptor.bytes[0] == 'J')
+                returnType = long.class;
+            else if (fieldDescriptor.bytes[0] == 'F')
+                returnType = float.class;
+            else if (fieldDescriptor.bytes[0] == 'D')
+                returnType = double.class;
+            else if (fieldDescriptor.bytes[0] == 'Z')
+                returnType = boolean.class;
+            else if (fieldDescriptor.bytes[0] == 'B')
+                returnType = byte.class;
+            else if (fieldDescriptor.bytes[0] == 'S')
+                returnType = short.class;
+            else if (fieldDescriptor.bytes[0] == 'C')
+                returnType = char.class;
+        }
+
+        Instruction returnInstruction;
+        if (returnType == int.class || returnType == byte.class || returnType == short.class || returnType == boolean.class || returnType == char.class) {
+            returnInstruction = Instruction.ireturn;
+        } else if (returnType == long.class) {
+            returnInstruction = Instruction.lreturn;
+        } else if (returnType == float.class) {
+            returnInstruction = Instruction.freturn;
+        } else if (returnType == double.class) {
+            returnInstruction = Instruction.dreturn;
+        } else {
+            returnInstruction = Instruction.areturn;
+        }
+
+        ca.code = new CodeBuilder()
+                .append(Instruction.aload_0)
+                .append(Instruction.getfield, getOrCreateFieldRefBytes(name))
+                .append(returnInstruction)
+                .build();
+        ca.code_length = ca.code.length;
+        ca.attribute_length = ca.updateLength();
+
+        append(mi);
+
+        return this;
+    }
+
     public ClassBuilder method(Method method, Mapper<ClassBuilder, Code_attribute> codeBuilderMapper) {
         return method(method.getName(), method.getParameterTypes(), method.getReturnType(), codeBuilderMapper);
     }
