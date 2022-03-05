@@ -1645,6 +1645,60 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_def_class_access_static_field() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("test", EvalTools.prepare("" +
+                "class Holder {\n" +
+                "  static String value = 'test' \n" +
+                "  String test() {\n" +
+                "    return value;\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "new Holder().test()\n" +
+                "").get(model).toString());
+    }
+
+    @Test
+    public void test_def_class_local_variables() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        EvalTools.prepare("" +
+                "class Holder {\n" +
+                "  String value = 'value' \n" +
+                "  String test(String value) {\n" +
+                "    return value;\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "def holder = new Holder();\n" +
+                "def test = holder.test('test')\n" +
+                "def value = holder.value\n" +
+                "").get(model);
+        Assert.assertEquals("test", model.get("test").toString());
+        Assert.assertEquals("value", model.get("value").toString());
+    }
+
+    @Test
+    public void test_def_class_local_variables_2() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        EvalTools.prepare("" +
+                "class Holder {\n" +
+                "  String value = 'value' \n" +
+                "  String test() {\n" +
+                "    String value = 'test'\n" +
+                "    return value;\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "def holder = new Holder();\n" +
+                "def test = holder.test()\n" +
+                "def value = holder.value\n" +
+                "").get(model);
+        Assert.assertEquals("test", model.get("test").toString());
+        Assert.assertEquals("value", model.get("value").toString());
+    }
+
+    @Test
     public void test_def_class_constructor_chained() {
         Map<String, Object> model = new HashMap<String, Object>();
         Expression expression = EvalTools.prepare("" +

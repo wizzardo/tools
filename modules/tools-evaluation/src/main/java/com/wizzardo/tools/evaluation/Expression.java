@@ -159,6 +159,7 @@ public abstract class Expression {
     }
 
     public static class Definition extends Holder {
+        public static final Object DEFINITION_MARK = new Object();
         public final Class<?> type;
         public final String name;
         public final String typeDefinition;
@@ -178,6 +179,13 @@ public abstract class Expression {
             this.type = null;
             this.name = name;
             this.typeDefinition = type;
+        }
+
+        @Override
+        protected Object doExecute(Map<String, Object> model) {
+            model.put(name, DEFINITION_MARK);
+            model.put(name, null);
+            return null;
         }
     }
 
@@ -268,6 +276,7 @@ public abstract class Expression {
 
         @Override
         protected Object doExecute(Map<String, Object> model) {
+            model.put(name, Definition.DEFINITION_MARK);
             model.put(name, null);
             return action.get(model);
         }
@@ -332,14 +341,14 @@ public abstract class Expression {
         public VariableOrFieldOfThis(String exp, EvaluationContext context) {
             super(context);
             this.exp = exp;
-            thisHolder = new Expression.Holder("delegate", context);
+            thisHolder = new Expression.Holder("this", context);
             function = new Function(thisHolder, exp, context);
         }
 
         protected VariableOrFieldOfThis(String exp, String file, int lineNumber, int linePosition) {
             super(file, lineNumber, linePosition);
             this.exp = exp;
-            thisHolder = new Expression.Holder("delegate", file, lineNumber, linePosition);
+            thisHolder = new Expression.Holder("this", file, lineNumber, linePosition);
             function = new Function(thisHolder, exp, file, lineNumber, linePosition);
         }
 
@@ -364,15 +373,18 @@ public abstract class Expression {
             if (model.containsKey(exp))
                 return model.get(exp);
 
-            if (hasDelegate(model)) {
+            if (hasThis(model)) {
+                if (exp.equals("super"))
+                    return thisHolder.get(model);
+
                 return function.get(model);
             }
 
             return model.get(exp);
         }
 
-        public static boolean hasDelegate(Map<String, Object> model) {
-            return model.containsKey("delegate");
+        public static boolean hasThis(Map<String, Object> model) {
+            return model.containsKey("this");
         }
     }
 

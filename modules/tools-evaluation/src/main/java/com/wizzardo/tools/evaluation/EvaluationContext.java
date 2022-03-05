@@ -59,6 +59,24 @@ public class EvaluationContext extends HashMap<String, Object> {
     }
 
     @Override
+    public Object put(String key, Object value) {
+        if (value == Expression.Definition.DEFINITION_MARK)
+            return super.put(key, value);
+
+        if (super.containsKey(key))
+            return super.put(key, value);
+
+        if (parent != null && parent.containsKey(key))
+            return parent.put(key, value);
+
+        return super.put(key, value);
+    }
+
+    public Object putLocal(String key, Object value) {
+        return super.put(key, value);
+    }
+
+    @Override
     public Collection<Object> values() {
         return collectValues(new ArrayList<>(size()));
     }
@@ -68,11 +86,34 @@ public class EvaluationContext extends HashMap<String, Object> {
         return collectEntrySet(new HashSet<>(size(), 1));
     }
 
+    @Override
+    public EvaluationContext clone() {
+        EvaluationContext context = new EvaluationContext(parent);
+        for (Entry<String, Object> entry : super.entrySet()) {
+            context.putLocal(entry.getKey(), entry.getValue());
+        }
+        return context;
+    }
+
     protected Set<Entry<String, Object>> collectEntrySet(Set<Entry<String, Object>> into) {
         if (parent != null)
             parent.collectEntrySet(into);
         into.addAll(super.entrySet());
         return into;
+    }
+
+    @Override
+    public int hashCode() {
+        int h = 0;
+        if (parent != null)
+            h += parent.hashCode() * 37;
+
+        for (Entry<String, Object> entry : super.entrySet()) {
+            if (entry.getValue() == this)
+                continue;
+            h += entry.hashCode();
+        }
+        return h;
     }
 
     protected Collection<Object> collectValues(Collection<Object> into) {

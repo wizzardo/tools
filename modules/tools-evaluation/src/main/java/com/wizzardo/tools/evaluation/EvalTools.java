@@ -2058,7 +2058,7 @@ public class EvalTools {
                         thatObject = new Function(Expression.Holder.NULL, thatObject.exp, args, model);
                         continue;
                     }
-                    methodName = "execute";
+                    methodName = "%execute%";
                 }
 
                 if (thatObject instanceof UserFunction) {
@@ -2114,7 +2114,7 @@ public class EvalTools {
                     List<Expression> arr = prepareArgs(part.source, part.startBracketsTrimmed, part.endBracketsTrimmed, model, functions, imports);
                     args = arr.toArray(new Expression[arr.size()]);
                 }
-                thatObject = new Function(thatObject, "execute", args, model);
+                thatObject = new Function(thatObject, "%execute%", args, model);
             }
         }
 
@@ -2374,6 +2374,8 @@ public class EvalTools {
     private static Class doFindClass(String s, List<String> imports) {
         if (s.equals("def"))
             return Object.class;
+        if (s.equals("void"))
+            return void.class;
         if (s.equals("byte"))
             return byte.class;
         if (s.equals("int"))

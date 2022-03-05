@@ -1,5 +1,7 @@
 package com.wizzardo.tools.evaluation;
 
+import com.wizzardo.tools.bytecode.DynamicProxy;
+
 import java.util.Map;
 
 /**
@@ -51,11 +53,20 @@ public class ClosureLookup extends Expression {
             return localFunction;
         }
 
-        Object delegate = model.get("delegate");
-        if (delegate instanceof ClassExpression) {
-            MethodDefinition method = ((ClassExpression) delegate).findMethod(functionName, args);
+        Object that = model.get("this");
+        if (that instanceof ClassExpression.WithClassExpression) {
+            ClassExpression classExpression = ((ClassExpression.WithClassExpression) that).getClassExpression();
+            MethodDefinition method = classExpression.findMethod(functionName, args);
             if (method != null)
                 return method.action.get(model);
+        }
+        if (that instanceof ClassExpression) {
+            MethodDefinition method = ((ClassExpression) that).findMethod(functionName, args);
+            if (method != null)
+                return method.action.get(model);
+        }
+        if (that instanceof DynamicProxy && !functionName.equals("this")) {
+            return null;
         }
         if (parent != null) {
             MethodDefinition method = parent.findMethod(functionName, args);
@@ -68,7 +79,7 @@ public class ClosureLookup extends Expression {
             return localFunction;
         }
 
-        return delegate;
+        return that;
     }
 
     private Object lookupInFunctions() {

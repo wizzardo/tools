@@ -41,7 +41,7 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
 
     @Override
     public Object get(Object key) {
-        if (key.equals("delegate"))
+        if (key.equals("this"))
             return this;
 
         Object value = superGet(key);

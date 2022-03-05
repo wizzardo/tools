@@ -16,23 +16,23 @@ public class ClassExpression extends Expression {
     protected boolean isEnum;
     protected List<Expression> definitions;
     protected List<Expression> definitionsStatic;
-    protected Map<String, Object> context;
+    protected EvaluationContext context;
     protected String packageName;
     protected String name;
     protected Class<?>[] interfaces;
     protected Class<?> superClass;
     protected Class<?> proxyClass;
 
-    public ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, EvaluationContext evaluationContext) {
-        this(name, definitions, definitionsStatic, superClass, interfaces, null, evaluationContext);
+    public ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, EvaluationContext parsingContext) {
+        this(name, definitions, definitionsStatic, superClass, interfaces, null, parsingContext);
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, EvaluationContext evaluationContext) {
-        this(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>(), evaluationContext);
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, EvaluationContext parsingContext) {
+        this(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, new EvaluationContext(), parsingContext);
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, Map<String, Object> context, EvaluationContext evaluationContext) {
-        super(evaluationContext);
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, EvaluationContext context, EvaluationContext parsingContext) {
+        super(parsingContext);
         this.name = name;
         this.definitions = definitions;
         this.definitionsStatic = definitionsStatic;
@@ -42,7 +42,7 @@ public class ClassExpression extends Expression {
         this.context = context;
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, Map<String, Object> context, String file, int lineNumber, int linePosition) {
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, EvaluationContext context, String file, int lineNumber, int linePosition) {
         super(file, lineNumber, linePosition);
         this.name = name;
         this.definitions = definitions;
@@ -90,7 +90,7 @@ public class ClassExpression extends Expression {
         for (Expression expression : this.definitionsStatic) {
             definitionsStatic.add(expression.clone());
         }
-        return new ClassExpression(name, l, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>(context), file, lineNumber, linePosition);
+        return new ClassExpression(name, l, definitionsStatic, superClass, interfaces, proxyClass, new EvaluationContext((Map<String, Object>) context), file, lineNumber, linePosition);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class ClassExpression extends Expression {
     }
 
     public Object newInstance(Object[] args) {
-        ClassExpression instance = new ClassExpression(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, new HashMap<>(), file, lineNumber, linePosition);
+        ClassExpression instance = new ClassExpression(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, context.createLocalContext(), file, lineNumber, linePosition);
         instance.context.put("this", instance);
         instance.init();
         Object result = instance;
@@ -119,6 +119,7 @@ public class ClassExpression extends Expression {
                 result = Unchecked.call(() -> proxyClass.newInstance());
                 instance.context.put("this", result);
                 Field[] fields = proxyClass.getDeclaredFields();
+                ((WithClassExpression) result).setClassExpression(instance);
 
                 for (Expression expression : definitions) {
                     if (expression instanceof DefineAndSet && ((DefineAndSet) expression).action instanceof Operation) {
@@ -203,7 +204,7 @@ public class ClassExpression extends Expression {
     }
 
     public MethodDefinition findMethod(String method, Object[] args) {
-        if ("this".equals(method))
+        if ("this".equals(method) || "%execute%".equals(method))
             method = name;
 
         MethodDefinition md = findMethod(definitions, method, args);
@@ -254,6 +255,12 @@ public class ClassExpression extends Expression {
         return null;
     }
 
+    public interface WithClassExpression {
+        void setClassExpression(ClassExpression classExpression);
+
+        ClassExpression getClassExpression();
+    }
+
     public Class<?> getJavaClass() {
         if (proxyClass != null)
             return proxyClass;
@@ -265,7 +272,11 @@ public class ClassExpression extends Expression {
                     .setClassFullName(fullname)
                     .implement(DynamicProxy.class)
                     .field("handler", Handler.class)
-                    .fieldSetter("handler");
+                    .fieldSetter("handler")
+                    .implement(WithClassExpression.class)
+                    .field("classExpression", ClassExpression.class)
+                    .fieldSetter("classExpression")
+                    .fieldGetter("classExpression");
 
             builder.implement(interfaces);
             builder.implement(superClass.getInterfaces());
@@ -356,6 +367,10 @@ public class ClassExpression extends Expression {
                         continue;
 
                     DynamicProxyFactory.addHandlerCallForMethod(builder, md.name, args, md.returnType);
+                    Optional<Method> superMethod = Arrays.stream(superMethods).filter(it -> it.getName().equals(md.name) && Arrays.equals(it.getParameterTypes(), args)).findFirst();
+                    if (superMethod.isPresent()) {
+                        DynamicProxyFactory.addCallSuperMethod(builder, superMethod.get());
+                    }
                 }
             }
 
@@ -379,6 +394,11 @@ public class ClassExpression extends Expression {
 
     protected void initStatic() {
         init(definitionsStatic);
+        for (Expression expression : definitionsStatic) {
+            if (expression instanceof MethodDefinition) {
+                ((MethodDefinition) expression).action.closure.setContext(context);
+            }
+        }
     }
 
     protected void init(List<Expression> definitions) {

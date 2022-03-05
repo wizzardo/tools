@@ -42,8 +42,12 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
         for (Expression expression : expressions) {
             clone.add(expression.clone());
         }
-        if (!context.isEmpty())
-            clone.context = new HashMap<String, Object>(context);
+        if (!context.isEmpty()) {
+            if (context instanceof EvaluationContext)
+                clone.context = ((EvaluationContext) context).clone();
+            else
+                clone.context = new HashMap<String, Object>(context);
+        }
 
         return clone;
     }
@@ -91,19 +95,20 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
     }
 
     public Object getAgainst(Map<String, Object> model, Object thisObject, Object... arg) {
-        HashMap<String, Object> local = new HashMap<>(context);
+        HashMap<String, Object> local = context instanceof EvaluationContext ? ((EvaluationContext) context).createLocalContext() : new HashMap<>(context);
         if (context != model && model != null)
             local.putAll(model);
 
-//        if (context != thisObject) {
-            local.put("delegate", thisObject);
+        if (context != thisObject || !context.containsKey("this")) {
+//            local.put("delegate", thisObject);
             local.put("this", thisObject);
-//        }
+        }
 //        if (model != null)
 //            local.put("this", model);
 
         if (arg != null) {
             if (args.length == 0 && arg.length == 1) {
+                local.put("it", Definition.DEFINITION_MARK);
                 local.put("it", arg[0]);
             } else {
                 if (args.length != arg.length)
@@ -111,6 +116,7 @@ public class ClosureExpression extends Expression implements Runnable, Callable 
                 for (int i = 0; i < args.length; i++) {
 //                if (!args[i].value.isAssignableFrom(arg[i].getClass()))
 //                    throw new ClassCastException("Can not cast " + args[i].getClass() + " to " + args[i].value);
+                    local.put(args[i].key, Definition.DEFINITION_MARK);
                     local.put(args[i].key, arg[i]);
                 }
             }

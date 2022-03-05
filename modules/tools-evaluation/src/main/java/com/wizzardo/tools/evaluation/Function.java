@@ -312,11 +312,17 @@ public class Function extends Expression {
                     arr = resolveArgs(model);
 
                 instance = ((ClosureLookup) thatObject).get(model, arr);
+
+                if (!(instance instanceof Expression)) {
+                    methodName = ((ClosureLookup) thatObject).functionName;
+                    if (instance == null)
+                        instance = model.get("this");
+                }
             } else
                 instance = thatObject.get(model);
 
             if (instance == null && thatObject instanceof VariableOrFieldOfThis) {
-                if (VariableOrFieldOfThis.hasDelegate(model))
+                if (VariableOrFieldOfThis.hasThis(model))
                     instance = ((VariableOrFieldOfThis) thatObject).function.get(model);
             }
 
@@ -327,13 +333,9 @@ public class Function extends Expression {
                 arr = resolveArgs(model);
             }
 
-            if (thatObject instanceof ClosureLookup && !(instance instanceof Expression)) {
-                methodName = ((ClosureLookup) thatObject).functionName;
-            }
-
             if (instance instanceof ClosureExpression) {
                 ClosureExpression exp = (ClosureExpression) instance;
-                return exp.getAgainst(model, exp.context, arr);
+                return exp.getAgainst(null, exp.context, arr);
             }
 
             if (instance instanceof UserFunction) {
@@ -364,6 +366,10 @@ public class Function extends Expression {
             }
             if (method == null || !method.canInvoke(instance)) {
                 argsMappers = new ArrayList<Mapper<Object[], Object[]>>(args == null ? 0 : args.length);
+                String methodName = this.methodName;
+                if ("super".equals(thatObject.exp)) {
+                    methodName = "super_" + methodName;
+                }
                 method = findMethod(getClass(instance), instance, methodName, arr, argsMappers);
                 if (method == null && instance != null && instance.getClass() == Class.class)
                     method = findMethod(instance.getClass(), instance, methodName, arr, argsMappers);
@@ -373,11 +379,11 @@ public class Function extends Expression {
                 if (instance instanceof TemplateBuilder.GString) {
                     thatObject = new Function(thatObject, "toString", new Expression[0], file, lineNumber, linePosition);
                     return get(model);
-                } else if (!methodName.equals("execute")) {
+                } else if (!methodName.equals("%execute%")) {
                     Expression prevThatObject = thatObject;
                     thatObject = new Function(thatObject, methodName, file, lineNumber, linePosition);
                     String methodNameHolder = methodName;
-                    methodName = "execute";
+                    methodName = "%execute%";
                     try {
                         return get(model);
                     } catch (Exception e) {
@@ -604,7 +610,7 @@ public class Function extends Expression {
         return clazz;
     }
 
-    private MethodInvoker findMethod(Class clazz, final Object instance, final String method, Object[] args, List<Mapper<Object[], Object[]>> argsMappers) {
+    static MethodInvoker findMethod(Class clazz, Object instance, String method, Object[] args, List<Mapper<Object[], Object[]>> argsMappers) {
         Class[] argsClasses;
         if (args != null) {
             argsClasses = new Class[args.length];
@@ -629,21 +635,25 @@ public class Function extends Expression {
             }
 
             if (closure == null)
-                throw new IllegalArgumentException("Cannot find method " + method + " " + Arrays.toString(args) + " in " + this);
+                throw new IllegalArgumentException("Cannot find method " + method + " " + Arrays.toString(args) + " in " + cl);
 
             ClosureExpression finalClosure = closure;
+            String finalMethod = method;
             return new EvalTools.ClosureInvoker() {
                 @Override
                 public Object map(Object instance, Object[] args) {
-                    return finalClosure.getAgainst(null, cl, args);
+                    return finalClosure.getAgainst(null, finalClosure.context, args);
                 }
 
                 @Override
                 public String toString() {
-                    return method;
+                    return finalMethod;
                 }
             };
         }
+
+        if (method.equals("%execute%"))
+            method = "execute";
 
 //        try {
 //            return wrapMethod(clazz.getMethod(method, argsClasses));
@@ -673,7 +683,7 @@ public class Function extends Expression {
         return findMeta(null, method, false);
     }
 
-    private Method findMethod(Method[] methods, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
+    private static Method findMethod(Method[] methods, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
         Method m = findExactMatch(methods, method, argsClasses);
         if (m == null)
             m = findBoxedMatch(methods, method, argsClasses);
@@ -682,7 +692,7 @@ public class Function extends Expression {
         return m;
     }
 
-    private Method findDefaultMethod(Class cl, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
+    private static Method findDefaultMethod(Class cl, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
         for (Class anInterface : cl.getInterfaces()) {
             Method m = findMethod(getMethods(anInterface), method, argsClasses, argsMappers);
             if (m != null)
@@ -695,7 +705,7 @@ public class Function extends Expression {
         return null;
     }
 
-    private MethodInvoker wrapMethod(final Method m) {
+    private static MethodInvoker wrapMethod(final Method m) {
         m.setAccessible(true);
 
         return new MethodInvoker() {
@@ -724,7 +734,7 @@ public class Function extends Expression {
         };
     }
 
-    private Method findExactMatch(Method[] methods, String method, Class[] argsClasses) {
+    private static Method findExactMatch(Method[] methods, String method, Class[] argsClasses) {
         Class<?> arg;
         Class<?> param;
         outer:
@@ -745,7 +755,7 @@ public class Function extends Expression {
         return null;
     }
 
-    private Method findBoxedMatch(Method[] methods, String method, Class[] argsClasses) {
+    private static Method findBoxedMatch(Method[] methods, String method, Class[] argsClasses) {
         Class<?> arg;
         Class<?> param;
         outer:
@@ -765,7 +775,7 @@ public class Function extends Expression {
         return null;
     }
 
-    private Method findNumberMatch(Method[] methods, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
+    private static Method findNumberMatch(Method[] methods, String method, Class[] argsClasses, final List<Mapper<Object[], Object[]>> argsMappers) {
         Class<?> arg;
         Class<?> param;
         outer:
@@ -883,7 +893,7 @@ public class Function extends Expression {
         return true;
     }
 
-    private Mapper<Object[], Object[]> wrapClosureArgAsProxy(final int index, final Class<?> samInterface) {
+    private static Mapper<Object[], Object[]> wrapClosureArgAsProxy(final int index, final Class<?> samInterface) {
         return new Mapper<Object[], Object[]>() {
             @Override
             public Object[] map(Object[] objects) {
