@@ -473,6 +473,54 @@ public class DynamicProxyFactory {
         });
     }
 
+    public static void addCallSuperMethod(ClassBuilder builder, Method method) {
+        String name = method.getName();
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        Class<?> returnType = method.getReturnType();
+        builder.method("super_" + name, parameterTypes, returnType, cb -> {
+            Code_attribute ca = new Code_attribute(cb.reader);
+            ca.max_locals = 2 + (parameterTypes.length == 0 ? 0 : Arrays.stream(parameterTypes).mapToInt(it -> it == long.class || it == double.class ? 2 : 1).sum());
+            ca.max_stack = 4 + parameterTypes.length * 2 + 2; // not optimal but should be ok
+            ca.attribute_name_index = cb.getOrCreateUtf8Constant("Code");
+            Instruction returnInstruction;
+            if (returnType == int.class || returnType == byte.class || returnType == short.class || returnType == boolean.class || returnType == char.class) {
+                returnInstruction = Instruction.ireturn;
+            } else if (returnType == long.class) {
+                returnInstruction = Instruction.lreturn;
+            } else if (returnType == float.class) {
+                returnInstruction = Instruction.freturn;
+            } else if (returnType == double.class) {
+                returnInstruction = Instruction.dreturn;
+            } else if (returnType == void.class) {
+                returnInstruction = Instruction.return_;
+            } else {
+                returnInstruction = Instruction.areturn;
+            }
+
+            CodeBuilder code = new CodeBuilder();
+
+            //call super.method(args..)
+            code.append(Instruction.aload_0);
+            int localVarIndexOffset = 1;
+            for (int i = 0; i < parameterTypes.length; i++) {
+                Class<?> parameterType = parameterTypes[i];
+                localVarIndexOffset = addLoadArg(code, i, parameterType, localVarIndexOffset);
+            }
+
+            int superMethodIndex = builder.getOrCreateMethodRef(method);
+
+            code.append(Instruction.invokespecial, int2toBytes(superMethodIndex))
+                    .append(returnInstruction);
+
+            ca.code = code.build();
+            ca.code_length = ca.code.length;
+            ca.attributes_count = 0;
+
+            ca.attribute_length = ca.updateLength();
+            return ca;
+        });
+    }
+
     private static boolean isAndroid() {
         try {
             Class.forName("android.os.Build");
