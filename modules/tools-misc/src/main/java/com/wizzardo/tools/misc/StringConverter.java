@@ -90,7 +90,7 @@ public abstract class StringConverter<T> {
 
     public abstract T convert(String s);
 
-    public static StringConverter getConverter(Class clazz) {
+    public static StringConverter getConverter(final Class clazz) {
         if (clazz == String.class || clazz == Object.class)
             return TO_STRING;
         if (clazz == Integer.class)
@@ -111,6 +111,13 @@ public abstract class StringConverter<T> {
             return TO_BYTE;
         if (clazz == Character.class)
             return TO_CHARACTER;
+        if (clazz.isEnum())
+            return new StringConverter<Enum>(Type.OBJECT) {
+                @Override
+                public Enum convert(String s) {
+                    return s == null ? null : Enum.valueOf(clazz, s);
+                }
+            };
 
         return null;
     }
