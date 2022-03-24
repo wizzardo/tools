@@ -213,7 +213,8 @@ public class Generator {
         if (ce.isEnum())
             return Field.EnumField.class;
 
-        throw new IllegalArgumentException("Cannot find proper field-class for class " + ce);
+        return Field.JsonField.class;
+//        throw new IllegalArgumentException("Cannot find proper field-class for class " + ce);
     }
 
     protected Class getFieldType(Class cl) {
@@ -265,7 +266,8 @@ public class Generator {
         else if (cl == Timestamp.class)
             return Field.TimestampField.class;
 
-        throw new IllegalArgumentException("Cannot find proper field-class for class " + cl);
+        return Field.JsonField.class;
+//        throw new IllegalArgumentException("Cannot find proper field-class for class " + cl);
     }
 
     public void createTables(Class... classes) {

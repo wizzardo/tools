@@ -1,6 +1,7 @@
 package com.wizzardo.tools.sql.query;
 
 import com.wizzardo.tools.cache.Cache;
+import com.wizzardo.tools.json.JsonTools;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.FieldInfo;
 import com.wizzardo.tools.reflection.FieldReflection;
@@ -78,7 +79,8 @@ public class FieldMappers {
             throw new IllegalArgumentException("Only byte arrays are supported for now");
         }
 
-        throw new IllegalArgumentException("Cannot create mapper for " + field + " of type " + fieldType);
+        return (o, builder) -> builder.setField(JsonTools.serialize(reflection.getObject(o)));
+//        throw new IllegalArgumentException("Cannot create mapper for " + field + " of type " + fieldType);
     }
 
     public static <R> RecordMapper<R> fromSqlMapper(Class<R> c) {
@@ -416,7 +418,8 @@ public class FieldMappers {
                 };
         }
 
-        throw new IllegalArgumentException("Cannot create mapper for " + fieldInfo.field + " of type " + fieldType);
+        return (instance, rs) -> reflection.setObject(instance, JsonTools.parse(rs.getString(name), fieldType));
+//        throw new IllegalArgumentException("Cannot create mapper for " + fieldInfo.field + " of type " + fieldType);
     }
 
     public static FieldSetter getSetter(FieldInfo fieldInfo, int column) {
@@ -497,7 +500,8 @@ public class FieldMappers {
                 };
         }
 
-        throw new IllegalArgumentException("Cannot create mapper for " + fieldInfo.field + " of type " + fieldType);
+        return (instance, rs) -> reflection.setObject(instance, JsonTools.parse(rs.getString(column), fieldType));
+//        throw new IllegalArgumentException("Cannot create mapper for " + fieldInfo.field + " of type " + fieldType);
     }
 
     interface FieldSetter {

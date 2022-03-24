@@ -1,5 +1,7 @@
 package com.wizzardo.tools.sql.query;
 
+import com.wizzardo.tools.json.JsonTools;
+
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
@@ -161,6 +163,16 @@ public class Field {
 
         public Condition.FieldCondition eq(String l) {
             return new Condition.FieldCondition(this, Condition.Operator.EQ, l, (o, builder) -> builder.setField((String) o));
+        }
+    }
+
+    public static class JsonField extends Field {
+        public JsonField(Table table, String name) {
+            super(table, name);
+        }
+
+        public Condition.FieldCondition eq(Object l) {
+            return new Condition.FieldCondition(this, Condition.Operator.EQ, l, (o, builder) -> builder.setField(JsonTools.serialize(o)));
         }
     }
 
