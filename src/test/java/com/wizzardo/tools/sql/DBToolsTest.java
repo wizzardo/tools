@@ -189,6 +189,32 @@ public class DBToolsTest {
     }
 
     @Test
+    public void test_inner_select_3() throws SQLException {
+        final Artist artist = new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1");
+        artist.id = service.insertInto(artist, Tables.ARTIST);
+
+        Song song1 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 1", artist.id, Song.Genre.ROCK);
+        song1.id = service.insertInto(song1, Tables.SONG);
+
+        Song song2 = new Song(0, TIMESTAMP.now(), TIMESTAMP.now(), "song 2", artist.id, Song.Genre.METAL);
+        song2.id = service.insertInto(song2, Tables.SONG);
+
+
+        List<Song> songs = service.withBuilder(new DBTools.Mapper<QueryBuilder.WrapConnectionStep, List<Song>>() {
+            @Override
+            public List<Song> map(QueryBuilder.WrapConnectionStep c) throws SQLException {
+                QueryBuilder.WhereStep query = c.select()
+                        .from(Tables.SONG)
+                        .where(Tables.SONG.ARTIST_ID.in(c.select(Tables.ARTIST.ID).from(Tables.ARTIST)));
+
+                assertThat(query.toSql()).isEqualTo("select * from song where song.artist_id in (select artist.id from artist)");
+                return query.fetchInto(Song.class);
+            }
+        });
+        assertThat(songs.size()).isEqualTo(2);
+    }
+
+    @Test
     public void test_limit() throws SQLException {
         final Artist artist = new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1");
         artist.id = service.insertInto(artist, Tables.ARTIST);

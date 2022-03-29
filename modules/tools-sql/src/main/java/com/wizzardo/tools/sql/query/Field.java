@@ -58,6 +58,14 @@ public class Field {
         return new Condition.JoinCondition(this, another);
     }
 
+    public Condition.IsNullCondition isNull() {
+        return new Condition.IsNullCondition(this);
+    }
+
+    public Condition.IsNotNullCondition isNotNull() {
+        return new Condition.IsNotNullCondition(this);
+    }
+
     public static class LongField extends Field {
         public LongField(Table table, String name) {
             super(table, name);
@@ -69,6 +77,14 @@ public class Field {
 
         public Condition.FieldCondition eq(Long l) {
             return new Condition.FieldCondition(this, Condition.Operator.EQ, l, (o, builder) -> builder.setField((Long) o));
+        }
+
+        public Condition.InCondition in(QueryBuilder.FetchableStep subQuery) {
+            return new Condition.InCondition(this, Condition.Operator.IN, subQuery);
+        }
+
+        public Condition.InCondition notIn(QueryBuilder.FetchableStep subQuery) {
+            return new Condition.InCondition(this, Condition.Operator.NOT_IN, subQuery);
         }
     }
 
@@ -83,6 +99,14 @@ public class Field {
 
         public Condition.FieldCondition eq(Integer i) {
             return new Condition.FieldCondition(this, Condition.Operator.EQ, i, (o, builder) -> builder.setField((Integer) o));
+        }
+
+        public Condition.InCondition in(QueryBuilder.FetchableStep subQuery) {
+            return new Condition.InCondition(this, Condition.Operator.IN, subQuery);
+        }
+
+        public Condition.InCondition notIn(QueryBuilder.FetchableStep subQuery) {
+            return new Condition.InCondition(this, Condition.Operator.NOT_IN, subQuery);
         }
     }
 

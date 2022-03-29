@@ -11,6 +11,8 @@ public abstract class Condition {
         EQ("="),
         AND("and"),
         OR("or"),
+        IN("in"),
+        NOT_IN("not in"),
         ;
 
         final String representation;
@@ -69,6 +71,116 @@ public abstract class Condition {
         public int hashCode() {
             int result = field.hashCode();
             result = 31 * result + operator.hashCode();
+            return result;
+        }
+    }
+
+    public static class IsNullCondition extends Condition {
+        public final Field field;
+
+        public IsNullCondition(Field field) {
+            this.field = field;
+        }
+
+        @Override
+        protected void toSql(QueryBuilder sb) {
+            sb.append(" ");
+            field.toSql(sb);
+            sb.append(" is null");
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            IsNullCondition that = (IsNullCondition) o;
+
+            return field.equals(that.field);
+        }
+
+        @Override
+        public int hashCode() {
+            return field.hashCode();
+        }
+    }
+
+    public static class IsNotNullCondition extends Condition {
+        public final Field field;
+
+        public IsNotNullCondition(Field field) {
+            this.field = field;
+        }
+
+        @Override
+        protected void toSql(QueryBuilder sb) {
+            sb.append(" ");
+            field.toSql(sb);
+            sb.append(" is not null");
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            IsNotNullCondition that = (IsNotNullCondition) o;
+
+            return field.equals(that.field);
+        }
+
+        @Override
+        public int hashCode() {
+            return field.hashCode();
+        }
+    }
+
+    public static class InCondition extends Condition {
+        public final Field field;
+        public final Operator operator;
+        public final QueryBuilder.FetchableStep subquery;
+
+        public InCondition(Field field, Operator operator, QueryBuilder.FetchableStep subquery) {
+            this.field = field;
+            this.operator = operator;
+            this.subquery = subquery;
+            if (operator != Operator.IN && operator != Operator.NOT_IN)
+                throw new IllegalArgumentException("InCondition cannot handle operator "+operator);
+        }
+
+        @Override
+        protected void toSql(QueryBuilder sb) {
+            sb.append(" ");
+            field.toSql(sb);
+            sb.append(" ");
+            sb.append(operator.representation);
+            sb.append(" (");
+            subquery.toSql(sb);
+            sb.append(")");
+        }
+
+        @Override
+        public void fillData(QueryBuilder builder) {
+            subquery.fillData(builder);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof InCondition)) return false;
+
+            InCondition that = (InCondition) o;
+
+            if (!field.equals(that.field)) return false;
+            if (operator != that.operator) return false;
+            return subquery.equals(that.subquery);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = field.hashCode();
+            result = 31 * result + operator.hashCode();
+            result = 31 * result + subquery.hashCode();
             return result;
         }
     }
