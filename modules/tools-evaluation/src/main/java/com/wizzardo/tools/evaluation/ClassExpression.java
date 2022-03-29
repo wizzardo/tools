@@ -153,7 +153,7 @@ public class ClassExpression extends Expression {
             } else {
                 Class<?>[] interfacesToImplement = new Class[interfaces.length + 1];
                 System.arraycopy(interfaces, 0, interfacesToImplement, 0, interfaces.length);
-                interfacesToImplement[interfacesToImplement.length - 1] = ClassExpressionProxy.class;
+                interfacesToImplement[interfacesToImplement.length - 1] = WithClassExpression.class;
                 result = Proxy.newProxyInstance(
                         interfaces[0].getClassLoader(),
                         interfacesToImplement,
@@ -245,6 +245,8 @@ public class ClassExpression extends Expression {
                             if (p < a)
                                 continue outer;
                         } else if (argClass != param && !param.isAssignableFrom(argClass)) {
+                            if (arg instanceof ClosureExpression && Function.isSAMInterface(param))
+                                continue;
                             continue outer;
                         }
                     }

@@ -477,10 +477,6 @@ public class Function extends Expression {
                 }
             };
 
-        if (instance instanceof ClassExpression.ClassExpressionProxy) {
-            return getGetter(((ClassExpression.ClassExpressionProxy) instance).getClassExpression());
-        }
-
         Class clazz = instance instanceof Class ? (Class) instance : instance.getClass();
         Field field = findField(clazz, fieldName);
         if (field != null && Modifier.isPublic(field.getModifiers()))
@@ -510,6 +506,10 @@ public class Function extends Expression {
         if (field != null) {
             field.setAccessible(true);
             return getter = new FieldGetter(field);
+        }
+
+        if (instance instanceof ClassExpression.WithClassExpression) {
+            return getGetter(((ClassExpression.WithClassExpression) instance).getClassExpression());
         }
 
         throw Unchecked.rethrow(new NoSuchFieldException("Cannot find getter " + thatObject.toString() + "." + fieldName));
