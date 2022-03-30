@@ -2122,4 +2122,13 @@ public class EvalToolsTest {
         Assert.assertEquals(s.indexOf("static"), EvalTools.indexOfWord(s, "static", 0, s.length()));
         Assert.assertEquals(s.indexOf("class"), EvalTools.indexOfWord(s, "class", 0, s.length()));
     }
+
+    @Test
+    public void test_instanceOf() {
+        Object[] args = new Object[]{123};
+        HashMap<String, Object> model = new HashMap<>();
+        model.put("args", args);
+        Expression expression = EvalTools.prepare("args != null && args.length > 0 && args[0] instanceof Integer", model);
+        Assert.assertEquals(true, expression.get(model));
+    }
 }
