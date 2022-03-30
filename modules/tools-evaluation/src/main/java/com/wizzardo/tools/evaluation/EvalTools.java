@@ -1760,7 +1760,10 @@ public class EvalTools {
     }
 
     public static Expression prepare(String exp, Map<String, Object> model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {
-        return prepare(exp, new EvaluationContext(model), functions, imports, isTemplate);
+        if (model instanceof EvaluationContext)
+            return prepare(exp, (EvaluationContext) model, functions, imports, isTemplate);
+        else
+            return prepare(exp, new EvaluationContext(model), functions, imports, isTemplate);
     }
 
     public static Expression prepare(String exp, EvaluationContext model, Map<String, UserFunction> functions, List<String> imports, boolean isTemplate) {

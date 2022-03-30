@@ -194,16 +194,22 @@ class BuildPlugin implements Plugin<Project> {
                             main: toolsSqlExtension.tablesGenerator,
                             test: toolsSqlExtension.tablesGeneratorTest,
                     ].each { sourceSet, tablesGenerator ->
-                        if (tablesGenerator && tablesGenerator.getEnabled().getOrElse(false)) {
+                        def isEnabled = tablesGenerator && tablesGenerator.getEnabled().getOrElse(false)
+                        println "generateTables for ${sourceSet} sourceSet enabled: ${isEnabled}"
+                        if (isEnabled) {
                             def src = tablesGenerator.getSrc().get()
                             def out = tablesGenerator.getOut().get()
                             def packageName = tablesGenerator.getPackageName().get()
 
-                            Generator generator = new Generator(out, packageName);
+                            Generator generator = new Generator(new File(project.projectDir, out).getCanonicalPath(), packageName);
 
-                            def files = new File(src).listFiles()
-                            if (files)
+                            def files = new File(project.projectDir, src).listFiles()
+                            if (files) {
+//                                files.each { println "  ${it}" }
                                 generator.createTables(files);
+                            } else {
+                                println "no files in src dir"
+                            }
                         }
                     }
                 }
