@@ -6,6 +6,9 @@ import com.wizzardo.tools.reflection.Fields;
 import com.wizzardo.tools.reflection.Generic;
 
 import java.lang.reflect.*;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -368,6 +371,54 @@ public class Binder {
             appender.append('"');
         }
     };
+    public final static Serializer localDateTimeSerializer = new Serializer(SerializerType.DATE) {
+        @Override
+        public void serialize(Object object, Appender appender, JsonGeneric generic, SerializationContext context) {
+            appender.append('"');
+            appender.append(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format((Temporal) object));
+            appender.append('"');
+        }
+    };
+    public final static Serializer localDateSerializer = new Serializer(SerializerType.DATE) {
+        @Override
+        public void serialize(Object object, Appender appender, JsonGeneric generic, SerializationContext context) {
+            appender.append('"');
+            appender.append(DateTimeFormatter.ISO_LOCAL_DATE.format((Temporal) object));
+            appender.append('"');
+        }
+    };
+    public final static Serializer localTimeSerializer = new Serializer(SerializerType.DATE) {
+        @Override
+        public void serialize(Object object, Appender appender, JsonGeneric generic, SerializationContext context) {
+            appender.append('"');
+            appender.append(DateTimeFormatter.ISO_LOCAL_TIME.format((Temporal) object));
+            appender.append('"');
+        }
+    };
+    public final static Serializer offsetDateTimeSerializer = new Serializer(SerializerType.DATE) {
+        @Override
+        public void serialize(Object object, Appender appender, JsonGeneric generic, SerializationContext context) {
+            appender.append('"');
+            appender.append(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format((Temporal) object));
+            appender.append('"');
+        }
+    };
+    public final static Serializer offsetTimeSerializer = new Serializer(SerializerType.DATE) {
+        @Override
+        public void serialize(Object object, Appender appender, JsonGeneric generic, SerializationContext context) {
+            appender.append('"');
+            appender.append(DateTimeFormatter.ISO_OFFSET_TIME.format((Temporal) object));
+            appender.append('"');
+        }
+    };
+    public final static Serializer zonedDateTimeSerializer = new Serializer(SerializerType.DATE) {
+        @Override
+        public void serialize(Object object, Appender appender, JsonGeneric generic, SerializationContext context) {
+            appender.append('"');
+            appender.append(DateTimeFormatter.ISO_ZONED_DATE_TIME.format((Temporal) object));
+            appender.append('"');
+        }
+    };
     public final static Serializer enumSerializer = new Serializer(SerializerType.ENUM) {
         @Override
         public void serialize(Object object, Appender appender, JsonGeneric generic, SerializationContext context) {
@@ -514,7 +565,22 @@ public class Binder {
             return mapSerializer;
         else if (Date.class.isAssignableFrom(clazz))
             return dateSerializer;
-        else if (Array.class == clazz || clazz.isArray()) {
+        else if (Temporal.class.isAssignableFrom(clazz)) {
+            if (clazz == LocalDateTime.class)
+                return localDateTimeSerializer;
+            if (clazz == LocalDate.class)
+                return localDateSerializer;
+            if (clazz == LocalTime.class)
+                return localTimeSerializer;
+            if (clazz == OffsetDateTime.class)
+                return offsetDateTimeSerializer;
+            if (clazz == OffsetTime.class)
+                return offsetTimeSerializer;
+            if (clazz == ZonedDateTime.class)
+                return zonedDateTimeSerializer;
+
+            return objectSerializer;
+        } else if (Array.class == clazz || clazz.isArray()) {
             clazz = getArrayType(clazz);
             if (clazz != null) {
                 if (clazz.isPrimitive()) {

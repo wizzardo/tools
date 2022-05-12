@@ -3,6 +3,9 @@ dependencies {
     compile project(':modules:tools-misc')
 }
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 archivesBaseName = "tools-json"
 ext {
     descriptionString = 'json tools'

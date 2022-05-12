@@ -2,6 +2,8 @@ dependencies {
     compile project(':modules:tools-reflection')
     compile project(':modules:tools-interfaces')
 }
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 archivesBaseName = "tools-misc"
 ext {

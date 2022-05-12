@@ -2,6 +2,7 @@ package com.wizzardo.tools.misc;
 
 import com.wizzardo.tools.reflection.field.Type;
 
+import java.time.*;
 import java.util.Date;
 
 /**
@@ -64,6 +65,43 @@ public abstract class StringConverter<T> {
         @Override
         public Date convert(String s) {
             return toDate(s);
+        }
+    };
+
+    public static final StringConverter TO_LOCAL_DATE_TIME = new StringConverter<LocalDateTime>(Type.OBJECT) {
+        @Override
+        public LocalDateTime convert(String s) {
+            return LocalDateTime.parse(s);
+        }
+    };
+    public static final StringConverter TO_LOCAL_DATE = new StringConverter<LocalDate>(Type.OBJECT) {
+        @Override
+        public LocalDate convert(String s) {
+            return LocalDate.parse(s);
+        }
+    };
+    public static final StringConverter TO_LOCAL_TIME = new StringConverter<LocalTime>(Type.OBJECT) {
+        @Override
+        public LocalTime convert(String s) {
+            return LocalTime.parse(s);
+        }
+    };
+    public static final StringConverter TO_OFFSET_DATE_TIME = new StringConverter<OffsetDateTime>(Type.OBJECT) {
+        @Override
+        public OffsetDateTime convert(String s) {
+            return OffsetDateTime.parse(s);
+        }
+    };
+    public static final StringConverter TO_OFFSET_TIME = new StringConverter<OffsetTime>(Type.OBJECT) {
+        @Override
+        public OffsetTime convert(String s) {
+            return OffsetTime.parse(s);
+        }
+    };
+    public static final StringConverter TO_ZONED_DATE_TIME = new StringConverter<ZonedDateTime>(Type.OBJECT) {
+        @Override
+        public ZonedDateTime convert(String s) {
+            return ZonedDateTime.parse(s);
         }
     };
 

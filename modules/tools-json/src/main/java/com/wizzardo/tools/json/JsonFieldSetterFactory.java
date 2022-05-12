@@ -8,6 +8,8 @@ import com.wizzardo.tools.reflection.field.*;
 import com.wizzardo.tools.reflection.field.Type;
 
 import java.lang.reflect.Field;
+import java.time.*;
+import java.time.temporal.Temporal;
 import java.util.Date;
 
 /**
@@ -71,6 +73,21 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
             if (cl == Date.class)
                 return new UnsafeBoxedSetter(f, StringConverter.TO_DATE);
+
+            if (Temporal.class.isAssignableFrom(cl)) {
+                if (cl == LocalDateTime.class)
+                    return new UnsafeBoxedSetter(f, StringConverter.TO_LOCAL_DATE_TIME);
+                if (cl == LocalDate.class)
+                    return new UnsafeBoxedSetter(f, StringConverter.TO_LOCAL_DATE);
+                if (cl == LocalTime.class)
+                    return new UnsafeBoxedSetter(f, StringConverter.TO_LOCAL_TIME);
+                if (cl == OffsetDateTime.class)
+                    return new UnsafeBoxedSetter(f, StringConverter.TO_OFFSET_DATE_TIME);
+                if (cl == OffsetTime.class)
+                    return new UnsafeBoxedSetter(f, StringConverter.TO_OFFSET_TIME);
+                if (cl == ZonedDateTime.class)
+                    return new UnsafeBoxedSetter(f, StringConverter.TO_ZONED_DATE_TIME);
+            }
         } else {
             if (cl.isEnum())
                 return new ReflectionEnumSetter(f, cl);
@@ -101,6 +118,21 @@ public class JsonFieldSetterFactory extends FieldReflectionFactory {
 
             if (cl == Date.class)
                 return new ReflectionBoxedSetter(f, StringConverter.TO_DATE);
+
+            if (Temporal.class.isAssignableFrom(cl)) {
+                if (cl == LocalDateTime.class)
+                    return new ReflectionBoxedSetter(f, StringConverter.TO_LOCAL_DATE_TIME);
+                if (cl == LocalDate.class)
+                    return new ReflectionBoxedSetter(f, StringConverter.TO_LOCAL_DATE);
+                if (cl == LocalTime.class)
+                    return new ReflectionBoxedSetter(f, StringConverter.TO_LOCAL_TIME);
+                if (cl == OffsetDateTime.class)
+                    return new ReflectionBoxedSetter(f, StringConverter.TO_OFFSET_DATE_TIME);
+                if (cl == OffsetTime.class)
+                    return new ReflectionBoxedSetter(f, StringConverter.TO_OFFSET_TIME);
+                if (cl == ZonedDateTime.class)
+                    return new ReflectionBoxedSetter(f, StringConverter.TO_ZONED_DATE_TIME);
+            }
         }
         return (JsonFieldSetter) super.create(f);
     }

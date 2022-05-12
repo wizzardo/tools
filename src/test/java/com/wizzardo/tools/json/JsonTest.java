@@ -15,6 +15,9 @@ import java.io.PipedOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -1721,5 +1724,34 @@ public class JsonTest {
 
         Assert.assertEquals("{\"Custom Key\":\"value\"}", JsonTools.serialize(obj));
         Assert.assertEquals("value", JsonTools.parse("{\"Custom Key\":\"value\"}", TestPropertyAnnotation.class).key);
+    }
+
+    static class TestLocalDateTime {
+        LocalDateTime date;
+    }
+
+    @Test
+    public void test_LocalDateTime() {
+        TestLocalDateTime obj = new TestLocalDateTime();
+        obj.date = LocalDateTime.now();
+
+        String value = obj.date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
+        Assert.assertEquals("{\"date\":\"" + value + "\"}", JsonTools.serialize(obj));
+        Assert.assertEquals(obj.date, JsonTools.parse("{\"date\":\"" + value + "\"}", TestLocalDateTime.class).date);
+    }
+
+    static class TestLocalDate {
+        LocalDate date;
+    }
+    @Test
+    public void test_LocalDate() {
+        TestLocalDate obj = new TestLocalDate();
+        obj.date = LocalDate.now();
+
+        String value = obj.date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+
+        Assert.assertEquals("{\"date\":\"" + value + "\"}", JsonTools.serialize(obj));
+        Assert.assertEquals(obj.date, JsonTools.parse("{\"date\":\"" + value + "\"}", TestLocalDate.class).date);
     }
 }
