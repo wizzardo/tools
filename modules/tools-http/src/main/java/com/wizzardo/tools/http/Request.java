@@ -131,6 +131,7 @@ public class Request extends RequestArguments<Request> {
                         data = createPostParameters(params, charsetForEncoding).getBytes(charsetForEncoding);
                     }
 
+                    c.setFixedLengthStreamingMode(data.length);
                     c.setRequestProperty("Content-Length", String.valueOf(data.length));
                     OutputStream out = c.getOutputStream();
                     out.write(data);
@@ -139,7 +140,9 @@ public class Request extends RequestArguments<Request> {
                 } else {
                     c.setRequestProperty("Connection", "Keep-Alive");
                     c.setRequestProperty("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryZzaC4MkAfrAMfJCJ");
-                    c.setRequestProperty("Content-Length", String.valueOf(getLength()));
+                    int length = getLength();
+                    c.setRequestProperty("Content-Length", String.valueOf(length));
+                    c.setFixedLengthStreamingMode(length);
 //                        c.setChunkedStreamingMode(10240);
                     OutputStream out = c.getOutputStream();
                     for (Map.Entry<String, List<String>> param : params.entrySet()) {
@@ -208,16 +211,19 @@ public class Request extends RequestArguments<Request> {
 
     private int getLength() {
         int l = 0;
-        l += "------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".length() * (params.size() + 1) + 2;
+        l += "------WebKitFormBoundaryZzaC4MkAfrAMfJCJ\r\n".length() * (params.size() + 1);
         for (Map.Entry<String, List<String>> en : params.entrySet()) {
             for (String value : en.getValue()) {
                 if (value.startsWith("file://") || value.startsWith("array://")) {
                     String type = dataTypes.get(en.getKey()) != null ? dataTypes.get(en.getKey()) : ContentType.BINARY.value;
                     l += ("Content-Type: " + type + "\r\n").length();
                     if (value.startsWith("file://")) {
-                        l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + new File(value.substring(7)).getName().getBytes().length + value.length();
+                        File file = new File(value.substring(7));
+                        String name = file.getName();
+                        l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + name.getBytes().length + file.length();
                     } else {
-                        l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + dataArrays.get(en.getKey()).length + value.length();
+                        String name = value.substring(8);
+                        l += "Content-Disposition: form-data; name=\"\"; filename=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + name.getBytes().length + dataArrays.get(en.getKey()).length;
                     }
                 } else {
                     l += "Content-Disposition: form-data; name=\"\"\r\n\r\n\r\n".length() + en.getKey().getBytes().length + value.getBytes().length;
