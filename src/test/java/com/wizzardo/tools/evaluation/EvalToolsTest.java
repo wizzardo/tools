@@ -4,7 +4,6 @@
  */
 package com.wizzardo.tools.evaluation;
 
-import com.wizzardo.http.framework.template.TagLib;
 import com.wizzardo.tools.interfaces.Consumer;
 import com.wizzardo.tools.interfaces.Filter;
 import com.wizzardo.tools.interfaces.Mapper;
