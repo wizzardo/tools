@@ -128,13 +128,14 @@ public class Request extends RequestArguments<Request> {
                 if (!multipart) {
                     if (data == null) {
                         c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                        data = createPostParameters(params, charsetForEncoding).getBytes(charsetForEncoding);
+                        data = new Body.ByteArrayBody(createPostParameters(params, charsetForEncoding).getBytes(charsetForEncoding));
                     }
 
-                    c.setFixedLengthStreamingMode(data.length);
-                    c.setRequestProperty("Content-Length", String.valueOf(data.length));
+                    long length = data.length();
+                    c.setFixedLengthStreamingMode(length);
+                    c.setRequestProperty("Content-Length", String.valueOf(length));
                     OutputStream out = c.getOutputStream();
-                    out.write(data);
+                    data.write(out);
                     out.flush();
                     out.close();
                 } else {

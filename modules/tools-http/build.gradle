@@ -3,6 +3,8 @@ dependencies {
     compile project(':modules:tools-security')
     compile project(':modules:tools-reflection')
 }
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 archivesBaseName = "tools-http"
 ext {

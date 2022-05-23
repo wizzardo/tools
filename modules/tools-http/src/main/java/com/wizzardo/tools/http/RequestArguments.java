@@ -26,7 +26,7 @@ public class RequestArguments<T extends RequestArguments> {
     protected String charsetForEncoding = "utf-8";
     protected Proxy proxy;
     protected boolean redirects = true;
-    protected byte[] data;
+    protected Body data;
     protected HostnameVerifier hostnameVerifier;
     protected SSLSocketFactory sslFactory;
     protected int connectTimeout;
@@ -171,22 +171,33 @@ public class RequestArguments<T extends RequestArguments> {
         return data(data, contentType);
     }
 
-    public byte[] getData() {
+    public Body getData() {
         return data;
     }
 
-    public byte[] data() {
+    public Body data() {
         return data;
     }
 
     public T data(byte[] data, String contentType) {
-        this.data = data;
+        this.data = new Body.ByteArrayBody(data);
         method = ConnectionMethod.POST;
         setContentType(contentType);
         return self();
     }
 
     public T data(byte[] data, ContentType contentType) {
+        return data(data, contentType.value);
+    }
+
+    public T data(File data, String contentType) {
+        this.data = new Body.FileBody(data);
+        method = ConnectionMethod.POST;
+        setContentType(contentType);
+        return self();
+    }
+
+    public T data(File data, ContentType contentType) {
         return data(data, contentType.value);
     }
 
