@@ -15,11 +15,11 @@ public class CacheCleaner extends Thread {
         void onAdd(Cache cache);
     }
 
-    private Set<WeakReference<Cache>> caches = Collections.newSetFromMap(new ConcurrentHashMap<WeakReference<Cache>, Boolean>());
+    public Set<WeakReference<Cache>> caches = Collections.newSetFromMap(new ConcurrentHashMap<WeakReference<Cache>, Boolean>());
     private volatile long wakeup = -1;
     private volatile boolean sleeping = false;
 
-    private final static CacheCleaner instance;
+    public final static CacheCleaner instance;
     private final Queue<OnCacheAddedListener> listeners = new ConcurrentLinkedQueue<OnCacheAddedListener>();
 
     static {
@@ -120,10 +120,10 @@ public class CacheCleaner extends Thread {
 //            System.out.println();
 //            System.out.println("cleaning");
 
-            Long time = System.currentTimeMillis();
+            long time = System.currentTimeMillis();
 
             Iterator<WeakReference<Cache>> iterator = caches.iterator();
-            Long wakeup = time + (24 * 3600 * 1000);
+            long wakeup = time + (24 * 3600 * 1000);
 
             while (iterator.hasNext()) {
                 Cache<?, ?> cache = iterator.next().get();
@@ -140,10 +140,13 @@ public class CacheCleaner extends Thread {
 
 
 //            System.out.println("can sleep for " + (wakeup - time));
-            while (wakeup.compareTo(time = System.currentTimeMillis()) > 0) {
+            while (wakeup > (time = System.currentTimeMillis())) {
                 synchronized (this) {
-                    if (this.wakeup < wakeup && this.wakeup > time)
-                        wakeup = this.wakeup;
+                    if (this.wakeup < wakeup)
+                        if (this.wakeup > time)
+                            wakeup = this.wakeup;
+                        else
+                            break;
                     else
                         this.wakeup = wakeup;
 

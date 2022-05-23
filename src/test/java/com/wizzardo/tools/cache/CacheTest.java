@@ -141,7 +141,7 @@ public class CacheTest {
             public String compute(String s) {
                 return s.toUpperCase();
             }
-        }),1);
+        }), 1);
 
         Assert.assertEquals(0, cache.size());
         cache.get("foo1");
@@ -166,7 +166,7 @@ public class CacheTest {
                     }
                 };
             }
-        }),5);
+        }), 5);
 
         Assert.assertEquals(0, cache.size());
         cache.get("foo1");
@@ -249,6 +249,9 @@ public class CacheTest {
     @Test
     public void destroy_test() throws InterruptedException {
         System.gc();
+        CacheCleaner.updateWakeUp(0);
+        Thread.sleep(100);
+        int sizeBefore = CacheCleaner.size();
         Cache<String, String> cache = new Cache<String, String>(1, new Computable<String, String>() {
             @Override
             public String compute(String s) {
@@ -262,17 +265,17 @@ public class CacheTest {
 
         Thread.sleep(1020);
         Assert.assertEquals(0, cache.size());
-        Assert.assertEquals(1, CacheCleaner.size());
+        Assert.assertEquals(sizeBefore + 1, CacheCleaner.size());
         cache.get("foo");
         Assert.assertEquals(1, cache.size());
 
         cache.destroy();
         Assert.assertEquals(0, cache.size());
         Assert.assertEquals(true, cache.isDestroyed());
-        Assert.assertEquals(1, CacheCleaner.size());
+        Assert.assertEquals(sizeBefore + 1, CacheCleaner.size());
 
         Thread.sleep(1020);
-        Assert.assertEquals(0, CacheCleaner.size());
+        Assert.assertEquals(sizeBefore, CacheCleaner.size());
 
     }
 
@@ -500,13 +503,14 @@ public class CacheTest {
 
     @Test
     public void test_cache_iterable() {
+        int sizeBefore = CacheCleaner.size();
         Cache<String, String> cache;
         cache = new Cache<String, String>(1);
         cache = new Cache<String, String>(1);
         cache = new Cache<String, String>(1);
 
         int before = CacheCleaner.size();
-        Assert.assertTrue(before >= 3);
+        Assert.assertTrue(before >= sizeBefore + 3);
 
         System.gc();
 
@@ -515,8 +519,8 @@ public class CacheTest {
             i++;
         }
 
-        Assert.assertEquals(1, i);
-        Assert.assertEquals(1, CacheCleaner.size());
+        Assert.assertEquals(sizeBefore + 1, i);
+        Assert.assertEquals(sizeBefore + 1, CacheCleaner.size());
     }
 
     @Test
