@@ -72,13 +72,13 @@ public class CacheTest {
         Thread.sleep(500);
         cache.get("bar");
 
-        Thread.sleep(490);
+        Thread.sleep(400);
         Assert.assertEquals(2, cache.size());
 
         Thread.sleep(500);
         Assert.assertEquals(1, cache.size());
 
-        Thread.sleep(20);
+        Thread.sleep(150);
         Assert.assertEquals(0, cache.size());
     }
 
@@ -272,7 +272,7 @@ public class CacheTest {
         cache.destroy();
         Assert.assertEquals(0, cache.size());
         Assert.assertEquals(true, cache.isDestroyed());
-        Assert.assertEquals(sizeBefore + 1, CacheCleaner.size());
+        Assert.assertTrue(sizeBefore + 1 == CacheCleaner.size() || sizeBefore == CacheCleaner.size());
 
         Thread.sleep(1020);
         Assert.assertEquals(sizeBefore, CacheCleaner.size());
@@ -502,15 +502,17 @@ public class CacheTest {
     }
 
     @Test
-    public void test_cache_iterable() {
+    public void test_cache_iterable() throws InterruptedException {
+        System.gc();
+        CacheCleaner.updateWakeUp(0);
+        Thread.sleep(100);
         int sizeBefore = CacheCleaner.size();
         Cache<String, String> cache;
         cache = new Cache<String, String>(1);
         cache = new Cache<String, String>(1);
         cache = new Cache<String, String>(1);
 
-        int before = CacheCleaner.size();
-        Assert.assertTrue(before >= sizeBefore + 3);
+        Assert.assertTrue(CacheCleaner.size() >= sizeBefore + 3);
 
         System.gc();
 
@@ -521,6 +523,7 @@ public class CacheTest {
 
         Assert.assertEquals(sizeBefore + 1, i);
         Assert.assertEquals(sizeBefore + 1, CacheCleaner.size());
+        Assert.assertFalse(cache.isDestroyed());
     }
 
     @Test
