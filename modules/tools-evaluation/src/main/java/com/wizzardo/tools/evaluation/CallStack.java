@@ -48,7 +48,7 @@ public class CallStack {
         return exception;
     }
 
-    static class EvaluationException extends RuntimeException {
+    public static class EvaluationException extends RuntimeException {
         public EvaluationException(Exception e) {
             super(e);
         }

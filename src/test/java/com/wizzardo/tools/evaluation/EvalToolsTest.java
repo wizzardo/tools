@@ -4,6 +4,7 @@
  */
 package com.wizzardo.tools.evaluation;
 
+import com.wizzardo.http.framework.template.TagLib;
 import com.wizzardo.tools.interfaces.Consumer;
 import com.wizzardo.tools.interfaces.Filter;
 import com.wizzardo.tools.interfaces.Mapper;
@@ -2130,5 +2131,12 @@ public class EvalToolsTest {
         model.put("args", args);
         Expression expression = EvalTools.prepare("args != null && args.length > 0 && args[0] instanceof Integer", model);
         Assert.assertEquals(true, expression.get(model));
+    }
+
+    @Test
+    public void template_url() {
+        String s = "https://google.com";
+        Expression expression = EvalTools.prepare(s, new HashMap<>(), new HashMap<>(), new ArrayList<>(), true);
+        Assert.assertEquals(s, expression.get(null));
     }
 }

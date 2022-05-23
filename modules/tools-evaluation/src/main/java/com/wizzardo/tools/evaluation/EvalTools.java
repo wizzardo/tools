@@ -1788,10 +1788,10 @@ public class EvalTools {
         }
 
         int start = from;
-        if (from == 0 && to == exp.length())
-            exp = removeComments(exp);
-
         if (!isTemplate) {
+            if (from == 0 && to == exp.length())
+                exp = removeComments(exp);
+
             start = trimLeft(exp, from, to);
             to = trimRight(exp, start, to);
 
