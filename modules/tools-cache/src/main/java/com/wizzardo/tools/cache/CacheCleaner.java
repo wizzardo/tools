@@ -139,6 +139,7 @@ public class CacheCleaner extends Thread {
             }
 
 
+            this.wakeup = wakeup;
 //            System.out.println("can sleep for " + (wakeup - time));
             while (wakeup > (time = System.currentTimeMillis())) {
                 synchronized (this) {
