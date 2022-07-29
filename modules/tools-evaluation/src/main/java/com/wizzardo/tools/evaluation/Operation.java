@@ -698,6 +698,10 @@ public class Operation extends Expression {
 
             if (leftPart instanceof Expression.VariableOrFieldOfThis) {
                 Expression.VariableOrFieldOfThis that = (VariableOrFieldOfThis) leftPart;
+                if (model instanceof EvaluationContext && ((EvaluationContext) model).containsKeyLocal(that.function.fieldName)) {
+                    return setAndReturn(model, new Function.MapSetter(that.function.fieldName), ob1, ob2, operator);
+                }
+
                 Object instance = that.thisHolder.get(model);
                 if (instance != null) {
                     if (!(instance instanceof Map) || ((Map) instance).containsKey(that.function.fieldName)) {
@@ -705,7 +709,7 @@ public class Operation extends Expression {
                             instance = model;
                         Function.Setter setter = that.function.getSetter(instance);
                         if (setter != null)
-                            return setAndReturn(instance, setter, null, ob2, operator);
+                            return setAndReturn(instance, setter, ob1, ob2, operator);
                     }
                 }
             }

@@ -56,12 +56,13 @@ public class Function extends Expression {
         this.safeNavigation = safeNavigation;
     }
 
-    protected Function(Expression thatObject, MethodInvoker method, Expression[] args, boolean safeNavigation, String file, int lineNumber, int linePosition) {
+    protected Function(Expression thatObject, MethodInvoker method, Expression[] args, boolean safeNavigation, String file, int lineNumber, int linePosition, List<Mapper<Object[], Object[]>> argsMappers) {
         super(file, lineNumber, linePosition);
         this.thatObject = thatObject;
         this.method = method;
         this.args = args;
         this.safeNavigation = safeNavigation;
+        this.argsMappers = argsMappers;
     }
 
     public Function(Expression thatObject, String methodName, Expression[] args, EvaluationContext context) {
@@ -185,7 +186,7 @@ public class Function extends Expression {
             return new Function(thatObject, fieldName, safeNavigation, file, lineNumber, linePosition);
         }
         if (method != null) {
-            return new Function(thatObject.clone(), method, args, safeNavigation, file, lineNumber, linePosition);
+            return new Function(thatObject.clone(), method, args, safeNavigation, file, lineNumber, linePosition, argsMappers);
         }
         return new Function(thatObject.clone(), methodName, args, safeNavigation, file, lineNumber, linePosition);
     }
@@ -402,7 +403,7 @@ public class Function extends Expression {
                 throw new NoSuchMethodException((aClass != null ? aClass.getCanonicalName() : "null") + "." + methodName + "(" + (arr == null ? "" : Arrays.toString(arr)) + "), at " + this);
             }
 
-            if (!argsMappers.isEmpty()) {
+            if (argsMappers != null && !argsMappers.isEmpty()) {
                 for (Mapper<Object[], Object[]> mapper : argsMappers) {
                     arr = mapper.map(arr);
                 }
@@ -724,7 +725,10 @@ public class Function extends Expression {
 
             @Override
             public boolean canInvoke(Object instance) {
-                return m.getDeclaringClass().isAssignableFrom(instance.getClass());
+                if ((m.getModifiers() & Modifier.STATIC) != 0 && instance.getClass() == Class.class)
+                    return m.getDeclaringClass().isAssignableFrom((Class<?>) instance);
+                else
+                    return m.getDeclaringClass().isAssignableFrom(instance.getClass());
             }
 
             @Override

@@ -50,6 +50,10 @@ public class EvaluationContext extends HashMap<String, Object> {
         return parent != null && parent.containsKey(key);
     }
 
+    public boolean containsKeyLocal(Object key) {
+        return super.containsKey(key);
+    }
+
     @Override
     public Set<String> keySet() {
         HashSet<String> keys = new HashSet<>(super.keySet());

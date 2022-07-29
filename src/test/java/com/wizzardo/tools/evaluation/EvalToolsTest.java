@@ -870,6 +870,17 @@ public class EvalToolsTest {
         assertEquals((Object) (-1), EvalTools.evaluate(exp, model));
 
 
+        exp = "if(i>0){\n" +
+                "// i=i*2;\n" +
+                "}\n" +
+                "i\n";
+
+        model.put("i", 1);
+        assertEquals((Object) 1, EvalTools.evaluate(exp, model));
+        model.put("i", -1);
+        assertEquals((Object) (-1), EvalTools.evaluate(exp, model));
+
+
         exp = "if(s.length()<3)\n" +
                 " s=\"0\"+s;\n" +
                 "else\n" +

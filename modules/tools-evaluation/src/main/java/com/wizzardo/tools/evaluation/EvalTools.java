@@ -586,6 +586,9 @@ public class EvalTools {
                     else
                         then = EvalTools.prepare(body, model, functions, imports);
 
+                    if (then == null)
+                        then = Expression.Holder.NULL;
+
                     Expression elseExpression;
                     if (optionalStatement != null)
                         elseExpression = optionalStatement.prepare(model, functions, imports);
@@ -1066,7 +1069,7 @@ public class EvalTools {
 
             EvaluationContext localModel = model.createLocalContext();
             for (Pair<String, Class> arg : closure.args) {
-                localModel.put(arg.key, null);
+                localModel.putLocal(arg.key, null);
             }
 
             closure.parseBody(exp, from, to, model, functions, imports);
@@ -1446,7 +1449,7 @@ public class EvalTools {
 
                 if (m.group(4).equals("=")) {
                     if (name != null)
-                        model.put(name, null);
+                        model.putLocal(name, null);
 
                     Expression action = prepare(exp.source, exp.start + m.start(3), exp.end, model, functions, imports, false);
                     if (action instanceof Operation && ((Operation) action).leftPart() instanceof ClassExpression) {
@@ -1455,7 +1458,7 @@ public class EvalTools {
                     Class typeClass = findClass(type, imports, model);
                     return new Expression.DefineAndSet(typeClass, name, action, type, modifiers, model);
                 } else {
-                    model.put(name, null);
+                    model.putLocal(name, null);
 
                     if (model.containsKey("class " + type))
                         return new Expression.DefinitionWithClassExpression((ClassExpression) model.get("class " + type), name, model);
@@ -1498,7 +1501,7 @@ public class EvalTools {
                     return null;
 
                 if (name != null)
-                    model.put(name, null);
+                    model.putLocal(name, null);
 
                 int argsEnd = findCloseBracket(exp.source, exp.start + m.end()) - exp.start;
                 ClosureHolder closure;
@@ -1518,7 +1521,7 @@ public class EvalTools {
                     c.parseArguments(exp.source, exp.start + m.end(), exp.start + argsEnd, imports, model);
                     EvaluationContext localModel = model.createLocalContext();
                     for (Pair<String, Class> arg : c.args) {
-                        localModel.put(arg.key, null);
+                        localModel.putLocal(arg.key, null);
                     }
                     c.parseBody(exp.source, blockStart + 1, exp.end - 1, localModel, functions, imports);
                     ClosureHolder closureHolder = new ClosureHolder(c, model);
@@ -1976,7 +1979,7 @@ public class EvalTools {
 //                System.out.println("available functions: " + functions);
                 ClassExpression currentClass = (ClassExpression) model.get("current class");
                 String functionName = m.group(1);
-                List<ExpressionPart> args = parseArgs(exp.substring(functionName.length() + 1, exp.length() - 1));
+                List<ExpressionPart> args = parseArgs(exp, start + functionName.length() + 1, to - 1);
                 thatObject = new ClosureLookup(functionName, functions, args.size(), currentClass, model);
                 start = from = start + functionName.length();
             }
