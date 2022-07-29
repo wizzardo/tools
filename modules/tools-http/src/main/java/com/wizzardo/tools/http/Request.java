@@ -43,42 +43,42 @@ public class Request extends RequestArguments<Request> {
     }
 
     public Response get() throws IOException {
-        setMethod(ConnectionMethod.GET);
+        setMethod(ConnectionMethod.HTTPMethod.GET);
         return execute();
     }
 
     public Response post() throws IOException {
-        setMethod(ConnectionMethod.POST);
+        setMethod(ConnectionMethod.HTTPMethod.POST);
         return execute();
     }
 
     public Response put() throws IOException {
-        setMethod(ConnectionMethod.PUT);
+        setMethod(ConnectionMethod.HTTPMethod.PUT);
         return execute();
     }
 
     public Response head() throws IOException {
-        setMethod(ConnectionMethod.HEAD);
+        setMethod(ConnectionMethod.HTTPMethod.HEAD);
         return execute();
     }
 
     public Response delete() throws IOException {
-        setMethod(ConnectionMethod.DELETE);
+        setMethod(ConnectionMethod.HTTPMethod.DELETE);
         return execute();
     }
 
     public Response options() throws IOException {
-        setMethod(ConnectionMethod.OPTIONS);
+        setMethod(ConnectionMethod.HTTPMethod.OPTIONS);
         return execute();
     }
 
     public Response trace() throws IOException {
-        setMethod(ConnectionMethod.TRACE);
+        setMethod(ConnectionMethod.HTTPMethod.TRACE);
         return execute();
     }
 
     public Response patch() throws IOException {
-        setMethod(ConnectionMethod.PATCH);
+        setMethod(ConnectionMethod.HTTPMethod.PATCH);
         return execute();
     }
 
@@ -98,7 +98,7 @@ public class Request extends RequestArguments<Request> {
             if (!url.toLowerCase().startsWith("http"))
                 url = "http://" + url;
 
-            if (data != null || (method != ConnectionMethod.PUT && method != ConnectionMethod.POST)) {
+            if (data != null || !method.withBody()) {
                 url = createURL(url, params);
             }
             URL u = new URL(url);
@@ -111,7 +111,7 @@ public class Request extends RequestArguments<Request> {
             c.setConnectTimeout(connectTimeout);
             c.setReadTimeout(readTimeout);
             c.setInstanceFollowRedirects(false);
-            c.setRequestMethod(method.toString());
+            c.setRequestMethod(method.name());
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 c.setRequestProperty(header.getKey(), header.getValue());
             }
@@ -123,7 +123,7 @@ public class Request extends RequestArguments<Request> {
                 HttpsURLConnection https = (HttpsURLConnection) c;
                 https.setSSLSocketFactory(sslFactory);
             }
-            if (method == ConnectionMethod.POST || method == ConnectionMethod.PUT || method == ConnectionMethod.PATCH) {
+            if (method.withBody()) {
                 c.setDoOutput(true);
                 if (!multipart) {
                     if (data == null) {

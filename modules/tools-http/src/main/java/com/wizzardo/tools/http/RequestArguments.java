@@ -17,7 +17,7 @@ public class RequestArguments<T extends RequestArguments> {
 
     protected int maxRetryCount = 0;
     protected long pauseBetweenRetries = 0;
-    protected ConnectionMethod method = ConnectionMethod.GET;
+    protected ConnectionMethod method = ConnectionMethod.HTTPMethod.GET;
     protected Map<String, List<String>> params = new LinkedHashMap<String, List<String>>();
     protected Map<String, String> headers = new HashMap<String, String>();
     protected Map<String, byte[]> dataArrays = new HashMap<String, byte[]>();
@@ -181,7 +181,7 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T data(byte[] data, String contentType) {
         this.data = new Body.ByteArrayBody(data);
-        method = ConnectionMethod.POST;
+        method = ConnectionMethod.HTTPMethod.POST;
         setContentType(contentType);
         return self();
     }
@@ -192,7 +192,7 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T data(File data, String contentType) {
         this.data = new Body.FileBody(data);
-        method = ConnectionMethod.POST;
+        method = ConnectionMethod.HTTPMethod.POST;
         setContentType(contentType);
         return self();
     }
@@ -291,7 +291,7 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T addFile(String key, String path, String type) {
         multipart = true;
-        method = ConnectionMethod.POST;
+        method = ConnectionMethod.HTTPMethod.POST;
         addParameter(key, "file://" + path);
         if (type != null)
             dataTypes.put(key, type);
@@ -305,7 +305,7 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T addByteArray(String key, byte[] array, String name, String type) {
         multipart = true;
-        method = ConnectionMethod.POST;
+        method = ConnectionMethod.HTTPMethod.POST;
         addParameter(key, "array://" + name);
         dataArrays.put(key, array);
         if (type != null) {
