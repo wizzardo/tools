@@ -1,5 +1,6 @@
 allprojects {
     apply plugin: 'java'
+    apply plugin: 'tools-gradle-build'
 
     sourceCompatibility = 1.6
     targetCompatibility = 1.6
@@ -89,7 +90,7 @@ dependencies {
     testCompile 'junit:junit:4.11'
     testCompile 'com.google.code.gson:gson:2.2.4'
     testCompile "org.assertj:assertj-core:3.18.1"
-    testCompile 'org.xerial:sqlite-jdbc:3.32.3.2'
+    testCompile 'org.xerial:sqlite-jdbc:3.36.0.3'
 }
 
 
