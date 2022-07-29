@@ -13,21 +13,33 @@ import java.text.SimpleDateFormat
 class BuildPlugin implements Plugin<Project> {
 
     def getGitRevision() {
-        return "git rev-parse HEAD".execute().text.trim()
+        try {
+            return "git rev-parse HEAD".execute().text.trim()
+        } catch (Exception e) {
+            return ""
+        }
     }
 
     def getGitTags() {
-        return "git tag --points-at HEAD".execute().text.trim().readLines()
+        try {
+            return "git tag --points-at HEAD".execute().text.trim().readLines()
+        } catch (Exception e) {
+            return ""
+        }
     }
 
     def getGitBranchName() {
         def branchName = System.getenv().get('GIT_BRANCH')
         if (!branchName) {
-            branchName = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
-            if (branchName == gitRevision) {
-                branchName = "git branch -a --contains ${"git rev-parse --verify HEAD".execute().text}".execute()
-                        .text.trim().readLines()
-                        .find({ it.contains('origin/') })?.with({ it.split('origin/')[1].trim() }) ?: ''
+            try {
+                branchName = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
+                if (branchName == gitRevision) {
+                    branchName = "git branch -a --contains ${"git rev-parse --verify HEAD".execute().text}".execute()
+                            .text.trim().readLines()
+                            .find({ it.contains('origin/') })?.with({ it.split('origin/')[1].trim() }) ?: ''
+                }
+            } catch (Exception e) {
+                return ""
             }
         }
         return branchName
