@@ -171,6 +171,10 @@ public class RequestArguments<T extends RequestArguments> {
         return data(data, contentType);
     }
 
+    public T setData(Body data, String contentType) {
+        return data(data, contentType);
+    }
+
     public Body getData() {
         return data;
     }
@@ -181,6 +185,13 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T data(byte[] data, String contentType) {
         this.data = new Body.ByteArrayBody(data);
+        method = ConnectionMethod.HTTPMethod.POST;
+        setContentType(contentType);
+        return self();
+    }
+
+    public T data(Body data, String contentType) {
+        this.data = data;
         method = ConnectionMethod.HTTPMethod.POST;
         setContentType(contentType);
         return self();
