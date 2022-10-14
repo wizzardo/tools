@@ -205,6 +205,10 @@ public class ClassBuilder {
     }
 
     public <T> ClassBuilder field(String name, Class<T> type, T initValue) {
+        return field(name, type, initValue, AccessFlags.ACC_PUBLIC);
+    }
+
+    public <T> ClassBuilder field(String name, Class<T> type, T initValue, int accessFlags) {
         String description = getFieldDescription(type);
         int nameIndex = getOrCreateUtf8Constant(name);
         int descriptorIndex = getOrCreateUtf8Constant(description);
@@ -218,7 +222,7 @@ public class ClassBuilder {
         }));
 
         FieldInfo fi = new FieldInfo();
-        fi.access_flags = AccessFlags.ACC_PUBLIC;
+        fi.access_flags = accessFlags & AccessFlags.FIELD_ACCESS_FLAGS_MASK;
         fi.name_index = nameIndex;
         fi.descriptor_index = descriptorIndex;
         append(fi);
@@ -571,12 +575,22 @@ public class ClassBuilder {
         ca.max_locals = 2;
         ca.max_stack = 2;
         ca.attribute_name_index = getOrCreateUtf8Constant("Code");
-        ca.code = new CodeBuilder()
-                .append(Instruction.aload_0)
-                .append(Instruction.aload_1)
-                .append(Instruction.putfield, getOrCreateFieldRefBytes(name))
-                .append(Instruction.return_)
-                .build();
+        if ((field.access_flags & AccessFlags.ACC_STATIC) == 0) {
+            ca.code = new CodeBuilder()
+                    .append(Instruction.aload_0)
+                    .append(Instruction.aload_1)
+                    .append(Instruction.putfield, getOrCreateFieldRefBytes(name))
+                    .append(Instruction.return_)
+                    .build();
+        } else {
+            ca.code = new CodeBuilder()
+                    .append(Instruction.aload_0)
+                    .append(Instruction.pop)
+                    .append(Instruction.aload_1)
+                    .append(Instruction.putstatic, getOrCreateFieldRefBytes(name))
+                    .append(Instruction.return_)
+                    .build();
+        }
         ca.code_length = ca.code.length;
         ca.attribute_length = ca.updateLength();
 
@@ -653,11 +667,18 @@ public class ClassBuilder {
             returnInstruction = Instruction.areturn;
         }
 
-        ca.code = new CodeBuilder()
-                .append(Instruction.aload_0)
-                .append(Instruction.getfield, getOrCreateFieldRefBytes(name))
-                .append(returnInstruction)
-                .build();
+        if ((field.access_flags & AccessFlags.ACC_STATIC) == 0) {
+            ca.code = new CodeBuilder()
+                    .append(Instruction.aload_0)
+                    .append(Instruction.getfield, getOrCreateFieldRefBytes(name))
+                    .append(returnInstruction)
+                    .build();
+        } else {
+            ca.code = new CodeBuilder()
+                    .append(Instruction.getstatic, getOrCreateFieldRefBytes(name))
+                    .append(returnInstruction)
+                    .build();
+        }
         ca.code_length = ca.code.length;
         ca.attribute_length = ca.updateLength();
 

@@ -1,17 +1,14 @@
 package com.wizzardo.tools.evaluation;
 
 
-import com.wizzardo.tools.bytecode.ClassBuilder;
-import com.wizzardo.tools.bytecode.DynamicProxy;
-import com.wizzardo.tools.bytecode.DynamicProxyFactory;
-import com.wizzardo.tools.bytecode.Handler;
+import com.wizzardo.tools.bytecode.*;
 import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.*;
 import java.util.*;
 
-public class ClassExpression extends Expression {
+public class ClassExpression extends Expression implements Type {
 
     protected boolean isEnum;
     protected List<Expression> definitions;
@@ -19,36 +16,39 @@ public class ClassExpression extends Expression {
     protected EvaluationContext context;
     protected String packageName;
     protected String name;
-    protected Class<?>[] interfaces;
-    protected Class<?> superClass;
+    protected Type[] interfaces;
+    protected Class<?>[] interfacesRaw;
+    protected Type superClass;
     protected Class<?> proxyClass;
 
-    public ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, EvaluationContext parsingContext) {
+    public ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Type superClass, Type[] interfaces, EvaluationContext parsingContext) {
         this(name, definitions, definitionsStatic, superClass, interfaces, null, parsingContext);
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, EvaluationContext parsingContext) {
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Type superClass, Type[] interfaces, Class<?> proxyClass, EvaluationContext parsingContext) {
         this(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, new EvaluationContext(), parsingContext);
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, EvaluationContext context, EvaluationContext parsingContext) {
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Type superClass, Type[] interfaces, Class<?> proxyClass, EvaluationContext context, EvaluationContext parsingContext) {
         super(parsingContext);
         this.name = name;
         this.definitions = definitions;
         this.definitionsStatic = definitionsStatic;
         this.superClass = superClass;
         this.interfaces = interfaces;
+        this.interfacesRaw = typesToClasses(interfaces);
         this.proxyClass = proxyClass;
         this.context = context;
     }
 
-    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Class<?> superClass, Class<?>[] interfaces, Class<?> proxyClass, EvaluationContext context, String file, int lineNumber, int linePosition) {
+    protected ClassExpression(String name, List<Expression> definitions, List<Expression> definitionsStatic, Type superClass, Type[] interfaces, Class<?> proxyClass, EvaluationContext context, String file, int lineNumber, int linePosition) {
         super(file, lineNumber, linePosition);
         this.name = name;
         this.definitions = definitions;
         this.definitionsStatic = definitionsStatic;
         this.superClass = superClass;
         this.interfaces = interfaces;
+        this.interfacesRaw = typesToClasses(interfaces);
         this.proxyClass = proxyClass;
         this.context = context;
     }
@@ -74,10 +74,25 @@ public class ClassExpression extends Expression {
     }
 
     public Class<?>[] getInterfaces() {
-        if (interfaces == null)
+        if (interfacesRaw == null)
             return new Class[0];
 
+        return Arrays.copyOf(interfacesRaw, interfacesRaw.length);
+    }
+
+    public Type[] getGenericInterfaces() {
+        if (interfaces == null)
+            return new Type[0];
+
         return Arrays.copyOf(interfaces, interfaces.length);
+    }
+
+    public Type getGenericSuperClass(){
+        return superClass;
+    }
+
+    public Class<?> getSuperClass() {
+        return typeToClass(superClass);
     }
 
     @Override
@@ -108,13 +123,30 @@ public class ClassExpression extends Expression {
         return "class " + name;// + " " + definitions.toString();
     }
 
+    protected Class<?> typeToClass(Type t) {
+        if (t instanceof Class)
+            return (Class<?>) t;
+        if (t instanceof ParameterizedType)
+            return typeToClass(((ParameterizedType) t).getRawType());
+
+        throw new IllegalArgumentException();
+    }
+
+    private Class<?>[] typesToClasses(Type[] types) {
+        Class<?>[] classes = new Class[types.length];
+        for (int i = 0; i < types.length; i++) {
+            classes[i] = typeToClass(types[i]);
+        }
+        return classes;
+    }
+
     public Object newInstance(Object[] args) {
         ClassExpression instance = new ClassExpression(name, definitions, definitionsStatic, superClass, interfaces, proxyClass, context.createLocalContext(), file, lineNumber, linePosition);
         instance.context.put("this", instance);
         instance.init();
         Object result = instance;
 
-        if (interfaces.length != 0 || superClass != Object.class) {
+        if (interfaces.length != 0 || superClass != Object.class || proxyClass != null) {
             if (getJavaClass() != null) {
                 result = Unchecked.call(() -> proxyClass.newInstance());
                 instance.context.put("this", result);
@@ -151,11 +183,11 @@ public class ClassExpression extends Expression {
                     return r;
                 });
             } else {
-                Class<?>[] interfacesToImplement = new Class[interfaces.length + 1];
-                System.arraycopy(interfaces, 0, interfacesToImplement, 0, interfaces.length);
+                Class<?>[] interfacesToImplement = new Class[interfacesRaw.length + 1];
+                System.arraycopy(interfacesRaw, 0, interfacesToImplement, 0, interfacesRaw.length);
                 interfacesToImplement[interfacesToImplement.length - 1] = WithClassExpression.class;
                 result = Proxy.newProxyInstance(
-                        interfaces[0].getClassLoader(),
+                        interfacesRaw[0].getClassLoader(),
                         interfacesToImplement,
                         (proxy, method, args1) -> {
 //                            System.out.println(method+" "+Arrays.toString(args));
@@ -268,22 +300,23 @@ public class ClassExpression extends Expression {
             return proxyClass;
 
         if (DynamicProxy.SUPPORTED) {
-            String fullname = ((packageName != null && !packageName.isEmpty()) ? packageName + "." : "") + name + "Proxy";
+            String fullname = ((packageName != null && !packageName.isEmpty()) ? packageName + "." : "") + name;
+            Class<?> superClazz = typeToClass(superClass);
             ClassBuilder builder = new ClassBuilder()
-                    .setSuperClass(superClass)
+                    .setSuperClass(superClazz)
                     .setClassFullName(fullname)
                     .implement(DynamicProxy.class)
-                    .field("handler", Handler.class)
+                    .field("handler", Handler.class, null, AccessFlags.ACC_STATIC)
                     .fieldSetter("handler")
                     .implement(WithClassExpression.class)
-                    .field("classExpression", ClassExpression.class)
+                    .field("classExpression", ClassExpression.class, null, AccessFlags.ACC_STATIC)
                     .fieldSetter("classExpression")
                     .fieldGetter("classExpression");
 
-            builder.implement(interfaces);
-            builder.implement(superClass.getInterfaces());
+            builder.implement(interfacesRaw);
+            builder.implement(superClazz.getInterfaces());
 
-            for (Class<?> anInterface : interfaces) {
+            for (Class<?> anInterface : interfacesRaw) {
                 for (Method method : anInterface.getMethods()) {
                     if (builder.hasMethod(method))
                         continue;
@@ -292,8 +325,8 @@ public class ClassExpression extends Expression {
                 }
             }
 
-            Method[] superMethods = superClass.getMethods();
-            for (Class<?> anInterface : superClass.getInterfaces()) {
+            Method[] superMethods = superClazz.getMethods();
+            for (Class<?> anInterface : superClazz.getInterfaces()) {
                 for (Method method : anInterface.getMethods()) {
                     if (builder.hasMethod(method))
                         continue;
@@ -376,7 +409,7 @@ public class ClassExpression extends Expression {
                 }
             }
 
-            Constructor<?>[] constructors = superClass.getConstructors();
+            Constructor<?>[] constructors = superClazz.getConstructors();
             for (Constructor<?> constructor : constructors) {
                 builder.withSuperConstructor(constructor.getParameterTypes());
             }

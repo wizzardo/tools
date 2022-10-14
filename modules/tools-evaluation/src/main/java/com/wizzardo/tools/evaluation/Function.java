@@ -466,6 +466,8 @@ public class Function extends Expression {
             return getter = new Getter() {
                 @Override
                 public Object get(Object instance) {
+                    if (fieldName.equals("class"))
+                        return ((ClassExpression) instance).getJavaClass();
                     return ((ClassExpression) instance).context.get(fieldName);
                 }
             };

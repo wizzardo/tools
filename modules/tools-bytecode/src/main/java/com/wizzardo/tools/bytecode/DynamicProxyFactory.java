@@ -69,7 +69,7 @@ public class DynamicProxyFactory {
                 .setSuperClass(clazz)
                 .setClassFullName(classFullName)
                 .implement(DynamicProxy.class)
-                .field("handler", Handler.class)
+                .field("handler", Handler.class, null, AccessFlags.ACC_STATIC)
                 .fieldSetter("handler");
 
         Constructor<?>[] constructors = clazz.getConstructors();
@@ -114,6 +114,13 @@ public class DynamicProxyFactory {
                 @Override
                 public Class<?> findClass(String name) {
                     return defineClass(name, bytes, 0, bytes.length);
+                }
+
+                @Override
+                public Class<?> loadClass(String n) throws ClassNotFoundException {
+                    if (n.equals(name))
+                        return findClass(n);
+                    return super.loadClass(n);
                 }
             }.loadClass(name);
         } catch (Exception e) {
@@ -318,8 +325,9 @@ public class DynamicProxyFactory {
             }
 
             CodeBuilder code = new CodeBuilder()
-                    .append(Instruction.aload_0)
-                    .append(Instruction.getfield, cb.getOrCreateFieldRefBytes("handler"))
+//                    .append(Instruction.aload_0)
+//                    .append(Instruction.getfield, cb.getOrCreateFieldRefBytes("handler"))
+                    .append(Instruction.getstatic, cb.getOrCreateFieldRefBytes("handler"))
                     .append(Instruction.aload_0);
 
             int methodNameIndex = cb.getOrCreateStringConstant(name);

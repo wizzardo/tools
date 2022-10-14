@@ -1,5 +1,7 @@
 package com.wizzardo.tools.bytecode;
 
+import com.wizzardo.tools.io.FileTools;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -32,6 +34,10 @@ class ByteCodeParser {
 
     public ByteCodeParser(byte[] bytes) {
         this.bytes = bytes;
+    }
+
+    public static void main(String[] args) {
+        new ByteCodeParser(FileTools.bytes("out/test/classes/com/wizzardo/tools/bytecode/ProxyExample.class")).read();
     }
 
     public void read() {

@@ -7,8 +7,7 @@ package com.wizzardo.tools.evaluation;
 import com.wizzardo.tools.misc.Pair;
 import com.wizzardo.tools.misc.Unchecked;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,7 +23,7 @@ public class EvalTools {
     static EvaluatingStrategy defaultEvaluatingStrategy;
     private static AtomicInteger variableCounter = new AtomicInteger();
     private static final Pattern CLEAN_CLASS = Pattern.compile("(([a-z]+\\.)*(\\b[A-Z]?[a-zA-Z\\d_]+)(\\.[A-Z]?[a-zA-Z\\d_]+)*)(\\[)?]?");
-    private static final Pattern TYPE = Pattern.compile(CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)*\\>)*");
+    private static final Pattern TYPE = Pattern.compile(CLEAN_CLASS.pattern() + "(?<generics>\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)*\\>)*");
     private static final Pattern NEW = Pattern.compile("^new +" + CLEAN_CLASS.pattern() + "(\\<(\\s*" + CLEAN_CLASS.pattern() + "\\s*,*\\s*)*\\>)*");
     private static final Pattern CLASS = Pattern.compile("^" + CLEAN_CLASS.pattern());
     private static final Pattern CAST = Pattern.compile("^\\(" + CLEAN_CLASS.pattern() + "(\\<([\\s<]*" + CLEAN_CLASS.pattern() + "[\\s>,]*)+\\>)?" + "\\)");
@@ -1250,29 +1249,34 @@ public class EvalTools {
                 };
 
             boolean isEnum = substringEquals(exp, cd.typeStart, cd.typeEnd, "enum");
-            Class[] interfaces = new Class[0];
+            List<Type> interfaces = new ArrayList<>();
             String anImplements = cd.implementsStart == -1 ? null : exp.substring(cd.implementsStart, cd.implementsEnd);
             if (anImplements != null && !anImplements.isEmpty()) {
                 anImplements = anImplements.trim();
                 anImplements = anImplements.substring("implements ".length()).trim();
                 Matcher interfacesMatcher = TYPE.matcher(anImplements);
 
-                List<String> interfacesNames = new ArrayList<>();
                 while (interfacesMatcher.find()) {
-                    interfacesNames.add(interfacesMatcher.group(1));
-                }
-                interfaces = new Class[interfacesNames.size()];
-                for (int i = 0; i < interfacesNames.size(); i++) {
-                    Class aClass = findClass(interfacesNames.get(i).trim(), imports, model);
-                    interfaces[i] = aClass;
-                    if (aClass == null)
-                        throw new IllegalStateException("Cannot find interface to implement: " + interfacesNames.get(i));
+                    String name = interfacesMatcher.group(1).trim();
+                    Type type = findType(name, interfacesMatcher.group("generics"), imports, model);
+                    Class aClass;
+                    if (type == null)
+                        throw new IllegalStateException("Cannot find interface to implement: " + name);
+
+                    if (type instanceof ParameterizedType) {
+                        aClass = (Class) ((ParameterizedType) type).getRawType();
+                    } else {
+                        aClass = (Class) type;
+                    }
+
                     if (!aClass.isInterface())
-                        throw new IllegalStateException("Cannot implement " + interfacesNames.get(i) + " - it's not an interface!");
+                        throw new IllegalStateException("Cannot implement " + name + " - it's not an interface!");
+
+                    interfaces.add(type);
                 }
             }
 
-            Class<?> superClass = Object.class;
+            Type superClass = Object.class;
             String anExtends = cd.extendsStart == -1 ? null : exp.substring(cd.extendsStart, cd.extendsEnd);
             if (anExtends != null && !anExtends.isEmpty()) {
                 anExtends = anExtends.trim();
@@ -1281,7 +1285,7 @@ public class EvalTools {
 
                 if (typeMatcher.find()) {
                     String toExtend = typeMatcher.group(1);
-                    superClass = findClass(toExtend.trim(), imports, model);
+                    superClass = findType(toExtend.trim(), typeMatcher.group("generics"), imports, model);
                     if (superClass == null)
                         throw new IllegalStateException("Cannot find class to extend: " + toExtend);
                 } else
@@ -1292,7 +1296,7 @@ public class EvalTools {
 
             List<Expression> definitions = new ArrayList<Expression>();
             List<Expression> definitionsStatic = new ArrayList<Expression>();
-            ClassExpression classExpression = new ClassExpression(className, definitions, definitionsStatic, superClass, interfaces, model);
+            ClassExpression classExpression = new ClassExpression(className, definitions, definitionsStatic, superClass, interfaces.toArray(new Type[interfaces.size()]), model);
             String parentClass = null;
             if (model.getRoot() instanceof ScriptEngine.Binding) {
                 ScriptEngine.Binding binding = (ScriptEngine.Binding) model.getRoot();
@@ -2350,6 +2354,51 @@ public class EvalTools {
             result = 31 * result + name.hashCode();
             return result;
         }
+    }
+
+    public static Type findType(String name, String generics, List<String> imports, EvaluationContext model) {
+        Class aClass = findClass(name, imports, model);
+        if (aClass == null) {
+            ClassExpression ce = (ClassExpression) model.get("class " + name);
+            if (ce != null)
+                return ce;
+            return null;
+        }
+
+        TypeVariable[] typeParameters = aClass.getTypeParameters();
+        if (typeParameters.length == 0 || generics == null)
+            return aClass;
+
+        List<Type> actualTypes = new ArrayList<>(typeParameters.length);
+
+        Matcher typeMatcher = TYPE.matcher(generics);
+
+        while (typeMatcher.find()) {
+            String subTypeName = typeMatcher.group(1).trim();
+            Type t = findType(subTypeName, typeMatcher.group("generics"), imports, model);
+            if (t == null)
+                throw new IllegalStateException("Cannot find class: " + subTypeName);
+
+            actualTypes.add(t);
+        }
+
+        Type[] typesArray = actualTypes.toArray(new Type[actualTypes.size()]);
+        return new ParameterizedType() {
+            @Override
+            public Type[] getActualTypeArguments() {
+                return typesArray;
+            }
+
+            @Override
+            public Type getRawType() {
+                return aClass;
+            }
+
+            @Override
+            public Type getOwnerType() {
+                return null;
+            }
+        };
     }
 
     public static Class findClass(String s, List<String> imports, EvaluationContext model) {
