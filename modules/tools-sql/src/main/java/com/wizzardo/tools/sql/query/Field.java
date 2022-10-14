@@ -1,7 +1,9 @@
 package com.wizzardo.tools.sql.query;
 
 import com.wizzardo.tools.json.JsonTools;
+import com.wizzardo.tools.sql.DBTools;
 
+import java.sql.Connection;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
@@ -52,6 +54,10 @@ public class Field {
 
     interface ToSqlMapper {
         void map(Object o, QueryBuilder builder);
+
+        default String getCast(Connection c) {
+            return null;
+        }
     }
 
     public Condition.JoinCondition eq(Field another) {
@@ -191,12 +197,26 @@ public class Field {
     }
 
     public static class JsonField extends Field {
+       static final ToSqlMapper onlyFieldMapper = new ToSqlMapper() {
+            @Override
+            public void map(Object o, QueryBuilder builder) {
+                builder.setField(JsonTools.serialize(o));
+            }
+
+            @Override
+            public String getCast(Connection connection) {
+                if (DBTools.isPostgreSQLDB(connection))
+                    return "::json";
+                return null;
+            }
+        };
+
         public JsonField(Table table, String name) {
             super(table, name);
         }
 
         public Condition.FieldCondition eq(Object l) {
-            return new Condition.FieldCondition(this, Condition.Operator.EQ, l, (o, builder) -> builder.setField(JsonTools.serialize(o)));
+            return new Condition.FieldCondition(this, Condition.Operator.EQ, l, onlyFieldMapper);
         }
     }
 

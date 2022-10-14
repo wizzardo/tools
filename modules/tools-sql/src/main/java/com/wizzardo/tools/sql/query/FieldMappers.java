@@ -1,13 +1,16 @@
 package com.wizzardo.tools.sql.query;
 
 import com.wizzardo.tools.cache.Cache;
+import com.wizzardo.tools.json.JsonGeneric;
 import com.wizzardo.tools.json.JsonTools;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.reflection.FieldInfo;
 import com.wizzardo.tools.reflection.FieldReflection;
 import com.wizzardo.tools.reflection.Fields;
 import com.wizzardo.tools.reflection.Generic;
+import com.wizzardo.tools.sql.DBTools;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -79,7 +82,19 @@ public class FieldMappers {
             throw new IllegalArgumentException("Only byte arrays are supported for now");
         }
 
-        return (o, builder) -> builder.setField(JsonTools.serialize(reflection.getObject(o)));
+        return new Field.ToSqlMapper() {
+            @Override
+            public void map(Object o, QueryBuilder builder) {
+                builder.setField(JsonTools.serialize(reflection.getObject(o)));
+            }
+
+            @Override
+            public String getCast(Connection c) {
+                if (DBTools.isPostgreSQLDB(c))
+                    return "::json";
+                return null;
+            }
+        };
 //        throw new IllegalArgumentException("Cannot create mapper for " + field + " of type " + fieldType);
     }
 
@@ -100,7 +115,7 @@ public class FieldMappers {
         if (c == Date.class) {
             return rs -> {
                 try {
-                    return (R) rs.getDate(1);
+                    return (R) rs.getTimestamp(1);
                 } catch (SQLException e) {
                     throw Unchecked.rethrow(e);
                 }
@@ -366,7 +381,7 @@ public class FieldMappers {
         } else if (fieldType == String.class)
             return (instance, rs) -> reflection.setObject(instance, rs.getString(name));
         else if (fieldType == Date.class)
-            return (instance, rs) -> reflection.setObject(instance, rs.getDate(name));
+            return (instance, rs) -> reflection.setObject(instance, rs.getTimestamp(name));
         else if (fieldType == Timestamp.class)
             return (instance, rs) -> reflection.setObject(instance, rs.getTimestamp(name));
         else if (fieldType.isEnum()) {
@@ -418,7 +433,8 @@ public class FieldMappers {
                 };
         }
 
-        return (instance, rs) -> reflection.setObject(instance, JsonTools.parse(rs.getString(name), fieldType));
+        JsonGeneric<Object> generic = new JsonGeneric<>(fieldInfo.field.getGenericType());
+        return (instance, rs) -> reflection.setObject(instance, JsonTools.parse(rs.getString(name), generic));
 //        throw new IllegalArgumentException("Cannot create mapper for " + fieldInfo.field + " of type " + fieldType);
     }
 
@@ -449,7 +465,7 @@ public class FieldMappers {
                 reflection.setObject(instance, value == null ? null : Enum.valueOf((Class<Enum>) fieldType, value));
             };
         else if (fieldType == Date.class)
-            return (instance, rs) -> reflection.setObject(instance, rs.getDate(column));
+            return (instance, rs) -> reflection.setObject(instance, rs.getTimestamp(column));
         else if (fieldType == Timestamp.class)
             return (instance, rs) -> reflection.setObject(instance, rs.getTimestamp(column));
         else if (fieldType == Long.class)
@@ -500,7 +516,8 @@ public class FieldMappers {
                 };
         }
 
-        return (instance, rs) -> reflection.setObject(instance, JsonTools.parse(rs.getString(column), fieldType));
+        JsonGeneric<Object> generic = new JsonGeneric<>(fieldInfo.field.getGenericType());
+        return (instance, rs) -> reflection.setObject(instance, JsonTools.parse(rs.getString(column), generic));
 //        throw new IllegalArgumentException("Cannot create mapper for " + fieldInfo.field + " of type " + fieldType);
     }
 
