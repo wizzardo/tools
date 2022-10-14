@@ -1,20 +1,14 @@
 package com.wizzardo.tools.sql;
 
 import com.wizzardo.tools.misc.Unchecked;
-import com.wizzardo.tools.misc.With;
 import oracle.jdbc.datasource.impl.OracleDataSource;
 import org.junit.After;
 import org.junit.Test;
 import org.testcontainers.containers.OracleContainer;
-import org.testcontainers.jdbc.ContainerDatabaseDriver;
 
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.DataSource;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
 
 public class OracleTests extends DBToolsTest {
     {
