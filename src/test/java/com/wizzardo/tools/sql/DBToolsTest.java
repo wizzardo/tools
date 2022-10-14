@@ -8,7 +8,6 @@ import com.wizzardo.tools.sql.model.Album;
 import com.wizzardo.tools.sql.model.Artist;
 import com.wizzardo.tools.sql.model.Song;
 import com.wizzardo.tools.sql.query.Field;
-import com.wizzardo.tools.sql.query.Generator;
 import com.wizzardo.tools.sql.query.QueryBuilder;
 import com.wizzardo.tools.sql.query.QueryBuilder.TIMESTAMP;
 import org.junit.Before;
@@ -16,7 +15,6 @@ import org.junit.Test;
 import org.sqlite.javax.SQLiteConnectionPoolDataSource;
 
 import javax.sql.ConnectionPoolDataSource;
-import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -30,6 +28,7 @@ import static org.assertj.core.api.Assertions.*;
 public class DBToolsTest {
     protected DBTools service;
     protected String migrationsListPath = "sql/migrations.txt";
+    protected String songLimitQuery = "select * from song limit ?";
 
     @Before
     public void init() {
@@ -212,7 +211,7 @@ public class DBToolsTest {
                     .from(Tables.SONG)
                     .limit(1);
 
-            assertThat(query.toSql()).isEqualTo("select * from song limit ?");
+            assertThat(query.toSql()).isEqualTo(songLimitQuery);
             return query.fetchInto(Song.class);
         });
         assertThat(songs).hasSize(1);
@@ -231,12 +230,10 @@ public class DBToolsTest {
 
 
         List<Song> songs = service.withBuilder(c -> {
-            QueryBuilder.OffsetStep query = c.select()
+            QueryBuilder.LimitStep query = c.select()
                     .from(Tables.SONG)
-                    .limit(1)
-                    .offset(0);
+                    .limit(1);
 
-            assertThat(query.toSql()).isEqualTo("select * from song limit ? offset ?");
             return query.fetchInto(Song.class);
         });
         assertThat(songs).hasSize(1);
@@ -244,12 +241,10 @@ public class DBToolsTest {
                 .contains(1L, "song 1", Song.Genre.ROCK);
 
         songs = service.withBuilder(c -> {
-            QueryBuilder.OffsetStep query = c.select()
+            QueryBuilder.OffsetLimitStep query = c.select()
                     .from(Tables.SONG)
-                    .limit(1)
-                    .offset(1);
+                    .offsetLimit(1, 1);
 
-            assertThat(query.toSql()).isEqualTo("select * from song limit ? offset ?");
             return query.fetchInto(Song.class);
         });
         assertThat(songs).hasSize(1);
@@ -282,7 +277,7 @@ public class DBToolsTest {
         Album album = new Album(0, new Date(), new Date(), "album 1", Collections.singletonList(new Album.AlbumArt("art-url")));
         album.id = service.insertInto(album, Tables.ALBUM);
 
-        album = service.withBuilder(b-> b.select().from(Tables.ALBUM).where(Tables.ALBUM.ID.eq(1L)).fetchOneInto(Album.class));
+        album = service.withBuilder(b -> b.select().from(Tables.ALBUM).where(Tables.ALBUM.ID.eq(1L)).fetchOneInto(Album.class));
 
         assertThat(album)
                 .isNotNull()
@@ -301,7 +296,7 @@ public class DBToolsTest {
                 .executeUpdate()
         );
 
-        album = service.withBuilder(b-> b.select().from(Tables.ALBUM).where(Tables.ALBUM.ID.eq(1L)).fetchOneInto(Album.class));
+        album = service.withBuilder(b -> b.select().from(Tables.ALBUM).where(Tables.ALBUM.ID.eq(1L)).fetchOneInto(Album.class));
         assertThat(album.arts)
                 .hasSize(1)
                 .first().extracting("url")

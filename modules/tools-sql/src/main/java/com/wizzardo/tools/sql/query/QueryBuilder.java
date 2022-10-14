@@ -550,6 +550,10 @@ public class QueryBuilder {
             return new OffsetStep(this, offset);
         }
 
+        public OffsetLimitStep offsetLimit(int offset, int limit) {
+            return new OffsetLimitStep(this, offset, limit);
+        }
+
         public OrderByStep orderBy(Field field) {
             return new OrderByStep(this, field);
         }
@@ -686,6 +690,10 @@ public class QueryBuilder {
             return new OffsetStep(this, offset);
         }
 
+        public OffsetLimitStep offsetLimit(int offset, int limit) {
+            return new OffsetLimitStep(this, offset, limit);
+        }
+
         public OrderByStep orderBy(Field field) {
             return new OrderByStep(this, field);
         }
@@ -740,6 +748,10 @@ public class QueryBuilder {
         public LimitStep limit(int limit) {
             return new LimitStep(this, limit);
         }
+
+        public OffsetLimitStep offsetLimit(int offset, int limit) {
+            return new OffsetLimitStep(this, offset, limit);
+        }
     }
 
     public static class LimitStep extends AbstractChainStep implements FetchableStep {
@@ -781,10 +793,6 @@ public class QueryBuilder {
             result = 31 * result + limit;
             return result;
         }
-
-        public OffsetStep offset(int offset) {
-            return new OffsetStep(this, offset);
-        }
     }
 
     public static class OffsetStep extends AbstractChainStep implements FetchableStep {
@@ -824,6 +832,57 @@ public class QueryBuilder {
         public int hashCode() {
             int result = super.hashCode();
             result = 31 * result + offset;
+            return result;
+        }
+    }
+
+    public static class OffsetLimitStep extends AbstractChainStep implements FetchableStep {
+        private final int offset;
+        private final int limit;
+
+        public OffsetLimitStep(AbstractChainStep previous, int offset, int limit) {
+            super(previous);
+            this.offset = offset;
+            this.limit = limit;
+        }
+
+        @Override
+        public void toSql(QueryBuilder sb) {
+            super.toSql(sb);
+            if (DBTools.isOracleDB(getConnection()))
+                sb.append(" offset ? rows fetch next ? rows only");
+            else
+                sb.append(" limit ? offset ?");
+        }
+
+        @Override
+        public void fillData(QueryBuilder sb) {
+            super.fillData(sb);
+
+            if (DBTools.isOracleDB(getConnection())) {
+                sb.setField(offset);
+                sb.setField(limit);
+            } else {
+                sb.setField(limit);
+                sb.setField(offset);
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!super.equals(o)) return false;
+
+            OffsetLimitStep step = (OffsetLimitStep) o;
+
+            return offset == step.offset && limit == step.limit;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + offset;
+            result = 31 * result + limit;
             return result;
         }
     }
