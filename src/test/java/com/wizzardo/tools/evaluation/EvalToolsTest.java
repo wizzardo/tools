@@ -12,6 +12,9 @@ import org.junit.Test;
 
 import java.awt.*;
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -2110,6 +2113,69 @@ public class EvalToolsTest {
 
         Assert.assertTrue(filter.allow("test"));
         Assert.assertFalse(filter.allow(null));
+    }
+
+    @Test
+    public void test_generic_type() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression result = EvalTools.prepare("" +
+                " static class NonNullFilter implements com.wizzardo.tools.interfaces.Filter<String> {\n" +
+                "        @Override\n" +
+                "        public boolean allow(String o) {\n" +
+                "            return o != null;\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n");
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof ClassExpression);
+        Type[] types = ((ClassExpression) result).getGenericInterfaces();
+        Assert.assertEquals(1,types.length);
+        Assert.assertTrue(types[0] instanceof ParameterizedType);
+        Assert.assertEquals(1, ((ParameterizedType) types[0]).getActualTypeArguments().length);
+        Assert.assertEquals(String.class, ((ParameterizedType) types[0]).getActualTypeArguments()[0]);
+    }
+
+    @Test
+    public void test_generic_type2() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression result = EvalTools.prepare("" +
+                " static class StringToIntegerMapper implements com.wizzardo.tools.interfaces.Mapper<String, Integer> {\n" +
+                "        @Override\n" +
+                "        public Integer map(String o) {\n" +
+                "            return Integer.valueOf(o);\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n");
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof ClassExpression);
+        Type[] types = ((ClassExpression) result).getGenericInterfaces();
+        Assert.assertEquals(1,types.length);
+        Assert.assertTrue(types[0] instanceof ParameterizedType);
+        Assert.assertEquals(2, ((ParameterizedType) types[0]).getActualTypeArguments().length);
+        Assert.assertEquals(String.class, ((ParameterizedType) types[0]).getActualTypeArguments()[0]);
+        Assert.assertEquals(Integer.class, ((ParameterizedType) types[0]).getActualTypeArguments()[1]);
+    }
+
+    @Test
+    public void test_generate_class() {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression e = EvalTools.prepare("" +
+                " static class SimpleClass  {\n" +
+                "       String name;" +
+                "    }\n" +
+                "SimpleClass.class");
+
+        Object result = e.get(new HashMap<>());
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof Class);
+        Assert.assertEquals("SimpleClass", ((Class<?>) result).getSimpleName());
+        Field[] fields = ((Class<?>) result).getDeclaredFields();
+        Assert.assertTrue(fields.length >= 1);
+        Assert.assertNotNull(Arrays.stream(fields).filter(it-> it.getName().equals("name")).findFirst().orElse(null));
     }
 
     @Test

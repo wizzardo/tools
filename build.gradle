@@ -2,8 +2,8 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'tools-gradle-build'
 
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
     group = 'com.wizzardo.tools'
     version = '0.24-SNAPSHOT'
@@ -87,10 +87,13 @@ dependencies {
     compile project(':modules:tools-xml')
     compile project(':modules:tools-yaml')
 
-    testCompile 'junit:junit:4.11'
-    testCompile 'com.google.code.gson:gson:2.2.4'
-    testCompile "org.assertj:assertj-core:3.18.1"
-    testCompile 'org.xerial:sqlite-jdbc:3.36.0.3'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'com.google.code.gson:gson:2.2.4'
+    testImplementation "org.assertj:assertj-core:3.18.1"
+    testImplementation 'org.xerial:sqlite-jdbc:3.36.0.3'
+    testImplementation "org.testcontainers:testcontainers:1.17.5"
+    testImplementation "org.testcontainers:postgresql:1.17.5"
+    testImplementation "org.postgresql:postgresql:42.5.0"
 }
 
 
