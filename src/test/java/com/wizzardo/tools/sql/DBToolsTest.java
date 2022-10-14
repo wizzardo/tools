@@ -4,6 +4,7 @@ import com.wizzardo.tools.misc.Stopwatch;
 import com.wizzardo.tools.misc.Unchecked;
 import com.wizzardo.tools.sql.generated.ArtistTable;
 import com.wizzardo.tools.sql.generated.Tables;
+import com.wizzardo.tools.sql.model.Album;
 import com.wizzardo.tools.sql.model.Artist;
 import com.wizzardo.tools.sql.model.Song;
 import com.wizzardo.tools.sql.query.Field;
@@ -14,11 +15,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sqlite.javax.SQLiteConnectionPoolDataSource;
 
+import javax.sql.ConnectionPoolDataSource;
 import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -26,54 +29,47 @@ import static org.assertj.core.api.Assertions.*;
 
 public class DBToolsTest {
     protected DBTools service;
+    protected String migrationsListPath = "sql/migrations.txt";
 
     @Before
     public void init() {
         service = new DBTools();
-        final SQLiteConnectionPoolDataSource dataSource = new SQLiteConnectionPoolDataSource();
+        service.migrationsListPath = migrationsListPath;
+        service.dataSource = new SimpleConnectionPool(createDataSource(), 8);
+        service.migrate();
+    }
+
+    protected ConnectionPoolDataSource createDataSource() {
+        SQLiteConnectionPoolDataSource dataSource = new SQLiteConnectionPoolDataSource();
         dataSource.setUrl("jdbc:sqlite::memory:");
         dataSource.getConfig().setBusyTimeout(10000);
-        Unchecked.run(new Unchecked.UncheckedRunnable() {
-            @Override
-            public void run() throws Exception {
-                dataSource.getConfig().setDatePrecision("MILLISECONDS");
-            }
-        });
-        service.migrationsListPath = "sql/migrations.txt";
-        service.dataSource = new SimpleConnectionPool(dataSource, 8);
-        service.migrate();
+        Unchecked.run(() -> dataSource.getConfig().setDatePrecision("MILLISECONDS"));
+        return dataSource;
     }
 
     @Test
     public void test_1() {
-        service.withBuilder(new DBTools.Mapper<QueryBuilder.WrapConnectionStep, Object>() {
-            @Override
-            public Object map(QueryBuilder.WrapConnectionStep c) throws SQLException {
-                c.insertInto(Tables.ARTIST).fields(Arrays.asList((Field) Tables.ARTIST.NAME)).values(new Artist(0, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "test")).executeUpdate();
-                ResultSet resultSet = c.select(Arrays.asList(Tables.ARTIST.ID, Tables.ARTIST.NAME)).from(Tables.ARTIST).executeQuery();
-                assertThat(resultSet.next()).isTrue();
-                assertThat(resultSet.getInt(Tables.ARTIST.ID.getName())).isEqualTo(1);
-                assertThat(resultSet.getString(Tables.ARTIST.NAME.getName())).isEqualTo("test");
-                assertThat(resultSet.next()).isFalse();
-                return null;
-            }
+        service.withBuilder(c -> {
+            c.insertInto(Tables.ARTIST).fields(Arrays.asList((Field) Tables.ARTIST.NAME)).values(new Artist(0, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), "test")).executeUpdate();
+            ResultSet resultSet = c.select(Arrays.asList(Tables.ARTIST.ID, Tables.ARTIST.NAME)).from(Tables.ARTIST).executeQuery();
+            assertThat(resultSet.next()).isTrue();
+            assertThat(resultSet.getInt(Tables.ARTIST.ID.getName())).isEqualTo(1);
+            assertThat(resultSet.getString(Tables.ARTIST.NAME.getName())).isEqualTo("test");
+            assertThat(resultSet.next()).isFalse();
+            return null;
         });
     }
 
     @Test
     public void test_fetch() {
-        List<Artist> artists = service.withBuilder(new DBTools.Mapper<QueryBuilder.WrapConnectionStep, List<Artist>>() {
-            @Override
-            public List<Artist> map(QueryBuilder.WrapConnectionStep c) throws SQLException {
-                c.insertInto(Tables.ARTIST).values(new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1")).executeUpdate();
-                long id = service.getLastInsertedId(c.getConnection());
-                assertThat(id).describedAs("id of inserted row").isEqualTo(1);
+        List<Artist> artists = service.withBuilder(c -> {
+            long id = c.insertInto(Tables.ARTIST).values(new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1")).executeInsert(Tables.ARTIST.ID);
+            assertThat(id).describedAs("id of inserted row").isEqualTo(1);
 
-                c.insertInto(Tables.ARTIST).values(new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 2")).executeUpdate();
-                return c.select()
-                        .from(Tables.ARTIST)
-                        .fetchInto(Artist.class);
-            }
+            c.insertInto(Tables.ARTIST).values(new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 2")).executeUpdate();
+            return c.select()
+                    .from(Tables.ARTIST)
+                    .fetchInto(Artist.class);
         });
 
         assertThat(artists).hasSize(2)
@@ -85,32 +81,23 @@ public class DBToolsTest {
 
     @Test
     public void test_update() {
-        Artist artist = service.withBuilder(new DBTools.Mapper<QueryBuilder.WrapConnectionStep, Artist>() {
-            @Override
-            public Artist map(QueryBuilder.WrapConnectionStep c) throws SQLException {
-                c.insertInto(Tables.ARTIST).values(new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1")).executeUpdate();
-                long id = service.getLastInsertedId(c.getConnection());
-                assertThat(id).describedAs("id of inserted row").isEqualTo(1);
+        Artist artist = service.withBuilder(c -> {
+            long id = c.insertInto(Tables.ARTIST).values(new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1")).executeInsert(Tables.ARTIST.ID);
+            assertThat(id).describedAs("id of inserted row").isEqualTo(1);
 
-                Unchecked.run(new Unchecked.UncheckedRunnable() {
-                    @Override
-                    public void run() throws Exception {
-                        Thread.sleep(1);
-                    }
-                });
+            Unchecked.run(() -> Thread.sleep(1));
 
-                int rowsUpdated = c.update(Tables.ARTIST)
-                        .set(Tables.ARTIST.DATE_UPDATED.eq(TIMESTAMP.now()))
-                        .set(Tables.ARTIST.NAME.eq("the ARTIST"))
-                        .where(Tables.ARTIST.ID.eq(1))
-                        .executeUpdate();
-                assertThat(rowsUpdated).describedAs("updated rows").isEqualTo(1);
+            int rowsUpdated = c.update(Tables.ARTIST)
+                    .set(Tables.ARTIST.DATE_UPDATED.eq(TIMESTAMP.now()))
+                    .set(Tables.ARTIST.NAME.eq("the ARTIST"))
+                    .where(Tables.ARTIST.ID.eq(1))
+                    .executeUpdate();
+            assertThat(rowsUpdated).describedAs("updated rows").isEqualTo(1);
 
-                return c.select()
-                        .from(Tables.ARTIST)
-                        .where(Tables.ARTIST.ID.eq(1))
-                        .fetchOneInto(Artist.class);
-            }
+            return c.select()
+                    .from(Tables.ARTIST)
+                    .where(Tables.ARTIST.ID.eq(1))
+                    .fetchOneInto(Artist.class);
         });
 
         assertThat(artist)
@@ -168,21 +155,18 @@ public class DBToolsTest {
         song2.id = service.insertInto(song2, Tables.SONG);
 
 
-        ArtistSongs artistSongs = service.withBuilder(new DBTools.Mapper<QueryBuilder.WrapConnectionStep, ArtistSongs>() {
-            @Override
-            public ArtistSongs map(QueryBuilder.WrapConnectionStep c) throws SQLException {
-                QueryBuilder.WhereStep query = c.select(Tables.ARTIST.ID, Field.of(c
-                                        .select(Field.invoke("group_concat", Tables.SONG.as("s").ID))
-                                        .from(Tables.SONG.as("s"))
-                                        .where(Tables.SONG.as("s").ARTIST_ID.eq(Tables.ARTIST.ID)))
-                                .as("songs")
-                        )
-                        .from(Tables.ARTIST)
-                        .where(Tables.ARTIST.ID.eq(artist.id));
+        ArtistSongs artistSongs = service.withBuilder(c -> {
+            QueryBuilder.WhereStep query = c.select(Tables.ARTIST.ID, Field.of(c
+                                    .select(Field.invoke("group_concat", Tables.SONG.as("s").ID))
+                                    .from(Tables.SONG.as("s"))
+                                    .where(Tables.SONG.as("s").ARTIST_ID.eq(Tables.ARTIST.ID)))
+                            .as("songs")
+                    )
+                    .from(Tables.ARTIST)
+                    .where(Tables.ARTIST.ID.eq(artist.id));
 
-                assertThat(query.toSql()).isEqualTo("select artist.id, (select group_concat(s.id) from song as s where s.artist_id=artist.id) as songs from artist where artist.id=?");
-                return query.fetchOneInto(ArtistSongs.class);
-            }
+            assertThat(query.toSql()).isEqualTo("select artist.id, (select group_concat(s.id) from song as s where s.artist_id=artist.id) as songs from artist where artist.id=?");
+            return query.fetchOneInto(ArtistSongs.class);
         });
         assertThat(artistSongs.id).isEqualTo(artist.id);
         assertThat(artistSongs.songs).isEqualTo("1,2");
@@ -200,16 +184,13 @@ public class DBToolsTest {
         song2.id = service.insertInto(song2, Tables.SONG);
 
 
-        List<Song> songs = service.withBuilder(new DBTools.Mapper<QueryBuilder.WrapConnectionStep, List<Song>>() {
-            @Override
-            public List<Song> map(QueryBuilder.WrapConnectionStep c) throws SQLException {
-                QueryBuilder.WhereStep query = c.select()
-                        .from(Tables.SONG)
-                        .where(Tables.SONG.ARTIST_ID.in(c.select(Tables.ARTIST.ID).from(Tables.ARTIST)));
+        List<Song> songs = service.withBuilder(c -> {
+            QueryBuilder.WhereStep query = c.select()
+                    .from(Tables.SONG)
+                    .where(Tables.SONG.ARTIST_ID.in(c.select(Tables.ARTIST.ID).from(Tables.ARTIST)));
 
-                assertThat(query.toSql()).isEqualTo("select * from song where song.artist_id in (select artist.id from artist)");
-                return query.fetchInto(Song.class);
-            }
+            assertThat(query.toSql()).isEqualTo("select * from song where song.artist_id in (select artist.id from artist)");
+            return query.fetchInto(Song.class);
         });
         assertThat(songs.size()).isEqualTo(2);
     }
@@ -295,5 +276,37 @@ public class DBToolsTest {
         assertThat(sum).isNotEqualTo(0);
     }
 
+
+    @Test
+    public void test_json() throws SQLException {
+        Album album = new Album(0, new Date(), new Date(), "album 1", Collections.singletonList(new Album.AlbumArt("art-url")));
+        album.id = service.insertInto(album, Tables.ALBUM);
+
+        album = service.withBuilder(b-> b.select().from(Tables.ALBUM).where(Tables.ALBUM.ID.eq(1L)).fetchOneInto(Album.class));
+
+        assertThat(album)
+                .isNotNull()
+                .extracting("id", "name")
+                .contains(1L, "album 1");
+
+        assertThat(album.arts)
+                .hasSize(1)
+                .first().extracting("url")
+                .isEqualTo("art-url");
+
+
+        service.withBuilder(b -> b.update(Tables.ALBUM)
+                .set(Tables.ALBUM.ARTS.eq(Collections.singletonList(new Album.AlbumArt("another-url"))))
+                .where(Tables.ALBUM.ID.eq(1))
+                .executeUpdate()
+        );
+
+        album = service.withBuilder(b-> b.select().from(Tables.ALBUM).where(Tables.ALBUM.ID.eq(1L)).fetchOneInto(Album.class));
+        assertThat(album.arts)
+                .hasSize(1)
+                .first().extracting("url")
+                .isEqualTo("another-url");
+
+    }
 }
 
