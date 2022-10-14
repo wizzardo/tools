@@ -2,6 +2,7 @@ package com.wizzardo.tools.sql.query;
 
 import com.wizzardo.tools.cache.Cache;
 import com.wizzardo.tools.misc.Unchecked;
+import com.wizzardo.tools.sql.DBTools;
 
 import java.sql.*;
 import java.util.*;
@@ -484,8 +485,13 @@ public class QueryBuilder {
             return prepare().executeUpdate();
         }
 
-        default long executeInsert() throws SQLException {
-            PreparedStatement statement = prepare((connection, sql) -> connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS));
+        default int executeInsert() throws SQLException {
+            PreparedStatement statement = prepare((connection, sql) -> connection.prepareStatement(sql));
+            return statement.executeUpdate();
+        }
+
+        default long executeInsert(Field indexField) throws SQLException {
+            PreparedStatement statement = prepare((connection, sql) -> connection.prepareStatement(sql, new String[]{indexField.name}));
             statement.executeUpdate();
             ResultSet generatedKeys = statement.getGeneratedKeys();
             if (generatedKeys.next()) {
@@ -747,7 +753,10 @@ public class QueryBuilder {
         @Override
         public void toSql(QueryBuilder sb) {
             super.toSql(sb);
-            sb.append(" limit ?");
+            if (DBTools.isOracleDB(getConnection()))
+                sb.append(" fetch next ? rows only");
+            else
+                sb.append(" limit ?");
         }
 
         @Override
@@ -789,7 +798,10 @@ public class QueryBuilder {
         @Override
         public void toSql(QueryBuilder sb) {
             super.toSql(sb);
-            sb.append(" offset ?");
+            if (DBTools.isOracleDB(getConnection()))
+                sb.append(" offset ? rows");
+            else
+                sb.append(" offset ?");
         }
 
         @Override
@@ -892,6 +904,9 @@ public class QueryBuilder {
                 sb.append(" set ");
 
             sb.append(condition.field.name).append("=?");
+            String cast = condition.mapper.getCast(getConnection());
+            if (cast != null)
+                sb.append(cast);
         }
 
         @Override
@@ -1015,7 +1030,17 @@ public class QueryBuilder {
         }
 
         public InsertValuesStep values(Object o) {
-            return new InsertFieldsStep(this, table.getFields().stream().filter(field -> !field.getName().equals("id")).collect(Collectors.toList())).values(o);
+            return values(o, false);
+        }
+
+        public InsertValuesStep values(Object o, boolean withIdField) {
+            List<Field> fields = table.getFields();
+            if (!withIdField)
+                fields = fields.stream()
+                        .filter(field -> !field.getName().equals("id"))
+                        .collect(Collectors.toList());
+
+            return new InsertFieldsStep(this, fields).values(o);
         }
 
         @Override
@@ -1092,8 +1117,13 @@ public class QueryBuilder {
         public void toSql(QueryBuilder sb) {
             super.toSql(sb);
             sb.append(" values (");
+            Connection connection = getConnection();
             for (int i = 0; i < fields.size(); i++) {
-                sb.append("?, ");
+                String cast = fields.get(i).getCast(connection);
+                if (cast == null)
+                    sb.append("?, ");
+                else
+                    sb.append("? ").append(cast).append(", ");
             }
             sb.setLength(sb.length() - 2);
             sb.append(")");
