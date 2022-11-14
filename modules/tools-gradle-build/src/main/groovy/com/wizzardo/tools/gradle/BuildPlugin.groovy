@@ -163,7 +163,7 @@ class BuildPlugin implements Plugin<Project> {
                 }
             })
 
-            tasks.jar.dependsOn makeAppInfo
+            tasks.processResources.finalizedBy makeAppInfo
 
             SqlToolsExtension toolsSqlExtension = project.extensions.create('sqlTools', SqlToolsExtension.class)
             task([description: 'listing all migrations'], 'listMigrations', {
