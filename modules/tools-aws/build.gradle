@@ -1,0 +1,13 @@
+dependencies {
+    compile project(':modules:tools-http')
+    compile project(':modules:tools-json')
+    compile project(':modules:tools-collections')
+}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+archivesBaseName = "tools-aws"
+ext {
+    descriptionString = 'aws tools'
+}
+apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"

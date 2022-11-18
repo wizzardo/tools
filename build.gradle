@@ -68,8 +68,9 @@ task codeCoverageReport(type: JacocoReport) {
 }
 
 dependencies {
-    compile project(':modules:tools-cache')
+    compile project(':modules:tools-aws')
     compile project(':modules:tools-bytecode')
+    compile project(':modules:tools-cache')
     compile project(':modules:tools-collections')
     compile project(':modules:tools-evaluation')
     compile project(':modules:tools-exception')
