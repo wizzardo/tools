@@ -41,7 +41,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
+import java.awt.image.WritableRaster;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -102,10 +104,10 @@ public class JpegEncoder {
     void WriteCompressedData(BufferedOutputStream outStream) throws IOException {
         int i, j, r, c, a, b;
         int comp, xpos, ypos, xblockoffset, yblockoffset;
-        float inputArray[][];
-        float dctArray1[][] = new float[8][8];
-        double dctArray2[][] = new double[8][8];
-        int dctArray3[] = new int[8 * 8];
+        float[][] dctArray1 = new float[8][8];
+        double[][] dctArray2 = new double[8][8];
+        int[] dctArray3 = new int[8 * 8];
+        JpegInfo.FloatColorComponentGetter[] components = JpegObj.components;
 
         /*
          * This method controls the compression of the image.
@@ -113,7 +115,7 @@ public class JpegEncoder {
          * of data until the entire image has been compressed.
          */
 
-        int lastDCvalue[] = new int[JpegObj.NumberOfComponents];
+        int[] lastDCvalue = new int[JpegObj.NumberOfComponents];
         int MinBlockWidth, MinBlockHeight;
 // This initial setting of MinBlockWidth and MinBlockHeight is done to
 // ensure they start with values larger than will actually be the case.
@@ -128,8 +130,6 @@ public class JpegEncoder {
                 xpos = c * 8;
                 ypos = r * 8;
                 for (comp = 0; comp < JpegObj.NumberOfComponents; comp++) {
-                    inputArray = (float[][]) JpegObj.Components[comp];
-
                     for (i = 0; i < JpegObj.VsampFactor[comp]; i++) {
                         for (j = 0; j < JpegObj.HsampFactor[comp]; j++) {
                             xblockoffset = j * 8;
@@ -142,14 +142,14 @@ public class JpegEncoder {
 // image data.
 // This seems to not be a big issue right now. (04/04/98)
 
-                                    dctArray1[a][b] = inputArray[ypos + yblockoffset + a][xpos + xblockoffset + b];
+                                    dctArray1[a][b] = components[comp].get(xpos + xblockoffset + b, ypos + yblockoffset + a);
                                 }
                             }
 // The following code commented out because on some images this technique
 // results in poor right and bottom borders.
 //                        if ((!JpegObj.lastColumnIsDummy[comp] || c < Width - 1) && (!JpegObj.lastRowIsDummy[comp] || r < Height - 1)) {
-                            dctArray2 = dct.forwardDCT(dctArray1);
-                            dctArray3 = dct.quantizeBlock(dctArray2, JpegObj.QtableNumber[comp]);
+                            dct.forwardDCT(dctArray1, dctArray2);
+                            dct.quantizeBlock(dctArray2, JpegObj.QtableNumber[comp], dctArray3);
 //                        }
 //                        else {
 //                           zeroArray[0] = dctArray3[0];
@@ -328,8 +328,8 @@ class DCT {
      */
     private int N = 8;
 
-    Object quantum[] = new Object[2];
-    private Object Divisors[] = new Object[2];
+    int[][] quantum = new int[2][];
+    private double[][] Divisors = new double[2][];
 
     /**
      * Quantitization Matrix for luminace.
@@ -571,7 +571,10 @@ class DCT {
      * method as implemented in the IJG Jpeg-6a library.
      */
     double[][] forwardDCT(float input[][]) {
-        double output[][] = new double[N][N];
+        return forwardDCT(input, new double[N][N]);
+    }
+
+    double[][] forwardDCT(float input[][], double output[][]) {
         double tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
         double tmp10, tmp11, tmp12, tmp13;
         double z1, z2, z3, z4, z5, z11, z13;
@@ -580,51 +583,54 @@ class DCT {
 
 // Subtracts 128 from the input values
         for (i = 0; i < 8; i++) {
+            float[] floats = input[i];
+            double[] o = output[i];
             for (j = 0; j < 8; j++) {
-                output[i][j] = ((double) input[i][j] - (double) 128.0);
+                o[j] = ((double) floats[j] - 128.0);
 //                        input[i][j] -= 128;
 
             }
         }
 
         for (i = 0; i < 8; i++) {
-            tmp0 = output[i][0] + output[i][7];
-            tmp7 = output[i][0] - output[i][7];
-            tmp1 = output[i][1] + output[i][6];
-            tmp6 = output[i][1] - output[i][6];
-            tmp2 = output[i][2] + output[i][5];
-            tmp5 = output[i][2] - output[i][5];
-            tmp3 = output[i][3] + output[i][4];
-            tmp4 = output[i][3] - output[i][4];
+            double[] o = output[i];
+            tmp0 = o[0] + o[7];
+            tmp7 = o[0] - o[7];
+            tmp1 = o[1] + o[6];
+            tmp6 = o[1] - o[6];
+            tmp2 = o[2] + o[5];
+            tmp5 = o[2] - o[5];
+            tmp3 = o[3] + o[4];
+            tmp4 = o[3] - o[4];
 
             tmp10 = tmp0 + tmp3;
             tmp13 = tmp0 - tmp3;
             tmp11 = tmp1 + tmp2;
             tmp12 = tmp1 - tmp2;
 
-            output[i][0] = tmp10 + tmp11;
-            output[i][4] = tmp10 - tmp11;
+            o[0] = tmp10 + tmp11;
+            o[4] = tmp10 - tmp11;
 
-            z1 = (tmp12 + tmp13) * (double) 0.707106781;
-            output[i][2] = tmp13 + z1;
-            output[i][6] = tmp13 - z1;
+            z1 = (tmp12 + tmp13) * 0.707106781;
+            o[2] = tmp13 + z1;
+            o[6] = tmp13 - z1;
 
             tmp10 = tmp4 + tmp5;
             tmp11 = tmp5 + tmp6;
             tmp12 = tmp6 + tmp7;
 
-            z5 = (tmp10 - tmp12) * (double) 0.382683433;
-            z2 = ((double) 0.541196100) * tmp10 + z5;
-            z4 = ((double) 1.306562965) * tmp12 + z5;
-            z3 = tmp11 * ((double) 0.707106781);
+            z5 = (tmp10 - tmp12) * 0.382683433;
+            z2 = 0.541196100 * tmp10 + z5;
+            z4 = 1.306562965 * tmp12 + z5;
+            z3 = tmp11 * 0.707106781;
 
             z11 = tmp7 + z3;
             z13 = tmp7 - z3;
 
-            output[i][5] = z13 + z2;
-            output[i][3] = z13 - z2;
-            output[i][1] = z11 + z4;
-            output[i][7] = z11 - z4;
+            o[5] = z13 + z2;
+            o[3] = z13 - z2;
+            o[1] = z11 + z4;
+            o[7] = z11 - z4;
         }
 
         for (i = 0; i < 8; i++) {
@@ -645,7 +651,7 @@ class DCT {
             output[0][i] = tmp10 + tmp11;
             output[4][i] = tmp10 - tmp11;
 
-            z1 = (tmp12 + tmp13) * (double) 0.707106781;
+            z1 = (tmp12 + tmp13) * 0.707106781;
             output[2][i] = tmp13 + z1;
             output[6][i] = tmp13 - z1;
 
@@ -653,10 +659,10 @@ class DCT {
             tmp11 = tmp5 + tmp6;
             tmp12 = tmp6 + tmp7;
 
-            z5 = (tmp10 - tmp12) * (double) 0.382683433;
-            z2 = ((double) 0.541196100) * tmp10 + z5;
-            z4 = ((double) 1.306562965) * tmp12 + z5;
-            z3 = tmp11 * ((double) 0.707106781);
+            z5 = (tmp10 - tmp12) * 0.382683433;
+            z2 = 0.541196100 * tmp10 + z5;
+            z4 = 1.306562965 * tmp12 + z5;
+            z3 = tmp11 * 0.707106781;
 
             z11 = tmp7 + z3;
             z13 = tmp7 - z3;
@@ -674,14 +680,17 @@ class DCT {
     * This method quantitizes data and rounds it to the nearest integer.
     */
     int[] quantizeBlock(double inputData[][], int code) {
-        int outputData[] = new int[N * N];
+        return quantizeBlock(inputData, code, new int[N * N]);
+    }
+
+    int[] quantizeBlock(double inputData[][], int code, int outputData[]) {
         int i, j;
         int index;
         index = 0;
         for (i = 0; i < 8; i++) {
             for (j = 0; j < 8; j++) {
 // The second line results in significantly better compression.
-                outputData[index] = (int) (Math.round(inputData[i][j] * (((double[]) (Divisors[code]))[index])));
+                outputData[index] = (int) Math.round(inputData[i][j] * Divisors[code][index]);
 //                        outputData[index] = (int)(((inputData[i][j] * (((double[]) (Divisors[code]))[index])) + 16384.5) -16384);
                 index++;
             }
@@ -699,12 +708,12 @@ class Huffman {
     int bufferPutBits, bufferPutBuffer;
     private int[][][] DC_matrix;
     private int[][][] AC_matrix;
-    private int[] bitsDCluminance = {0x00, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0};
-    private int[] valDCluminance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-    private int[] bitsDCchrominance = {0x01, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
-    private int[] valDCchrominance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-    private int[] bitsACluminance = {0x10, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d};
-    private int[] valACluminance =
+    private static final int[] bitsDCluminance = {0x00, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0};
+    private static final int[] valDCluminance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+    private static final int[] bitsDCchrominance = {0x01, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
+    private static final int[] valDCchrominance = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+    private static final int[] bitsACluminance = {0x10, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d};
+    private static final int[] valACluminance =
             {0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
                     0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
                     0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08,
@@ -726,9 +735,9 @@ class Huffman {
                     0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
                     0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
                     0xf9, 0xfa};
-    private int[] bitsACchrominance = {0x11, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77};
+    private static final int[] bitsACchrominance = {0x11, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77};
 
-    private int[] valACchrominance =
+    private static final int[] valACchrominance =
             {0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
                     0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,
                     0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91,
@@ -757,7 +766,7 @@ class Huffman {
      * jpegNaturalOrder[i] is the natural-order position of the i'th element
      * of zigzag order.
      */
-    private static int[] jpegNaturalOrder = {
+    private static final int[] jpegNaturalOrder = {
             0, 1, 8, 16, 9, 2, 3, 10,
             17, 24, 32, 25, 18, 11, 4, 5,
             12, 19, 26, 33, 40, 48, 41, 34,
@@ -1055,24 +1064,26 @@ class JpegInfo {
     // the following are set as the default
     int Precision = 8;
     int NumberOfComponents = 3;
-    float[][][] Components;
-    int[] CompID = {1, 2, 3};
-    int[] HsampFactor = {1, 1, 1};
-    int[] VsampFactor = {1, 1, 1};
-    int[] QtableNumber = {0, 1, 1};
-    int[] DCtableNumber = {0, 1, 1};
-    int[] ACtableNumber = {0, 1, 1};
-    boolean[] lastColumnIsDummy = {false, false, false};
-    boolean[] lastRowIsDummy = {false, false, false};
+    FloatColorComponentGetter[] components;
+    final int[] CompID = {1, 2, 3};
+    final int[] HsampFactor = {1, 1, 1};
+    final int[] VsampFactor = {1, 1, 1};
+    final int[] QtableNumber = {0, 1, 1};
+    final int[] DCtableNumber = {0, 1, 1};
+    final int[] ACtableNumber = {0, 1, 1};
+    final boolean[] lastColumnIsDummy = {false, false, false};
+    final boolean[] lastRowIsDummy = {false, false, false};
     int Ss = 0;
     int Se = 63;
     int Ah = 0;
     int Al = 0;
     private int compWidth[], compHeight[];
 
+    interface FloatColorComponentGetter{
+        float get(int x, int y);
+    }
 
     public JpegInfo(Image image) {
-        Components = new float[NumberOfComponents][][];
         compWidth = new int[NumberOfComponents];
         compHeight = new int[NumberOfComponents];
         BlockWidth = new int[NumberOfComponents];
@@ -1097,22 +1108,36 @@ class JpegInfo {
      * input image.
      */
 
+    interface PixelGetter{
+        int get(int x, int y);
+    }
+
     private void getYCCArray() {
-        int values[] = new int[imageWidth * imageHeight];
-        int r, g, b, y, x;
-// In order to minimize the chance that grabPixels will throw an exception
-// it may be necessary to grab some pixels every few scanlines and process
-// those before going for more.  The time expense may be prohibitive.
-// However, for a situation where memory overhead is a concern, this may be
-// the only choice.
-        PixelGrabber grabber = new PixelGrabber(imageobj.getSource(), 0, 0, imageWidth, imageHeight, values, 0, imageWidth);
+        PixelGetter pixelGetter;
+        if (imageobj instanceof BufferedImage) {
+            WritableRaster raster = ((BufferedImage) imageobj).getRaster();
+            int[] pixel = new int[4];
+            pixelGetter = (x, y) -> {
+                raster.getPixel(x, y, pixel);
+                return (pixel[0] << 16) + (pixel[1] << 8) + (pixel[2]);
+            };
+        } else {
+            int[] values = new int[imageWidth * imageHeight];
+            PixelGrabber grabber = new PixelGrabber(imageobj.getSource(), 0, 0, imageWidth, imageHeight, values, 0, imageWidth);
+            try {
+                grabber.grabPixels();
+            } catch (InterruptedException ignored) {
+            }
+            pixelGetter = (x, y) -> values[y * imageWidth + x];
+        }
+
         int maxHsampFactor = 1;
         int maxVsampFactor = 1;
-        for (y = 0; y < NumberOfComponents; y++) {
+        for (int y = 0; y < NumberOfComponents; y++) {
             maxHsampFactor = Math.max(maxHsampFactor, HsampFactor[y]);
             maxVsampFactor = Math.max(maxVsampFactor, VsampFactor[y]);
         }
-        for (y = 0; y < NumberOfComponents; y++) {
+        for (int y = 0; y < NumberOfComponents; y++) {
             compWidth[y] = (((imageWidth % 8 != 0) ? ((int) Math.ceil((double) imageWidth / 8.0)) * 8 : imageWidth) / maxHsampFactor) * HsampFactor[y];
             if (compWidth[y] != ((imageWidth / maxHsampFactor) * HsampFactor[y])) {
                 lastColumnIsDummy[y] = true;
@@ -1128,44 +1153,64 @@ class JpegInfo {
             }
             BlockHeight[y] = (int) Math.ceil((double) compHeight[y] / 8.0);
         }
-        try {
-            grabber.grabPixels();
-        } catch (InterruptedException ignored) {
-        }
-        float Y[][] = new float[compHeight[0]][compWidth[0]];
-        float Cr1[][] = new float[compHeight[0]][compWidth[0]];
-        float Cb1[][] = new float[compHeight[0]][compWidth[0]];
-        int index = 0;
-        for (y = 0; y < imageHeight; ++y) {
-            for (x = 0; x < imageWidth; ++x) {
-                r = ((values[index] >> 16) & 0xff);
-                g = ((values[index] >> 8) & 0xff);
-                b = (values[index] & 0xff);
+//        float Y[][] = new float[compHeight[0]][compWidth[0]];
+//        float Cr1[][] = new float[compHeight[0]][compWidth[0]];
+//        float Cb1[][] = new float[compHeight[0]][compWidth[0]];
+//        for (int y = 0; y < imageHeight; ++y) {
+//            for (int x = 0; x < imageWidth; ++x) {
+//                int value = pixelGetter.get(x, y);
+//                int r, g, b;
+//                r = ((value >> 16) & 0xff);
+//                g = ((value >> 8) & 0xff);
+//                b = (value & 0xff);
+//
+//// The following three lines are a more correct color conversion but
+//// the current conversion technique is sufficient and results in a higher
+//// compression rate.
+////                Y[y][x] = 16 + (float)(0.8588*(0.299 * (float)r + 0.587 * (float)g + 0.114 * (float)b ));
+////                Cb1[y][x] = 128 + (float)(0.8784*(-0.16874 * (float)r - 0.33126 * (float)g + 0.5 * (float)b));
+////                Cr1[y][x] = 128 + (float)(0.8784*(0.5 * (float)r - 0.41869 * (float)g - 0.08131 * (float)b));
+//                Y[y][x] = (float) ((0.299 * (float) r + 0.587 * (float) g + 0.114 * (float) b));
+//                Cb1[y][x] = 128 + (float) ((-0.16874 * (float) r - 0.33126 * (float) g + 0.5 * (float) b));
+//                Cr1[y][x] = 128 + (float) ((0.5 * (float) r - 0.41869 * (float) g - 0.08131 * (float) b));
+//            }
+//        }
+//
+//// Need a way to set the H and V sample factors before allowing downsampling.
+//// For now (04/04/98) downsampling must be hard coded.
+//// Until a better downsampler is implemented, this will not be done.
+//// Downsampling is currently supported.  The downsampling method here
+//// is a simple box filter.
+//
+//        Components[0] = Y;
+////        Cb2 = DownSample(Cb1, 1);
+//        Components[1] = Cb1;
+////        Cr2 = DownSample(Cr1, 2);
+//        Components[2] = Cr1;
 
-// The following three lines are a more correct color conversion but
-// the current conversion technique is sufficient and results in a higher
-// compression rate.
-//                Y[y][x] = 16 + (float)(0.8588*(0.299 * (float)r + 0.587 * (float)g + 0.114 * (float)b ));
-//                Cb1[y][x] = 128 + (float)(0.8784*(-0.16874 * (float)r - 0.33126 * (float)g + 0.5 * (float)b));
-//                Cr1[y][x] = 128 + (float)(0.8784*(0.5 * (float)r - 0.41869 * (float)g - 0.08131 * (float)b));
-                Y[y][x] = (float) ((0.299 * (float) r + 0.587 * (float) g + 0.114 * (float) b));
-                Cb1[y][x] = 128 + (float) ((-0.16874 * (float) r - 0.33126 * (float) g + 0.5 * (float) b));
-                Cr1[y][x] = 128 + (float) ((0.5 * (float) r - 0.41869 * (float) g - 0.08131 * (float) b));
-                index++;
-            }
-        }
-
-// Need a way to set the H and V sample factors before allowing downsampling.
-// For now (04/04/98) downsampling must be hard coded.
-// Until a better downsampler is implemented, this will not be done.
-// Downsampling is currently supported.  The downsampling method here
-// is a simple box filter.
-
-        Components[0] = Y;
-//        Cb2 = DownSample(Cb1, 1);
-        Components[1] = Cb1;
-//        Cr2 = DownSample(Cr1, 2);
-        Components[2] = Cr1;
+        components = new FloatColorComponentGetter[]{
+                (x, y) -> {
+                    int value = pixelGetter.get(x, y);
+                    int r = ((value >> 16) & 0xff);
+                    int g = ((value >> 8) & 0xff);
+                    int b = (value & 0xff);
+                    return (float) ((0.299 * (float) r + 0.587 * (float) g + 0.114 * (float) b));
+                },
+                (x, y) -> {
+                    int value = pixelGetter.get(x, y);
+                    int r = ((value >> 16) & 0xff);
+                    int g = ((value >> 8) & 0xff);
+                    int b = (value & 0xff);
+                    return 128 + (float) ((-0.16874 * (float) r - 0.33126 * (float) g + 0.5 * (float) b));
+                },
+                (x, y) -> {
+                    int value = pixelGetter.get(x, y);
+                    int r = ((value >> 16) & 0xff);
+                    int g = ((value >> 8) & 0xff);
+                    int b = (value & 0xff);
+                    return 128 + (float) ((0.5 * (float) r - 0.41869 * (float) g - 0.08131 * (float) b));
+                }
+        };
     }
 
     float[][] DownSample(float[][] C, int comp) {

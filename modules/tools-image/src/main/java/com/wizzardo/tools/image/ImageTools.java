@@ -50,7 +50,7 @@ public class ImageTools {
     }
 
     public static byte[] saveJPGtoBytes(BufferedImage im, int quality) throws IOException {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream(im.getWidth() * im.getHeight() * 3 / 10);
         saveJPG(im, bytes, quality);
         return bytes.toByteArray();
     }
