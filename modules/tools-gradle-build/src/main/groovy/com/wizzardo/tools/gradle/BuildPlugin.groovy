@@ -108,12 +108,12 @@ class BuildPlugin implements Plugin<Project> {
             }
 
             task('javadocJar', type: Jar, {
-                classifier = 'javadoc'
+                archiveClassifier = 'javadoc'
                 from javadoc
             })
 
             task('sourcesJar', type: Jar, {
-                classifier = 'sources'
+                archiveClassifier = 'sources'
                 from sourceSets.main.allSource
             })
 
@@ -123,7 +123,7 @@ class BuildPlugin implements Plugin<Project> {
 
 
             task([type: Jar, description: 'Generates runnable jar with all dependencies'], 'fatJar', {
-                baseName = project.name + '-all'
+                archiveBaseName = project.name + '-all'
 //                from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                 from { sourceSets.main.runtimeClasspath.collect { !it.isFile() ? it : zipTree(it) } }
