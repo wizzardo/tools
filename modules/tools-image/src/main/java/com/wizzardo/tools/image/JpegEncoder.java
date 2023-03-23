@@ -1118,6 +1118,13 @@ class JpegInfo {
             WritableRaster raster = ((BufferedImage) imageobj).getRaster();
             int[] pixel = new int[4];
             pixelGetter = (x, y) -> {
+                if (x >= imageWidth) {
+                    x -= imageWidth;
+                    y++;
+                }
+                if (y >= imageHeight) {
+                    return 0;
+                }
                 raster.getPixel(x, y, pixel);
                 return (pixel[0] << 16) + (pixel[1] << 8) + (pixel[2]);
             };
