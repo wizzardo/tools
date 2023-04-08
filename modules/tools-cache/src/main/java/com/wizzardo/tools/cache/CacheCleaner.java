@@ -19,12 +19,13 @@ public class CacheCleaner extends Thread {
     private volatile long wakeup = -1;
     private volatile boolean sleeping = false;
 
-    public final static CacheCleaner instance;
+    public final static CacheCleaner INSTANCE;
+    private final static Object MONITOR = new Object();
     private final Queue<OnCacheAddedListener> listeners = new ConcurrentLinkedQueue<OnCacheAddedListener>();
 
     static {
-        instance = new CacheCleaner();
-        instance.start();
+        INSTANCE = new CacheCleaner();
+        INSTANCE.start();
     }
 
     private CacheCleaner() {
@@ -33,25 +34,25 @@ public class CacheCleaner extends Thread {
     }
 
     static void addCache(Cache cache) {
-        instance.caches.add(new WeakReference<Cache>(cache));
-        for (OnCacheAddedListener listener : instance.listeners) {
+        INSTANCE.caches.add(new WeakReference<Cache>(cache));
+        for (OnCacheAddedListener listener : INSTANCE.listeners) {
             listener.onAdd(cache);
         }
     }
 
     public static void addListener(OnCacheAddedListener listener) {
-        instance.listeners.add(listener);
+        INSTANCE.listeners.add(listener);
     }
 
     public static int size() {
-        return instance.caches.size();
+        return INSTANCE.caches.size();
     }
 
     public static Iterable<Cache> iterable() {
         return new Iterable<Cache>() {
             @Override
             public Iterator<Cache> iterator() {
-                final Iterator<WeakReference<Cache>> iterator = instance.caches.iterator();
+                final Iterator<WeakReference<Cache>> iterator = INSTANCE.caches.iterator();
                 return new Iterator<Cache>() {
                     Cache next;
 
@@ -96,18 +97,18 @@ public class CacheCleaner extends Thread {
 
     static void updateWakeUp(long wakeup) {
 //        System.out.println("updateWakeUp");
-        if (instance.wakeup < wakeup && instance.wakeup > 0)
+        if (INSTANCE.wakeup < wakeup && INSTANCE.wakeup > 0)
             return;
 
-        synchronized (instance) {
-            if (instance.wakeup < wakeup && instance.wakeup > 0)
+        synchronized (MONITOR) {
+            if (INSTANCE.wakeup < wakeup && INSTANCE.wakeup > 0)
                 return;
 
 //            System.out.println("set wakeup after " + (wakeup - System.currentTimeMillis()));
-            instance.wakeup = wakeup;
-            if (instance.sleeping) {
+            INSTANCE.wakeup = wakeup;
+            if (INSTANCE.sleeping) {
 //                System.out.println("notify");
-                instance.notify();
+                MONITOR.notifyAll();
             }
         }
     }
@@ -142,7 +143,7 @@ public class CacheCleaner extends Thread {
             this.wakeup = wakeup;
 //            System.out.println("can sleep for " + (wakeup - time));
             while (wakeup > (time = System.currentTimeMillis())) {
-                synchronized (this) {
+                synchronized (MONITOR) {
                     if (this.wakeup < wakeup)
                         if (this.wakeup > time)
                             wakeup = this.wakeup;
@@ -156,7 +157,7 @@ public class CacheCleaner extends Thread {
                     if (wakeup - time > 0)
                         try {
 //                            System.out.println("sleep for: " + (wakeup - time));
-                            this.wait(wakeup - time);
+                            MONITOR.wait(wakeup - time);
                         } catch (InterruptedException ignored) {
                         }
 //                    System.out.println("wake up, can sleep " + (this.wakeup - System.currentTimeMillis()) + "ms more");
