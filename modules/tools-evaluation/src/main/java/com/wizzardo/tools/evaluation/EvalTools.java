@@ -1230,8 +1230,12 @@ public class EvalTools {
         if (cd != null && findCloseBracket(exp, cd.bodyStart) == to - 1) {
             String className = exp.substring(cd.nameStart, cd.nameEnd);
 
-            if (substringEquals(exp, cd.typeStart, cd.typeEnd, "interface"))
-                return new Expression(model) {
+            if (substringEquals(exp, cd.typeStart, cd.typeEnd, "interface")) {
+                class NoopExpression extends Expression {
+                    protected NoopExpression(EvaluationContext context) {
+                        super(context);
+                    }
+
                     @Override
                     public void setVariable(Variable v) {
 
@@ -1239,14 +1243,16 @@ public class EvalTools {
 
                     @Override
                     public Expression clone() {
-                        return null;
+                        return new NoopExpression(null);
                     }
 
                     @Override
                     protected Object doExecute(Map<String, Object> model) {
                         return null;
                     }
-                };
+                }
+                return new NoopExpression(model);
+            }
 
             boolean isEnum = substringEquals(exp, cd.typeStart, cd.typeEnd, "enum");
             List<Type> interfaces = new ArrayList<>();
