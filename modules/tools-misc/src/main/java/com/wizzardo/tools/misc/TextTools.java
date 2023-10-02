@@ -107,4 +107,52 @@ public class TextTools {
     public static <T extends Enum<T>> T asEnum(Class<T> cl, String name) {
         return Enum.valueOf(cl, name);
     }
+
+    public static String substringAfterLast(String src, String separator) {
+        return substringAfterLast(src, separator, src);
+    }
+
+    public static String substringAfterLast(String src, String separator, String missingDelimiterValue) {
+        int i = src.lastIndexOf(separator);
+        if (i == -1)
+            return missingDelimiterValue;
+
+        return src.substring(i + separator.length());
+    }
+
+    public static String substringAfter(String src, String separator) {
+        return substringAfter(src, separator, src);
+    }
+
+    public static String substringAfter(String src, String separator, String missingDelimiterValue) {
+        int i = src.indexOf(separator);
+        if (i == -1)
+            return missingDelimiterValue;
+
+        return src.substring(i + separator.length());
+    }
+
+    public static String substringBeforeLast(String src, String separator) {
+        return substringBeforeLast(src, separator, src);
+    }
+
+    public static String substringBeforeLast(String src, String separator, String missingDelimiterValue) {
+        int i = src.lastIndexOf(separator);
+        if (i == -1)
+            return missingDelimiterValue;
+
+        return src.substring(0, i);
+    }
+
+    public static String substringBefore(String src, String separator) {
+        return substringBefore(src, separator, src);
+    }
+
+    public static String substringBefore(String src, String separator, String missingDelimiterValue) {
+        int i = src.indexOf(separator);
+        if (i == -1)
+            return missingDelimiterValue;
+
+        return src.substring(0, i);
+    }
 }
