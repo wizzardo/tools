@@ -33,11 +33,12 @@ public class CharTreeTest {
                 .append("foo", "foo")
                 .append("bar", "bar")
                 .append("foobar", "foobar")
-                .append("foo", "foo");
+                .append("foo2bar", "foo2bar");
 
         Assert.assertEquals("foo", tree.get("foo".toCharArray()));
         Assert.assertEquals("bar", tree.get("bar".toCharArray()));
         Assert.assertEquals("foobar", tree.get("foobar".toCharArray()));
+        Assert.assertEquals("foo2bar", tree.get("foo2bar".toCharArray()));
     }
 
     @Test

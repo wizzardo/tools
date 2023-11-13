@@ -271,6 +271,7 @@ public class CharTree<V> {
             if (next != null && this.b != b) {
                 ArrayCharTreeNode<V> node = new ArrayCharTreeNode<V>(Math.max(this.b, b));
                 node.set(this.b, next);
+                node.value = value;
                 node.append(b);
                 return node;
             } else if (this.b == b)
@@ -287,6 +288,7 @@ public class CharTree<V> {
             if (next != null && this.b != b) {
                 ArrayCharTreeNode<V> node = new ArrayCharTreeNode<V>(Math.max(this.b, b));
                 node.set(this.b, next);
+                node.value = value;
                 node.set(b, n);
                 return node;
             } else if (this.b == b) {
