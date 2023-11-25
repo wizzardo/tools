@@ -99,6 +99,7 @@ dependencies {
 
     testImplementation "org.testcontainers:oracle-xe:1.17.5"
     testImplementation "com.oracle.database.jdbc:ojdbc11-production:21.7.0.0"
+    testImplementation 'org.apache.commons:commons-imaging:1.0-alpha3'
 }
 
 
