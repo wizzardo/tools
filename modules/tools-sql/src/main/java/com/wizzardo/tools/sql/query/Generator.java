@@ -261,8 +261,10 @@ public class Generator {
             return Field.BooleanField.class;
         if (cl.isEnum())
             return Field.EnumField.class;
-        else if (cl == Date.class)
+        else if (cl == java.sql.Date.class)
             return Field.DateField.class;
+        else if (cl == Date.class)
+            return Field.TimestampField.class;
         else if (cl == Timestamp.class)
             return Field.TimestampField.class;
 

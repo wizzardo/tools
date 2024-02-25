@@ -259,6 +259,10 @@ public class Field {
         public Condition.FieldCondition eq(Timestamp l) {
             return new Condition.FieldCondition(this, Condition.Operator.EQ, l, (o, builder) -> builder.setField((Timestamp) o));
         }
+
+        public Condition.FieldCondition eq(Date l) {
+            return new Condition.FieldCondition(this, Condition.Operator.EQ, l, (o, builder) -> builder.setField(new Timestamp(((Date) o).getTime())));
+        }
     }
 
     @Override
