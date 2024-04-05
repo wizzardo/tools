@@ -160,7 +160,7 @@ public class DBTools {
             boolean result = withDB(c -> {
                 c.setAutoCommit(false);
                 try {
-                    c.prepareStatement(migration).executeUpdate();
+                    c.prepareStatement(migration).execute();
                     c.prepareStatement("insert into schema_history (name, md5) values('" + name + "', '" + md5 + "')").executeUpdate();
                     c.commit();
                 } catch (Exception e) {
