@@ -2,6 +2,7 @@ package com.wizzardo.tools.gradle
 
 import com.wizzardo.tools.sql.query.Generator
 import org.gradle.api.*
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested;
@@ -230,6 +231,15 @@ class BuildPlugin implements Plugin<Project> {
             tasks.compileJava.dependsOn generateTables
             tasks.compileTestJava.dependsOn generateTables
 
+            task([description: 'Resolves all projects dependencies from the repository.'], 'resolveDependencies', {
+                doLast {
+                    rootProject.allprojects { p ->
+                        Set<Configuration> configurations = p.buildscript.configurations + p.configurations
+                        configurations.findAll { c -> c.canBeResolved }
+                                .forEach { c -> c.resolve() }
+                    }
+                }
+            })
         }
     }
 }
