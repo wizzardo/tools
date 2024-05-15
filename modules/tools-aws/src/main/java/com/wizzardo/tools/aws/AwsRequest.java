@@ -22,8 +22,13 @@ import java.util.*;
 
 public class AwsRequest extends Request {
 
-    protected final static SoftThreadLocal<SimpleDateFormat> dateFormatShortThreadLocal = new SoftThreadLocal<>(() -> new SimpleDateFormat("yyyyMMdd"));
     protected final static SoftThreadLocal<SimpleDateFormat> dateFormatThreadLocal = new SoftThreadLocal<>(() -> new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US));
+    protected final static SoftThreadLocal<SimpleDateFormat> dateFormatShortThreadLocal = new SoftThreadLocal<>(() -> {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        format.setTimeZone(tz);
+        return format;
+    });
     protected final static SoftThreadLocal<SimpleDateFormat> dateFormatIsoThreadLocal = new SoftThreadLocal<>(() -> {
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
         TimeZone tz = TimeZone.getTimeZone("UTC");
