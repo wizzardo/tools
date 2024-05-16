@@ -143,7 +143,7 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
 
                 switch (reflection.getType()) {
                     case BOOLEAN:
-                        reflection.setBoolean(t, get(name, Boolean.FALSE));
+                        reflection.setBoolean(t, getAsBoolean(name));
                         break;
                     case BYTE:
                         reflection.setByte(t, isConfig ? (byte) 0 : ((Number) value).byteValue());
@@ -194,6 +194,20 @@ public class Config extends HashMap<String, Object> implements CollectionTools.C
             }
         }
         return t;
+    }
+
+    private boolean getAsBoolean(String name) {
+        Object value = get(name);
+
+        if (value instanceof Config && ((Config) value).isEmpty())
+            return false;
+
+        if(value instanceof Boolean)
+            return (Boolean) value;
+        if(value instanceof String)
+            return Boolean.parseBoolean(value.toString());
+
+        throw new ClassCastException("Cannot get property " + name + " = '" + value + "' as boolean");
     }
 
     protected <T> T creteInstance(Class<T> clazz) {

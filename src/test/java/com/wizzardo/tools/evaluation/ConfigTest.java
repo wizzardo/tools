@@ -411,6 +411,19 @@ public class ConfigTest {
         Assert.assertEquals("4", v.string);
     }
 
+    @Test
+    public void test_boolean_string_value() {
+        String s = "" +
+                "a.flag = \"true\"\n" +
+                "";
+        Expression expression = EvalTools.prepare(s);
+        Config config = new Config();
+        expression.get(config);
+
+        TestClass v = config.config("a").bind(TestClass.class);
+        Assert.assertEquals(true, v.flag);
+    }
+
 
     public static class TestImport {
         public int i;
