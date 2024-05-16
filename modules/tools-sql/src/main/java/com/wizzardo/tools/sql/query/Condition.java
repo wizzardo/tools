@@ -2,6 +2,9 @@ package com.wizzardo.tools.sql.query;
 
 public abstract class Condition {
 
+    public static final Condition TRUE_CONDITION = new BooleanCondition(true);
+    public static final Condition FALSE_CONDITION = new BooleanCondition(false);
+
     protected abstract void toSql(QueryBuilder builder);
 
     public void fillData(QueryBuilder builder) {
@@ -28,6 +31,36 @@ public abstract class Condition {
 
     public Condition or(Condition condition) {
         return new MultiCondition(this, Operator.OR, condition);
+    }
+
+    public static class BooleanCondition extends Condition {
+        final boolean value;
+
+        public BooleanCondition(boolean value) {
+            this.value = value;
+        }
+
+        @Override
+        protected void toSql(QueryBuilder builder) {
+            if (value)
+                builder.append(" true");
+            else
+                builder.append(" false");
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            BooleanCondition that = (BooleanCondition) o;
+            return value == that.value;
+        }
+
+        @Override
+        public int hashCode() {
+            return Boolean.hashCode(value);
+        }
     }
 
     public static class FieldCondition extends Condition {
@@ -145,7 +178,7 @@ public abstract class Condition {
             this.operator = operator;
             this.subquery = subquery;
             if (operator != Operator.IN && operator != Operator.NOT_IN)
-                throw new IllegalArgumentException("InCondition cannot handle operator "+operator);
+                throw new IllegalArgumentException("InCondition cannot handle operator " + operator);
         }
 
         @Override

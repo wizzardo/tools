@@ -16,7 +16,7 @@ public class PostgresTests extends DBToolsTest {
     protected ConnectionPoolDataSource createDataSource() {
         return new SimpleConnectionPoolDataSource(new SimpleDataSource(
                 new ContainerDatabaseDriver(),
-                "jdbc:tc:postgresql:///databasename"
+                "jdbc:tc:postgresql:16.2-alpine:///databasename"
         ));
     }
 

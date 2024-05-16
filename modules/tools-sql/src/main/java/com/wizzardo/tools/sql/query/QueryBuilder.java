@@ -250,7 +250,7 @@ public class QueryBuilder {
             QueryBuilder builder = new QueryBuilder();
             toSql(builder);
             String sql = builder.toString();
-            System.out.println(sql);
+//            System.out.println(sql);
 
             PreparedStatement statement;
             Connection connection = getConnection();
@@ -645,7 +645,7 @@ public class QueryBuilder {
     }
 
     public static class WhereStep extends AbstractChainStep implements FetchableStep {
-        private final Condition condition;
+        protected final Condition condition;
 
         public WhereStep(AbstractChainStep previous, Condition condition) {
             super(previous);
@@ -947,7 +947,7 @@ public class QueryBuilder {
     }
 
     public static class SetValueStep extends SetStep {
-        private final Condition.FieldCondition condition;
+        protected final Condition.FieldCondition condition;
 
         public SetValueStep(AbstractChainStep previous, Condition.FieldCondition condition) {
             super(previous);
@@ -957,7 +957,7 @@ public class QueryBuilder {
         @Override
         public void toSql(QueryBuilder sb) {
             super.toSql(sb);
-            if (previous instanceof SetValueStep)
+            if (previous instanceof SetStep)
                 sb.append(", ");
             else
                 sb.append(" set ");
@@ -993,7 +993,7 @@ public class QueryBuilder {
     }
 
     public static class SetFieldStep extends SetStep {
-        private final Condition.JoinCondition condition;
+        protected final Condition.JoinCondition condition;
 
         public SetFieldStep(AbstractChainStep previous, Condition.JoinCondition condition) {
             super(previous);
@@ -1003,7 +1003,7 @@ public class QueryBuilder {
         @Override
         public void toSql(QueryBuilder sb) {
             super.toSql(sb);
-            if (previous instanceof SetValueStep)
+            if (previous instanceof SetStep)
                 sb.append(", ");
             else
                 sb.append(" set ");
@@ -1210,6 +1210,222 @@ public class QueryBuilder {
         public int hashCode() {
             int result = super.hashCode();
             result = 31 * result + fields.size();
+            return result;
+        }
+
+        public OnConflictDoNothingStep onConflictDoNothing() {
+            return new OnConflictDoNothingStep(this);
+        }
+
+        public OnConflictDoUpdateStep onConflictDoUpdate(List<Field> fields) {
+            return new OnConflictDoUpdateStep(this, fields);
+        }
+
+        public OnConflictDoUpdateStep onConflictDoUpdate(Field field) {
+            return new OnConflictDoUpdateStep(this, field);
+        }
+    }
+
+    public static class OnConflictDoNothingStep extends AbstractChainStep implements ExecutableStep {
+
+        public OnConflictDoNothingStep(AbstractChainStep previous) {
+            super(previous);
+        }
+
+        @Override
+        public void toSql(QueryBuilder sb) {
+            super.toSql(sb);
+            sb.append(" ON CONFLICT DO NOTHING");
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!super.equals(o)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result;
+            return result;
+        }
+    }
+
+    public static class OnConflictDoUpdateStep extends AbstractChainStep implements ExecutableStep {
+        final List<Field> fields;
+
+        public OnConflictDoUpdateStep(AbstractChainStep previous, List<Field> fields) {
+            super(previous);
+            this.fields = fields;
+        }
+
+        public OnConflictDoUpdateStep(AbstractChainStep previous, Field field) {
+            super(previous);
+            this.fields = Collections.singletonList(field);
+        }
+
+        @Override
+        public void toSql(QueryBuilder sb) {
+            super.toSql(sb);
+            sb.append(" ON CONFLICT (");
+            for (int i = 0; i < fields.size(); i++) {
+                if (i > 0)
+                    sb.append(", ");
+
+                sb.append(fields.get(i).name);
+            }
+            sb.append(") DO UPDATE");
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!super.equals(o)) return false;
+
+            OnConflictDoUpdateStep that = (OnConflictDoUpdateStep) o;
+            return fields.equals(that.fields);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + fields.hashCode();
+            return result;
+        }
+
+        public SetValueConflictUpdateStep set(Condition.FieldCondition fieldCondition) {
+            return new SetValueConflictUpdateStep(this, fieldCondition);
+        }
+
+        public SetFieldConflictUpdateStep set(Condition.JoinCondition fieldCondition) {
+            return new SetFieldConflictUpdateStep(this, fieldCondition);
+        }
+    }
+
+    public static class SetValueConflictUpdateStep extends SetValueStep {
+
+        public SetValueConflictUpdateStep(AbstractChainStep previous, Condition.FieldCondition condition) {
+            super(previous, condition);
+        }
+
+        @Override
+        public SetValueConflictUpdateStep set(Condition.FieldCondition fieldCondition) {
+            return new SetValueConflictUpdateStep(this, fieldCondition);
+        }
+
+        @Override
+        public SetFieldConflictUpdateStep set(Condition.JoinCondition fieldCondition) {
+            return new SetFieldConflictUpdateStep(this, fieldCondition);
+        }
+
+        public ReturningStep returning(List<Field> fields) {
+            return new ReturningStep(this, fields);
+        }
+
+        public ReturningStep returning(Field returning) {
+            return new ReturningStep(this, Collections.singletonList(returning));
+        }
+
+        public WhereConflictUpdateStep where(Condition condition) {
+            return new WhereConflictUpdateStep(this, condition);
+        }
+    }
+
+    public static class SetFieldConflictUpdateStep extends SetFieldStep {
+
+        public SetFieldConflictUpdateStep(AbstractChainStep previous, Condition.JoinCondition condition) {
+            super(previous, condition);
+        }
+
+        @Override
+        public SetValueConflictUpdateStep set(Condition.FieldCondition fieldCondition) {
+            return new SetValueConflictUpdateStep(this, fieldCondition);
+        }
+
+        @Override
+        public SetFieldStep set(Condition.JoinCondition fieldCondition) {
+            return new SetFieldConflictUpdateStep(this, fieldCondition);
+        }
+
+        public WhereConflictUpdateStep where(Condition condition) {
+            return new WhereConflictUpdateStep(this, condition);
+        }
+
+        @Override
+        public void toSql(QueryBuilder sb) {
+            if (previous != null)
+                previous.toSql(sb);
+
+            if (previous instanceof SetStep)
+                sb.append(", ");
+            else
+                sb.append(" set ");
+
+            sb.append(condition.a.name).append("=").append(condition.b.sql);
+        }
+
+        public ReturningStep returning(List<Field> fields) {
+            return new ReturningStep(this, fields);
+        }
+
+        public ReturningStep returning(Field returning) {
+            return new ReturningStep(this, Collections.singletonList(returning));
+        }
+    }
+
+    public static class WhereConflictUpdateStep extends WhereStep {
+
+        public WhereConflictUpdateStep(AbstractChainStep previous, Condition condition) {
+            super(previous, condition);
+        }
+
+        public ReturningStep returning(List<Field> fields) {
+            return new ReturningStep(this, fields);
+        }
+
+        public ReturningStep returning(Field returning) {
+            return new ReturningStep(this, Collections.singletonList(returning));
+        }
+    }
+
+    public static class ReturningStep extends AbstractChainStep implements FetchableStep {
+        final List<Field> fields;
+
+        public ReturningStep(AbstractChainStep previous, List<Field> fields) {
+            super(previous);
+            this.fields = fields;
+        }
+
+        @Override
+        public void toSql(QueryBuilder sb) {
+            super.toSql(sb);
+            sb.append(" RETURNING ");
+
+            for (int i = 0; i < fields.size(); i++) {
+                if (i > 0)
+                    sb.append(", ");
+
+                fields.get(i).toSql(sb);
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!super.equals(o)) return false;
+
+            ReturningStep that = (ReturningStep) o;
+
+            return fields != null ? fields.equals(that.fields) : that.fields == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + (fields != null ? fields.hashCode() : 0);
             return result;
         }
     }

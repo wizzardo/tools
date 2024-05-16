@@ -52,7 +52,7 @@ public class Field {
         return new FetchableField(step);
     }
 
-    interface ToSqlMapper {
+    public interface ToSqlMapper {
         void map(Object o, QueryBuilder builder);
 
         default String getCast(Connection c) {

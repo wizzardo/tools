@@ -1,3 +1,4 @@
 sql/migrations_oracle/0001.create_artist_table.sql
 sql/migrations_oracle/0002.create_song_table.sql
-sql/migrations_oracle/0003.create_song_album.sql
+sql/migrations_oracle/0003.create_album_table.sql
+sql/migrations_oracle/0004.create_artist_album.sql

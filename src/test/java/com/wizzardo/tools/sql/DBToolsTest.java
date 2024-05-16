@@ -6,6 +6,7 @@ import com.wizzardo.tools.sql.generated.ArtistTable;
 import com.wizzardo.tools.sql.generated.Tables;
 import com.wizzardo.tools.sql.model.Album;
 import com.wizzardo.tools.sql.model.Artist;
+import com.wizzardo.tools.sql.model.ArtistAlbum;
 import com.wizzardo.tools.sql.model.Song;
 import com.wizzardo.tools.sql.query.Field;
 import com.wizzardo.tools.sql.query.QueryBuilder;
@@ -302,6 +303,56 @@ public class DBToolsTest {
                 .first().extracting("url")
                 .isEqualTo("another-url");
 
+    }
+
+    @Test
+    public void test_insert_on_conflict() throws SQLException {
+        final Artist artist1 = new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 1");
+        artist1.id = service.insertInto(artist1, Tables.ARTIST);
+
+        final Artist artist2 = new Artist(0, TIMESTAMP.now(), TIMESTAMP.now(), "artist 2");
+        artist2.id = service.insertInto(artist2, Tables.ARTIST);
+
+        final Album album = new Album(0, TIMESTAMP.now(), TIMESTAMP.now(), "album", Collections.emptyList());
+        album.id = service.insertInto(album, Tables.ALBUM);
+
+
+        service.withBuilder(db -> {
+            db.insertInto(Tables.ARTIST_ALBUM).values(new ArtistAlbum(artist1.id, album.id)).executeInsert();
+            db.insertInto(Tables.ARTIST_ALBUM).values(new ArtistAlbum(artist2.id, album.id)).executeInsert();
+            return null;
+        });
+
+        List<ArtistAlbum> artistAlbums = service.withBuilder(db -> db.select().from(Tables.ARTIST_ALBUM).fetchInto(ArtistAlbum.class));
+        assertThat(artistAlbums)
+                .hasSize(2);
+
+        int inserted = service.withBuilder(db -> db.insertInto(Tables.ARTIST_ALBUM)
+                .values(new ArtistAlbum(artist1.id, album.id))
+                .onConflictDoNothing()
+                .executeInsert());
+
+        assertThat(inserted).isEqualTo(0);
+
+        ArtistAlbum artistAlbum = service.withBuilder(db -> db.insertInto(Tables.ARTIST_ALBUM)
+                .values(new ArtistAlbum(artist1.id, album.id))
+                .onConflictDoUpdate(Tables.ARTIST_ALBUM.FIELDS)
+                .set(Tables.ARTIST_ALBUM.ALBUM_ID.eq(Tables.ARTIST_ALBUM.ALBUM_ID))
+                .returning(Tables.ARTIST_ALBUM.FIELDS)
+                .fetchOneInto(ArtistAlbum.class));
+
+        assertThat(artistAlbum)
+                .isNotNull()
+                .extracting(it -> it.albumId).isEqualTo(album.id)
+        ;
+        assertThat(artistAlbum)
+                .isNotNull()
+                .extracting(it -> it.artistId).isEqualTo(artist1.id)
+        ;
+
+        artistAlbums = service.withBuilder(db -> db.select().from(Tables.ARTIST_ALBUM).fetchInto(ArtistAlbum.class));
+        assertThat(artistAlbums)
+                .hasSize(2);
     }
 }
 
