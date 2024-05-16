@@ -1,9 +1,11 @@
 package com.wizzardo.tools.json;
 
+import com.wizzardo.tools.interfaces.Supplier;
 import com.wizzardo.tools.misc.*;
 import com.wizzardo.tools.reflection.FieldReflection;
 import com.wizzardo.tools.reflection.Fields;
 import com.wizzardo.tools.reflection.Generic;
+import com.wizzardo.tools.reflection.UnsafeTools;
 
 import java.lang.reflect.*;
 import java.time.*;
@@ -41,7 +43,7 @@ public class Binder {
     protected static final Object[] EMPTY_ARRAY = new Object[0];
     public static SerializationContext DEFAULT_SERIALIZATION_CONTEXT = new SerializationContext();
     protected static final JsonFieldSetterFactory JSON_FIELD_SETTER_FACTORY = new JsonFieldSetterFactory();
-    private static Map<Class, Constructor> cachedConstructors = new ConcurrentHashMap<Class, Constructor>();
+    private static Map<Class, Supplier<Object>> cachedConstructors = new ConcurrentHashMap<Class, Supplier<Object>>();
     private static Map<Class, Serializer> serializers = new ConcurrentHashMap<Class, Serializer>();
     static CharTree<Pair<String, JsonFieldInfo>> fieldsNames = new CharTree<Pair<String, JsonFieldInfo>>();
 
@@ -633,10 +635,9 @@ public class Binder {
     }
 
     static Object createObject(Class clazz) {
-        Constructor c = cachedConstructors.get(clazz);
+        Supplier<Object> c = cachedConstructors.get(clazz);
         if (c == null) {
             c = initDefaultConstructor(clazz);
-            c.setAccessible(true);
         }
 
         return createInstance(c);
@@ -644,7 +645,7 @@ public class Binder {
 
 
     static Collection createCollection(Class clazz) {
-        Constructor c = cachedConstructors.get(clazz);
+        Supplier<Object> c = cachedConstructors.get(clazz);
         if (c == null) {
             if (clazz == List.class)
                 return new ArrayList();
@@ -665,7 +666,7 @@ public class Binder {
     }
 
     static Map createMap(Class clazz) {
-        Constructor c = cachedConstructors.get(clazz);
+        Supplier<Object> c = cachedConstructors.get(clazz);
         if (c == null) {
             if (clazz == Map.class)
                 return new HashMap();
@@ -679,31 +680,47 @@ public class Binder {
         return (Map) createInstance(c);
     }
 
-    private static Constructor initDefaultConstructor(Class clazz) {
+    private static Supplier<Object> initDefaultConstructor(Class clazz) {
         return initDefaultConstructor(clazz, clazz);
     }
 
-    private static Constructor initDefaultConstructor(Class classKey, Class classReal) {
-        Constructor c;
+    private static Supplier<Object> initDefaultConstructor(Class classKey, Class classReal) {
+        Supplier<Object> supplier;
         try {
-            c = classReal.getDeclaredConstructor();
-            cachedConstructors.put(classKey, c);
+            Constructor c = classReal.getDeclaredConstructor();
+            c.setAccessible(true);
+            supplier = new Supplier<Object>() {
+                @Override
+                public Object supply() {
+                    try {
+                        return c.newInstance(EMPTY_ARRAY);
+                    } catch (IllegalAccessException e) {
+                        throw Unchecked.rethrow(e);
+                    } catch (InstantiationException e) {
+                        throw Unchecked.rethrow(e);
+                    } catch (InvocationTargetException e) {
+                        throw Unchecked.rethrow(e);
+                    }
+                }
+            };
+            cachedConstructors.put(classKey, supplier);
         } catch (NoSuchMethodException e) {
-            throw Unchecked.rethrow(e);
+            supplier = new Supplier<Object>() {
+                @Override
+                public Object supply() {
+                    try {
+                        return UnsafeTools.getUnsafe().allocateInstance(classReal);
+                    } catch (InstantiationException ex) {
+                        throw Unchecked.rethrow(ex);
+                    }
+                }
+            };
         }
-        return c;
+        return supplier;
     }
 
-    private static Object createInstance(Constructor c) {
-        try {
-            return c.newInstance(EMPTY_ARRAY);
-        } catch (IllegalAccessException e) {
-            throw Unchecked.rethrow(e);
-        } catch (InstantiationException e) {
-            throw Unchecked.rethrow(e);
-        } catch (InvocationTargetException e) {
-            throw Unchecked.rethrow(e);
-        }
+    private static Object createInstance(Supplier<Object> c) {
+        return c.supply();
     }
 
     static Object createArrayByComponentType(Class clazz, int size) {

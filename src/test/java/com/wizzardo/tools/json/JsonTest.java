@@ -1480,19 +1480,12 @@ public class JsonTest {
         Assert.assertEquals(TreeMap.class, Binder.createMap(TreeMap.class).getClass());
 
 
-        testExceptionContains(new Runnable() {
-                                  @Override
-                                  public void run() {
-                                      Binder.createCollection(CustomList.class);
-                                  }
-                              }, IllegalAccessException.class, "com.wizzardo.tools.json.Binder ",
-                "com.wizzardo.tools.json.JsonTest$CustomList with modifiers \"private\"");
         testException(new Runnable() {
             @Override
             public void run() {
                 Binder.createCollection(NoSuchMethodExceptionTest.class);
             }
-        }, NoSuchMethodException.class, "com.wizzardo.tools.json.JsonTest$NoSuchMethodExceptionTest.<init>()");
+        }, InstantiationException.class, "com.wizzardo.tools.json.JsonTest$NoSuchMethodExceptionTest");
         testException(new Runnable() {
             @Override
             public void run() {
