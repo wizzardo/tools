@@ -27,7 +27,11 @@ public class CpuAndAllocationStats {
     }
 
     public CpuAndAllocationStats() {
-        threadId = Thread.currentThread().getId();
+        this(Thread.currentThread());
+    }
+
+    public CpuAndAllocationStats(Thread thread) {
+        threadId = thread.getId();
         threadMXBean = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
     }
 
@@ -49,7 +53,7 @@ public class CpuAndAllocationStats {
         if (!CPU_TIME_TRACING_SUPPORTED)
             return 0;
 
-        return threadMXBean.getCurrentThreadCpuTime();
+        return threadMXBean.getThreadCpuTime(threadId);
     }
 
     public long getCountedCpuUserTime() {
@@ -60,7 +64,7 @@ public class CpuAndAllocationStats {
         if (!CPU_TIME_TRACING_SUPPORTED)
             return 0;
 
-        return threadMXBean.getCurrentThreadUserTime();
+        return threadMXBean.getThreadUserTime(threadId);
     }
 
     public long getCountedAllocation() {
