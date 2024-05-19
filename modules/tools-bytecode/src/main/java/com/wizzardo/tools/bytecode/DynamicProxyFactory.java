@@ -89,16 +89,17 @@ public class DynamicProxyFactory {
 
     public static Class<?> loadClass(String classFullName, byte[] bytes) {
         String name = classFullName.replace('/', '.');
-        try {
-            Optional<Method> defineHiddenClass = Arrays.stream(MethodHandles.Lookup.class.getMethods()).filter(it -> it.getName().equals("defineHiddenClass")).findFirst();
-            if (defineHiddenClass.isPresent()) {
-                Class<?> classOptionClass = ClassLoader.getSystemClassLoader().loadClass("java.lang.invoke.MethodHandles$Lookup$ClassOption");
-                MethodHandles.Lookup lookup = (MethodHandles.Lookup) defineHiddenClass.get().invoke(MethodHandles.lookup(), bytes, true, Array.newInstance(classOptionClass, 0));
-                return lookup.lookupClass();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Optional<Method> defineHiddenClass = Arrays.stream(MethodHandles.Lookup.class.getMethods()).filter(it -> it.getName().equals("defineHiddenClass")).findFirst();
+//            if (defineHiddenClass.isPresent()) {
+//                Class<?> classOptionClass = ClassLoader.getSystemClassLoader().loadClass("java.lang.invoke.MethodHandles$Lookup$ClassOption");
+//                MethodHandles.Lookup lookup = (MethodHandles.Lookup) defineHiddenClass.get().invoke(MethodHandles.lookup(), bytes, true, Array.newInstance(classOptionClass, 0));
+//                return lookup.lookupClass();
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
 //        try {
 //            ClassLoader classLoader = DynamicProxyFactory.class.getClassLoader();
 //            Method method = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
