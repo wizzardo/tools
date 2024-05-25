@@ -751,7 +751,13 @@ public abstract class Expression {
         protected Object doExecute(Map<String, Object> model) {
             Object ob = null;
             for (Expression expression : expressions) {
-                ob = expression.get(model);
+                if (expression.getClass() == ClosureHolder.class) {
+                    // not groovy syntax, but this will call java code blocks in {...} when real groovy fails to compile
+                    ClosureExpression closure = (ClosureExpression) expression.get(model);
+                    ob = closure.get(model);
+                } else {
+                    ob = expression.get(model);
+                }
                 if (ob != null && ob instanceof ReturnResultHolder)
                     return ob;
             }

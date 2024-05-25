@@ -2000,6 +2000,17 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_java_code_block() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("2", EvalTools.evaluate("" +
+                                                    "int a = 1;\n" +
+                                                    "{ \n" +
+                                                    "  a = 2\n" +
+                                                    "}\n" +
+                                                    "a.toString()", model));
+    }
+
+    @Test
     public void test_builder_pattern() {
         Map<String, Object> model = new HashMap<String, Object>();
 
