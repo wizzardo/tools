@@ -924,7 +924,8 @@ public class Function extends Expression {
 //                            closureArgs[j].set(args[j]);
 //                        }
                         if (args.length == 1 && method.getName().equals("equals")) {
-                            return closure.equals(args[0]);
+                            Object other = args[0];
+                            return other != null && other.equals(closure);
                         } else if (args.length == 0 && method.getName().equals("hashCode")) {
                             return closure.hashCode();
                         } else if (args.length == 0 && method.getName().equals("toString")) {
