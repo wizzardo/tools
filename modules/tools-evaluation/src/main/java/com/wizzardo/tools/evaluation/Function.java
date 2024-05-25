@@ -923,6 +923,14 @@ public class Function extends Expression {
 //                        for (int j = 0; j < closureArgs.length && args != null && j < args.length; j++) {
 //                            closureArgs[j].set(args[j]);
 //                        }
+                        if (args.length == 1 && method.getName().equals("equals")) {
+                            return closure.equals(args[0]);
+                        } else if (args.length == 0 && method.getName().equals("hashCode")) {
+                            return closure.hashCode();
+                        } else if (args.length == 0 && method.getName().equals("toString")) {
+                            return closure.toString();
+                        }
+
                         return closure.getAgainst(closure.context, closure.context.get("this"), args);
                     }
                 });
