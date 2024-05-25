@@ -191,8 +191,6 @@ public class Function extends Expression {
         return new Function(thatObject.clone(), methodName, args, safeNavigation, file, lineNumber, linePosition);
     }
 
-    private ThreadLocal<Object[]> tempArray = new ThreadLocal<Object[]>();
-
     interface Getter {
         Object get(Object instance);
     }
@@ -428,11 +426,7 @@ public class Function extends Expression {
     }
 
     protected Object[] resolveArgs(Map<String, Object> model) {
-        Object[] arr;
-        if ((arr = tempArray.get()) == null) {
-            arr = new Object[args.length];
-            tempArray.set(arr);
-        }
+        Object[] arr = new Object[args.length];
 //            System.out.println("try resolve args:");
         for (int i = 0; i < arr.length; i++) {
 //                System.out.println(i+"\t"+args[i]);
