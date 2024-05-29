@@ -182,7 +182,7 @@ public class Field {
         }
 
         public Condition.FieldCondition eq(Boolean b) {
-            return new Condition.FieldCondition(this, Condition.Operator.EQ, b, (o, builder) -> builder.setField((Float) o));
+            return new Condition.FieldCondition(this, Condition.Operator.EQ, b, (o, builder) -> builder.setField((Boolean) o));
         }
     }
 
