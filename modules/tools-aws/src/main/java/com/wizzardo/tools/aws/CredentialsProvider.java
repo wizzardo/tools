@@ -1,7 +1,5 @@
 package com.wizzardo.tools.aws;
 
-import com.wizzardo.tools.http.Request;
-import com.wizzardo.tools.http.Response;
 import com.wizzardo.tools.json.JsonTools;
 import com.wizzardo.tools.misc.Unchecked;
 
@@ -45,17 +43,11 @@ public interface CredentialsProvider {
 
     static Optional<CredentialsProvider> createFromMetaData() {
         return Unchecked.ignore(() -> {
-            String metaDataUrl = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
-            Response response = new Request(metaDataUrl).get();
-            if (response.getResponseCode() != 200)
-                throw new IllegalStateException(response.asString());
-
-            String role = response.asString();
+            String role = EC2MetaData.get("/iam/security-credentials/");
             String[] rolePath = role.split("\\n", 2);
             if (rolePath.length == 0)
                 throw new IllegalStateException("Can parse role: " + role);
-
-            String json = new Request(metaDataUrl + rolePath[0]).get().asString();
+            String json = EC2MetaData.get("/iam/security-credentials/" + rolePath[0]);
             AwsCredentials credentials = JsonTools.parse(json, AwsCredentials.class);
             return Optional.of(() -> credentials);
         }, Optional.empty());
