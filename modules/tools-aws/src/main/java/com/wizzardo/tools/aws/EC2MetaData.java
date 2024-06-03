@@ -21,7 +21,7 @@ public class EC2MetaData {
             String token = new Request("http://169.254.169.254/latest/api/token")
                     .header("X-aws-ec2-metadata-token-ttl-seconds", "60")
                     .timeout(timeout)
-                    .get()
+                    .put()
                     .asString();
 
             response = new Request(url)
