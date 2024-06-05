@@ -2190,6 +2190,38 @@ public class EvalToolsTest {
     }
 
     @Test
+    public void test_generate_class_2() throws InstantiationException, IllegalAccessException {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression e = EvalTools.prepare("" +
+                                         " static class SimpleClass  {\n" +
+                                         "       double value = 1;" +
+                                         "       int count = 2;" +
+                                         "       boolean flag = true;" +
+                                         " }\n" +
+                                         "SimpleClass.class"
+        );
+
+        Object result = e.get(new HashMap<>());
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof Class);
+        Assert.assertEquals("SimpleClass", ((Class<?>) result).getSimpleName());
+        Field[] fields = ((Class<?>) result).getDeclaredFields();
+        Assert.assertTrue(fields.length >= 3);
+        Field valueField = Arrays.stream(fields).filter(it -> it.getName().equals("value")).findFirst().orElse(null);
+        Field countField = Arrays.stream(fields).filter(it -> it.getName().equals("count")).findFirst().orElse(null);
+        Field flagField = Arrays.stream(fields).filter(it -> it.getName().equals("flag")).findFirst().orElse(null);
+        Assert.assertNotNull(valueField);
+        Assert.assertNotNull(countField);
+        Assert.assertNotNull(flagField);
+        Object instance = ((Class<?>) result).newInstance();
+        Assert.assertEquals(1.0, valueField.get(instance));
+        Assert.assertEquals(2, countField.get(instance));
+        Assert.assertEquals(true, flagField.get(instance));
+    }
+
+    @Test
     public void test_line_number() {
         Map<String, Object> model = new HashMap<String, Object>();
 

@@ -384,6 +384,33 @@ public class ClassExpression extends Expression implements Type {
                                 builder.field(defineAndSet.name, type, value);
                                 continue;
                             }
+
+                            if (value instanceof Number) {
+                                if (type == int.class || type == Integer.class) {
+                                    builder.field(defineAndSet.name, type, ((Number) value).intValue());
+                                    continue;
+                                }
+                                if (type == long.class || type == Long.class) {
+                                    builder.field(defineAndSet.name, type, ((Number) value).longValue());
+                                    continue;
+                                }
+                                if (type == float.class || type == Float.class) {
+                                    builder.field(defineAndSet.name, type, ((Number) value).floatValue());
+                                    continue;
+                                }
+                                if (type == double.class || type == Double.class) {
+                                    builder.field(defineAndSet.name, type, ((Number) value).doubleValue());
+                                    continue;
+                                }
+                                if (type == short.class || type == Short.class) {
+                                    builder.field(defineAndSet.name, type, ((Number) value).shortValue());
+                                    continue;
+                                }
+                                if (type == byte.class || type == Byte.class) {
+                                    builder.field(defineAndSet.name, type, ((Number) value).byteValue());
+                                    continue;
+                                }
+                            }
                         }
                     }
 
