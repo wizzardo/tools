@@ -12,9 +12,7 @@ import org.junit.Test;
 
 import java.awt.*;
 import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1096,7 +1094,7 @@ public class EvalToolsTest {
         checkException(new Runnable() {
             @Override
             public void run() {
-                EvalTools.prepare(s);
+                EvalTools.prepare(s).get(model);
             }
         }, ClassNotFoundException.class, "Can not find class 'AtomicInteger'");
 
@@ -2219,6 +2217,65 @@ public class EvalToolsTest {
         Assert.assertEquals(1.0, valueField.get(instance));
         Assert.assertEquals(2, countField.get(instance));
         Assert.assertEquals(true, flagField.get(instance));
+    }
+
+    @Test
+    public void test_class_expression_lookup() throws InstantiationException, IllegalAccessException, InvocationTargetException {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression e = EvalTools.prepare("" +
+                                         "class SimpleClass {\n" +
+                                         "  public String get(){\n" +
+                                         "    return new InternalClass().value+\"\";" +
+                                         "  }\n" +
+                                         "  static class InternalClass {\n" +
+                                         "    int value = 1;" +
+                                         "  }\n" +
+                                         "}\n" +
+                                         "");
+
+        Object result = e.get(new HashMap<>());
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof ClassExpression);
+        Class<?> aClass = ((ClassExpression) result).getJavaClass();
+        Assert.assertEquals("SimpleClass", aClass.getSimpleName());
+        Method[] methods = ((Class<?>) aClass).getDeclaredMethods();
+        Assert.assertTrue(methods.length >= 1);
+        Method getMethod = Arrays.stream(methods).filter(it -> it.getName().equals("get")).findFirst().orElse(null);
+        Assert.assertNotNull(getMethod);
+        Object instance = ((ClassExpression) result).newInstance(new Object[0]);
+        Assert.assertEquals("1", getMethod.invoke(instance));
+    }
+
+    @Test
+    public void test_class_expression_lookup_2() throws InstantiationException, IllegalAccessException, InvocationTargetException {
+        Map<String, Object> model = new HashMap<String, Object>();
+
+        Expression e = EvalTools.prepare("" +
+                                         "class SimpleClass {\n" +
+                                         "  public String get(){\n" +
+                                         "    return new InternalClass(2).value+\"\";" +
+                                         "  }\n" +
+                                         "  static class InternalClass {\n" +
+                                         "    int value = 1;" +
+                                         "    InternalClass(int v){this.value=v;}" +
+                                         "  }\n" +
+                                         "}\n" +
+                                         "");
+
+        Object result = e.get(new HashMap<>());
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result instanceof ClassExpression);
+        Class<?> aClass = ((ClassExpression) result).getJavaClass();
+        Assert.assertEquals("SimpleClass", aClass.getSimpleName());
+        Method[] methods = ((Class<?>) aClass).getDeclaredMethods();
+        Assert.assertTrue(methods.length >= 1);
+        Method getMethod = Arrays.stream(methods).filter(it -> it.getName().equals("get")).findFirst().orElse(null);
+        Assert.assertNotNull(getMethod);
+        Object instance = ((ClassExpression) result).newInstance(new Object[0]);
+        Assert.assertEquals("2", getMethod.invoke(instance));
     }
 
     @Test

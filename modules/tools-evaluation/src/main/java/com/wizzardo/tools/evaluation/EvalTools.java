@@ -5,7 +5,6 @@
 package com.wizzardo.tools.evaluation;
 
 import com.wizzardo.tools.misc.Pair;
-import com.wizzardo.tools.misc.Unchecked;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -1938,8 +1937,11 @@ public class EvalTools {
                             methodName = CONSTRUCTOR;
                             from = start = expressionPart.start + m.end();
                         }
-                    } else
-                        Unchecked.rethrow(new ClassNotFoundException("Can not find class '" + className + "'"));
+                    } else {
+                        thatObject = new ClassExpressionLookup(className, model);
+                        methodName = CONSTRUCTOR;
+                        from = start = expressionPart.start + m.end();
+                    }
                 }
             }
         }
