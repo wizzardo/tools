@@ -133,11 +133,11 @@ class BuildPlugin implements Plugin<Project> {
 
                 manifest {
                     attributes(
-                            "Main-Class": "${{ -> project.hasProperty('mainClassName') ? mainClassName : '' }}",
+                            "Main-Class": "${{ -> plugins.hasPlugin('application') ? application.mainClass.get() : '' }}",
                             "revision": gitRevision,
                             "branch": gitBranchName,
                             "buildTime": new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
-                            "version": "${{ -> version }}"
+                            "version": "${{ -> archiveVersion.get() }}"
                     )
                 }
             })
