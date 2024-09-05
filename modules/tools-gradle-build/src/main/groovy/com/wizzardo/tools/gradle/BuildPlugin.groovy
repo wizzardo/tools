@@ -208,8 +208,8 @@ class BuildPlugin implements Plugin<Project> {
                             test: toolsSqlExtension.tablesGeneratorTest,
                     ].each { sourceSet, tablesGenerator ->
                         def isEnabled = tablesGenerator && tablesGenerator.getEnabled().getOrElse(false)
-                        println "generateTables for ${sourceSet} sourceSet enabled: ${isEnabled}"
                         if (isEnabled) {
+                            println "generateTables for ${sourceSet} sourceSet:"
                             def src = tablesGenerator.getSrc().get()
                             def out = tablesGenerator.getOut().get()
                             def packageName = tablesGenerator.getPackageName().get()
