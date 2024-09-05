@@ -9,6 +9,8 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 
 class BuildPlugin implements Plugin<Project> {
@@ -240,6 +242,65 @@ class BuildPlugin implements Plugin<Project> {
                     }
                 }
             })
+
+            task([description: 'check for gradle updates'], 'checkGradleVersion', {
+                doLast {
+                    def wrapperPropertiesPath = 'gradle/wrapper/gradle-wrapper.properties'
+                    def currentGradleVersion = null
+                    def latestGradleVersion
+                    def gradleHome = gradle.gradleUserHomeDir
+                    def latestVersionFile = new File(gradleHome, 'latest-version')
+
+                    if (Files.exists(Paths.get(wrapperPropertiesPath))) {
+                        Properties properties = new Properties()
+                        properties.load(Files.newInputStream(Paths.get(wrapperPropertiesPath)))
+                        def distributionUrl = properties.getProperty('distributionUrl')
+                        currentGradleVersion = distributionUrl.split('/').last().split('-')[1]
+                    }
+
+                    if(!latestVersionFile.exists() || latestVersionFile.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000L) {
+                        try {
+                            println "checking latest gradle version..."
+                            def url = new URI('https://services.gradle.org/distributions/').toURL()
+                            def connection = url.openConnection() as HttpURLConnection
+                            connection.connect()
+
+                            def responseCode = connection.responseCode
+                            if (responseCode == 200) {
+                                def html = connection.inputStream.text
+
+                                def pattern = ~/\/distributions\/gradle-(\d+\.\d+(\.\d+)?)-all.zip"/
+                                def matcher = pattern.matcher(html)
+                                def versions = []
+                                while (matcher.find()) {
+                                    versions << matcher.group(1)
+                                }
+                                latestVersionFile.text = versions[0]
+                            } else {
+                                println "Error: Failed to fetch the latest Gradle version. HTTP response code: ${responseCode}"
+                                return
+                            }
+                        } catch (Exception e) {
+                            println "Error: ${e.message}"
+                            return
+                        }
+                    }
+
+                    latestGradleVersion = latestVersionFile.text
+
+                    if (currentGradleVersion != null && !currentGradleVersion.equals(latestGradleVersion)) {
+                        print "\u001B[31m" //red
+//                        print "\u001B[33m" // yellow
+                        print "Warning: The current Gradle version (${currentGradleVersion}) does not match the latest version (${latestGradleVersion})."
+                        println "\u001B[0m"
+
+                        println "run this to update config: ./gradlew wrapper --gradle-version latest"
+                    }
+                }
+            })
+
+            tasks.jar.finalizedBy checkGradleVersion
+            tasks.fatJar.finalizedBy checkGradleVersion
         }
     }
 }
