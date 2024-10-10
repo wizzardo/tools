@@ -238,7 +238,16 @@ class BuildPlugin implements Plugin<Project> {
                     rootProject.allprojects { p ->
                         Set<Configuration> configurations = p.buildscript.configurations + p.configurations
                         configurations.findAll { c -> c.canBeResolved }
-                                .forEach { c -> c.resolve() }
+                                .forEach { c ->
+                                    try {
+                                        c.resolve()
+                                    } catch (e) {
+//                                        print "\u001B[31m" //red
+                                        print "\u001B[33m" // yellow
+                                        print "Warning: ${e.toString()}"
+                                        println "\u001B[0m"
+                                    }
+                                }
                     }
                 }
             })
