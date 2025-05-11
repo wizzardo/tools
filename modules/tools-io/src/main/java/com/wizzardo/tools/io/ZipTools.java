@@ -207,7 +207,7 @@ public class ZipTools {
                 FileOutputStream out = null;
                 try {
                     String canonicalDestinationPath = outFile.getCanonicalPath();
-                    if (canonicalDestinationPath.startsWith(outDirCanonicalPath)) {
+                    if (!canonicalDestinationPath.startsWith(outDirCanonicalPath)) {
                         throw new IllegalStateException("Zip entry '" + name + "' tries to escape to another directory");
                     }
 
