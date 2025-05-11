@@ -9,13 +9,13 @@ public class StringReflection {
     private static StringReflections reflections;
 
     static {
-        FieldReflection value = getFieldReflection(String.class, "value", true);
+        FieldReflection value = getFieldReflection(String.class, "value", false);
         FieldReflection offset = getFieldReflection(String.class, "offset", false);
         FieldReflection count = getFieldReflection(String.class, "count", false);
         FieldReflection hash = getFieldReflection(String.class, "hash", false);
         FieldReflection coder = getFieldReflection(String.class, "coder", false);
         if (hash == null)
-            hash = getFieldReflection(String.class, "hashCode", true);
+            hash = getFieldReflection(String.class, "hashCode", false);
 
         if (value == null || hash == null || coder != null)
             reflections = new NoStringReflections();
