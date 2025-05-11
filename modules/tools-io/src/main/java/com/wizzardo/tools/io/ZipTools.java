@@ -196,16 +196,23 @@ public class ZipTools {
 
     public static List<File> unzip(File zipFile, final File outDir, ZipEntryFilter filter) {
         final List<File> l = new ArrayList<File>();
+        String outDirCanonicalPath = Unchecked.call(outDir::getCanonicalPath);
         unzip(zipFile, new ZipEntryConsumer() {
             byte[] b = new byte[1024 * 50];
 
             @Override
             public void consume(String name, InputStream in) {
                 File outFile = new File(outDir, name);
-                outFile.getParentFile().mkdirs();
 
                 FileOutputStream out = null;
                 try {
+                    String canonicalDestinationPath = outFile.getCanonicalPath();
+                    if (canonicalDestinationPath.startsWith(outDirCanonicalPath)) {
+                        throw new IllegalStateException("Zip entry '" + name + "' tries to escape to another directory");
+                    }
+
+                    outFile.getParentFile().mkdirs();
+
                     out = new FileOutputStream(outFile);
                     IOTools.copy(in, out, b);
                     l.add(outFile);
