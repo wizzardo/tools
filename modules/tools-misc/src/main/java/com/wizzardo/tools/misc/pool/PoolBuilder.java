@@ -109,6 +109,14 @@ public class PoolBuilder<T> {
                 AtomicInteger waits = new AtomicInteger();
 
                 @Override
+                public T get() {
+                    T t = super.get();
+                    created.decrementAndGet();
+                    notifyWaits();
+                    return t;
+                }
+
+                @Override
                 protected Holder<T> poll() {
                     Holder<T> holder = super.poll();
                     if (holder == null && created.get() == limitSize) {
@@ -136,6 +144,10 @@ public class PoolBuilder<T> {
                 public void dispose(Holder<T> h) {
                     super.dispose(h);
                     created.decrementAndGet();
+                    notifyWaits();
+                }
+
+                private void notifyWaits() {
                     if (waits.get() > 0) {
                         synchronized (this) {
                             if (waits.get() > 0)
@@ -147,12 +159,7 @@ public class PoolBuilder<T> {
                 @Override
                 public void release(Holder<T> holder) {
                     super.release(holder);
-                    if (waits.get() > 0) {
-                        synchronized (this) {
-                            if (waits.get() > 0)
-                                this.notify();
-                        }
-                    }
+                    notifyWaits();
                 }
             };
         }

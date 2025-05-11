@@ -45,6 +45,5 @@ public class QueuedPool<T> extends AbstractQueuedPool<T> {
 
     @Override
     public void dispose(Holder<T> h) {
-        queue().remove(h);
     }
 }

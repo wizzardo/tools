@@ -89,11 +89,7 @@ public class SimpleConnectionPool implements DataSource {
         while (true) {
             Holder<PooledConnection> holder = pool.holder();
             PooledConnection pooledConnection = holder.get();
-            if (pooledConnection == null)
-                continue;
-
             Connection connection = pooledConnection.getConnection();
-
             if (checkValidity && !connection.isValid(1)) {
                 pool.dispose(holder);
                 continue;
