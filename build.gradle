@@ -1,6 +1,6 @@
 allprojects {
     apply plugin: 'java'
-    apply plugin: 'tools-gradle-build'
+//    apply plugin: 'tools-gradle-build'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -28,13 +28,13 @@ allprojects {
 buildscript {
     repositories {
         maven {
-            url "https://oss.sonatype.org/content/repositories/snapshots/"
+            url "https://central.sonatype.com/repository/maven-snapshots/"
         }
         mavenCentral()
     }
-    dependencies {
-        classpath 'com.wizzardo.tools:tools-gradle-build:+'
-    }
+//    dependencies {
+//        classpath 'com.wizzardo.tools:tools-gradle-build:+'
+//    }
 }
 
 archivesBaseName = "tools"
@@ -42,7 +42,7 @@ ext {
     descriptionString = 'Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other'
 }
 
-apply plugin: 'tools-gradle-build'
+//apply plugin: 'tools-gradle-build'
 apply from: 'gradle/sonatype.gradle'
 apply plugin: 'jacoco'
 
@@ -109,16 +109,16 @@ task copyJars(type: Copy, dependsOn: subprojects.jar) {
     into project.file('build/libs')
 }
 
-sqlTools {
-    migrationsTest {
-        enabled = true
-        src = 'sql/migrations'
-        out = 'sql/migrations.txt'
-    }
-    tablesGeneratorTest {
-        enabled = true
-        src = 'src/test/java/com/wizzardo/tools/sql/model'
-        out = 'src/test/java/com/wizzardo/tools/sql/generated'
-        packageName = 'com.wizzardo.tools.sql.generated'
-    }
-}
+//sqlTools {
+//    migrationsTest {
+//        enabled = true
+//        src = 'sql/migrations'
+//        out = 'sql/migrations.txt'
+//    }
+//    tablesGeneratorTest {
+//        enabled = true
+//        src = 'src/test/java/com/wizzardo/tools/sql/model'
+//        out = 'src/test/java/com/wizzardo/tools/sql/generated'
+//        packageName = 'com.wizzardo.tools.sql.generated'
+//    }
+//}
