@@ -100,4 +100,24 @@ public class YamlToolsTest {
         Assert.assertEquals("value", item.asYamlObject().getAsYamlObject("key").getAsYamlObject("sub").getAsString("subsub"));
         Assert.assertEquals("b", item.asYamlObject().getAsString("key2"));
     }
+
+    @Test
+    public void simple_test_10() {
+        String data = "key: \n" +
+                "  sub:\n" +
+                "#  comment: qwerty\n" +
+                "    subsub: value\n" +
+                "    #subsub2: value\n" +
+                "\n" +
+                "key2: b";
+        YamlItem item = YamlTools.parse(data);
+        item.toString();
+
+        Assert.assertTrue(item.isYamlObject());
+        Assert.assertEquals(2, item.asYamlObject().size());
+        Assert.assertEquals(1, item.asYamlObject().getAsYamlObject("key").size());
+        Assert.assertEquals(1, item.asYamlObject().getAsYamlObject("key").getAsYamlObject("sub").size());
+        Assert.assertEquals("value", item.asYamlObject().getAsYamlObject("key").getAsYamlObject("sub").getAsString("subsub"));
+        Assert.assertEquals("b", item.asYamlObject().getAsString("key2"));
+    }
 }

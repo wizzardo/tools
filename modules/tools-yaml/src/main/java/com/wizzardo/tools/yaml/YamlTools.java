@@ -84,9 +84,9 @@ public class YamlTools {
 
     public static int parse(char[] data, int from, int to, int indent, YamlObject into) {
         do {
-            from += indent;
             int lineEnd = skipUntilLineEnd(data, from, to);
             int commentStart = find(data, from, lineEnd, '#');
+            from += indent;
             int kvEnd = commentStart == -1 ? lineEnd : commentStart;
             int kvSeparator = find(data, from, kvEnd, ':');
 
@@ -106,7 +106,16 @@ public class YamlTools {
             String key = readKey(data, from, kvSeparator);
             String value = readValue(data, kvSeparator + 1, kvEnd);
 
-            from = skipUntilNextLine(data, lineEnd, to);
+            do {
+                from = skipUntilNextLine(data, lineEnd, to);
+                lineEnd = skipUntilLineEnd(data, from, to);
+                commentStart = find(data, from, lineEnd, '#');
+                if (commentStart >= from && isBlank(data, from, commentStart)) {
+                    continue;
+                }
+                break;
+            } while (true);
+
             int nextIndent = getIndent(data, from, to);
             if (nextIndent == indent) {
                 into.put(key, new YamlItem(value));
@@ -128,6 +137,14 @@ public class YamlTools {
             }
         } while (from < to);
         return from;
+    }
+
+    static boolean isBlank(char[] s, int from, int to) {
+        for (int i = from; i < to; i++) {
+            if (s[i] > ' ')
+                return false;
+        }
+        return true;
     }
 
     static boolean isArray(char[] s, int i) {
