@@ -48,7 +48,7 @@ public class Generator {
         fields.forEach(d -> sb.append(d.importString()));
 
         sb.append("public class ").append(classTableName).append(" extends Table {\n\n");
-        sb.append(offset).append("private ").append(classTableName).append("(String name, String alias) {\n").append(offset).append(offset).append("super(name, alias);\n").append(offset).append("}\n\n");
+        sb.append(offset).append("public ").append(classTableName).append("(String name, String alias) {\n").append(offset).append(offset).append("super(name, alias);\n").append(offset).append("}\n\n");
         sb.append(offset).append("public ").append(classTableName).append(" as(String alias) {\n").append(offset).append(offset).append("return new ").append(classTableName).append("(name, alias);\n").append(offset).append("}\n\n");
 
         sb.append(offset).append("public final static ").append(classTableName).append(" INSTANCE")
