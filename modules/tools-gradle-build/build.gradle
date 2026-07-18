@@ -1,14 +1,13 @@
-archivesBaseName = "tools-gradle-build"
+base {
+    archivesName = "tools-gradle-build"
+}
 apply plugin: 'groovy'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 dependencies {
-    compile gradleApi()
-    compile localGroovy()
+    implementation gradleApi()
+    implementation localGroovy()
 
-    compile project(':modules:tools-sql')
+    implementation project(':modules:tools-sql')
 }
 
 ext {

@@ -1,18 +1,19 @@
 dependencies {
-    compile project(':modules:tools-io')
+    implementation project(':modules:tools-io')
 }
 
-archivesBaseName = "tools-image"
+base {
+    archivesName = "tools-image"
+}
 ext {
     descriptionString = 'image tools'
 }
 apply from: "${rootProject.projectDir}/gradle/sonatype.gradle"
 
-
-compileJava {
-    // I only managed to get this working when I forked
-    // and passed 'javac' as an executable
-    options.compilerArgs << '-XDignore.symbol.file'
-    options.fork = true
-    options.forkOptions.executable = 'javac'
-}
+//compileJava {
+//    // I only managed to get this working when I forked
+//    // and passed 'javac' as an executable
+//    options.compilerArgs << '-XDignore.symbol.file'
+//    options.fork = true
+//    options.forkOptions.executable = 'javac'
+//}

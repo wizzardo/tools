@@ -1,9 +1,18 @@
+
+plugins {
+    id "java-library"
+    id "com.vanniktech.maven.publish" version "0.34.0" apply false
+}
 allprojects {
-    apply plugin: 'java'
+    apply plugin: 'java-library'
+    apply plugin: "com.vanniktech.maven.publish"
 //    apply plugin: 'tools-gradle-build'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
 
     group = 'com.wizzardo.tools'
     version = '0.24-SNAPSHOT'
@@ -25,19 +34,21 @@ allprojects {
     }
 }
 
-buildscript {
-    repositories {
-        maven {
-            url "https://central.sonatype.com/repository/maven-snapshots/"
-        }
-        mavenCentral()
-    }
-//    dependencies {
-//        classpath 'com.wizzardo.tools:tools-gradle-build:+'
+//buildscript {
+//    repositories {
+//        maven {
+//            url "https://central.sonatype.com/repository/maven-snapshots/"
+//        }
+//        mavenCentral()
 //    }
-}
+////    dependencies {
+////        classpath 'com.wizzardo.tools:tools-gradle-build:+'
+////    }
+//}
 
-archivesBaseName = "tools"
+base {
+    archivesName = "tools"
+}
 ext {
     descriptionString = 'Package of useful tools like http-client, json-parser, xml-parser, cropping and resizing images and other'
 }
@@ -46,8 +57,11 @@ ext {
 apply from: 'gradle/sonatype.gradle'
 apply plugin: 'jacoco'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 jacoco {
     toolVersion = "0.8.5"
@@ -68,25 +82,25 @@ task codeCoverageReport(type: JacocoReport) {
 }
 
 dependencies {
-    compile project(':modules:tools-aws')
-    compile project(':modules:tools-bytecode')
-    compile project(':modules:tools-cache')
-    compile project(':modules:tools-collections')
-    compile project(':modules:tools-evaluation')
-    compile project(':modules:tools-exception')
-    compile project(':modules:tools-helpers')
-    compile project(':modules:tools-http')
-    compile project(':modules:tools-image')
-    compile project(':modules:tools-interfaces')
-    compile project(':modules:tools-io')
-    compile project(':modules:tools-json')
-    compile project(':modules:tools-math')
-    compile project(':modules:tools-misc')
-    compile project(':modules:tools-reflection')
-    compile project(':modules:tools-security')
-    compile project(':modules:tools-sql')
-    compile project(':modules:tools-xml')
-    compile project(':modules:tools-yaml')
+    api project(':modules:tools-aws')
+    api project(':modules:tools-bytecode')
+    api project(':modules:tools-cache')
+    api project(':modules:tools-collections')
+    api project(':modules:tools-evaluation')
+    api project(':modules:tools-exception')
+    api project(':modules:tools-helpers')
+    api project(':modules:tools-http')
+    api project(':modules:tools-image')
+    api project(':modules:tools-interfaces')
+    api project(':modules:tools-io')
+    api project(':modules:tools-json')
+    api project(':modules:tools-math')
+    api project(':modules:tools-misc')
+    api project(':modules:tools-reflection')
+    api project(':modules:tools-security')
+    api project(':modules:tools-sql')
+    api project(':modules:tools-xml')
+    api project(':modules:tools-yaml')
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'com.google.code.gson:gson:2.2.4'

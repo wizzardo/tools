@@ -1,58 +1,30 @@
-apply plugin: 'maven'
-apply plugin: 'signing'
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 
-if (!project.hasProperty("ossrhUsername"))
-    ext.ossrhUsername = ""
-if (!project.hasProperty("ossrhPassword"))
-    ext.ossrhPassword = ""
-
-signing {
-    required { gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
+    pom {
+        name = base.archivesName
+        description = project.ext.descriptionString
+        url = "https://github.com/wizzardo/tools"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "http://www.opensource.org/licenses/mit-license.php"
+                distribution = "http://www.opensource.org/licenses/mit-license.php"
             }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+        developers {
+            developer {
+                id = "Wizzardo"
+                name = "Mikhail Bobrutskov"
+                url = "https://github.com/wizzardo/"
+                email = "wizzardobox@gmail.com"
             }
-
-            pom.project {
-                name archivesBaseName
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description project.ext.descriptionString
-                url 'https://github.com/wizzardo/tools'
-
-                scm {
-                    connection 'scm:git:git@github.com:wizzardo/tools.git'
-                    developerConnection 'scm:git:git@github.com:wizzardo/tools.git'
-                    url 'https://github.com/wizzardo/tools'
-                }
-
-
-                licenses {
-                    license {
-                        name 'MIT License'
-                        url 'http://www.opensource.org/licenses/mit-license.php'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'Wizzardo'
-                        name 'Mikhail Bobrutskov'
-                        email 'wizzardobox@gmail.com'
-                    }
-                }
-            }
+        }
+        scm {
+            url = "https://github.com/wizzardo/tools/"
+            connection = "scm:git:git@github.com:wizzardo/tools.git"
+            developerConnection = "scm:git:git@github.com:wizzardo/tools.git"
         }
     }
 }

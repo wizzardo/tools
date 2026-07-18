@@ -1,15 +1,17 @@
 dependencies {
-    compile project(':modules:tools-exception')
-    compile project(':modules:tools-collections')
-    compile project(':modules:tools-misc')
-    compile project(':modules:tools-io')
-    compile project(':modules:tools-bytecode')
+    implementation project(':modules:tools-exception')
+    implementation project(':modules:tools-collections')
+    implementation project(':modules:tools-misc')
+    implementation project(':modules:tools-io')
+    implementation project(':modules:tools-bytecode')
+    implementation project(':modules:tools-reflection')
+    implementation project(':modules:tools-interfaces')
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+base {
+    archivesName = "tools-evaluation"
+}
 
-archivesBaseName = "tools-evaluation"
 ext {
     descriptionString = 'evaluation tools'
 }

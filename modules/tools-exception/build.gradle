@@ -1,4 +1,7 @@
-archivesBaseName = "tools-exception"
+//archivesBaseName = "tools-exception"
+base {
+    archivesName = "tools-exception"
+}
 ext {
     descriptionString = 'exception tools'
 }

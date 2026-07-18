@@ -1,4 +1,6 @@
-archivesBaseName = "tools-math"
+base {
+    archivesName = "tools-math"
+}
 ext {
     descriptionString = 'math tools'
 }

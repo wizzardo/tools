@@ -1,4 +1,6 @@
-archivesBaseName = "tools-interfaces"
+base {
+    archivesName = "tools-interfaces"
+}
 ext {
     descriptionString = 'Common interfaces'
 }

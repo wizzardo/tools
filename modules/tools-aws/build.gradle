@@ -1,12 +1,16 @@
 dependencies {
-    compile project(':modules:tools-http')
-    compile project(':modules:tools-json')
-    compile project(':modules:tools-collections')
+    implementation project(':modules:tools-http')
+    implementation project(':modules:tools-json')
+    implementation project(':modules:tools-collections')
+    implementation project(':modules:tools-exception')
+    implementation project(':modules:tools-misc')
+    implementation project(':modules:tools-security')
+    implementation project(':modules:tools-interfaces')
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
-archivesBaseName = "tools-aws"
+base {
+    archivesName = "tools-aws"
+}
 ext {
     descriptionString = 'aws tools'
 }

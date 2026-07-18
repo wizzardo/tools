@@ -1,12 +1,13 @@
 dependencies {
-    compile project(':modules:tools-exception')
-    compile project(':modules:tools-security')
-    compile project(':modules:tools-reflection')
+    implementation project(':modules:tools-exception')
+    implementation project(':modules:tools-security')
+    implementation project(':modules:tools-reflection')
+    implementation project(':modules:tools-io')
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
-archivesBaseName = "tools-http"
+base {
+    archivesName = "tools-http"
+}
 ext {
     descriptionString = 'http tools'
 }

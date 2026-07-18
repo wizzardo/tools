@@ -1,8 +1,10 @@
 dependencies {
-    compile project(':modules:tools-exception')
+    implementation project(':modules:tools-exception')
 }
 
-archivesBaseName = "tools-cache"
+base {
+    archivesName = "tools-cache"
+}
 ext {
     descriptionString = 'cache tools'
 }

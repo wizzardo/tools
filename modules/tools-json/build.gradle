@@ -1,12 +1,13 @@
 dependencies {
-    compile project(':modules:tools-reflection')
-    compile project(':modules:tools-misc')
+    implementation project(':modules:tools-reflection')
+    implementation project(':modules:tools-misc')
+    implementation project(':modules:tools-interfaces')
+    implementation project(':modules:tools-exception')
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-archivesBaseName = "tools-json"
+base {
+    archivesName = "tools-json"
+}
 ext {
     descriptionString = 'json tools'
 }

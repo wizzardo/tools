@@ -1,11 +1,12 @@
 dependencies {
-    compile project(':modules:tools-reflection')
-    compile project(':modules:tools-misc')
+    implementation project(':modules:tools-reflection')
+    implementation project(':modules:tools-misc')
+    implementation project(':modules:tools-interfaces')
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
-archivesBaseName = "tools-yaml"
+base {
+    archivesName = "tools-yaml"
+}
 ext {
     descriptionString = 'yaml tools'
 }

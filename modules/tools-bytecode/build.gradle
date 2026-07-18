@@ -1,13 +1,13 @@
 dependencies {
-    compile project(':modules:tools-misc')
-    compile project(':modules:tools-io')
+    implementation project(':modules:tools-misc')
+    implementation project(':modules:tools-io')
+    implementation project(':modules:tools-interfaces')
+    implementation project(':modules:tools-exception')
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-
-archivesBaseName = "tools-bytecode"
+base {
+    archivesName = "tools-bytecode"
+}
 ext {
     descriptionString = 'bytecode tools'
 }

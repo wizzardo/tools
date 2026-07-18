@@ -1,8 +1,11 @@
 dependencies {
-    compile project(':modules:tools-exception')
+    implementation project(':modules:tools-exception')
 }
 
-archivesBaseName = "tools-io"
+base {
+    archivesName = "tools-io"
+}
+
 ext {
     descriptionString = 'io tools'
 }

@@ -1,8 +1,10 @@
 dependencies {
-    compile project(':modules:tools-collections')
+    implementation project(':modules:tools-collections')
 }
 
-archivesBaseName = "tools-xml"
+base {
+    archivesName = "tools-xml"
+}
 ext {
     descriptionString = 'xml tools'
 }

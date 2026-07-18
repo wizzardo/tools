@@ -1,9 +1,11 @@
 dependencies {
-    compile project(':modules:tools-exception')
-    compile project(':modules:tools-interfaces')
+    implementation project(':modules:tools-exception')
+    implementation project(':modules:tools-interfaces')
 }
 
-archivesBaseName = "tools-reflection"
+base {
+    archivesName = "tools-reflection"
+}
 ext {
     descriptionString = 'reflection tools'
 }
