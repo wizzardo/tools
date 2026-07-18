@@ -1431,10 +1431,22 @@ public class EvalToolsTest {
     @Test
     public void test_with() {
         Map<String, Object> model = new HashMap<String, Object>();
-        Assert.assertEquals("[1]", EvalTools.prepare("[].with { add(1) }").get(model).toString());
+        Assert.assertEquals("[1]", EvalTools.prepare("[].with { add(1); it }").get(model).toString());
 
         model.put("holder", new StringHolder());
-        Assert.assertEquals("123", EvalTools.prepare("holder.with { " +
+        Assert.assertEquals("123", EvalTools.prepare("holder.with(true, { " +
+                "value = '123';" +
+                "l = value.length();" +
+                " })").get(model).toString());
+    }
+
+    @Test
+    public void test_tap() {
+        Map<String, Object> model = new HashMap<String, Object>();
+        Assert.assertEquals("[1]", EvalTools.prepare("[].tap { add(1); }").get(model).toString());
+
+        model.put("holder", new StringHolder());
+        Assert.assertEquals("123", EvalTools.prepare("holder.tap { " +
                 "value = '123';" +
                 "l = value.length();" +
                 " }").get(model).toString());
@@ -1510,7 +1522,7 @@ public class EvalToolsTest {
                 "}\n" +
                 "\n" +
                 "new Greeter().sayHello()\n" +
-                "").get(model).toString());
+                "").get(model));
 
         model.clear();
         Assert.assertEquals(1, EvalTools.prepare("" +
