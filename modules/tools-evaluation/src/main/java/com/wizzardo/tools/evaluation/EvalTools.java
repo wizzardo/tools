@@ -2949,8 +2949,35 @@ public class EvalTools {
         Function.setMethod(Object.class, "with", new ClosureInvoker() {
             @Override
             public Object map(Object it, Object[] args) {
-                if (args.length != 1 || args[0].getClass() != ClosureExpression.class)
+                if (!(args.length == 1 || args.length == 2) || args[args.length - 1].getClass() != ClosureExpression.class)
                     throw new MissingMethodException(it.getClass(), "with", args);
+
+                ClosureExpression closure = (ClosureExpression) args[args.length - 1];
+                if (args.length == 2) {
+                    Object result = closure.getAgainst(closure.context, it, it);
+                    if (args[0] == Boolean.TRUE) {
+                        return it;
+                    } else if (args[0] == Boolean.FALSE) {
+                        return result;
+                    } else {
+                        throw new IllegalArgumentException("First parameter should be an optional boolean, default false, but was " + args[0]);
+                    }
+                } else {
+                    return closure.getAgainst(closure.context, it, it);
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "with";
+            }
+        });
+
+        Function.setMethod(Object.class, "tap", new ClosureInvoker() {
+            @Override
+            public Object map(Object it, Object[] args) {
+                if (args.length != 1 || args[0].getClass() != ClosureExpression.class)
+                    throw new MissingMethodException(it.getClass(), "tap", args);
 
                 ClosureExpression closure = (ClosureExpression) args[0];
                 closure.getAgainst(closure.context, it);
@@ -2959,7 +2986,7 @@ public class EvalTools {
 
             @Override
             public String toString() {
-                return "with";
+                return "tap";
             }
         });
 
