@@ -17,7 +17,7 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v2
       with:
-        java-version: '11'
+        java-version: '21'
         distribution: 'temurin'
     - run: ./gradlew check --no-daemon
     - name: Publish Test Report
