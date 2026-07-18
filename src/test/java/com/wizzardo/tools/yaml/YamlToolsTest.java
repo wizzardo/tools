@@ -4,6 +4,8 @@ import com.wizzardo.tools.misc.Appender;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
+
 public class YamlToolsTest {
 
     @Test
@@ -147,5 +149,29 @@ public class YamlToolsTest {
                 "array: \n" +
                 "  - \"item1\"\n" +
                 "  - 2", yaml);
+    }
+
+    @Test
+    public void test_documents() {
+        String data = "key: value\n" +
+                "\n" +
+                "a: b\n" +
+                "---\n" +
+                "key: value2\n" +
+                "a: c\n";
+        List<YamlItem> docs = YamlTools.parseDocuments(data);
+        Assert.assertEquals(2, docs.size());
+
+        YamlItem item = docs.get(0);
+        Assert.assertTrue(item.isYamlObject());
+        Assert.assertEquals(2, item.asYamlObject().size());
+        Assert.assertEquals("value", item.asYamlObject().getAsString("key"));
+        Assert.assertEquals("b", item.asYamlObject().getAsString("a"));
+
+        item = docs.get(1);
+        Assert.assertTrue(item.isYamlObject());
+        Assert.assertEquals(2, item.asYamlObject().size());
+        Assert.assertEquals("value2", item.asYamlObject().getAsString("key"));
+        Assert.assertEquals("c", item.asYamlObject().getAsString("a"));
     }
 }

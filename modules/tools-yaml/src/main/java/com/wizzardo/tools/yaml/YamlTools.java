@@ -3,6 +3,9 @@ package com.wizzardo.tools.yaml;
 import com.wizzardo.tools.misc.Appender;
 import com.wizzardo.tools.reflection.StringReflection;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class YamlTools {
     private static final char[] UNESCAPES = new char[128];
     private static final char[] ESCAPES = new char[128];
@@ -83,6 +86,29 @@ public class YamlTools {
         return new YamlItem(object);
     }
 
+    public static List<YamlItem> parseDocuments(String s) {
+        char[] data = StringReflection.chars(s);
+        int offset = 0;
+        if (data.length != s.length())
+            offset = StringReflection.offset(s); // for java 6
+        return parseDocuments(data, offset, offset + s.length());
+    }
+
+    public static List<YamlItem> parseDocuments(char[] data, int from, int to) {
+        int indent = getIndent(data, from, to);
+        return parseDocuments(data, from, to, indent);
+    }
+
+    private static List<YamlItem> parseDocuments(char[] data, int from, int to, int indent) {
+        ArrayList<YamlItem> list = new ArrayList<>();
+        do {
+            YamlObject object = new YamlObject();
+            from = parse(data, from, to, indent, object);
+            list.add(new YamlItem(object));
+        } while (from < to);
+        return list;
+    }
+
     public static int parse(char[] data, int from, int to, int indent, YamlObject into) {
         do {
             int lineEnd = skipUntilLineEnd(data, from, to);
@@ -102,6 +128,13 @@ public class YamlTools {
                 } else {
                     return from;
                 }
+            }
+
+            if (kvSeparator == -1) {
+                String s = new String(data, from, kvEnd - from);
+                if (s.equals("---"))
+                    return skipUntilNextLine(data, lineEnd, to);
+                throw new IllegalStateException("Cannot parse 'key:value' from string: " + "\"" + s + "\"");
             }
 
             String key = readKey(data, from, kvSeparator);
