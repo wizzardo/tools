@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.wizzardo.tools.yaml.YamlTools.appendNewLineAndIndent;
+
 
 public class YamlObject extends LinkedHashMap<String, YamlItem> {
 
@@ -24,26 +26,37 @@ public class YamlObject extends LinkedHashMap<String, YamlItem> {
         });
     }
 
-    void toYaml(Appender sb) {
-        sb.append('{');
-        boolean comma = false;
-        for (Map.Entry<String, YamlItem> entry : entrySet()) {
-            if (comma)
-                sb.append(',');
-            else
-                comma = true;
+    public void toYaml(Appender sb) {
+        toYaml(sb, 0);
+    }
 
-            sb.append('"');
+    void toYaml(Appender sb, int indent) {
+        if (isEmpty()) {
+            sb.append("{}");
+            return;
+        }
+
+        boolean first = true;
+        for (Map.Entry<String, YamlItem> entry : entrySet()) {
+            if (!first) {
+                YamlTools.appendNewLineAndIndent(sb, indent);
+            } else
+                first = false;
+
             sb.append(entry.getKey());
-            sb.append('"');
-            sb.append(':');
+            sb.append(": ");
 
             if (entry.getValue() == null)
                 sb.append("null");
-            else
-                entry.getValue().toYaml(sb);
+            else {
+                YamlItem item = entry.getValue();
+                if (item.isYamlObject() || item.isYamlArray()) {
+                    appendNewLineAndIndent(sb, indent + 1);
+                    item.toYaml(sb, indent + 1);
+                } else
+                    item.toYaml(sb, indent + 1);
+            }
         }
-        sb.append('}');
     }
 
 

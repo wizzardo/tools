@@ -302,8 +302,23 @@ public class YamlItem {
         });
     }
 
-    void toYaml(Appender sb) {
-        throw new IllegalStateException("Serialize for " + ob.getClass() + " not supported yet");
+    public void toYaml(Appender sb) {
+        toYaml(sb, 0);
+    }
+
+    void toYaml(Appender sb, int indent) {
+        if (ob == null)
+            sb.append("null");
+        else if (ob instanceof YamlObject)
+            ((YamlObject) ob).toYaml(sb, indent);
+        else if (ob instanceof YamlArray)
+            ((YamlArray) ob).toYaml(sb, indent);
+        else if (ob.getClass() == String.class) {
+            sb.append('"');
+            sb.append(ob.toString());
+            sb.append('"');
+        } else
+            sb.append(String.valueOf(ob));
     }
 
     protected void set(Object value) {

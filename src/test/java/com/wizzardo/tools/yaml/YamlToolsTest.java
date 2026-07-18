@@ -1,5 +1,6 @@
 package com.wizzardo.tools.yaml;
 
+import com.wizzardo.tools.misc.Appender;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -111,7 +112,6 @@ public class YamlToolsTest {
                 "\n" +
                 "key2: b";
         YamlItem item = YamlTools.parse(data);
-        item.toString();
 
         Assert.assertTrue(item.isYamlObject());
         Assert.assertEquals(2, item.asYamlObject().size());
@@ -119,5 +119,33 @@ public class YamlToolsTest {
         Assert.assertEquals(1, item.asYamlObject().getAsYamlObject("key").getAsYamlObject("sub").size());
         Assert.assertEquals("value", item.asYamlObject().getAsYamlObject("key").getAsYamlObject("sub").getAsString("subsub"));
         Assert.assertEquals("b", item.asYamlObject().getAsString("key2"));
+    }
+
+    @Test
+    public void test_toYaml() {
+        YamlObject object = new YamlObject();
+        object.append("key", "value");
+        object.append("nullKey", (Object) null);
+
+        YamlArray array = new YamlArray();
+        array.add(new YamlItem("item1"));
+        array.add(new YamlItem(2));
+        object.append("array", array);
+
+        YamlItem item = new YamlItem(object);
+        StringBuilder sb = new StringBuilder();
+        item.toYaml(Appender.create(sb));
+
+        String yaml = sb.toString();
+        System.out.println("Generated YAML:");
+        System.out.println("---");
+        System.out.println(yaml);
+        System.out.println("---");
+
+        Assert.assertEquals("key: \"value\"\n" +
+                "nullKey: null\n" +
+                "array: \n" +
+                "  - \"item1\"\n" +
+                "  - 2", yaml);
     }
 }

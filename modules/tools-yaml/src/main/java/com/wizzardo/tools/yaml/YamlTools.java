@@ -1,5 +1,6 @@
 package com.wizzardo.tools.yaml;
 
+import com.wizzardo.tools.misc.Appender;
 import com.wizzardo.tools.reflection.StringReflection;
 
 public class YamlTools {
@@ -268,5 +269,11 @@ public class YamlTools {
             i++;
         }
         return i;
+    }
+
+    static void appendNewLineAndIndent(Appender sb, int indent) {
+        sb.append('\n');
+        for (int i = 0; i < indent; i++)
+            sb.append("  ");
     }
 }

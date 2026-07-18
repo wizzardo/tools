@@ -7,6 +7,8 @@ import com.wizzardo.tools.misc.ExceptionDrivenStringBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static com.wizzardo.tools.yaml.YamlTools.appendNewLineAndIndent;
+
 public class YamlArray extends ArrayList<YamlItem> {
 
     public String toString() {
@@ -20,21 +22,35 @@ public class YamlArray extends ArrayList<YamlItem> {
         });
     }
 
-    void toYaml(Appender sb) {
-        sb.append('[');
-        boolean comma = false;
+    public void toYaml(Appender sb) {
+        toYaml(sb, 0);
+    }
+
+    void toYaml(Appender sb, int indent) {
+        if (isEmpty()) {
+            sb.append("[]");
+            return;
+        }
+
+        boolean first = true;
         for (YamlItem item : this) {
-            if (comma)
-                sb.append(',');
-            else
-                comma = true;
+            if (!first) {
+                appendNewLineAndIndent(sb, indent);
+            } else
+                first = false;
+
+            sb.append("- ");
 
             if (item == null)
                 sb.append("null");
-            else
-                item.toYaml(sb);
+            else {
+                if (item.isYamlObject() || item.isYamlArray()) {
+                    appendNewLineAndIndent(sb, indent);
+                    item.toYaml(sb, indent + 1);
+                } else
+                    item.toYaml(sb, indent + 1);
+            }
         }
-        sb.append(']');
     }
 
     public YamlArray append(Object ob) {
