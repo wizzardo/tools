@@ -134,13 +134,35 @@ public class AES {
     }
 
     private void init() throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
-        byte[] iv = key.getEncoded();
-        AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);
+        // Cipher.init (since JDK 9) may mutate the provided key and IV byte arrays in place
+        // (zeroing them out). To avoid corrupting the shared key/IV when initializing the
+        // decrypt cipher after the encrypt cipher, each cipher gets its own fresh copies.
+        byte[] keyBytes = key.getEncoded().clone();
+        byte[] iv = keyBytes.clone();
         ecipher = Cipher.getInstance("AES/CFB8/NoPadding");
 //            ecipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         dcipher = Cipher.getInstance("AES/CFB8/NoPadding");
-        ecipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
-        dcipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
+        ecipher.init(Cipher.ENCRYPT_MODE, rawKey(keyBytes), new IvParameterSpec(iv.clone()));
+        dcipher.init(Cipher.DECRYPT_MODE, rawKey(keyBytes), new IvParameterSpec(iv.clone()));
+    }
+
+    private static SecretKey rawKey(byte[] keyBytes) {
+        return new SecretKey() {
+            @Override
+            public String getAlgorithm() {
+                return "AES";
+            }
+
+            @Override
+            public String getFormat() {
+                return "RAW";
+            }
+
+            @Override
+            public byte[] getEncoded() {
+                return keyBytes.clone();
+            }
+        };
     }
 
     public byte[] decrypt(byte[] b) {
