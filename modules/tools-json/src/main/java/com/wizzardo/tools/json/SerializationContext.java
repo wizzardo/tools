@@ -9,6 +9,7 @@ public class SerializationContext {
     private Map<JsonGeneric, JsonFields> cachedFields = new ConcurrentHashMap<JsonGeneric, JsonFields>();
     private Map<Class, JsonGeneric> cachedJsonGenerics = new ConcurrentHashMap<Class, JsonGeneric>();
     private Fields.FieldMapper<JsonFieldInfo, JsonGeneric> jsonFieldInfoMapper = Binder.JSON_FIELD_INFO_MAPPER;
+    private boolean isWithNullFields = true;
 
     public <T> JsonGeneric<T> getGeneric(Class<T> clazz) {
         JsonGeneric<T> jsonGeneric = cachedJsonGenerics.get(clazz);
@@ -52,5 +53,13 @@ public class SerializationContext {
 
     public void setJsonFieldInfoMapper(Fields.FieldMapper<JsonFieldInfo, JsonGeneric> mapper) {
         jsonFieldInfoMapper = mapper;
+    }
+
+    public boolean isWithNullFields() {
+        return isWithNullFields;
+    }
+
+    public void setWithNullFields(boolean withNullFields) {
+        this.isWithNullFields = withNullFields;
     }
 }

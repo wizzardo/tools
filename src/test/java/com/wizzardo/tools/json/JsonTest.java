@@ -1747,4 +1747,73 @@ public class JsonTest {
         Assert.assertEquals("{\"date\":\"" + value + "\"}", JsonTools.serialize(obj));
         Assert.assertEquals(obj.date, JsonTools.parse("{\"date\":\"" + value + "\"}", TestLocalDate.class).date);
     }
+
+    static class TestNullableValues {
+        String s;
+        Integer i;
+        Boolean b;
+        int[] array;
+    }
+    @Test
+    public void test_nullable_values() {
+        TestNullableValues obj = new TestNullableValues();
+        obj.s = "value";
+        obj.i = 1;
+        obj.b = true;
+        obj.array = new int[]{1, 2, 3};
+
+        Assert.assertEquals("{\"s\":\"value\",\"i\":1,\"b\":true,\"array\":[1,2,3]}", JsonTools.serialize(obj));
+
+
+        SerializationContext context = new SerializationContext();
+        context.setWithNullFields(false);
+
+        obj = new TestNullableValues();
+        obj.s = null;
+        obj.i = 1;
+        obj.b = true;
+        obj.array = new int[]{1, 2, 3};
+
+        Assert.assertEquals("{\"i\":1,\"b\":true,\"array\":[1,2,3]}", JsonTools.serialize(obj, context));
+
+        obj = new TestNullableValues();
+        obj.s = "value";
+        obj.i = null;
+        obj.b = true;
+        obj.array = new int[]{1, 2, 3};
+
+        Assert.assertEquals("{\"s\":\"value\",\"b\":true,\"array\":[1,2,3]}", JsonTools.serialize(obj, context));
+
+        obj = new TestNullableValues();
+        obj.s = "value";
+        obj.i = null;
+        obj.b = null;
+        obj.array = new int[]{1, 2, 3};
+
+        Assert.assertEquals("{\"s\":\"value\",\"array\":[1,2,3]}", JsonTools.serialize(obj, context));
+
+        obj = new TestNullableValues();
+        obj.s = "value";
+        obj.i = null;
+        obj.b = true;
+        obj.array = null;
+
+        Assert.assertEquals("{\"s\":\"value\",\"b\":true}", JsonTools.serialize(obj, context));
+
+        obj = new TestNullableValues();
+        obj.s = "value";
+        obj.i = null;
+        obj.b = null;
+        obj.array = null;
+
+        Assert.assertEquals("{\"s\":\"value\"}", JsonTools.serialize(obj, context));
+
+        obj = new TestNullableValues();
+        obj.s = null;
+        obj.i = null;
+        obj.b = null;
+        obj.array = null;
+
+        Assert.assertEquals("{}", JsonTools.serialize(obj, context));
+    }
 }

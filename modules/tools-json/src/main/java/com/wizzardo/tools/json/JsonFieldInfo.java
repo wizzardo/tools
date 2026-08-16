@@ -10,28 +10,27 @@ import java.util.Map;
  */
 public class JsonFieldInfo extends FieldInfo<JsonFieldSetter, JsonGeneric> {
     public final Binder.Serializer serializer;
-    protected String preparedFieldName;
+    protected String preparedFieldNameFirst;
+    protected String preparedFieldNameNext;
 
     public JsonFieldInfo(Field field, JsonFieldSetter reflection, JsonGeneric generic, Binder.Serializer serializer) {
         super(field, reflection, generic);
         this.serializer = serializer;
     }
 
-    protected void prepareName(boolean firstField) {
+    protected void prepareName() {
         String fieldName = field.getName();
 
         JsonProperty annotation = field.getAnnotation(JsonProperty.class);
         if (annotation != null)
             fieldName = annotation.value();
 
-        if (firstField)
-            preparedFieldName = "{\"" + fieldName + "\":";
-        else
-            preparedFieldName = ",\"" + fieldName + "\":";
+        preparedFieldNameFirst = "{\"" + fieldName + "\":";
+        preparedFieldNameNext = ",\"" + fieldName + "\":";
     }
 
-    public String getPreparedFieldName() {
-        return preparedFieldName;
+    public String getPreparedFieldName(boolean isFirst) {
+        return isFirst ? preparedFieldNameFirst : preparedFieldNameNext;
     }
 
     @Override

@@ -87,8 +87,23 @@ public class Binder {
 
         }
 
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
-            checkNullAndSerialize(field.getObject(parent), appender, generic, context);
+        public boolean checkNullAndSerialize(Object object, Appender appender, JsonFieldInfo info, SerializationContext context, boolean isFirst) {
+            if (object == null) {
+                if (context.isWithNullFields()) {
+                    appender.append(info.getPreparedFieldName(isFirst));
+                    appender.append(nullArray);
+                    return true;
+                }
+                return false;
+            }
+
+            appender.append(info.getPreparedFieldName(isFirst));
+            serialize(object, appender, info.generic, context);
+            return true;
+        }
+
+        public boolean serialize(Object parent, JsonFieldInfo info, Appender appender, SerializationContext context, boolean isFirst) {
+           return checkNullAndSerialize(info.reflection.getObject(parent), appender, info, context, isFirst);
         }
 
         abstract public void serialize(Object object, Appender appender, JsonGeneric generic, SerializationContext context);
@@ -104,7 +119,14 @@ public class Binder {
             throw new IllegalStateException("PrimitiveSerializer can serialize only primitives");
         }
 
-        public abstract void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context);
+        @Override
+        public boolean serialize(Object parent, JsonFieldInfo info, Appender appender, SerializationContext context, boolean isFirst) {
+            appender.append(info.getPreparedFieldName(isFirst));
+            serialize(parent, info.reflection, appender);
+            return true;
+        }
+
+        public abstract void serialize(Object parent, FieldReflection field, Appender appender);
     }
 
     public static class ArrayBoxedSerializer extends Serializer {
@@ -135,31 +157,31 @@ public class Binder {
 
     public final static PrimitiveSerializer intSerializer = new PrimitiveSerializer() {
         @Override
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
+        public void serialize(Object parent, FieldReflection field, Appender appender) {
             appender.append(field.getInteger(parent));
         }
     };
     public final static PrimitiveSerializer longSerializer = new PrimitiveSerializer() {
         @Override
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
+        public void serialize(Object parent, FieldReflection field, Appender appender) {
             appender.append(field.getLong(parent));
         }
     };
     public final static PrimitiveSerializer shortSerializer = new PrimitiveSerializer() {
         @Override
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
+        public void serialize(Object parent, FieldReflection field, Appender appender) {
             appender.append(field.getShort(parent));
         }
     };
     public final static PrimitiveSerializer byteSerializer = new PrimitiveSerializer() {
         @Override
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
+        public void serialize(Object parent, FieldReflection field, Appender appender) {
             appender.append(field.getByte(parent));
         }
     };
     public final static PrimitiveSerializer charSerializer = new PrimitiveSerializer() {
         @Override
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
+        public void serialize(Object parent, FieldReflection field, Appender appender) {
             appender.append('"');
             appender.append(field.getChar(parent));
             appender.append('"');
@@ -167,19 +189,19 @@ public class Binder {
     };
     public final static PrimitiveSerializer booleanSerializer = new PrimitiveSerializer() {
         @Override
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
+        public void serialize(Object parent, FieldReflection field, Appender appender) {
             appender.append(field.getBoolean(parent));
         }
     };
     public final static PrimitiveSerializer floatSerializer = new PrimitiveSerializer() {
         @Override
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
+        public void serialize(Object parent, FieldReflection field, Appender appender) {
             appender.append(field.getFloat(parent));
         }
     };
     public final static PrimitiveSerializer doubleSerializer = new PrimitiveSerializer() {
         @Override
-        public void serialize(Object parent, FieldReflection field, Appender appender, JsonGeneric generic, SerializationContext context) {
+        public void serialize(Object parent, FieldReflection field, Appender appender) {
             appender.append(field.getDouble(parent));
         }
     };
@@ -439,28 +461,22 @@ public class Binder {
     public final static Serializer objectSerializer = new Serializer(SerializerType.OBJECT) {
         @Override
         public void serialize(Object src, Appender sb, JsonGeneric generic, SerializationContext context) {
-//            boolean comma = false;
             JsonFields fields;
             if (generic != null && src.getClass() == generic.clazz)
                 fields = generic.getFields();
             else
                 fields = context.getFields(src.getClass());
 
-            if (fields.size() == 0)
-                sb.append('{');
-
-            for (JsonFieldInfo info : fields.fields()) {
-//                Field field = info.field;
-//                if (comma)
-//                    sb.append(',');
-//                else
-//                    comma = true;
-
-//                appendName(field.getName(), sb, false);
-                sb.append(info.getPreparedFieldName());
-                info.serializer.serialize(src, info.reflection, sb, info.generic, context);
+            JsonFieldInfo[] fieldsArr = fields.fields();
+            boolean isFirst = true;
+            for (int i = 0, fieldsLength = fieldsArr.length; i < fieldsLength; i++) {
+                JsonFieldInfo info = fieldsArr[i];
+                isFirst &= !info.serializer.serialize(src, info, sb, context, isFirst);
             }
-            sb.append('}');
+            if (isFirst)
+                sb.append("{}");
+            else
+                sb.append('}');
         }
     };
     public final static Serializer genericSerializer = new Serializer(SerializerType.OBJECT) {

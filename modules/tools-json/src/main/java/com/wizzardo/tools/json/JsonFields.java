@@ -24,7 +24,7 @@ public class JsonFields extends Fields<JsonFieldInfo> {
     public JsonFields(JsonGeneric clazz, FieldMapper<JsonFieldInfo, JsonGeneric> mapper) {
         super(clazz, mapper);
         for (int i = 0; i < array.length; i++) {
-            array[i].prepareName(i == 0);
+            array[i].prepareName();
         }
     }
 
