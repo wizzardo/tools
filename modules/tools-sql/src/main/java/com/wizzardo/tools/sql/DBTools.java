@@ -156,18 +156,23 @@ public class DBTools {
             }
 
             System.out.println("executing migration " + name);
+            boolean transaction = !migration.startsWith("--TRANSACTION_OFF") && !migration.startsWith("--TRANSACTION OFF") && !migration.startsWith("-- TRANSACTION_OFF") && !migration.startsWith("-- TRANSACTION OFF")
+                    && !migration.startsWith("--transaction_off") && !migration.startsWith("--transaction off") && !migration.startsWith("-- transaction_off") && !migration.startsWith("-- transaction off");
 
             boolean result = withDB(c -> {
-                c.setAutoCommit(false);
+                if (transaction)
+                    c.setAutoCommit(false);
                 try {
                     c.prepareStatement(migration).execute();
                     c.prepareStatement("insert into schema_history (name, md5) values('" + name + "', '" + md5 + "')").executeUpdate();
-                    c.commit();
+                    if (transaction)
+                        c.commit();
                 } catch (Exception e) {
                     System.out.println("Cannot execute migration: " + name);
                     System.out.println(migration);
                     e.printStackTrace();
-                    c.rollback();
+                    if (transaction)
+                        c.rollback();
                     return false;
                 } finally {
                     c.setAutoCommit(true);
