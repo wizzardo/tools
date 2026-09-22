@@ -70,4 +70,31 @@ public interface Body {
             return new FileInputStream(file);
         }
     }
+
+    class FixedStreamBody implements Body {
+        final InputStream stream;
+        final long length;
+
+        public FixedStreamBody(InputStream stream, long length) {
+            this.stream = stream;
+            this.length = length;
+        }
+
+
+        @Override
+        public long length() {
+            return length;
+        }
+
+        @Override
+        public void write(OutputStream out) throws IOException {
+            IOTools.copy(stream, out);
+            stream.close();
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return stream;
+        }
+    }
 }

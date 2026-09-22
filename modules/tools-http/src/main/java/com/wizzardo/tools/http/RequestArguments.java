@@ -5,6 +5,7 @@ import com.wizzardo.tools.security.Base64;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.File;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.Proxy;
 import java.util.*;
@@ -210,6 +211,17 @@ public class RequestArguments<T extends RequestArguments> {
 
     public T data(File data, ContentType contentType) {
         return data(data, contentType.value);
+    }
+
+    public T data(InputStream data, long length, String contentType) {
+        this.data = new Body.FixedStreamBody(data, length);
+        method = ConnectionMethod.HTTPMethod.POST;
+        setContentType(contentType);
+        return self();
+    }
+
+    public T data(InputStream data, long length, ContentType contentType) {
+        return data(data, length, contentType.value);
     }
 
     public T removeParameter(String key) {
