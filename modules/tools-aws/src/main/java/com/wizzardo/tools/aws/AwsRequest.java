@@ -43,9 +43,20 @@ public class AwsRequest extends Request {
     protected String region;
     protected String service;
     protected String path;
+    protected boolean withUnsignedPayload = false;
 
     public AwsRequest() {
         super(null);
+    }
+
+    protected String getBodyHash() throws IOException {
+        if (withUnsignedPayload)
+            return "UNSIGNED-PAYLOAD";
+
+        SHA256 bodySHA = SHA256.create();
+        if (data != null)
+            bodySHA.update(data.getInputStream());
+        return bodySHA.asString();
     }
 
     protected void prepareRequest(ConnectionMethod method) throws IOException {
@@ -56,10 +67,7 @@ public class AwsRequest extends Request {
         String dateIso = dateFormatIsoThreadLocal.getValue().format(date);
         String dateLong = dateFormatThreadLocal.getValue().format(date);
 
-        SHA256 bodySHA = SHA256.create();
-        if (data != null)
-            bodySHA.update(data.getInputStream());
-        String payloadHash = bodySHA.asString();
+        String payloadHash = getBodyHash();
 
         this.header("Date", dateLong)
                 .header("x-amz-content-sha256", payloadHash)
@@ -207,5 +215,10 @@ public class AwsRequest extends Request {
     public Response execute() throws IOException {
         prepareRequest(method);
         return super.execute();
+    }
+
+    public AwsRequest withUnsignedPayload() {
+        this.withUnsignedPayload = true;
+        return this;
     }
 }
