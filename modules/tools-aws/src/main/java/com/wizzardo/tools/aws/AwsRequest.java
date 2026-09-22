@@ -106,11 +106,14 @@ public class AwsRequest extends Request {
         header("Authorization", result);
     }
 
-    protected String encode(String value) {
-        return Unchecked.call(() -> URLEncoder.encode(value, StandardCharsets.UTF_8.name()));
+    protected static String encode(String value) {
+        return Unchecked.call(() -> URLEncoder.encode(value, StandardCharsets.UTF_8.name()))
+                .replace("+", "%20")
+                .replace("*", "%2A")
+                .replace("%7E", "~");
     }
 
-    protected byte[] hmacSHA256(String data, byte[] key) {
+    protected static byte[] hmacSHA256(String data, byte[] key) {
         String algorithm = "HmacSHA256";
         return Unchecked.call(() -> {
             Mac mac = Mac.getInstance(algorithm);
@@ -119,7 +122,13 @@ public class AwsRequest extends Request {
         });
     }
 
-    protected String toHexString(byte[] b, int length) {
+    protected static String getSha256(String data){
+        SHA256 sha256 = SHA256.create();
+        sha256.update(data);
+        return sha256.asString();
+    }
+
+    protected static String toHexString(byte[] b, int length) {
         String str = new BigInteger(1, b).toString(16);
         while (str.length() < length) {
             str = "0" + str;
@@ -127,7 +136,7 @@ public class AwsRequest extends Request {
         return str;
     }
 
-    protected byte[] getSignatureKey(String key, String dateStamp, String regionName, String serviceName) {
+    protected static byte[] getSignatureKey(String key, String dateStamp, String regionName, String serviceName) {
         byte[] kSecret = ("AWS4" + key).getBytes(StandardCharsets.UTF_8);
         byte[] kDate = hmacSHA256(dateStamp, kSecret);
         byte[] kRegion = hmacSHA256(regionName, kDate);
